@@ -1,0 +1,96 @@
+{
+  "expo": {
+    "name": "Shelf",
+    "slug": "shelf-companion",
+    "version": "1.2.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "shelf",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.shelf.companion",
+      "associatedDomains": ["applinks:app.shelf.nu"],
+      "infoPlist": {
+        "NSCameraUsageDescription": "Shelf needs camera access to scan QR codes and barcodes on your assets.",
+        "NSPhotoLibraryUsageDescription": "Shelf needs photo library access so you can attach photos to assets and audits."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FF7809"
+      },
+      "package": "com.shelf.companion",
+      "permissions": ["android.permission.CAMERA"],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "category": ["BROWSABLE", "DEFAULT"],
+          "data": [
+            { "scheme": "https", "host": "app.shelf.nu", "pathPrefix": "/qr/" },
+            {
+              "scheme": "https",
+              "host": "app.shelf.nu",
+              "pathPrefix": "/assets/"
+            },
+            {
+              "scheme": "https",
+              "host": "app.shelf.nu",
+              "pathPrefix": "/bookings/"
+            },
+            {
+              "scheme": "https",
+              "host": "app.shelf.nu",
+              "pathPrefix": "/audits/"
+            }
+          ]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FF7809",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Shelf needs camera access to scan QR codes and barcodes on your assets.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-quick-actions",
+      "./plugins/swift-concurrency-fix",
+      "@sentry/react-native"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b6d6a6cb-c242-4474-815f-b55d5e691c58"
+      }
+    },
+    "owner": "shelfassetmanagement"
+  }
+}

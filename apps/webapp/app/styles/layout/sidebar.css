@@ -1,0 +1,48 @@
+/** Sidebar */
+
+/* Bottom of the sidebar */
+.bottom {
+  @apply flex justify-between border-t border-t-slate-400 pt-6;
+}
+
+.main-navigation .menu li a:hover .icon,
+.main-navigation .menu li button:hover .icon,
+.main-navigation .menu li .active .icon {
+  @apply text-primary-500;
+}
+
+@media (min-width: 768px) {
+  .collapsed-navigation .navigation-header .logo-text,
+  /* .collapsed-navigation .navigation-header button, */
+  .collapsed-navigation .menu li .text,
+  .collapsed-navigation .user-credentials,
+  .collapsed-navigation .logout-btn {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .collapsed-navigation .menu li a:not(.disabled),
+  .collapsed-navigation .menu li button:not(.disabled) {
+    @apply py-2.5;
+  }
+
+  .collapsed-navigation .logout-btn form {
+    pointer-events: all;
+  }
+
+  .collapsed-navigation .bottom {
+    @apply border-transparent;
+  }
+
+  .collapsed-navigation .bottom a {
+    @apply hover:bg-transparent;
+  }
+
+  .collapsed-navigation .support-banner {
+    @apply pointer-events-none hidden;
+  }
+}
+
+.active\:text-sidebar-accent-foreground:active {
+  @apply text-primary;
+}

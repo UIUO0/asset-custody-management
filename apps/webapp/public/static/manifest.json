@@ -1,0 +1,19 @@
+{
+  "name": "نظام إدارة الأصول — هيئة تطوير المنطقة الشرقية",
+  "lang": "ar-SA",
+  "short_name": "EPDA Assets",
+  "description": "نظام إدارة الأصول والعهد الخاص بهيئة تطوير المنطقة الشرقية",
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#044E8B",
+  "background_color": "#FFFFFF",
+  "icons": [
+    {
+      "src": "/static/images/epda-symbol.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

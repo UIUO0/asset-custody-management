@@ -1,0 +1,396 @@
+import {
+  Button,
+  Html,
+  Head,
+  render,
+  Container,
+  Heading,
+} from "@react-email/components";
+import {
+  BOOKING_EMAIL_ASSETS_DISPLAY_LIMIT,
+  type ReservationEmailAsset,
+  type ReservationEmailModelRequest,
+} from "~/modules/booking/constants";
+import type { ClientHint } from "~/utils/client-hints";
+import { getDateTimeFormatFromHints } from "~/utils/client-hints";
+import { SERVER_URL } from "~/utils/env";
+import { resolveUserDisplayName } from "~/utils/user";
+import { CustomEmailFooter } from "./components/custom-footer";
+import {
+  AdminFooter,
+  NotificationReasonFooter,
+  UserFooter,
+} from "./components/footers";
+import { LogoForEmail } from "./logo";
+import { styles } from "./styles";
+import type { BookingForEmail } from "./types";
+
+interface Props {
+  heading: string;
+  booking: BookingForEmail;
+  assetCount: number;
+  hints: ClientHint;
+  hideViewButton?: boolean;
+  isAdminEmail?: boolean;
+  cancellationReason?: string;
+  changes?: string[];
+  /** Only provided for reservation emails */
+  assets?: ReservationEmailAsset[];
+  /**
+   * Outstanding model-level reservations (Phase 3d — Book-by-Model).
+   * Only provided for reservation emails. When absent or empty, the
+   * "Requested models" section is not rendered.
+   */
+  modelRequests?: ReservationEmailModelRequest[];
+  /**
+   * The reason why this recipient is receiving the notification
+   * (e.g., "custodian", "creator", "admin"). When provided, the email
+   * renders a `NotificationReasonFooter` instead of the legacy
+   * `UserFooter`/`AdminFooter`. Optional for backward compatibility
+   * with callers that haven't adopted the granular notification system.
+   */
+  recipientReason?: string;
+  /**
+   * The email address of the specific recipient. Displayed in the
+   * `NotificationReasonFooter` so the user knows which address
+   * received the email. Optional for backward compatibility — only
+   * meaningful when `recipientReason` is also provided.
+   */
+  recipientEmail?: string;
+}
+
+export function BookingUpdatesEmailTemplate({
+  booking,
+  heading,
+  hints,
+  assetCount,
+  hideViewButton = false,
+  isAdminEmail = false,
+  cancellationReason,
+  changes,
+  assets,
+  modelRequests,
+  recipientReason,
+  recipientEmail,
+}: Props) {
+  // Phase 3d (Book-by-Model): only surface outstanding model-level
+  // reservations. Fulfilled rows carry a `fulfilledAt` timestamp and
+  // represent historical fulfilment — they shouldn't appear in a
+  // reservation notification email.
+  const outstandingModelRequests = (modelRequests ?? []).filter(
+    (req) => req.fulfilledAt === null
+  );
+  const fromDate = getDateTimeFormatFromHints(hints, {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(booking.from as Date);
+  const toDate = getDateTimeFormatFromHints(hints, {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(booking.to as Date);
+  return (
+    <Html>
+      <Head>
+        <title>Bookings update from Shelf.nu</title>
+      </Head>
+
+      <Container
+        style={{
+          padding: "32px 16px",
+          textAlign: "center",
+          maxWidth: "600px",
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: "32px",
+          }}
+        >
+          <LogoForEmail />
+        </div>
+        <div style={{ margin: "32px" }}>
+          <Heading as="h1" style={{ ...styles.h1 }}>
+            {heading}
+          </Heading>
+          <Heading as="h2" style={{ ...styles.h2 }}>
+            {booking.name} | {assetCount}{" "}
+            {assetCount === 1 ? "asset" : "assets"}
+          </Heading>
+          <p style={{ ...styles.p }}>
+            <span style={{ color: "#101828", fontWeight: "600" }}>
+              Custodian:
+            </span>{" "}
+            {resolveUserDisplayName(booking.custodianUser) ||
+              booking.custodianTeamMember?.name}
+          </p>
+          <p style={{ ...styles.p }}>
+            <span style={{ color: "#101828", fontWeight: "600" }}>From:</span>{" "}
+            {fromDate}
+          </p>
+          <p style={{ ...styles.p }}>
+            <span style={{ color: "#101828", fontWeight: "600" }}>To:</span>{" "}
+            {toDate}
+          </p>
+        </div>
+
+        {assets && assets.length > 0 && (
+          <div
+            style={{
+              textAlign: "left",
+              margin: "24px 32px",
+              backgroundColor: "#F9FAFB",
+              borderRadius: "8px",
+              border: "1px solid #EAECF0",
+              padding: "16px 20px",
+            }}
+          >
+            <p
+              style={{
+                ...styles.p,
+                fontWeight: "600",
+                color: "#101828",
+                marginBottom: "12px",
+              }}
+            >
+              Booked items:
+            </p>
+            {assets
+              .slice(0, BOOKING_EMAIL_ASSETS_DISPLAY_LIMIT)
+              .map((bookingAsset) => (
+                <div
+                  key={bookingAsset.id}
+                  style={{
+                    padding: "6px 0",
+                    borderBottom: "1px solid #EAECF0",
+                  }}
+                >
+                  <span
+                    style={{
+                      ...styles.p,
+                      margin: "0",
+                      color: "#101828",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {bookingAsset.asset.title}
+                    {bookingAsset.quantity > 1 && ` × ${bookingAsset.quantity}`}
+                  </span>
+                  {bookingAsset.asset.category?.name && (
+                    <span
+                      style={{
+                        ...styles.p,
+                        margin: "0 0 0 8px",
+                        color: "#667085",
+                        fontSize: "13px",
+                      }}
+                    >
+                      · {bookingAsset.asset.category.name}
+                    </span>
+                  )}
+                </div>
+              ))}
+            {assets.length > BOOKING_EMAIL_ASSETS_DISPLAY_LIMIT && (
+              <p
+                style={{
+                  ...styles.p,
+                  color: "#667085",
+                  fontSize: "13px",
+                  marginTop: "8px",
+                }}
+              >
+                and {assets.length - BOOKING_EMAIL_ASSETS_DISPLAY_LIMIT} more —{" "}
+                <a
+                  href={`${SERVER_URL}/bookings/${booking.id}?orgId=${booking.organizationId}`}
+                  style={{ color: "#044E8B" }}
+                >
+                  View full booking
+                </a>
+              </p>
+            )}
+          </div>
+        )}
+
+        {/*
+         * Phase 3d (Book-by-Model): outstanding model-level reservations
+         * that have yet to be fulfilled by scanning a concrete asset.
+         * Rendered as a sibling block after "Booked items" using the
+         * shared list style so the two sections read as a pair.
+         */}
+        {outstandingModelRequests.length > 0 && (
+          <div
+            style={{
+              textAlign: "left",
+              margin: "24px 32px",
+              backgroundColor: "#F9FAFB",
+              borderRadius: "8px",
+              border: "1px solid #EAECF0",
+              padding: "16px 20px",
+            }}
+          >
+            <p
+              style={{
+                ...styles.p,
+                fontWeight: "600",
+                color: "#101828",
+                marginBottom: "12px",
+              }}
+            >
+              Requested models:
+            </p>
+            <ul style={{ margin: "0", paddingLeft: "20px" }}>
+              {outstandingModelRequests.map((req) => (
+                <li
+                  key={req.id}
+                  style={{
+                    ...styles.li,
+                    marginBottom: "4px",
+                  }}
+                >
+                  <span style={{ fontWeight: 500, color: "#101828" }}>
+                    {req.quantity - req.fulfilledQuantity} ×
+                  </span>{" "}
+                  {req.assetModel.name}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {cancellationReason && (
+          <div
+            style={{
+              margin: "0 0 24px",
+              padding: "16px",
+              borderBottom: "3px solid #F79009",
+              backgroundColor: "#FFFAEB",
+              textAlign: "left",
+              borderRadius: "4px",
+            }}
+          >
+            <p
+              style={{
+                ...styles.p,
+                margin: "0 0 4px",
+                fontWeight: "600",
+              }}
+            >
+              Cancellation reason
+            </p>
+            <p style={{ ...styles.p, margin: "0" }}>{cancellationReason}</p>
+          </div>
+        )}
+
+        {changes && changes.length > 0 && (
+          <div
+            style={{
+              textAlign: "left",
+              margin: "24px 0",
+              backgroundColor: "#F9FAFB",
+              borderRadius: "8px",
+              border: "1px solid #EAECF0",
+              padding: "16px 20px",
+            }}
+          >
+            <p
+              style={{
+                ...styles.p,
+                fontWeight: "600",
+                color: "#101828",
+                marginBottom: "8px",
+              }}
+            >
+              What changed:
+            </p>
+            <ul style={{ margin: "0", paddingLeft: "20px" }}>
+              {changes.map((change, i, arr) => {
+                // why: duplicate change strings would collide on `key={change}`,
+                // so disambiguate with an occurrence counter. Keeps the key
+                // content-derived (no array-index-as-key) while handling the
+                // rare case where the server reports the same change twice.
+                const occurrence = arr
+                  .slice(0, i)
+                  .filter((c) => c === change).length;
+                return (
+                  <li
+                    key={`${change}#${occurrence}`}
+                    style={{ ...styles.li, marginBottom: "4px" }}
+                  >
+                    {change}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {!hideViewButton && (
+          <Button
+            href={`${SERVER_URL}/bookings/${booking.id}?orgId=${booking.organizationId}`}
+            style={{
+              ...styles.button,
+              textAlign: "center",
+              marginBottom: "32px",
+            }}
+          >
+            View booking in app
+          </Button>
+        )}
+
+        <CustomEmailFooter
+          footerText={booking.organization.customEmailFooter}
+        />
+
+        {recipientReason && recipientEmail ? (
+          <NotificationReasonFooter
+            booking={booking}
+            recipientEmail={recipientEmail}
+            reason={recipientReason}
+          />
+        ) : isAdminEmail ? (
+          <AdminFooter booking={booking} />
+        ) : (
+          <UserFooter booking={booking} />
+        )}
+      </Container>
+    </Html>
+  );
+}
+
+/*
+ *The HTML content of an email will be accessed by a server file to send email,
+  we cannot import a TSX component in a server file so we are exporting TSX converted to HTML string using render function by react-email.
+ */
+export const bookingUpdatesTemplateString = ({
+  booking,
+  heading,
+  assetCount,
+  hints,
+  hideViewButton = false,
+  isAdminEmail = false,
+  cancellationReason,
+  changes,
+  assets,
+  modelRequests,
+  recipientReason,
+  recipientEmail,
+}: Props) =>
+  render(
+    <BookingUpdatesEmailTemplate
+      booking={booking}
+      heading={heading}
+      assetCount={assetCount}
+      hints={hints}
+      hideViewButton={hideViewButton}
+      isAdminEmail={isAdminEmail}
+      cancellationReason={cancellationReason}
+      changes={changes}
+      assets={assets}
+      modelRequests={modelRequests}
+      recipientReason={recipientReason}
+      recipientEmail={recipientEmail}
+    />
+  );

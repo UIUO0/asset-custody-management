@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment (secrets — never commit)
+.env
+.env.*
+!.env.example
+.env.local
+.env.*.local
+
+# Build output
+build/
+dist/
+.cache/
+.turbo/
+public/build/
+apps/webapp/build/
+apps/webapp/.cache/
+apps/docs/.vitepress/dist/
+apps/docs/.vitepress/cache/
+
+# Prisma generated client
+node_modules/.prisma/
+packages/database/src/generated/
+
+# Expo / React Native
+.expo/
+apps/companion/ios/build/
+apps/companion/android/build/
+apps/companion/android/.gradle/
+*.jsbundle
+
+# Testing & coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+.vscode/*
+!.vscode/extensions.json
+
+# Misc
+*.tsbuildinfo
+.fly/

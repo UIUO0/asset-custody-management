@@ -1,0 +1,397 @@
+import { data, type Params } from "react-router";
+import { parseFormAny } from "react-zorm";
+import type { ZodType } from "zod";
+import { sendNotification } from "./emitter/send-notification.server";
+import { SERVER_URL, URL_SHORTENER } from "./env";
+import type { Options } from "./error";
+import {
+  ShelfError,
+  makeShelfError,
+  badRequest,
+  notAllowedMethod,
+} from "./error";
+import type { ValidationError } from "./http";
+import { Logger } from "./logger";
+
+export function getCurrentPath(request: Request) {
+  return new URL(request.url).pathname;
+}
+
+export function getCurrentSearchParams(request: Request) {
+  return new URL(request.url).searchParams;
+}
+
+export function makeRedirectToFromHere(request: Request) {
+  return new URLSearchParams([["redirectTo", getCurrentPath(request)]]);
+}
+
+export function getRedirectTo(request: Request, defaultRedirectTo = "/") {
+  const url = new URL(request.url);
+  return safeRedirect(url.searchParams.get("redirectTo"), defaultRedirectTo);
+}
+
+/**
+ * Get the pathname and search params from the Referer header.
+ *
+ * This is useful for redirecting users back to the page they came from
+ * after completing an action (e.g., editing an entity), while preserving
+ * their search/filter context.
+ *
+ * @param request - The request object
+ * @returns The pathname + search from the referer header, or null if not available or invalid
+ *
+ * @example
+ * // User navigates from /assets?search=laptop&status=AVAILABLE to /assets/123/edit
+ * const refererPath = getRefererPath(request);
+ * // returns "/assets?search=laptop&status=AVAILABLE"
+ *
+ * redirect(safeRedirect(refererPath, `/assets/${id}`));
+ */
+export function getRefererPath(request: Request): string | null {
+  const referer = request.headers.get("referer");
+  if (!referer) {
+    return null;
+  }
+
+  try {
+    const url = new URL(referer);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    // Invalid URL in referer header
+    return null;
+  }
+}
+
+export function isGet(request: Request) {
+  return request.method.toLowerCase() === "get";
+}
+
+export function isPost(request: Request) {
+  return request.method.toLowerCase() === "post";
+}
+
+export function isDelete(request: Request) {
+  return request.method.toLowerCase() === "delete";
+}
+
+type HTTPMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+export function getActionMethod(request: Request) {
+  return request.method.toUpperCase() as Exclude<HTTPMethod, "GET">;
+}
+
+/**
+ * Reads form data from a Remix request and converts undici's
+ * `TypeError: Content-Type was not one of "multipart/form-data" or
+ * "application/x-www-form-urlencoded".` into a non-captured `badRequest`.
+ *
+ * Only `TypeError` (the malformed-body case) is downgraded to a 400 — any
+ * other exception is rethrown so genuine server/runtime faults stay visible
+ * to Sentry instead of being masked as client errors.
+ *
+ * Use this in actions that may receive malformed bodies (auth endpoints
+ * and other public routes that external/mobile clients could hit).
+ *
+ * @param request - The Remix request whose body will be read as form data.
+ *   Pass `request.clone()` if the body needs to be read more than once.
+ * @returns The parsed FormData.
+ * @throws A non-captured `badRequest` if the body is not form-encoded.
+ */
+export async function readFormData(request: Request): Promise<FormData> {
+  try {
+    return await request.formData();
+  } catch (cause) {
+    if (cause instanceof TypeError) {
+      throw new ShelfError({
+        cause,
+        message: "Invalid request body. Expected a form submission.",
+        label: "Request validation",
+        shouldBeCaptured: false,
+        status: 400,
+      });
+    }
+    throw cause;
+  }
+}
+
+/**
+ * Validate data with a zod schema.
+ *
+ * @throws A `badRequest` error if the form data is invalid.
+ *
+ * **By default, the error will be captured.**
+ *
+ * If you don't want to capture the error, you can set the `shouldBeCaptured` option to `false`.
+ */
+export function parseData<Schema extends ZodType<any, any, any>>(
+  data: FormData | URLSearchParams | Params,
+  schema: Schema,
+  options?: Options
+) {
+  if (data instanceof FormData) {
+    try {
+      data = parseFormAny(data);
+    } catch (cause) {
+      throw new ShelfError({
+        cause,
+        message: "Invalid form data",
+        label: "Request validation",
+        shouldBeCaptured: false,
+        status: 400,
+      });
+    }
+  }
+
+  if (data instanceof URLSearchParams) {
+    data = Object.fromEntries(data);
+  }
+
+  const submission = schema.safeParse(data);
+
+  if (!submission.success) {
+    const validationErrors = {} as ValidationError<Schema>;
+
+    Object.entries(submission.error.formErrors.fieldErrors).forEach(
+      ([key, values]) => {
+        validationErrors[key as keyof Schema["_output"]] = {
+          message: values?.[0],
+        };
+      }
+    );
+
+    // Use the first validation error message as the main error message for better UX
+    const firstValidationError = Object.values(validationErrors)[0]?.message;
+    const errorMessage =
+      options?.message ||
+      firstValidationError ||
+      "The request is invalid. Please try again. If the issue persists, contact support.";
+
+    throw badRequest(errorMessage, {
+      shouldBeCaptured: true,
+      title: "Validation error",
+      ...options,
+      additionalData: {
+        ...options?.additionalData,
+        data,
+        validationErrors,
+      },
+    });
+  }
+
+  return submission.data as Schema["_output"];
+}
+
+/**
+ * Get and validate request params with a zod schema.
+ *
+ * **Use this function outside of loader/action try/catch blocks.**
+ *
+ * @throws A `json` response with a 400 status code if the params are invalid.
+ *
+ * **By default, the error will be captured.**
+ *
+ * If you don't want to capture the error, you can set the `shouldBeCaptured` option to `false`.
+ *
+ */
+export function getParams<Schema extends ZodType<any, any, any>>(
+  params: Params<string>,
+  schema: Schema,
+  options?: Options
+) {
+  try {
+    return parseData(params, schema, {
+      shouldBeCaptured: true,
+      ...options,
+      additionalData: {
+        ...options?.additionalData,
+      },
+    });
+  } catch (cause) {
+    const reason = cause instanceof ShelfError ? cause : makeShelfError(cause);
+    throw data(error(reason), { status: 400 });
+  }
+}
+
+export function assertIsPost(request: Request, message?: string) {
+  if (!isPost(request)) {
+    throw notAllowedMethod("POST", { message });
+  }
+}
+
+export function assertIsDelete(request: Request, message?: string) {
+  if (!isDelete(request)) {
+    throw notAllowedMethod("DELETE", { message });
+  }
+}
+
+/**
+ * This should be used any time the redirect path is user-provided
+ * (Like the query string on our login/signup pages). This avoids
+ * open-redirect vulnerabilities.
+ * @param to The redirect destination
+ * @param defaultRedirect The redirect to use if the to is unsafe.
+ */
+export function safeRedirect(
+  to: FormDataEntryValue | string | null | undefined,
+  defaultRedirect = "/"
+) {
+  if (!to || typeof to !== "string") {
+    return defaultRedirect;
+  }
+
+  // Block internal Remix routes (manifest, etc.) created by lazy route discovery.
+  if (to.startsWith("/__")) {
+    return defaultRedirect;
+  }
+
+  // Absolute URL? Validate the allow-list by ORIGIN, never by prefix.
+  // `SERVER_URL` has its trailing slash stripped, so a prefix check matches any
+  // host that merely begins with it — e.g. "https://app.shelf.nu.evil.com" or
+  // the "https://app.shelf.nu@evil.com" userinfo trick — which resolve
+  // off-origin. `new URL(to)` throws for relative inputs, which fall through.
+  try {
+    const absolute = new URL(to);
+    const allowed = new Set([new URL(SERVER_URL).origin]);
+    if (URL_SHORTENER) {
+      allowed.add(new URL(`https://${URL_SHORTENER}`).origin);
+    }
+    return allowed.has(absolute.origin) ? to : defaultRedirect;
+  } catch {
+    // Not an absolute URL — fall through to local-path handling.
+  }
+
+  if (!to.startsWith("/")) {
+    return defaultRedirect;
+  }
+
+  // Final defense: resolve the local path against our own origin and confirm it
+  // stays same-origin. A prefix check (e.g. `startsWith("//")`) misses "//host",
+  // "/\host" and "/\\host": browsers treat "\" like "/" in http(s) URLs, and a
+  // "\" reaches here decoded from "%5C" via route params — all resolve off-origin.
+  try {
+    if (new URL(to, SERVER_URL).origin !== new URL(SERVER_URL).origin) {
+      return defaultRedirect;
+    }
+  } catch {
+    return defaultRedirect;
+  }
+
+  return to;
+}
+
+export type ResponsePayload = Record<string, unknown> | null;
+
+/**
+ * Create a data response payload.
+ *
+ * Normalize the data to return to help type inference.
+ *
+ * @param data - The data to return
+ * @returns The normalized data with `error` key set to `null`
+ */
+export function payload<T extends ResponsePayload>(data: T) {
+  return { error: null, ...data };
+}
+
+export type DataResponse<T extends ResponsePayload = ResponsePayload> =
+  ReturnType<typeof payload<T>>;
+
+/**
+ * Log a caught server error for observability WITHOUT building a response.
+ *
+ * The logging half of {@link error}, for resource/API routes that catch a
+ * `ShelfError` and return their own JSON shape (so they can't use `error()`,
+ * which also fires a user notification and returns a richer payload). Mirrors
+ * `error()`'s logging exactly: 5xx (and uncaught) reach Sentry via
+ * `Logger.error`; handled 4xx land on the low-severity log trail via
+ * `Logger.handledClientError` (and are dropped from the Sentry error pipeline
+ * by `handleBeforeSendError`); client disconnects (status 499, "Request
+ * aborted") are intentionally skipped from both.
+ *
+ * @param cause - The normalized `ShelfError` to log
+ */
+export function logException(cause: ShelfError) {
+  if (cause.label === "Request aborted") {
+    return;
+  }
+  Logger.error(cause);
+  Logger.handledClientError(cause);
+}
+
+/**
+ * Create an error response payload.
+ *
+ * Normalize the error to return to help type inference.
+ *
+ * @param cause - The error that has been catch
+ * @returns The normalized error with `error` key set to the error
+ */
+export function error(cause: ShelfError, shouldSendNotification = true) {
+  // Single source of truth for "how we log a caught ShelfError": 5xx (and
+  // uncaught) reach Sentry via Logger.error; handled 4xx land on the
+  // low-severity log trail via Logger.handledClientError (dropped from the
+  // Sentry error pipeline by handleBeforeSendError); client disconnects
+  // (status 499 "Request aborted") are skipped from both. error() layers the
+  // notification + richer response payload on top of this.
+  logException(cause);
+
+  if (
+    cause.label !== "Request aborted" &&
+    cause.additionalData?.userId &&
+    typeof cause.additionalData?.userId === "string" &&
+    shouldSendNotification
+  ) {
+    sendNotification({
+      title: cause.title || "Oops! Something went wrong",
+      message: cause.message,
+      icon: { name: "x", variant: "error" },
+      senderId: cause.additionalData.userId,
+    });
+  }
+
+  return {
+    error: {
+      message: cause.message,
+      label: cause.label,
+      ...(cause.title && { title: cause.title }),
+      ...(cause.additionalData && {
+        additionalData: cause.additionalData,
+      }),
+      ...(cause.traceId && { traceId: cause.traceId }),
+    },
+  };
+}
+
+export type ErrorResponse = ReturnType<typeof error>;
+
+export type DataOrErrorResponse<T extends ResponsePayload = ResponsePayload> =
+  | ErrorResponse
+  | DataResponse<T>;
+
+/**
+ * Builds a Content-Disposition header value safe for non-ASCII filenames.
+ * Uses RFC 5987 filename* parameter for Unicode support, with an
+ * ASCII-only filename as fallback for older clients.
+ */
+export function buildContentDisposition(
+  name: string | null | undefined,
+  opts: { fallback: string; suffix?: string }
+): string {
+  const { fallback, suffix = "" } = opts;
+  const source = name && name.trim().length > 0 ? name : fallback;
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "").slice(0, 15);
+  const fullName = `${source}${suffix}-${timestamp}.csv`;
+
+  // ASCII-safe version: strip non-ASCII, replace unsafe chars
+  const asciiName =
+    fullName
+      .replace(/[^\x20-\x7E]/g, "_")
+      .replace(/[\\/:*?"<>|]/g, "-")
+      .replace(/\s+/g, " ")
+      .trim() || `${fallback}${suffix}-${timestamp}.csv`;
+
+  // RFC 5987 encoded version for modern browsers
+  const encodedName = encodeURIComponent(fullName);
+
+  return `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`;
+}

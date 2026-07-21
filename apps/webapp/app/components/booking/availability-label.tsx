@@ -1,0 +1,471 @@
+import type { ReactNode } from "react";
+import type { Booking } from "@prisma/client";
+import { BookingStatus, KitStatus } from "@prisma/client";
+import { Link, useLoaderData } from "react-router";
+import { isQuantityTracked } from "~/modules/asset/utils";
+import { hasAssetBookingConflicts } from "~/modules/booking/helpers";
+import { hasCustody } from "~/modules/custody/utils";
+import type { AssetWithBooking } from "~/routes/_layout+/bookings.$bookingId.overview.manage-assets";
+import type { KitForBooking } from "~/routes/_layout+/bookings.$bookingId.overview.manage-kits";
+import { SERVER_URL } from "~/utils/env";
+import { tw } from "~/utils/tw";
+import { Button } from "../shared/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../shared/tooltip";
+
+/**
+ * There are 4 reasons an asset can be unavailable:
+ * 1. Its marked as not allowed for booking
+ * 2. It is already in custody
+ * 3. It is already booked for that period (within another booking)
+ * 4. It is part of a kit and user is trying to add it individually
+ * Each reason has its own tooltip and label
+ */
+export function AvailabilityLabel({
+  asset,
+  isCheckedOut,
+  showKitStatus,
+  isAddedThroughKit,
+  isAlreadyAdded,
+}: {
+  asset: AssetWithBooking;
+  isCheckedOut: boolean;
+  showKitStatus?: boolean;
+  isAddedThroughKit?: boolean;
+  isAlreadyAdded?: boolean;
+}) {
+  const { booking } = useLoaderData<{ booking: Booking }>();
+  const isPartOfKit = (asset.assetKits ?? []).length > 0;
+
+  /** User scanned the asset and it is already in booking */
+  if (isAlreadyAdded) {
+    return (
+      <AvailabilityBadge
+        badgeText="Already added to this booking"
+        tooltipTitle="Asset is part of booking"
+        tooltipContent="This asset is already added to the current booking."
+      />
+    );
+  }
+
+  /**
+   * Marked as not allowed for booking
+   */
+
+  if (!asset.availableToBook) {
+    return (
+      <AvailabilityBadge
+        badgeText={"Unavailable"}
+        tooltipTitle={"Asset is unavailable for bookings"}
+        tooltipContent={
+          "This asset is marked as unavailable for bookings by an administrator."
+        }
+      />
+    );
+  }
+
+  /**
+   * Asset is part of a kit
+   */
+  if (isPartOfKit && showKitStatus) {
+    return (
+      <AvailabilityBadge
+        badgeText="Part of kit"
+        tooltipTitle="Asset is part of a kit"
+        tooltipContent="Remove the asset from the kit to add it individually."
+      />
+    );
+  }
+
+  /**
+   * Has custody — skip for QUANTITY_TRACKED assets since they can have
+   * partial custody while still having available units for booking.
+   * The status badge and quantity picker already communicate availability.
+   */
+  if (
+    hasCustody(asset.custody as Record<string, unknown>[] | null | undefined) &&
+    !isQuantityTracked(asset)
+  ) {
+    return (
+      <AvailabilityBadge
+        badgeText={"In custody"}
+        tooltipTitle={"Asset is in custody"}
+        tooltipContent={
+          "This asset is in custody of a team member making it currently unavailable for bookings."
+        }
+      />
+    );
+  }
+
+  /**
+   * Is booked for period - using client-side helper function
+   */
+  if (
+    hasAssetBookingConflicts(asset, booking.id) &&
+    !["ONGOING", "OVERDUE"].includes(booking.status)
+  ) {
+    const conflictingBooking = asset?.bookingAssets
+      ?.map((ba) => ba.booking)
+      .filter(
+        (b) =>
+          b.id !== booking.id &&
+          (b.status === BookingStatus.ONGOING ||
+            b.status === BookingStatus.OVERDUE ||
+            b.status === BookingStatus.RESERVED)
+      )
+      .sort((a, b) => {
+        // Sort by 'from' date descending to get the newest booking first
+        const aDate = a.from ? new Date(a.from).getTime() : 0;
+        const bDate = b.from ? new Date(b.from).getTime() : 0;
+        return bDate - aDate;
+      })[0];
+    return (
+      <AvailabilityBadge
+        badgeText={"Already booked"}
+        tooltipTitle={"Asset is already part of a booking"}
+        tooltipContent={
+          conflictingBooking ? (
+            <span>
+              This asset is added to a booking (
+              <Button
+                to={`/bookings/${conflictingBooking.id}`}
+                target="_blank"
+                variant={"inherit"}
+                className={"!underline"}
+              >
+                {conflictingBooking?.name}
+              </Button>
+              ) that is overlapping the selected time period.
+            </span>
+          ) : (
+            "This asset is added to a booking that is overlapping the selected time period."
+          )
+        }
+      />
+    );
+  }
+
+  /**
+   * Is currently checked out.
+   *
+   * QUANTITY_TRACKED assets are exempted here as defense-in-depth:
+   * `list-asset-content.tsx` already passes `isCheckedOut={false}` for QT
+   * rows (because a QT asset can be "checked out" on this booking while
+   * still having free units elsewhere). But `AvailabilityLabel` is also
+   * mounted from other surfaces (asset pickers, drawers) where the
+   * upstream `isCheckedOut` value may still leak in for a QT asset.
+   * Belt-and-suspenders: skip the "Checked out" badge for QT regardless
+   * of caller — the dedicated `InsufficientStockBadge` + status badge
+   * already communicate the relevant state.
+   */
+  if (isCheckedOut && !isQuantityTracked(asset)) {
+    /** We get the current active booking that the asset is checked out to so we can use its name in the tooltip contnet
+     * NOTE: This will currently not work as we are returning only overlapping bookings with the query. I leave to code and we can solve it by modifying the DB queries: https://github.com/Shelf-nu/shelf.nu/pull/555#issuecomment-1877050925
+     */
+    const conflictingBooking = asset?.bookingAssets
+      ?.map((ba) => ba.booking)
+      .filter(
+        (b) =>
+          b.id !== booking.id &&
+          (b.status === BookingStatus.ONGOING ||
+            b.status === BookingStatus.OVERDUE)
+      )
+      .sort((a, b) => {
+        // Sort by 'from' date descending to get the newest booking first
+        const aDate = a.from ? new Date(a.from).getTime() : 0;
+        const bDate = b.from ? new Date(b.from).getTime() : 0;
+        return bDate - aDate;
+      })[0];
+
+    return (
+      <AvailabilityBadge
+        badgeText={"Checked out"}
+        tooltipTitle={"Asset is currently checked out"}
+        tooltipContent={
+          conflictingBooking ? (
+            <span>
+              This asset is currently checked out as part of another booking (
+              <Link
+                to={`${SERVER_URL}/bookings/
+                ${conflictingBooking.id}`}
+                target="_blank"
+              >
+                {conflictingBooking?.name}
+              </Link>
+              ) and should be available for your selected date range period
+            </span>
+          ) : (
+            "This asset is currently checked out as part of another booking and should be available for your selected date range period"
+          )
+        }
+      />
+    );
+  }
+
+  /**
+   * User is viewing all assets and the assets is added in a booking through kit
+   */
+  if (isAddedThroughKit) {
+    return (
+      <AvailabilityBadge
+        badgeText="Added through kit"
+        tooltipTitle="Asset was added through a kit"
+        tooltipContent="Remove the asset from the kit to add it individually."
+      />
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Visual variant for the shared `AvailabilityBadge` shell.
+ *
+ *  - `"warning"` (default) — the legacy amber treatment used by every
+ *    pre-existing badge (Unavailable, In custody, Already booked, …).
+ *  - `"error"` — red-tinted (BADGE_COLORS.red palette) for hard
+ *    blockers like the new `InsufficientStockBadge`, where the booking
+ *    cannot proceed at the booked quantity. Same shell + tooltip
+ *    layout, only the color stops differ.
+ */
+export type AvailabilityBadgeVariant = "warning" | "error";
+
+export function AvailabilityBadge({
+  badgeText,
+  tooltipTitle,
+  tooltipContent,
+  className,
+  variant = "warning",
+}: {
+  badgeText: string;
+  tooltipTitle: string;
+  tooltipContent: string | ReactNode;
+  className?: string;
+  /**
+   * Color treatment for the badge shell. Defaults to `"warning"` (amber)
+   * for backwards compatibility with the existing call sites.
+   */
+  variant?: AvailabilityBadgeVariant;
+}) {
+  // Variant → palette classes. Kept inline (rather than via `BADGE_COLORS`
+  // style props) so it composes with the rest of the shell's Tailwind
+  // utilities and so existing call sites that pass a custom `className`
+  // keep working. The hex values in `BADGE_COLORS.red` (#FFEBEE / #C62828)
+  // are sourced via the Tailwind `red-50` / `red-700` tokens, which match
+  // closely enough for this surface and keep us off hardcoded hex.
+  const variantClasses =
+    variant === "error"
+      ? "bg-red-50 border-red-200 text-red-700"
+      : "bg-warning-50 border-warning-200 text-warning-700";
+
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            className={tw(
+              "inline-block px-[6px] py-[2px]",
+              "rounded-md border",
+              "text-xs",
+              "availability-badge",
+              variantClasses,
+              className
+            )}
+          >
+            {badgeText}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" align="end">
+          <div className="max-w-[260px] text-start sm:max-w-[320px]">
+            <h6 className="mb-1 text-xs font-semibold text-gray-700">
+              {tooltipTitle}
+            </h6>
+            <div className="whitespace-normal text-xs font-medium text-gray-500">
+              {tooltipContent}
+            </div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/**
+ * "Insufficient stock" badge for QT booking rows where the booked
+ * quantity on this booking exceeds the units available across the
+ * workspace pool (after subtracting operator custody, other-booking
+ * reservations, and active checkouts elsewhere).
+ *
+ * Red-tinted (`variant="error"`) because — unlike the amber availability
+ * warnings — this is a hard blocker: the booking cannot be checked out
+ * at the booked quantity until the operator either reduces it or frees
+ * units elsewhere in the workspace.
+ *
+ * NEVER renders for INDIVIDUAL assets — they have their own
+ * "Already booked" / "Checked out" paths via `AvailabilityLabel`. Callers
+ * must gate on `isQuantityTracked` before mounting this component.
+ *
+ * @param bookedQuantity - units this booking reserves of the asset
+ * @param availableUnits - units free across the workspace right now
+ */
+export function InsufficientStockBadge({
+  bookedQuantity,
+  availableUnits,
+}: {
+  bookedQuantity: number;
+  availableUnits: number;
+}) {
+  return (
+    <AvailabilityBadge
+      variant="error"
+      badgeText="Insufficient stock"
+      tooltipTitle="Not enough units available"
+      tooltipContent={`This booking reserves ${bookedQuantity} units, but only ${availableUnits} are available across the workspace (after subtracting custody, other reservations, and active checkouts). Reduce the booked quantity or free up units before checking out.`}
+    />
+  );
+}
+
+/**
+ * A kit is not available for the following reasons
+ * 1. Kit has unavailable status
+ * 2. Kit or some asset is in custody
+ * 3. Some of the assets are in custody
+ * 4. Some of the assets are already booked for that period (for that booking)
+ * 5. If kit has no assets
+ */
+export function getKitAvailabilityStatus(
+  kit: KitForBooking,
+  currentBookingId: string
+) {
+  // Phase 3a renamed the implicit M2M `Asset.bookings` to the explicit
+  // `BookingAsset` pivot, so we walk `bookingAssets` and pluck the
+  // related booking from each pivot row. Main's `asset.bookings`
+  // shape no longer exists in this branch's schema.
+  const kitAssets = kit.assetKits.map((ak) => ak.asset);
+  const bookings = kitAssets.flatMap(
+    (asset) => asset?.bookingAssets.map((ba) => ba.booking) ?? []
+  );
+
+  /** Checks whether this is checked out in another not overlapping booking */
+  const isCheckedOutInANonConflictingBooking =
+    kit.status === KitStatus.CHECKED_OUT && bookings.length === 0;
+  const isCheckedOut = kit.status === KitStatus.CHECKED_OUT;
+  // For QUANTITY_TRACKED assets, `Custody` rows reflect partial
+  // operator allocations on a single pooled asset — they should not
+  // flag the whole kit as in-custody just because Pleb is holding 4
+  // of 80 Pens. Only INDIVIDUAL custody rows escalate to the kit
+  // level. Mirrors the qty-aware exemptions in the kit
+  // ActionsDropdown + manage-assets picker fixed in 4a-Polish.
+  const isInCustody =
+    kit.status === "IN_CUSTODY" ||
+    kitAssets.some((a) => !isQuantityTracked(a) && hasCustody(a.custody));
+
+  const isKitWithoutAssets = kitAssets.length === 0;
+
+  const someAssetMarkedUnavailable = kitAssets.some((a) => !a.availableToBook);
+
+  // Apply same booking conflict logic as isCheckedOut
+  const someAssetHasUnavailableBooking = kitAssets.some((asset) =>
+    hasAssetBookingConflicts(asset, currentBookingId)
+  );
+
+  return {
+    isCheckedOut,
+    isCheckedOutInANonConflictingBooking,
+    isInCustody,
+    isKitWithoutAssets,
+    someAssetMarkedUnavailable,
+    someAssetHasUnavailableBooking,
+    isKitUnavailable: [isInCustody, isKitWithoutAssets].some(Boolean),
+  };
+}
+
+export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
+  const { booking } = useLoaderData<{ booking: Booking }>();
+
+  const {
+    isCheckedOut,
+    isCheckedOutInANonConflictingBooking,
+    someAssetMarkedUnavailable,
+    isInCustody,
+    isKitWithoutAssets,
+    someAssetHasUnavailableBooking,
+  } = getKitAvailabilityStatus(kit, booking.id);
+
+  // Check if kit is checked out in current booking - don't show availability label
+  const isCheckedOutInCurrentBooking =
+    isCheckedOut &&
+    kit.assetKits.some((ak) =>
+      ak.asset.bookingAssets.some(
+        (ba) =>
+          ba.booking.id === booking.id &&
+          ["ONGOING", "OVERDUE"].includes(ba.booking.status)
+      )
+    );
+
+  // Case 1: Kit is checked out in current booking - don't show availability label
+  // The KitStatusBadge with CHECKED_OUT should be shown instead in the Row component
+  if (isCheckedOutInCurrentBooking) {
+    return null;
+  }
+
+  if (isInCustody) {
+    return (
+      <AvailabilityBadge
+        badgeText="In custody"
+        tooltipTitle="Kit is in custody"
+        tooltipContent="This kit is in custody or it contains some assets that are in custody."
+      />
+    );
+  }
+
+  if (isCheckedOut) {
+    return (
+      <AvailabilityBadge
+        badgeText="Checked out"
+        tooltipTitle="Kit is checked out"
+        tooltipContent={
+          isCheckedOutInANonConflictingBooking
+            ? "This kit is currently checked out as part of another booking and should be available for your selected date range period"
+            : "This kit is currently checked out and is not available for your selected date range period"
+        }
+      />
+    );
+  }
+
+  if (isKitWithoutAssets) {
+    return (
+      <AvailabilityBadge
+        badgeText="No assets"
+        tooltipTitle="No assets in kit"
+        tooltipContent="There are no assets added to this kit yet."
+      />
+    );
+  }
+
+  if (someAssetMarkedUnavailable) {
+    return (
+      <AvailabilityBadge
+        badgeText="Contains non-bookable assets"
+        tooltipTitle="Kit is unavailable for check-out"
+        tooltipContent="Some assets in this kit are marked as non-bookable. You can still add the kit to your booking, but you must remove the non-bookable assets to proceed with check-out."
+      />
+    );
+  }
+
+  if (someAssetHasUnavailableBooking) {
+    return (
+      <AvailabilityBadge
+        badgeText="Already booked"
+        tooltipTitle="Kit is already part of a booking"
+        tooltipContent="This kit is already added to another booking."
+      />
+    );
+  }
+
+  return null;
+}
