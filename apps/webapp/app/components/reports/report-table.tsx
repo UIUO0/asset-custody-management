@@ -115,7 +115,7 @@ export function ReportTable<TData>({
 
   // Handle sorting change - either local or trigger server-side via callback
   const handleSortingChange = (
-    updater: SortingState | ((old: SortingState) => SortingState)
+    updater: SortingState | ((old: SortingState) => SortingState),
   ) => {
     const newSorting =
       typeof updater === "function" ? updater(sorting) : updater;
@@ -164,7 +164,7 @@ export function ReportTable<TData>({
                       className={tw(
                         "p-4 text-start text-sm font-normal text-gray-600 md:px-6",
                         canSort &&
-                          "cursor-pointer select-none hover:text-gray-900"
+                          "cursor-pointer select-none hover:text-gray-900",
                       )}
                       onClick={header.column.getToggleSortingHandler()}
                       style={{ width: header.getSize() }}
@@ -174,7 +174,7 @@ export function ReportTable<TData>({
                           ? null
                           : flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                         {canSort && <SortIcon direction={sorted} />}
                       </div>
@@ -193,7 +193,7 @@ export function ReportTable<TData>({
                 key={row.id}
                 className={tw(
                   "transition-colors",
-                  onRowClick && "cursor-pointer hover:bg-gray-50"
+                  onRowClick && "cursor-pointer hover:bg-gray-50",
                 )}
                 onClick={() => onRowClick?.(row.original)}
               >
@@ -282,8 +282,8 @@ export function StatusCell({
     <span
       className={tw(
         "inline-flex items-center rounded-2xl py-[2px] text-xs font-medium",
-        withDot ? "gap-1 ps-[6px] pe-2" : "px-2",
-        variantClasses[variant]
+        withDot ? "gap-1 pe-2 ps-[6px]" : "px-2",
+        variantClasses[variant],
       )}
     >
       {withDot && (

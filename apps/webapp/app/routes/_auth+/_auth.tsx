@@ -1,10 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link, useMatches, Outlet } from "react-router";
 import { ErrorContent } from "~/components/errors";
-import {
-  LanguageSwitcher,
-  ThemeSwitcher,
-} from "~/components/layout/appearance-switcher";
+import { LanguageSwitcher } from "~/components/layout/appearance-switcher";
 import { ShelfSymbolLogo } from "~/components/marketing/logos";
 import SubHeading from "~/components/shared/sub-heading";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -26,12 +23,10 @@ export default function App() {
   return (
     <main className="flex h-screen">
       <div className="relative flex size-full flex-col items-center justify-center p-6 lg:p-10">
-        {/* Language/theme are reachable before sign-in: staff must be able to
-            switch to Arabic or dark mode without an account. `start-0` is a
-            logical property, so it pins to the correct side per direction. */}
+        {/* Language is reachable before sign-in: staff must be able to
+            switch to Arabic/English without an account. */}
         <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-4">
           <LanguageSwitcher />
-          <ThemeSwitcher />
         </div>
 
         <div className=" mb-8 text-center">

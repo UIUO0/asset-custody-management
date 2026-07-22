@@ -1,4 +1,5 @@
 import { TagUseFor } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 import { useDisabled } from "~/hooks/use-disabled";
 import {
@@ -10,6 +11,7 @@ import {
 } from "../forms/select";
 
 export default function TagUseForFilter() {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -36,10 +38,10 @@ export default function TagUseForFilter() {
       disabled={disabled}
     >
       <SelectTrigger
-        aria-label="Filter by usage"
+        aria-label={t("tags.filterByUsage")}
         className="mt-2 px-3.5 py-2 text-start text-base text-gray-500 md:mt-0 md:max-w-fit"
       >
-        <SelectValue placeholder="Filter by status" />
+        <SelectValue placeholder={t("tags.filterByUsage")} />
       </SelectTrigger>
       <SelectContent
         position="popper"
@@ -53,8 +55,10 @@ export default function TagUseForFilter() {
               key={value}
               className="rounded-none border-b border-gray-200 px-6 py-4 pe-[5px]"
             >
-              <span className="me-4 block text-[14px] lowercase text-gray-700 first-letter:uppercase">
-                {value}
+              {/* why: enum values are translated via the `status`
+                  namespace; the raw enum is the fallback. */}
+              <span className="me-4 block text-[14px] text-gray-700">
+                {t(`status.${value}`, value)}
               </span>
             </SelectItem>
           ))}

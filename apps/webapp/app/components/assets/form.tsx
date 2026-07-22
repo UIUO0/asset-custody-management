@@ -8,6 +8,7 @@ import {
   PopoverContent,
 } from "@radix-ui/react-popover";
 import { useAtom, useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import {
   useActionData,
   useLoaderData,
@@ -129,7 +130,7 @@ export const NewAssetFormSchema = z.object({
         .number({ invalid_type_error: "Quantity must be a number" })
         .int("Quantity must be a whole number")
         .positive("Quantity is required and must be at least 1")
-        .optional()
+        .optional(),
     ),
   minQuantity: z
     .string()
@@ -140,7 +141,7 @@ export const NewAssetFormSchema = z.object({
         .number({ invalid_type_error: "Min quantity must be a number" })
         .int("Min quantity must be a whole number")
         .positive("Min quantity must be at least 1")
-        .nullable()
+        .nullable(),
     ),
   consumptionType: z
     .nativeEnum(ConsumptionType, {
@@ -152,7 +153,7 @@ export const NewAssetFormSchema = z.object({
     .optional()
     .refine(
       (v) => !v || !/{%|%}/.test(v),
-      "Unit of measure may not contain Markdoc syntax (`{%` / `%}`)"
+      "Unit of measure may not contain Markdoc syntax (`{%` / `%}`)",
     ),
 });
 
@@ -181,14 +182,14 @@ export const NewAssetBulkFormSchema = NewAssetFormSchema.extend({
   count: z
     .string()
     .transform((val) =>
-      val === "" || val === undefined ? Number.NaN : Number(val)
+      val === "" || val === undefined ? Number.NaN : Number(val),
     )
     .pipe(
       z
         .number({ invalid_type_error: "Count must be a number" })
         .int("Count must be a whole number")
         .min(2, "Count must be at least 2")
-        .max(100, "Count must be at most 100")
+        .max(100, "Count must be at most 100"),
     ),
 });
 
@@ -267,6 +268,7 @@ export const AssetForm = ({
   referer,
   bulkMode = false,
 }: Props) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const { canUseBarcodes } = useBarcodePermissions();
   // Workspace's current code-display preference — used by PreferredBarcodeSelector
@@ -294,7 +296,7 @@ export const AssetForm = ({
         required: cf.required,
         type: cf.type.toLowerCase() as "text" | "number" | "date" | "boolean",
         options: cf.options,
-      }
+      },
   ) as CustomFieldZodSchema[];
 
   // Bulk mode tightens a few fields (assetModelId, nameTemplate,
@@ -311,7 +313,7 @@ export const AssetForm = ({
           : NewAssetFormSchema) as typeof NewAssetFormSchema,
         customFields,
       }),
-    [bulkMode, customFields]
+    [bulkMode, customFields],
   );
 
   const zo = useZorm("NewAssetFormScreen", FormSchema);
@@ -359,7 +361,7 @@ export const AssetForm = ({
 
   /** Server-side validation errors as fallback when client-side validation fails */
   const validationErrors = getValidationErrors<typeof NewAssetFormSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   const fileError = useAtomValue(fileErrorAtom);
@@ -375,7 +377,7 @@ export const AssetForm = ({
   const isEditMode = Boolean(id);
   /** Track the selected asset type for conditional field rendering. */
   const [selectedAssetType, setSelectedAssetType] = useState<AssetType>(
-    bulkMode ? AssetType.INDIVIDUAL : assetType ?? AssetType.INDIVIDUAL
+    bulkMode ? AssetType.INDIVIDUAL : assetType ?? AssetType.INDIVIDUAL,
   );
   const isQtyTracked = isQuantityTracked(selectedAssetType);
 
@@ -424,7 +426,7 @@ export const AssetForm = ({
     const safeCount =
       Number.isInteger(bulkCount) && bulkCount > 0 ? bulkCount : 0;
     return Array.from({ length: safeCount }, (_, i) =>
-      renderBulkTitle(bulkNameTemplate, bulkStartNumber + i)
+      renderBulkTitle(bulkNameTemplate, bulkStartNumber + i),
     );
   }, [bulkMode, bulkNameTemplate, bulkCount, bulkStartNumber]);
 
@@ -442,7 +444,7 @@ export const AssetForm = ({
    * immediately when the user picks a model — Zorm itself only
    * re-validates on the next submit. */
   const [hasPickedAssetModel, setHasPickedAssetModel] = useState<boolean>(
-    Boolean(assetModelId)
+    Boolean(assetModelId),
   );
   const navigate = useNavigate();
   const location = useLocation();
@@ -582,12 +584,14 @@ export const AssetForm = ({
         <div className="flex items-start justify-between border-b pb-5">
           <div className=" ">
             <h2 className="mb-1 text-[18px] font-semibold">
-              {bulkMode ? "Bulk create from model" : "Basic fields"}
+              {bulkMode
+                ? t("assetForm.bulkCreate")
+                : t("assetForm.basicFields")}
             </h2>
             <p>
               {bulkMode
                 ? "Create multiple assets from a model in one go. Common fields below apply to every asset created."
-                : "Basic information about your asset."}
+                : t("assetForm.basicInfo")}
             </p>
           </div>
           <div className="hidden flex-1 justify-end gap-2 md:flex">
@@ -601,7 +605,7 @@ export const AssetForm = ({
 
         <When truthy={!bulkMode}>
           <FormRow
-            rowLabel={"Name"}
+            rowLabel={t("assets.name")}
             className="border-b-0 pb-[10px]"
             required={true}
           >
@@ -630,7 +634,7 @@ export const AssetForm = ({
 
         <When truthy={bulkMode}>
           <FormRow
-            rowLabel="Batch"
+            rowLabel={t("assetForm.batch")}
             className="border-b-0 pb-[10px]"
             subHeading={
               <p>
@@ -675,7 +679,7 @@ export const AssetForm = ({
                       setBulkCount(
                         Number.isFinite(+e.target.value)
                           ? Math.max(2, Math.min(100, +e.target.value))
-                          : 2
+                          : 2,
                       )
                     }
                     min={2}
@@ -702,7 +706,7 @@ export const AssetForm = ({
                       setBulkStartNumber(
                         Number.isFinite(+e.target.value)
                           ? Math.max(0, +e.target.value)
-                          : 1
+                          : 1,
                       )
                     }
                     min={0}
@@ -717,12 +721,12 @@ export const AssetForm = ({
 
         <When truthy={!bulkMode}>
           <FormRow
-            rowLabel={"Tracking method"}
+            rowLabel={t("assetForm.trackingMethod")}
             className="border-b-0 pb-[10px]"
             subHeading={
               isEditMode
-                ? "Tracking method cannot be changed after creation."
-                : "Choose how this asset is tracked. This cannot be changed later."
+                ? t("assetForm.trackingLocked")
+                : t("assetForm.trackingHint")
             }
             required={true}
           >
@@ -744,7 +748,7 @@ export const AssetForm = ({
         <When truthy={isQtyTracked}>
           <div className="flex flex-col gap-2">
             <FormRow
-              rowLabel="Quantity"
+              rowLabel={t("assetForm.quantity")}
               className="border-b-0 pb-[10px]"
               subHeading="Total number of items in this pool."
               required={true}
@@ -768,7 +772,7 @@ export const AssetForm = ({
             </FormRow>
 
             <FormRow
-              rowLabel="Unit of measure"
+              rowLabel={t("assetForm.unitOfMeasure")}
               className="border-b-0 pb-[10px]"
               subHeading="Label for the unit (e.g. pcs, boxes, liters)."
             >
@@ -778,13 +782,13 @@ export const AssetForm = ({
                 name="unitOfMeasure"
                 disabled={disabled}
                 className="w-full"
-                placeholder="e.g., pcs, boxes, liters"
+                placeholder={t("assetForm.unitPlaceholder")}
                 defaultValue={unitOfMeasure ?? ""}
               />
             </FormRow>
 
             <FormRow
-              rowLabel="Min quantity"
+              rowLabel={t("assetForm.minQuantity")}
               className="border-b-0 pb-[10px]"
               subHeading="Low-stock alert threshold. You will be notified when available quantity falls to or below this number."
             >
@@ -802,7 +806,7 @@ export const AssetForm = ({
             </FormRow>
 
             <FormRow
-              rowLabel="Consumption type"
+              rowLabel={t("assetForm.consumptionType")}
               className="border-b-0 pb-[10px]"
               subHeading={
                 'Choose "Used up (one-way)" for items that are consumed and not returned, or "Returnable (two-way)" for items that are checked out and returned.'
@@ -825,12 +829,12 @@ export const AssetForm = ({
             from the same sequence. Hide entirely under bulkMode. */}
         <When truthy={!bulkMode}>
           <FormRow
-            rowLabel={"Asset ID"}
+            rowLabel={t("assetForm.assetId")}
             className="border-b-0 pb-[10px]"
             subHeading={
               id
                 ? "This is the unique identifier for this asset"
-                : "This sequential ID will be assigned when the asset is created"
+                : t("assetForm.assetIdHint")
             }
           >
             <div className="flex items-center gap-2">
@@ -864,7 +868,7 @@ export const AssetForm = ({
           </FormRow>
         </When>
 
-        <FormRow rowLabel={"Main image"} className="pt-[10px]">
+        <FormRow rowLabel={t("assetForm.mainImage")} className="pt-[10px]">
           <div className="flex items-center gap-2">
             {id && thumbnailImage && mainImageExpiration ? (
               <AssetImage
@@ -882,7 +886,7 @@ export const AssetForm = ({
               <p className="hidden lg:block">
                 <HoverCard openDelay={50} closeDelay={50}>
                   <HoverCardTrigger className={tw("inline-flex w-full  ")}>
-                    Accepts PNG, JPG, JPEG, or WebP (max.8 MB)
+                    {t("assetForm.imageHint", { size: 8 })}
                   </HoverCardTrigger>
                   <HoverCardContent side="left">
                     Images will be automatically resized on upload. Width will
@@ -897,14 +901,14 @@ export const AssetForm = ({
                 name="mainImage"
                 type="file"
                 onChange={validateFile}
-                label={"Main image"}
+                label={t("assetForm.mainImage")}
                 hideLabel
                 error={mainImageError}
                 className="mt-2"
                 inputClassName="border-0 shadow-none p-0 rounded-none"
               />
               <p className="mt-2 lg:hidden">
-                Accepts PNG, JPG, JPEG, or WebP (max.8 MB)
+                {t("assetForm.imageHint", { size: 8 })}
               </p>
             </div>
           </div>
@@ -912,14 +916,8 @@ export const AssetForm = ({
 
         <div>
           <FormRow
-            rowLabel={"Description"}
-            subHeading={
-              <p>
-                This is the initial object description. It will be shown on the
-                asset’s overview page. You can always change it. Maximum 1000
-                characters.
-              </p>
-            }
+            rowLabel={t("assets.description")}
+            subHeading={<p>{t("assetForm.descriptionHint")}</p>}
             className="border-b-0"
           >
             <Input
@@ -929,7 +927,7 @@ export const AssetForm = ({
               name="description"
               defaultValue={description || ""}
               hideLabel
-              placeholder="Add a description for your asset."
+              placeholder={t("assetForm.descriptionPlaceholder")}
               disabled={disabled}
               data-test-id="assetDescription"
               className="w-full"
@@ -945,18 +943,17 @@ export const AssetForm = ({
         <When truthy={!bulkMode}>{assetModelFormRow}</When>
 
         <FormRow
-          rowLabel="Category"
+          rowLabel={t("assets.category")}
           subHeading={
             <p>
-              Make it unique. Each asset can have 1 category. It will show on
-              your index.{" "}
+              {t("assetForm.categoryHint")}{" "}
               <Button
                 to="/categories/new"
                 variant="link-gray"
                 className="text-gray-600 underline"
                 target="_blank"
               >
-                Create categories
+                {t("assetForm.createCategories")}
               </Button>
             </p>
           }
@@ -1001,17 +998,17 @@ export const AssetForm = ({
         </FormRow>
 
         <FormRow
-          rowLabel="Tags"
+          rowLabel={t("assets.tags")}
           subHeading={
             <p>
-              Tags can help you organise your database. They can be combined.{" "}
+              {t("assetForm.tagsHint")}{" "}
               <Button
                 to="/tags/new"
                 className="text-gray-600 underline"
                 target="_blank"
                 variant="link-gray"
               >
-                Create tags
+                {t("assetForm.createTags")}
               </Button>
             </p>
           }
@@ -1026,18 +1023,17 @@ export const AssetForm = ({
         </FormRow>
 
         <FormRow
-          rowLabel="Location"
+          rowLabel={t("assets.location")}
           subHeading={
             <p>
-              A location is a place where an item is supposed to be located.
-              This is different than the last scanned location{" "}
+              {t("assetForm.locationHint")}{" "}
               <Button
                 to="/locations/new"
                 className="text-gray-600 underline"
                 target="_blank"
                 variant="link-gray"
               >
-                Create locations
+                {t("assetForm.createLocations")}
               </Button>
             </p>
           }
@@ -1125,13 +1121,8 @@ export const AssetForm = ({
         </FormRow>
 
         <FormRow
-          rowLabel={"Value"}
-          subHeading={
-            <p>
-              Specify the value of assets to get an idea of the total value of
-              your inventory.
-            </p>
-          }
+          rowLabel={t("assets.value")}
+          subHeading={<p>{t("assetForm.valueHint")}</p>}
           className="border-b-0 py-[10px]"
         >
           <div className="relative w-full">
@@ -1163,7 +1154,7 @@ export const AssetForm = ({
           {canUseBarcodes ? (
             <>
               <FormRow
-                rowLabel={"Barcodes"}
+                rowLabel={t("assetForm.barcodes")}
                 className="border-b-0"
                 subHeading="Add additional barcodes to this asset (Code 128, Code 39, or Data Matrix). Note: Each asset automatically gets a default Shelf QR code for tracking."
               >
@@ -1186,14 +1177,14 @@ export const AssetForm = ({
               <PreferredBarcodeFormRow
                 barcodes={liveBarcodes.filter(
                   (b): b is typeof b & { id: string } =>
-                    typeof b.id === "string" && b.id.length > 0
+                    typeof b.id === "string" && b.id.length > 0,
                 )}
                 defaultValue={preferredBarcodeId}
                 workspacePreference={currentOrganization?.qrIdDisplayPreference}
               />
             </>
           ) : (
-            <FormRow rowLabel={"Barcodes"} className="border-b-0">
+            <FormRow rowLabel={t("assetForm.barcodes")} className="border-b-0">
               <UnlockBarcodesBanner />
             </FormRow>
           )}
@@ -1230,42 +1221,50 @@ const Actions = ({
    * sense — one submit already creates many assets, and the success
    * modal offers the natural follow-up CTAs — so the caller hides it. */
   showAddAnother?: boolean;
-}) => (
-  <>
-    {/* Save button is first in DOM order so Enter key triggers it by default */}
-    <Button type="submit" disabled={disabled} className="order-last">
-      Save
-    </Button>
+}) => {
+  const { t } = useTranslation();
 
-    <ButtonGroup>
-      <Button to={referer} variant="secondary" disabled={disabled}>
-        Cancel
+  return (
+    <>
+      {/* Save button is first in DOM order so Enter key triggers it by default */}
+      <Button type="submit" disabled={disabled} className="order-last">
+        {t("common.save")}
       </Button>
-      {showAddAnother ? <AddAnother disabled={disabled} /> : null}
-    </ButtonGroup>
-  </>
-);
 
-const AddAnother = ({ disabled }: { disabled: boolean }) => (
-  <TooltipProvider delayDuration={100}>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="submit"
-          variant="secondary"
-          disabled={disabled}
-          name="addAnother"
-          value="true"
-        >
-          Add another
+      <ButtonGroup>
+        <Button to={referer} variant="secondary" disabled={disabled}>
+          {t("common.cancel")}
         </Button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        <p className="text-sm">Save the asset and add a new one</p>
-      </TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-);
+        {showAddAnother ? <AddAnother disabled={disabled} /> : null}
+      </ButtonGroup>
+    </>
+  );
+};
+
+const AddAnother = ({ disabled }: { disabled: boolean }) => {
+  const { t } = useTranslation();
+
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            type="submit"
+            variant="secondary"
+            disabled={disabled}
+            name="addAnother"
+            value="true"
+          >
+            {t("assetForm.addAnother")}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p className="text-sm">{t("assetForm.addAnotherHint")}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 /**
  * Live-preview block rendered inside the bulk-create row.
@@ -1297,21 +1296,28 @@ function BulkCreatePreview({ titles }: { titles: string[] }) {
   );
 }
 
-/** Radio card options for the tracking method selector. */
-const TRACKING_OPTIONS = [
-  {
-    value: AssetType.INDIVIDUAL,
-    title: "Individually tracked",
-    description:
-      "Each item gets its own QR code, custody record, and booking entry. Best for unique or high-value items.",
-  },
-  {
-    value: AssetType.QUANTITY_TRACKED,
-    title: "Tracked by quantity",
-    description:
-      "A single record represents a pool of identical items. Custody and bookings are managed by numeric quantity.",
-  },
-] as const;
+/**
+ * Radio card options for the tracking method selector.
+ *
+ * A hook rather than a module const so the copy follows the active locale.
+ *
+ * @returns The two tracking options with localised title and description
+ */
+function useTrackingOptions() {
+  const { t } = useTranslation();
+  return [
+    {
+      value: AssetType.INDIVIDUAL,
+      title: t("assetForm.individualTitle"),
+      description: t("assetForm.individualDesc"),
+    },
+    {
+      value: AssetType.QUANTITY_TRACKED,
+      title: t("assetForm.quantityTitle"),
+      description: t("assetForm.quantityDesc"),
+    },
+  ] as const;
+}
 
 /**
  * Styled radio-card selector for choosing the asset tracking method.
@@ -1329,9 +1335,11 @@ function TrackingMethodCards({
   disabled: boolean;
   isEditMode: boolean;
 }) {
+  const { t } = useTranslation();
+  const trackingOptions = useTrackingOptions();
   const cards = (
     <div className="flex flex-col gap-2">
-      {TRACKING_OPTIONS.map((option) => {
+      {trackingOptions.map((option) => {
         const isSelected = selectedAssetType === option.value;
         return (
           <button
@@ -1344,14 +1352,14 @@ function TrackingMethodCards({
               isSelected
                 ? "border-primary-500 bg-primary-25"
                 : "border-gray-200 bg-white hover:border-gray-300",
-              disabled && "cursor-not-allowed opacity-50"
+              disabled && "cursor-not-allowed opacity-50",
             )}
           >
             {/* Radio circle indicator */}
             <span
               className={tw(
                 "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border-2",
-                isSelected ? "border-primary-500" : "border-gray-300"
+                isSelected ? "border-primary-500" : "border-gray-300",
               )}
             >
               {isSelected && (
@@ -1381,9 +1389,7 @@ function TrackingMethodCards({
             <div>{cards}</div>
           </TooltipTrigger>
           <TooltipContent side="bottom">
-            <p className="text-sm">
-              Tracking method cannot be changed after creation.
-            </p>
+            <p className="text-sm">{t("assetForm.trackingLocked")}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -1431,7 +1437,7 @@ function ConsumptionTypeSelect({
   onSelect?: () => void;
 }) {
   const [selected, setSelected] = useState<ConsumptionType | undefined>(
-    initialValue
+    initialValue,
   );
   const [open, setOpen] = useState(false);
 
@@ -1454,7 +1460,7 @@ function ConsumptionTypeSelect({
               "focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-25",
               selected ? "text-gray-900" : "text-gray-500",
               error ? "border-error-300" : "border-gray-300",
-              disabled && "cursor-not-allowed opacity-50"
+              disabled && "cursor-not-allowed opacity-50",
             )}
           >
             <span className="truncate">{selectedLabel}</span>
@@ -1487,7 +1493,7 @@ function ConsumptionTypeSelect({
                 className={tw(
                   "cursor-pointer px-3 py-2 text-[14px] text-gray-700 hover:bg-gray-50",
                   selected === option.value &&
-                    "bg-gray-50 font-medium text-gray-900"
+                    "bg-gray-50 font-medium text-gray-900",
                 )}
                 onClick={() => {
                   setSelected(option.value);

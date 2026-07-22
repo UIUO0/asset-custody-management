@@ -5,6 +5,7 @@ import {
   CustomFieldType,
   OrganizationRoles,
 } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   ActionFunctionArgs,
@@ -49,6 +50,8 @@ import When from "~/components/when/when";
 import { db } from "~/database/db.server";
 import { usePosition } from "~/hooks/use-position";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getAssetOverviewFields } from "~/modules/asset/fields";
 import {
   MOVE_UNITS_INTENT_FIELD,
@@ -187,7 +190,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
      * avoids the validator's DB fallback lookup.
      */
     const roles = userOrganizations.find(
-      (o) => o.organization.id === organizationId
+      (o) => o.organization.id === organizationId,
     )?.roles;
 
     const canEditAsset = await hasPermission({
@@ -323,7 +326,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       // negative remainder.
       const ongoingBookedNotYetOut = Math.max(
         0,
-        (ongoingBookedSum._sum?.quantity ?? 0) - checkedOut
+        (ongoingBookedSum._sum?.quantity ?? 0) - checkedOut,
       );
       // Combine RESERVED bookings + the ONGOING-not-yet-out remainder
       // so the "Reserved (bookings)" row reflects every unit committed
@@ -333,7 +336,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       // Sum each kit's slice — the asset's pool earmarked for kit use.
       const inKits = (asset.assetKits ?? []).reduce(
         (sum: number, ak) => sum + (ak.quantity ?? 0),
-        0
+        0,
       );
       // Sum each location's slice — the asset's pool that has a
       // physical placement. The remainder (`total − inLocations`) is
@@ -341,13 +344,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       // anywhere yet (in transit, just received, etc.).
       const inLocations = (asset.assetLocations ?? []).reduce(
         (sum: number, al) => sum + (al.quantity ?? 0),
-        0
+        0,
       );
       // Operator-only custody (see field comment above).
       const operatorCustody = (asset.custody ?? []).reduce(
         (sum: number, c) =>
           c.kitCustodyId == null ? sum + (c.quantity ?? 0) : sum,
-        0
+        0,
       );
 
       quantityData = {
@@ -394,7 +397,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
             !cf.customField.categories.length ||
             cf.customField.categories
               .map((c) => c.id)
-              .includes(asset.categoryId!)
+              .includes(asset.categoryId!),
         )
       : asset.customFields;
 
@@ -478,8 +481,8 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
             (asset.assetLocations ?? []).reduce(
               (sum: number, al) =>
                 al.assetKitId == null ? sum + (al.quantity ?? 0) : sum,
-              0
-            )
+              0,
+            ),
         )
       : 0;
 
@@ -513,12 +516,32 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ data, matches }) => {
+  // why: `meta` runs outside React; the loader title is English. Rebuild the
+  // localised tab title from the active locale and the asset name.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  const name = data?.asset?.title ?? "";
+
+  return [
+    {
+      title: appendToMetaTitle(
+        resources.assetOverview.pageTitle.replace("{{name}}", name),
+      ),
+    },
+  ];
+};
+
+/** Breadcrumb label for the asset overview tab (component for the hook). */
+function OverviewBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("assetOverview.overview")}</>;
+}
 
 export const handle = {
-  breadcrumb: () => "Overview",
+  breadcrumb: () => <OverviewBreadcrumb />,
 };
 
 export async function action({ context, request, params }: ActionFunctionArgs) {
@@ -557,13 +580,13 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     const { intent } = parseData(
       formData,
-      z.object({ intent: z.enum(["toggle", "updateField"]) })
+      z.object({ intent: z.enum(["toggle", "updateField"]) }),
     );
 
     if (intent === "toggle") {
       const { availableToBook } = parseData(
         formData,
-        AvailabilityForBookingFormSchema
+        AvailabilityForBookingFormSchema,
       );
 
       await updateAssetBookingAvailability({
@@ -590,7 +613,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             "valuation",
             "customField",
           ]),
-        })
+        }),
       );
 
       const fieldValue = formData.get("fieldValue") as string | null;
@@ -670,7 +693,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
           const builtValue = buildCustomFieldValue(
             { raw: fieldValue ?? "" },
-            fieldDef
+            fieldDef,
           );
 
           /**
@@ -799,7 +822,7 @@ async function handleMoveUnitsIntent({
     formData,
     z.object({
       [MOVE_UNITS_INTENT_FIELD]: moveAxisEnum,
-    })
+    }),
   );
 
   try {
@@ -851,6 +874,7 @@ async function handleMoveUnitsIntent({
 
 // react-doctor:no-giant-component — deferred for follow-up refactor
 export default function AssetOverview() {
+  const { t } = useTranslation();
   const {
     asset,
     locale,
@@ -882,7 +906,7 @@ export default function AssetOverview() {
   const customFieldsValueMap = new Map(
     (asset?.customFields ?? [])
       .filter((f) => f.value)
-      .map((f) => [f.customField.id, f])
+      .map((f) => [f.customField.id, f]),
   );
   const allCustomFields = (allCustomFieldDefs ?? [])
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -896,7 +920,7 @@ export default function AssetOverview() {
   const fetcher = useFetcher();
   const zo = useZorm(
     "NewQuestionWizardScreen",
-    AvailabilityForBookingFormSchema
+    AvailabilityForBookingFormSchema,
   );
   const { roles, isSelfService } = useUserRoleHelper();
   const { canUseBarcodes } = useBarcodePermissions();
@@ -925,7 +949,7 @@ export default function AssetOverview() {
             <ul className="item-information">
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                  ID
+                  {t("assetOverview.id")}
                 </span>
                 <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
                   {asset?.id}
@@ -934,7 +958,7 @@ export default function AssetOverview() {
               {asset?.sequentialId ? (
                 <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                    Asset ID
+                    {t("assetOverview.assetId")}
                   </span>
                   <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
                     {asset.sequentialId}
@@ -944,7 +968,7 @@ export default function AssetOverview() {
               {asset?.qrCodes?.[0] ? (
                 <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                    Shelf QR ID
+                    {t("assetOverview.qrId")}
                   </span>
                   <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
                     {asset.qrCodes[0].id}
@@ -953,7 +977,7 @@ export default function AssetOverview() {
               ) : null}
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                  Created
+                  {t("assetOverview.created")}
                 </span>
                 <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
                   <DateS date={asset.createdAt} includeTime />
@@ -962,14 +986,14 @@ export default function AssetOverview() {
 
               <InlineEditableField
                 fieldName="category"
-                label="Category"
+                label={t("assetOverview.category")}
                 canEdit={canEditAsset}
                 renderDisplay={() => (
                   <Badge
                     color={asset.category?.color ?? "#808080"}
                     withDot={false}
                   >
-                    {asset.category?.name ?? "Uncategorized"}
+                    {asset.category?.name ?? t("assetOverview.uncategorized")}
                   </Badge>
                 )}
                 renderEditor={() => (
@@ -1090,7 +1114,7 @@ export default function AssetOverview() {
               ) : (
                 <InlineEditableField
                   fieldName="location"
-                  label="Location"
+                  label={t("assetOverview.location")}
                   canEdit={canEditAsset}
                   isEmpty={!location}
                   renderDisplay={() =>
@@ -1106,7 +1130,9 @@ export default function AssetOverview() {
                         />
                       </div>
                     ) : (
-                      <span className="text-gray-600">No location</span>
+                      <span className="text-gray-600">
+                        {t("assetOverview.noLocation")}
+                      </span>
                     )
                   }
                   renderEditor={() => (
@@ -1124,18 +1150,18 @@ export default function AssetOverview() {
 
               <InlineEditableField
                 fieldName="description"
-                label="Description"
+                label={t("assetOverview.description")}
                 canEdit={canEditAsset}
                 isEmpty={!asset.description}
                 renderDisplay={() => (
                   <div className="whitespace-pre-wrap text-gray-600">
-                    {asset.description || "No description"}
+                    {asset.description || t("assetOverview.noDescription")}
                   </div>
                 )}
                 renderEditor={() => (
                   <div>
                     <Input
-                      label="Description"
+                      label={t("assetOverview.description")}
                       hideLabel
                       inputType="textarea"
                       name="fieldValue"
@@ -1155,7 +1181,7 @@ export default function AssetOverview() {
                   DynamicSelect variant for compact inline contexts). */}
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                  Tags
+                  {t("assetOverview.tags")}
                 </span>
                 <div className="mt-1 text-gray-600 md:mt-0 md:w-3/5">
                   {asset.tags?.length > 0 ? (
@@ -1172,14 +1198,16 @@ export default function AssetOverview() {
                       ))}
                     </div>
                   ) : (
-                    <span className="text-gray-600">No tags</span>
+                    <span className="text-gray-600">
+                      {t("assetOverview.noTags")}
+                    </span>
                   )}
                 </div>
               </li>
 
               <InlineEditableField
                 fieldName="valuation"
-                label="Value"
+                label={t("assetOverview.value")}
                 canEdit={canEditAsset}
                 isEmpty={asset.valuation == null}
                 renderDisplay={() => (
@@ -1190,7 +1218,7 @@ export default function AssetOverview() {
                           locale,
                           currency: asset.organization.currency,
                         })
-                      : "No value"}
+                      : t("assetOverview.noValue")}
                   </div>
                 )}
                 renderEditor={() => (
@@ -1211,7 +1239,7 @@ export default function AssetOverview() {
                    * the numeric keypad.
                    */
                   <Input
-                    label="Value"
+                    label={t("assetOverview.value")}
                     hideLabel
                     type="text"
                     inputMode="decimal"
@@ -1393,7 +1421,7 @@ export default function AssetOverview() {
                               className={tw(
                                 "text-gray-600",
                                 def.type !== CustomFieldType.MULTILINE_TEXT &&
-                                  "max-w-[350px]"
+                                  "max-w-[350px]",
                               )}
                             >
                               {def.type === CustomFieldType.MULTILINE_TEXT ? (
@@ -1407,7 +1435,7 @@ export default function AssetOverview() {
                                   variant="link-gray"
                                   target="_blank"
                                   to={buildCustomFieldLinkHref(
-                                    customFieldDisplayValue as string
+                                    customFieldDisplayValue as string,
                                   )}
                                 >
                                   {customFieldDisplayValue as string}
@@ -1473,7 +1501,7 @@ export default function AssetOverview() {
                                   <option value="">Select an option</option>
                                   {(def.options as string[] | null)
                                     ?.filter(
-                                      (o: string) => o !== null && o !== ""
+                                      (o: string) => o !== null && o !== "",
                                     )
                                     .map((option: string) => (
                                       <option key={option} value={option}>
@@ -1527,10 +1555,10 @@ export default function AssetOverview() {
                 <div className="flex justify-between gap-3">
                   <div>
                     <p className="text-[14px] font-medium text-gray-700">
-                      Available for bookings
+                      {t("assetOverview.availableForBookings")}
                     </p>
                     <p className="text-[12px] text-gray-600">
-                      Asset is available for being used in bookings
+                      {t("assetOverview.availableForBookingsDesc")}
                     </p>
                   </div>
                   <Switch
@@ -1542,7 +1570,7 @@ export default function AssetOverview() {
                     required
                     title={
                       !canUpdateAvailability
-                        ? "You do not have the permissions to change availability"
+                        ? t("assetOverview.noAvailabilityPermission")
                         : "Toggle availability"
                     }
                   />
@@ -1631,7 +1659,7 @@ export default function AssetOverview() {
                                   quantity: m.quantity,
                                 }}
                                 destinations={moveDestinations.kits.filter(
-                                  (k) => k.id !== m.kitId
+                                  (k) => k.id !== m.kitId,
                                 )}
                                 actionUrl={moveUnitsActionUrl}
                                 trigger={
@@ -1798,7 +1826,7 @@ export default function AssetOverview() {
                                   quantity: p.quantity,
                                 }}
                                 destinations={moveDestinations.locations.filter(
-                                  (l) => l.id !== p.locationId
+                                  (l) => l.id !== p.locationId,
                                 )}
                                 actionUrl={moveUnitsActionUrl}
                                 trigger={

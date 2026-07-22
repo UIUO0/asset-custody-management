@@ -60,11 +60,11 @@ export function BookingAssetsColumn() {
   const hasItems =
     paginatedItems?.length > 0 ||
     (booking.modelRequests ?? []).some(
-      (req: { fulfilledAt: Date | string | null }) => req.fulfilledAt === null
+      (req: { fulfilledAt: Date | string | null }) => req.fulfilledAt === null,
     );
   const { isBase, isSelfService, isBaseOrSelfService } = useUserRoleHelper();
   const { isCompleted, isArchived, isCancelled } = useBookingStatusHelpers(
-    booking.status
+    booking.status,
   );
 
   // Determine if we should show the check-in columns
@@ -154,7 +154,7 @@ export function BookingAssetsColumn() {
               : "You need to select a start and end date and save your booking before you can add assets to your booking",
           }
         : false,
-    [isCompleted, isArchived, isCancelled, cantManageAssetsAsBase]
+    [isCompleted, isArchived, isCancelled, cantManageAssetsAsBase],
   );
 
   /**
@@ -192,9 +192,10 @@ export function BookingAssetsColumn() {
   const outstandingModelRequests = useMemo(
     () =>
       (booking.modelRequests ?? []).filter(
-        (req: { fulfilledAt: Date | string | null }) => req.fulfilledAt === null
+        (req: { fulfilledAt: Date | string | null }) =>
+          req.fulfilledAt === null,
       ),
-    [booking.modelRequests]
+    [booking.modelRequests],
   );
 
   return (
@@ -535,7 +536,7 @@ function ModelRequestRow({
           (~48px) and ends up ~20px wider than the bulk cell on asset
           rows — which shifts every subsequent column out of alignment
           with the other rows' columns. */}
-      <Td className="md:ps-4 md:pe-3"> </Td>
+      <Td className="md:pe-3 md:ps-4"> </Td>
 
       <Td className="w-full whitespace-normal p-0 md:p-0">
         <div className="flex items-center gap-3 py-4 md:justify-normal md:pe-6">

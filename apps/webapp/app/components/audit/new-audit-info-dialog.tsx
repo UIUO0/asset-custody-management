@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { CompassIcon, MapPinIcon, PackageIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogPortal } from "~/components/layout/dialog";
 import { Button } from "~/components/shared/button";
 
 export function NewAuditInfoDialog() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const handleClose = () => setOpen(false);
@@ -11,7 +13,7 @@ export function NewAuditInfoDialog() {
   return (
     <>
       <Button type="button" onClick={() => setOpen(true)}>
-        New Audit
+        {t("audits.newAudit")}
       </Button>
       <DialogPortal>
         <Dialog

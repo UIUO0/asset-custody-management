@@ -49,6 +49,16 @@ const apiQueryCalls: Array<{ api: string; enabled: boolean }> = [];
 // runs without a network/loader, and so we can introspect the call
 // shape — case (d) below asserts the breakdown endpoint is NEVER
 // enabled when `suppressQtyAware` is set on a QT asset.
+// why: the badge resolves its label through i18next. These assertions use
+// the English wording, and every `status.*` key falls back to the shared
+// `@shelf/labels` string, so returning the fallback reproduces the
+// pre-i18n behaviour without booting an i18n instance in JSDOM.
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (_key: string, fallback?: string) => fallback ?? _key,
+  }),
+}));
+
 vi.mock("~/hooks/use-api-query", () => ({
   default: ({ api, enabled }: { api: string; enabled?: boolean }) => {
     apiQueryCalls.push({ api, enabled: !!enabled });
@@ -107,13 +117,13 @@ describe("AssetStatusBadge", () => {
           availableToBook
           suppressQtyAware
           asset={makeQtAssetWithCustodyElsewhere()}
-        />
+        />,
       );
 
       expect(screen.getByText("Available")).toBeInTheDocument();
       expect(screen.queryByText(/partial custody/i)).not.toBeInTheDocument();
       expect(
-        screen.queryByText(/partially checked out/i)
+        screen.queryByText(/partially checked out/i),
       ).not.toBeInTheDocument();
     });
 
@@ -131,7 +141,7 @@ describe("AssetStatusBadge", () => {
           availableToBook
           suppressQtyAware
           asset={makeQtAssetWithCustodyElsewhere()}
-        />
+        />,
       );
 
       expect(screen.getByText("Partially checked out")).toBeInTheDocument();
@@ -149,7 +159,7 @@ describe("AssetStatusBadge", () => {
           status="AVAILABLE"
           availableToBook
           asset={makeQtAssetWithCustodyElsewhere()}
-        />
+        />,
       );
 
       expect(screen.getByText("Partial custody")).toBeInTheDocument();
@@ -175,7 +185,7 @@ describe("AssetStatusBadge", () => {
             bookingAssets: null,
             assetKits: null,
           }}
-        />
+        />,
       );
 
       // Fire the cursor-enter event that would normally arm the lazy
@@ -184,7 +194,7 @@ describe("AssetStatusBadge", () => {
       if (root) fireEvent.mouseEnter(root);
 
       const breakdownCalls = apiQueryCalls.filter((call) =>
-        call.api.includes("/quantity-breakdown")
+        call.api.includes("/quantity-breakdown"),
       );
       // The hook is invoked unconditionally (React rules of hooks),
       // but it must NEVER be `enabled` for a suppressed QT row.
@@ -209,7 +219,7 @@ describe("AssetStatusBadge", () => {
           status="AVAILABLE"
           availableToBook
           asset={individualAsset}
-        />
+        />,
       );
       expect(screen.getByText("Available")).toBeInTheDocument();
 
@@ -221,7 +231,7 @@ describe("AssetStatusBadge", () => {
           availableToBook
           suppressQtyAware
           asset={individualAsset}
-        />
+        />,
       );
       expect(screen.getByText("Available")).toBeInTheDocument();
     });

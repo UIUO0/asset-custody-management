@@ -1,4 +1,5 @@
 import type { Tag } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -21,6 +22,8 @@ import BulkActionsDropdown from "~/components/tag/bulk-actions-dropdown";
 import TagQuickActions from "~/components/tag/tag-quick-actions";
 import TagUseForFilter from "~/components/tag/tag-use-for-filter";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 
 import { deleteTag, getTags } from "~/modules/tag/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -95,7 +98,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -103,9 +106,15 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.tags) }];
+};
 
 export async function action({ context, request }: ActionFunctionArgs) {
   const authSession = context.getSession();
@@ -128,7 +137,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       }),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     await deleteTag({ id, organizationId });
@@ -147,24 +156,31 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb link for the tags section (component so it can use the hook). */
+function TagsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/tags">{t("nav.tags")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/tags">Tags</Link>,
+  breadcrumb: () => <TagsBreadcrumb />,
 };
 export const ErrorBoundary = () => <ErrorContent />;
 
-export default function CategoriesPage() {
+export default function TagsPage() {
+  const { t } = useTranslation();
   const { isBaseOrSelfService } = useUserRoleHelper();
 
   return (
     <>
-      <Header>
+      <Header title={t("nav.tags")}>
         <Button
           to="new"
           role="link"
           aria-label={`new tag`}
           data-test-id="createNewTag"
         >
-          New tag
+          {t("tags.newTag")}
         </Button>
       </Header>
       <ListContentWrapper>
@@ -179,17 +195,17 @@ export default function CategoriesPage() {
             isBaseOrSelfService ? undefined : <BulkActionsDropdown />
           }
           customEmptyStateContent={{
-            title: "No tags yet",
-            text: "Tags let you label assets with flexible keywords. Create tags to add custom metadata to your inventory.",
+            title: t("tags.emptyTitle"),
+            text: t("tags.emptyText"),
             newButtonRoute: "/tags/new",
-            newButtonContent: "Create your first tag",
+            newButtonContent: t("tags.emptyCta"),
           }}
           ItemComponent={TagItem}
           headerChildren={
             <>
-              <Th>Description</Th>
-              <Th>Use for</Th>
-              <Th>Actions</Th>
+              <Th>{t("assets.description")}</Th>
+              <Th>{t("tags.useFor")}</Th>
+              <Th>{t("list.actions")}</Th>
             </>
           }
         />
@@ -202,36 +218,43 @@ const TagItem = ({
   item,
 }: {
   item: Pick<Tag, "id" | "description" | "name" | "useFor" | "color">;
-}) => (
-  <>
-    <Td className="w-1/4 text-start" title={`Tag: ${item.name}`}>
-      <TagBadge color={item.color ?? undefined} withDot={false}>
-        {item.name}
-      </TagBadge>
-    </Td>
-    <Td className="max-w-62 md:w-3/4">
-      {item.description ? (
-        <LineBreakText
-          className="md:w-3/4"
-          text={item.description}
-          numberOfLines={3}
-          charactersPerLine={60}
-        />
-      ) : null}
-    </Td>
-    <Td>
-      <div className="flex min-w-32 items-center gap-2">
-        {item.useFor && item.useFor.length > 0 ? (
-          item.useFor.map((useFor) => (
-            <GrayBadge key={useFor}>{formatEnum(useFor)}</GrayBadge>
-          ))
-        ) : (
-          <GrayBadge>All</GrayBadge>
-        )}
-      </div>
-    </Td>
-    <Td className="text-start">
-      <TagQuickActions tag={item} />
-    </Td>
-  </>
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      <Td
+        className="w-1/4 text-start"
+        title={t("tags.tagPrefix", { name: item.name })}
+      >
+        <TagBadge color={item.color ?? undefined} withDot={false}>
+          {item.name}
+        </TagBadge>
+      </Td>
+      <Td className="max-w-62 md:w-3/4">
+        {item.description ? (
+          <LineBreakText
+            className="md:w-3/4"
+            text={item.description}
+            numberOfLines={3}
+            charactersPerLine={60}
+          />
+        ) : null}
+      </Td>
+      <Td>
+        <div className="flex min-w-32 items-center gap-2">
+          {item.useFor && item.useFor.length > 0 ? (
+            item.useFor.map((useFor) => (
+              <GrayBadge key={useFor}>{formatEnum(useFor)}</GrayBadge>
+            ))
+          ) : (
+            <GrayBadge>{t("list.all")}</GrayBadge>
+          )}
+        </div>
+      </Td>
+      <Td className="text-start">
+        <TagQuickActions tag={item} />
+      </Td>
+    </>
+  );
+};

@@ -7,6 +7,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { useModelFilters } from "~/hooks/use-model-filters";
@@ -122,7 +123,7 @@ export default function DynamicSelect({
   renderItem,
   extraContent,
   disabled,
-  placeholder = `Select ${model.name}`,
+  placeholder,
   closeOnSelect = false,
   resetSearchOnClose = false,
   excludeItems,
@@ -136,6 +137,7 @@ export default function DynamicSelect({
   popoverZIndexClassName,
   ...hookProps
 }: Props) {
+  const { t } = useTranslation();
   const [createdItems, setCreatedItems] = useState<ModelFilterItem[]>([]);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
@@ -163,7 +165,7 @@ export default function DynamicSelect({
   // Using a lazy initializer keeps the initial seed out of the
   // `useState(defaultValue)` shape that react-doctor flags as derived state.
   const [selectedValue, setSelectedValue] = useState<string | undefined>(
-    () => defaultValue
+    () => defaultValue,
   );
   const lastDefaultValueRef = useRef(defaultValue);
   if (lastDefaultValueRef.current !== defaultValue) {
@@ -225,7 +227,7 @@ export default function DynamicSelect({
 
   const itemsWithCreated = useMemo(
     () => dedupeItems([...createdItems, ...items]),
-    [createdItems, items]
+    [createdItems, items],
   );
 
   const itemsToRender = useMemo(
@@ -233,7 +235,7 @@ export default function DynamicSelect({
       excludeItems
         ? itemsWithCreated.filter((i) => !excludeItems.includes(i.id))
         : itemsWithCreated,
-    [excludeItems, itemsWithCreated]
+    [excludeItems, itemsWithCreated],
   );
 
   // Create array that includes special items if provided
@@ -276,7 +278,7 @@ export default function DynamicSelect({
     setSelectedItemCache(
       isDeselecting
         ? undefined
-        : knownItem ?? allItemsToRender.find((i) => i.id === id)
+        : knownItem ?? allItemsToRender.find((i) => i.id === id),
     );
 
     // Always update URL params and parent state
@@ -304,7 +306,12 @@ export default function DynamicSelect({
     ? typeof renderItem === "function"
       ? renderItem({ ...selectedItem, metadata: selectedItem })
       : selectedItem.name
-    : placeholder;
+    : placeholder ??
+      t("assetForm.selectPlaceholder", {
+        name: t(`entities.${model.name}_singular`, {
+          defaultValue: model.name,
+        }),
+      });
 
   if (hidden) {
     return (
@@ -353,13 +360,13 @@ export default function DynamicSelect({
             asChild
             className={tw(
               triggerWrapperClassName,
-              "inline-flex w-full items-center gap-2 "
+              "inline-flex w-full items-center gap-2 ",
             )}
           >
             <button
               className={tw(
                 "w-full",
-                disabled && "cursor-not-allowed opacity-60"
+                disabled && "cursor-not-allowed opacity-60",
               )}
             >
               {label && (
@@ -375,7 +382,7 @@ export default function DynamicSelect({
                 <span
                   className={tw(
                     "truncate whitespace-nowrap pe-2",
-                    selectedValue === undefined && "text-gray-500"
+                    selectedValue === undefined && "text-gray-500",
                   )}
                 >
                   {triggerValue}
@@ -389,7 +396,7 @@ export default function DynamicSelect({
               className={tw(
                 popoverZIndexClassName ?? "z-[100]",
                 "overflow-y-auto rounded-md border border-gray-300 bg-white",
-                className
+                className,
               )}
               style={{
                 ...style,
@@ -423,8 +430,10 @@ export default function DynamicSelect({
                   <Input
                     ref={searchInputRef}
                     type="text"
-                    label={`Search ${contentLabel}`}
-                    placeholder={`Search ${contentLabel}`}
+                    label={t("assetForm.searchIn", { name: contentLabel })}
+                    placeholder={t("assetForm.searchIn", {
+                      name: contentLabel,
+                    })}
                     hideLabel
                     className="text-gray-500"
                     icon={searchIcon}
@@ -463,7 +472,7 @@ export default function DynamicSelect({
                         key={withValueItem.id}
                         className={tw(
                           "flex cursor-pointer select-none items-center justify-between gap-4 px-6 py-4 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100",
-                          withValueItem.id === selectedValue && "bg-gray-100"
+                          withValueItem.id === selectedValue && "bg-gray-100",
                         )}
                         role="option"
                         aria-selected={withValueItem.id === selectedValue}
@@ -472,7 +481,7 @@ export default function DynamicSelect({
                           handleItemChange(withValueItem.id);
                         }}
                         onKeyDown={handleActivationKeyPress(() =>
-                          handleItemChange(withValueItem.id)
+                          handleItemChange(withValueItem.id),
                         )}
                       >
                         <span className="max-w-[350px] truncate whitespace-nowrap pe-2">
@@ -490,7 +499,8 @@ export default function DynamicSelect({
                         key={withoutValueItem.id}
                         className={tw(
                           "flex cursor-pointer select-none items-center justify-between gap-4 px-6 py-4 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100",
-                          withoutValueItem.id === selectedValue && "bg-gray-100"
+                          withoutValueItem.id === selectedValue &&
+                            "bg-gray-100",
                         )}
                         role="option"
                         aria-selected={withoutValueItem.id === selectedValue}
@@ -499,7 +509,7 @@ export default function DynamicSelect({
                           handleItemChange(withoutValueItem.id);
                         }}
                         onKeyDown={handleActivationKeyPress(() =>
-                          handleItemChange(withoutValueItem.id)
+                          handleItemChange(withoutValueItem.id),
                         )}
                       >
                         <span className="max-w-[350px] truncate whitespace-nowrap pe-2">
@@ -533,7 +543,7 @@ export default function DynamicSelect({
                       key={item.id}
                       className={tw(
                         "flex cursor-pointer touch-manipulation select-none items-center justify-between gap-4 px-6 py-4 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100",
-                        item.id === selectedValue && "bg-gray-100"
+                        item.id === selectedValue && "bg-gray-100",
                       )}
                       role="option"
                       aria-selected={item.id === selectedValue}
@@ -542,7 +552,7 @@ export default function DynamicSelect({
                         handleItemChange(item.id);
                       }}
                       onKeyDown={handleActivationKeyPress(() =>
-                        handleItemChange(item.id)
+                        handleItemChange(item.id),
                       )}
                     >
                       <span className="max-w-[350px] truncate whitespace-nowrap pe-2">
@@ -627,7 +637,7 @@ export const MobileStyles = ({ open }: { open: boolean }) =>
         // eslint-disable-next-line tailwindcss/migration-from-tailwind-2
         className={tw(
           "extra-overlay fixed right-0 top-0 z-[999] h-screen w-screen cursor-pointer bg-black bg-opacity-50 backdrop-blur transition duration-300 ease-in-out md:hidden",
-          open ? "visible" : "invisible opacity-0"
+          open ? "visible" : "invisible opacity-0",
         )}
       ></div>
       <style>{MOBILE_POPPER_CSS}</style>

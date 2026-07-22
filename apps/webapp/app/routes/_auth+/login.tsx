@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -11,7 +12,6 @@ import {
   useNavigation,
 } from "react-router";
 
-import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { Form } from "~/components/custom-form";
@@ -66,7 +66,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       subHeading: i18n.t("auth.loginSubheading"),
       disableSignup,
       disableSSO,
-    })
+    }),
   );
 }
 
@@ -102,9 +102,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
                 shouldBeCaptured: false,
                 status: 400,
               }),
-              false
+              false,
             ),
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -121,16 +121,16 @@ export async function action({ context, request }: ActionFunctionArgs) {
                 shouldBeCaptured: false,
                 status: 400,
               }),
-              false
+              false,
             ),
-            { status: 400 }
+            { status: 400 },
           );
         }
 
         const { email, password, redirectTo } = parseData(
           formData,
           LoginFormSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
 
         const authSession = await signInWithEmail(email, password);
@@ -168,7 +168,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       undefined,
       isLikeShelfError(cause)
         ? cause.shouldBeCaptured
-        : !isZodValidationError(cause)
+        : !isZodValidationError(cause),
     );
     return data(error(reason), { status: reason.status });
   }

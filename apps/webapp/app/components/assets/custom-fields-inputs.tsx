@@ -9,6 +9,7 @@ import {
   PopoverContent,
 } from "@radix-ui/react-popover";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigation } from "react-router";
 import type { ShelfAssetCustomFieldValueType } from "~/modules/asset/types";
 import type { loader } from "~/routes/_layout+/assets.$assetId_.edit";
@@ -31,6 +32,7 @@ export default function AssetCustomFields({
   currency: Currency;
   fieldErrors: Record<string, string | undefined>;
 }) {
+  const { t } = useTranslation();
   const { customFields, asset } = useLoaderData<typeof loader>();
 
   const customFieldsValues =
@@ -44,8 +46,8 @@ export default function AssetCustomFields({
           res[cur.customFieldId] = new Date(cur.value.valueDate!);
           return res;
         },
-        {} as Record<string, Date | null>
-      )
+        {} as Record<string, Date | null>,
+      ),
   );
 
   const navigation = useNavigation();
@@ -140,7 +142,7 @@ export default function AssetCustomFields({
     ),
     MULTILINE_TEXT: (field) => {
       const value = customFieldsValues?.find(
-        (cfv) => cfv.customFieldId === field.id
+        (cfv) => cfv.customFieldId === field.id,
       )?.value?.raw;
 
       const error = getFieldError(field.id);
@@ -207,21 +209,23 @@ export default function AssetCustomFields({
   return (
     <div className="border-b pb-6">
       <div className=" border-t py-5">
-        <h2 className="mb-1 text-[18px] font-semibold">Custom Fields</h2>
+        <h2 className="mb-1 text-[18px] font-semibold">
+          {t("assetForm.customFields")}
+        </h2>
         <Button
           to="/settings/custom-fields"
           className="font-medium text-primary-600"
           target="_blank"
           variant="link"
         >
-          Manage custom fields
+          {t("assetForm.manageCustomFields")}
         </Button>
       </div>
       {customFields.length > 0 ? (
         <>
           {requiredFields.length > 0 && (
             <div className="border-t pt-4">
-              <h5>Required Fields</h5>
+              <h5>{t("assetForm.requiredFields")}</h5>
               {requiredFields.map((field, index) => (
                 <FormRow
                   key={field.id + index}
@@ -252,7 +256,7 @@ export default function AssetCustomFields({
           )}
           {optionalFields.length > 0 && (
             <div className="border-t pt-4">
-              <h5>Optional Fields</h5>
+              <h5>{t("assetForm.optionalFields")}</h5>
               {optionalFields.map((field, index) => (
                 <FormRow
                   key={field.id + index}
@@ -289,9 +293,11 @@ export default function AssetCustomFields({
               <div className="mb-4 inline-flex items-center justify-center rounded-full border-8 border-solid border-gray-50 bg-gray-100 p-2 text-gray-600">
                 <SearchIcon />
               </div>
-              <h4 className="mb-6 text-base">No active custom fields</h4>
+              <h4 className="mb-6 text-base">
+                {t("assetForm.noActiveCustomFields")}
+              </h4>
               <Button to="/settings/custom-fields/new" variant="primary">
-                Create custom fields
+                {t("assetForm.createCustomFields")}
               </Button>
             </div>
           </div>
@@ -325,7 +331,7 @@ function OptionSelect({
     if (!searchQuery) return options;
 
     return options.filter((option) =>
-      option.toLowerCase().includes(searchQuery.toLowerCase())
+      option.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [field.options, searchQuery]);
 
@@ -348,7 +354,7 @@ function OptionSelect({
       case "ArrowDown":
         event.preventDefault();
         setSelectedIndex((prev) =>
-          prev < filteredOptions.length - 1 ? prev + 1 : prev
+          prev < filteredOptions.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
@@ -428,14 +434,14 @@ function OptionSelect({
                           "before:absolute before:inset-x-0 before:top-0 before:border-t before:border-gray-200",
                         index !== filteredOptions.length - 1 &&
                           "after:absolute after:inset-x-0 after:bottom-0 after:border-b after:border-gray-200",
-                      ]
+                      ],
                     )}
                     role="option"
                     aria-selected={isSelected}
                     tabIndex={0}
                     onClick={() => handleOptionClick(option)}
                     onKeyDown={handleActivationKeyPress(() =>
-                      handleOptionClick(option)
+                      handleOptionClick(option),
                     )}
                     style={{
                       width: triggerRef.current?.clientWidth || "auto",

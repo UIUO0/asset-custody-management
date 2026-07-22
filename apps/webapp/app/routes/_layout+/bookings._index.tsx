@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { TagUseFor } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -37,6 +38,8 @@ import { TeamMemberBadge } from "~/components/user/team-member-badge";
 import { db } from "~/database/db.server";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   getBookings,
   getBookingsFilterData,
@@ -361,7 +364,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           setCookie(await setSelectedOrganizationIdCookie(organizationId)),
           ...(filtersCookie ? [setCookie(filtersCookie)] : []),
         ],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -369,13 +372,25 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.bookings) }];
+};
+
+/** Breadcrumb link for the bookings index (component so it can use the hook). */
+function BookingsIndexBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/bookings">{t("nav.bookings")}</Link>;
+}
 
 export const handle = {
   name: "bookings.index",
-  breadcrumb: () => <Link to="/bookings">Bookings</Link>,
+  breadcrumb: () => <BookingsIndexBreadcrumb />,
 };
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({
@@ -399,6 +414,7 @@ export default function BookingsIndexPage({
   className?: string;
   disableBulkActions?: boolean;
 }) {
+  const { t } = useTranslation();
   const matches = useMatches();
   const { isBaseOrSelfService } = useUserRoleHelper();
 
@@ -443,7 +459,7 @@ export default function BookingsIndexPage({
       }`}
     >
       {!isChildBookingsPage ? (
-        <Header>
+        <Header title={t("nav.bookings")}>
           <CreateBookingDialog
             trigger={
               <Button
@@ -452,7 +468,7 @@ export default function BookingsIndexPage({
                 data-test-id="createNewBooking"
                 prefetch="none"
               >
-                New booking
+                {t("bookings.newBooking")}
               </Button>
             }
           />
@@ -468,23 +484,23 @@ export default function BookingsIndexPage({
             )
           }
           customEmptyStateContent={{
-            title: "No bookings yet",
-            text: "Bookings let your team reserve assets for specific dates. Create a booking to schedule equipment checkouts and returns.",
+            title: t("bookings.emptyTitle"),
+            text: t("bookings.emptyText"),
             newButtonRoute: "/bookings/new",
-            newButtonContent: "Create your first booking",
+            newButtonContent: t("bookings.emptyCta"),
           }}
           ItemComponent={ListBookingsContent}
           headerChildren={
             <>
               <Th />
-              <Th>Assets</Th>
-              <Th>Description</Th>
+              <Th>{t("nav.assets")}</Th>
+              <Th>{t("assets.description")}</Th>
 
-              <Th>From</Th>
-              <Th>To</Th>
-              <Th>Tags</Th>
-              <Th>Custodian</Th>
-              <Th>Created by</Th>
+              <Th>{t("bookings.from")}</Th>
+              <Th>{t("bookings.to")}</Th>
+              <Th>{t("assets.tags")}</Th>
+              <Th>{t("assets.custodian")}</Th>
+              <Th>{t("bookings.createdBy")}</Th>
             </>
           }
           headerExtraContent={
@@ -609,7 +625,7 @@ const ListBookingsContent = ({
 
   const hasUnavaiableAssets =
     item.bookingAssets.some(
-      (ba) => !ba.asset.availableToBook || hasCustody(ba.asset.custody)
+      (ba) => !ba.asset.availableToBook || hasCustody(ba.asset.custody),
     ) && !["COMPLETE", "CANCELLED", "ARCHIVED"].includes(item.status);
 
   /**

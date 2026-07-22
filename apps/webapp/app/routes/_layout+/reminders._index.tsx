@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { data } from "react-router";
 import type {
   MetaFunction,
@@ -7,6 +8,8 @@ import type {
 import RemindersTable from "~/components/asset-reminder/reminders-table";
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getPaginatedAndFilterableReminders } from "~/modules/asset-reminder/service.server";
 import { resolveRemindersActions } from "~/modules/asset-reminder/utils.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -86,18 +89,27 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: appendToMetaTitle(data?.header.title) },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.reminders) }];
+};
 
 export default function Reminders() {
+  const { t } = useTranslation();
+
   return (
     <>
       <Header
+        title={t("reminders.title")}
         subHeading={
           <>
-            To create a new reminder, navigate to the asset of your choice and
-            use <b>{"Actions > Set Reminder"}</b>
+            {t("reminders.subHeadingPrefix")}{" "}
+            <b>{t("reminders.subHeadingAction")}</b>
           </>
         }
       />

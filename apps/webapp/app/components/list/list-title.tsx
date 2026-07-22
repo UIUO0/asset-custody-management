@@ -1,5 +1,6 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import {
   clearSelectedBulkItemsAtom,
@@ -10,9 +11,9 @@ import {
 import { ALL_SELECTED_KEY, isSelectingAllItems } from "~/utils/list";
 import { tw } from "~/utils/tw";
 import type { IndexResponse } from ".";
+import type { LoaderData } from "./bulk-actions/bulk-list-header";
 import type { ListItemData } from "./list-item";
 import { Button } from "../shared/button";
-import type { LoaderData } from "./bulk-actions/bulk-list-header";
 
 type ListTitleProps = {
   title?: string;
@@ -51,6 +52,7 @@ export default function ListTitle({
   itemsGetter,
   titleClassName,
 }: ListTitleProps) {
+  const { t } = useTranslation();
   const loaderData = useLoaderData<LoaderData>();
   const {
     totalItems,
@@ -84,10 +86,13 @@ export default function ListTitle({
       <div
         className={tw(
           "text-start text-text-sm font-semibold capitalize text-gray-900",
-          titleClassName
+          titleClassName,
         )}
       >
-        {title || plural}
+        {/* why: `plural` is the loader's model name (`assets`, `bookings`, …),
+            which matches the `nav.*` section labels. Falls back to the raw
+            English plural for any model without a nav entry. */}
+        {title || t(`nav.${plural}`, { defaultValue: plural })}
       </div>
       <div className="h-7">
         {hasBulkActions && hasSelectedItems ? (
@@ -110,7 +115,7 @@ export default function ListTitle({
                   onClick={handleSelectAllItems}
                   variant="block-link"
                 >
-                  Select all {totalItems} entries
+                  {t("list.selectAllEntries", { count: totalItems })}
                 </Button>
               )}
           </div>
@@ -118,12 +123,27 @@ export default function ListTitle({
           <div>
             {perPage < totalItems ? (
               <p>
-                {items.length} {items.length > 1 ? plural : singular}{" "}
-                <span className="text-gray-400">out of {totalItems}</span>
+                {/* why: the model name is a translation key from the loader
+                    (`asset`, `booking`, …). Arabic needs all six CLDR plural
+                    categories, so the count drives the form via i18next. */}
+                {t(`models.${singular}`, {
+                  count: items.length,
+                  defaultValue: `${items.length} ${
+                    items.length > 1 ? plural : singular
+                  }`,
+                })}{" "}
+                <span className="text-gray-400">
+                  {t("list.outOf", { total: totalItems })}
+                </span>
               </p>
             ) : (
               <span>
-                {totalItems} {items.length > 1 ? plural : singular}
+                {t(`models.${singular}`, {
+                  count: totalItems,
+                  defaultValue: `${totalItems} ${
+                    items.length > 1 ? plural : singular
+                  }`,
+                })}
               </span>
             )}
           </div>

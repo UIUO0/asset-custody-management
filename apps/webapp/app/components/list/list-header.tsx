@@ -6,6 +6,7 @@ import {
   PopoverPortal,
   PopoverContent,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useAssetIndexFreezeColumn } from "~/hooks/use-asset-index-freeze-column";
 import { useAssetIndexShowImage } from "~/hooks/use-asset-index-show-image";
@@ -34,6 +35,7 @@ export const ListHeader = ({
   className,
 }: ListHeaderProps) => {
   const { modeIsAdvanced } = useAssetIndexViewState();
+  const { t } = useTranslation();
   const freezeColumn = useAssetIndexFreezeColumn();
   const { originalHeaderRef } = useStickyHeaderPortal();
 
@@ -50,18 +52,18 @@ export const ListHeader = ({
 
               modeIsAdvanced && freezeColumn
                 ? freezeColumnClassNames.nameHeader
-                : ""
+                : "",
             )}
             colSpan={children ? 1 : 100}
             data-column-name="name"
           >
             <div
               className={tw(
-                modeIsAdvanced && "flex items-center justify-between"
+                modeIsAdvanced && "flex items-center justify-between",
               )}
             >
               <div className="flex items-center gap-1">
-                Name{" "}
+                {t("list.name")}{" "}
                 {modeIsAdvanced && freezeColumn ? (
                   <span className=" size-4 text-gray-400">
                     <LockIcon />
@@ -75,7 +77,7 @@ export const ListHeader = ({
         {children}
       </tr>
     ),
-    [bulkActions, children, hideFirstColumn, modeIsAdvanced, freezeColumn]
+    [bulkActions, children, hideFirstColumn, modeIsAdvanced, freezeColumn],
   );
 
   return (
@@ -86,10 +88,10 @@ export const ListHeader = ({
           modeIsAdvanced
             ? tw(
                 "sticky top-0 z-10 border-b bg-white",
-                "before:absolute before:inset-x-0 before:bottom-0 before:border-b before:border-gray-200 before:content-['']" // creates a border at the bottom of the header
+                "before:absolute before:inset-x-0 before:bottom-0 before:border-b before:border-gray-200 before:content-['']", // creates a border at the bottom of the header
               )
             : "",
-          className
+          className,
         )}
         ref={originalHeaderRef}
       >
@@ -125,7 +127,7 @@ function AdvancedModeDropdown() {
         <PopoverContent
           align="end"
           className={tw(
-            "z-20 mt-2 w-[200px] rounded-md border border-gray-300 bg-white p-0"
+            "z-20 mt-2 w-[200px] rounded-md border border-gray-300 bg-white p-0",
           )}
         >
           <freezeFetcher.Form

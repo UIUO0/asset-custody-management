@@ -1,9 +1,10 @@
 import type { HTMLAttributes } from "react";
+import { useTranslation } from "react-i18next";
 
 import { tw } from "~/utils/tw";
 
 export function EmptyTableValue({
-  label = "No data",
+  label,
   symbol = "—",
   className,
   ...rest
@@ -11,17 +12,20 @@ export function EmptyTableValue({
   label?: string;
   symbol?: string;
 } & HTMLAttributes<HTMLSpanElement>) {
+  const { t } = useTranslation();
+  /** Localised default — callers may still pass an explicit label. */
+  const resolvedLabel = label ?? t("list.noData");
   return (
     <span
-      aria-label={label}
+      aria-label={resolvedLabel}
       className={tw(
         "inline-flex items-center text-sm text-gray-400",
-        className
+        className,
       )}
       {...rest}
     >
       <span aria-hidden="true">{symbol}</span>
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{resolvedLabel}</span>
     </span>
   );
 }

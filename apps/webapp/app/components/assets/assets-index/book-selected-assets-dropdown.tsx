@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { ChevronRightIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { BulkUpdateDialogTrigger } from "~/components/bulk-update-dialog/bulk-update-dialog";
@@ -51,23 +52,24 @@ function ConditionalActionsDropdown() {
     defaultOpen,
     setOpen,
   } = useControlledDropdownMenu();
+  const { t } = useTranslation();
   const organization = useCurrentOrganization();
   const selectedAssets = useAtomValue(selectedBulkItemsAtom);
   const { roles } = useUserRoleHelper();
 
   const allSelected = isSelectingAllItems(selectedAssets);
-  const buttonTitle = `Book selection ${
+  const buttonTitle = `${t("list.bookSelection")} ${
     !selectedAssets.length
       ? ""
       : allSelected
-      ? "(All)"
+      ? t("list.allParens")
       : `(${selectedAssets.length})`
   }`;
 
   const disabledReason = useMemo(() => {
     // Filter out the ALL_SELECTED_KEY marker which is not a real asset
     const realAssets = selectedAssets.filter(
-      (asset) => asset.id !== ALL_SELECTED_KEY
+      (asset) => asset.id !== ALL_SELECTED_KEY,
     );
 
     /** If any asset is part of a kit. */
@@ -81,7 +83,7 @@ function ConditionalActionsDropdown() {
 
     /** If any asset is marked as unavailable. */
     const someAssetsMarkedUnavailable = realAssets.some(
-      (asset) => !asset.availableToBook
+      (asset) => !asset.availableToBook,
     );
     if (someAssetsMarkedUnavailable) {
       return { reason: "Some of the assets are marked as unavailable." };
@@ -108,7 +110,7 @@ function ConditionalActionsDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}

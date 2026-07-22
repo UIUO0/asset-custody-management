@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { ChevronRight } from "~/components/icons/library";
 import { useSidebar } from "~/components/layout/sidebar/sidebar";
@@ -19,6 +20,7 @@ import { ButtonGroup } from "../../shared/button-group";
 
 export function AssetIndexPagination() {
   const { roles } = useUserRoleHelper();
+  const { t } = useTranslation();
   const fetcher = useFetcher({ key: "asset-index-settings-mode" });
   const { isMd } = useViewportHeight();
   const { state } = useSidebar();
@@ -29,7 +31,7 @@ export function AssetIndexPagination() {
 
   function handleScrollToTop() {
     let target: Element | Window | null = document.querySelector(
-      modeIsSimple ? "main" : ".list-table-wrapper"
+      modeIsSimple ? "main" : ".list-table-wrapper",
     );
 
     if (!target) {
@@ -47,7 +49,7 @@ export function AssetIndexPagination() {
       className={tw(
         "asset-index-pagination flex flex-col items-center justify-between border-t border-gray-200 bg-white transition-all delay-75 ease-in-out md:flex-row",
         isMd ? "fixed bottom-0 right-0 z-[12]" : "",
-        state === "collapsed" ? "lg:left-[48px]" : "lg:left-[256px]"
+        state === "collapsed" ? "lg:left-[48px]" : "lg:left-[256px]",
       )}
     >
       <Pagination className="px-4 py-[6px]" />
@@ -88,26 +90,26 @@ export function AssetIndexPagination() {
                   variant="secondary"
                   className={tw(
                     "h-[34px]",
-                    modeIsSimple ? disabledButtonStyles : ""
+                    modeIsSimple ? disabledButtonStyles : "",
                   )}
                   name="mode"
                   value="SIMPLE"
                   aria-label="Switch to simple mode"
                 >
-                  Simple
+                  {t("list.simple")}
                 </Button>
                 <Button
                   type="submit"
                   variant="secondary"
                   className={tw(
                     "h-[34px]",
-                    modeIsAdvanced ? disabledButtonStyles : ""
+                    modeIsAdvanced ? disabledButtonStyles : "",
                   )}
                   name="mode"
                   value="ADVANCED"
                   aria-label="Switch to advanced mode"
                 >
-                  Advanced
+                  {t("list.advanced")}
                 </Button>
               </ButtonGroup>
             </fetcher.Form>

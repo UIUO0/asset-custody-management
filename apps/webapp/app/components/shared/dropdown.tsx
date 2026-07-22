@@ -34,7 +34,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   }
 >(function DropdownMenuSubTrigger(
   { className, inset, children, ...props },
-  ref
+  ref,
 ) {
   return (
     <DropdownMenuPrimitive.SubTrigger
@@ -42,7 +42,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
       className={tw(
         "flex cursor-default select-none items-center rounded p-2 text-sm font-medium outline-none data-[state=open]:bg-gray-100 focus:bg-gray-100 ",
         inset && "ps-8",
-        className
+        className,
       )}
       {...props}
     >
@@ -61,7 +61,7 @@ const DropdownMenuSubContent = React.forwardRef<
       ref={ref}
       className={tw(
         "z-50 min-w-32 overflow-hidden rounded border border-slate-100 bg-white shadow-md animate-in  slide-in-from-left-1 ",
-        className
+        className,
       )}
       {...props}
     />
@@ -75,7 +75,7 @@ const DropdownMenuContent = React.forwardRef<
   }
 >(function DropdownMenuContent(
   { className, sideOffset = 4, portalContainer, ...props },
-  ref
+  ref,
 ) {
   return (
     <DropdownMenuPrimitive.Portal container={portalContainer}>
@@ -84,7 +84,7 @@ const DropdownMenuContent = React.forwardRef<
         sideOffset={sideOffset}
         className={tw(
           " z-50 min-w-32 overflow-hidden rounded border border-gray-300 bg-white p-3 shadow-md animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2  data-[side=top]:slide-in-from-bottom-2",
-          className
+          className,
         )}
         {...props}
       />
@@ -99,7 +99,7 @@ const DropdownMenuItem = React.forwardRef<
   }
 >(function DropdownMenuItem(
   { className, inset, disabled = false, ...props },
-  ref
+  ref,
 ) {
   return (
     <DropdownMenuPrimitive.Item
@@ -108,7 +108,7 @@ const DropdownMenuItem = React.forwardRef<
         "relative flex cursor-default select-none items-center px-2 py-1.5 text-sm font-medium outline-none  focus:bg-slate-100 ",
         inset && "ps-8",
         disabled && "pointer-events-none cursor-not-allowed opacity-50",
-        className
+        className,
       )}
       {...props}
     />
@@ -120,14 +120,14 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
 >(function DropdownMenuCheckboxItem(
   { className, children, checked, ...props },
-  ref
+  ref,
 ) {
   return (
     <DropdownMenuPrimitive.CheckboxItem
       ref={ref}
       className={tw(
         "relative flex cursor-default select-none items-center rounded px-2 py-1.5 text-sm font-medium outline-none  focus:bg-slate-100 ",
-        className
+        className,
       )}
       checked={checked}
       {...props}
@@ -150,8 +150,8 @@ const DropdownMenuRadioItem = React.forwardRef<
     <DropdownMenuPrimitive.RadioItem
       ref={ref}
       className={tw(
-        "relative flex cursor-default select-none items-center rounded-[4px] py-1.5 ps-8 pe-2 text-sm font-medium outline-none  focus:bg-slate-100",
-        className
+        "relative flex cursor-default select-none items-center rounded-[4px] py-1.5 pe-2 ps-8 text-sm font-medium outline-none  focus:bg-slate-100",
+        className,
       )}
       {...props}
     >
@@ -177,7 +177,7 @@ const DropdownMenuLabel = React.forwardRef<
       className={tw(
         "px-2 py-1.5 text-sm font-semibold ",
         inset && "ps-8",
-        className
+        className,
       )}
       {...props}
     />

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Link, Outlet } from "react-router";
 import { ErrorContent } from "~/components/errors";
@@ -24,8 +25,19 @@ export function shouldRevalidate({
   return defaultShouldRevalidate;
 }
 
+/**
+ * Breadcrumb link for the assets section.
+ *
+ * A component (not an inline arrow in `handle`) so it can legally call the
+ * translation hook — `handle.breadcrumb` is rendered as JSX by the layout.
+ */
+function AssetsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/assets">{t("nav.assets")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/assets">Assets</Link>,
+  breadcrumb: () => <AssetsBreadcrumb />,
 };
 
 export default function AssetsPage() {

@@ -45,10 +45,10 @@ export default function BulkListItemCheckbox({
   // See helper JSDoc in ~/atoms/list for the multi-slice rationale.
   const itemKey = bulkSelectionKey(item);
   const disabled = disabledBulkItems.some(
-    (i) => bulkSelectionKey(i) === itemKey
+    (i) => bulkSelectionKey(i) === itemKey,
   );
   const checked = !!selectedBulkItems.find(
-    (i) => bulkSelectionKey(i) === itemKey
+    (i) => bulkSelectionKey(i) === itemKey,
   );
 
   function handleBulkItemSelection(e: MouseEvent<HTMLTableCellElement>) {
@@ -60,7 +60,7 @@ export default function BulkListItemCheckbox({
       const itemsToSet = [...bulkItems, item];
       const itemsToSetKeys = new Set(itemsToSet.map(bulkSelectionKey));
       const itemsExists = selectedBulkItems.some((selItem) =>
-        itemsToSetKeys.has(bulkSelectionKey(selItem))
+        itemsToSetKeys.has(bulkSelectionKey(selItem)),
       );
 
       /** If the selected items already exists, then remove them */
@@ -77,10 +77,10 @@ export default function BulkListItemCheckbox({
   return (
     <Td
       className={tw(
-        "md:ps-4 md:pe-3",
+        "md:pe-3 md:ps-4",
         modeIsAdvanced && freezeColumn ? freezeColumnClassNames.checkbox : "",
         disabled ? "cursor-not-allowed" : "",
-        className
+        className,
       )}
       onClick={handleBulkItemSelection}
     >
@@ -89,7 +89,7 @@ export default function BulkListItemCheckbox({
           className={tw(
             "overflow-visible text-static-white",
             checked ? "text-primary" : "",
-            disabled ? "text-gray-200" : ""
+            disabled ? "text-gray-200" : "",
           )}
           checked={checked}
         />

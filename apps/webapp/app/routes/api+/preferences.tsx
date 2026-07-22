@@ -1,9 +1,9 @@
 /**
- * Appearance preferences endpoint — language and theme.
+ * Appearance preferences endpoint — language.
  *
- * Both switchers post here. The preference is stored in a readable cookie so
- * the server can render `<html lang/dir/class>` correctly on the next request
- * (and the inline no-flash script can read it before first paint).
+ * The language switcher posts here. The preference is stored in a readable
+ * cookie so the server can render `<html lang/dir>` correctly on the next
+ * request. Dark mode is removed EPDA-wide, so no theme is handled here.
  *
  * Deliberately unauthenticated: the payload is a display preference tied to
  * the browser, not to a user record, so it must also work on the login screen
@@ -11,7 +11,6 @@
  * attacker can only set their own cookie to one of a few harmless constants.
  *
  * @see {@link file://./../../i18n/i18n.server.ts} — locale cookie serialisation
- * @see {@link file://./../../utils/theme.ts} — theme cookie serialisation
  * @see {@link file://./../../components/layout/appearance-switcher.tsx} — the UI
  */
 
@@ -21,24 +20,18 @@ import { parseLocale } from "~/i18n/config";
 import { serializeLocaleCookie } from "~/i18n/i18n.server";
 import { makeShelfError } from "~/utils/error";
 import { error, safeRedirect } from "~/utils/http.server";
-import { parseThemePreference, serializeThemeCookie } from "~/utils/theme";
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
     const formData = await request.formData();
 
+    // why: dark mode is removed EPDA-wide — this endpoint only handles the
+    // locale now; the theme form field is ignored if ever posted.
     const locale = parseLocale(String(formData.get("locale") ?? ""));
-    const theme = parseThemePreference(String(formData.get("theme") ?? ""));
     const redirectTo = formData.get("redirectTo");
 
-    const cookies: string[] = [];
-    if (locale) cookies.push(serializeLocaleCookie(locale));
-    if (theme) cookies.push(serializeThemeCookie(theme));
-
     const headers = new Headers();
-    for (const cookie of cookies) {
-      headers.append("Set-Cookie", cookie);
-    }
+    if (locale) headers.append("Set-Cookie", serializeLocaleCookie(locale));
 
     /**
      * A full redirect (rather than returning JSON) is intentional: changing

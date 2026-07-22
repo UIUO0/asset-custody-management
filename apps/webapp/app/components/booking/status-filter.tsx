@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useSearchParams } from "~/hooks/search-params";
 import { isFormProcessing } from "~/utils/form";
@@ -34,6 +35,7 @@ type StatusFilterProps =
 
 export function StatusFilter(props: StatusFilterProps) {
   const { statusItems, name = "status", defaultValue, onValueChange } = props;
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,10 +74,10 @@ export function StatusFilter(props: StatusFilterProps) {
         disabled={disabled}
       >
         <SelectTrigger
-          aria-label="Filter by status"
+          aria-label={t("list.filterByStatus")}
           className="mt-2 px-3.5 py-2 text-start text-base text-gray-500 md:mt-0 md:max-w-fit"
         >
-          <SelectValue placeholder="Filter by status" />
+          <SelectValue placeholder={t("list.filterByStatus")} />
         </SelectTrigger>
         <SelectContent
           position="popper"
@@ -89,8 +91,11 @@ export function StatusFilter(props: StatusFilterProps) {
                 key={value}
                 className="rounded-none border-b border-gray-200 px-6 py-4 pe-[5px]"
               >
-                <span className="me-4 block text-[14px] lowercase text-gray-700 first-letter:uppercase">
-                  {value.split("_").join(" ")}
+                {/* why: enum values are translated via the `status`
+                    namespace; the humanised enum is the fallback so a
+                    status added later still renders readably. */}
+                <span className="me-4 block text-[14px] text-gray-700">
+                  {t(`status.${value}`, value.split("_").join(" "))}
                 </span>
               </SelectItem>
             ))}

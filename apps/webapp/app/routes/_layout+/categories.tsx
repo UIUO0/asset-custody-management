@@ -1,4 +1,5 @@
 import type { Category } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -19,6 +20,8 @@ import { Badge } from "~/components/shared/badge";
 import { Button } from "~/components/shared/button";
 import { Th, Td } from "~/components/table";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   deleteCategory,
   getCategories,
@@ -93,7 +96,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -101,9 +104,15 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.categories) }];
+};
 
 export async function action({ context, request }: ActionFunctionArgs) {
   const authSession = context.getSession();
@@ -124,7 +133,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       }),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     await deleteCategory({ id, organizationId });
@@ -143,24 +152,31 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb link for the categories section (component so it can use the hook). */
+function CategoriesBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/categories">{t("nav.categories")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/categories">Categories</Link>,
+  breadcrumb: () => <CategoriesBreadcrumb />,
 };
 export const ErrorBoundary = () => <ErrorContent />;
 
 export default function CategoriesPage() {
+  const { t } = useTranslation();
   const { isBaseOrSelfService } = useUserRoleHelper();
 
   return (
     <>
-      <Header>
+      <Header title={t("nav.categories")}>
         <Button
           to="new"
           role="link"
           aria-label={`new category`}
           data-test-id="createNewCategory"
         >
-          New category
+          {t("categories.newCategory")}
         </Button>
       </Header>
       <ListContentWrapper>
@@ -171,17 +187,17 @@ export default function CategoriesPage() {
             isBaseOrSelfService ? undefined : <BulkActionsDropdown />
           }
           customEmptyStateContent={{
-            title: "No categories yet",
-            text: "Categories help you organize assets by type. Create categories to group and filter your inventory.",
+            title: t("categories.emptyTitle"),
+            text: t("categories.emptyText"),
             newButtonRoute: "/categories/new",
-            newButtonContent: "Create your first category",
+            newButtonContent: t("categories.emptyCta"),
           }}
           ItemComponent={CategoryItem}
           headerChildren={
             <>
-              <Th>Description</Th>
-              <Th>Assets</Th>
-              <Th>Actions</Th>
+              <Th>{t("assets.description")}</Th>
+              <Th>{t("nav.assets")}</Th>
+              <Th>{t("list.actions")}</Th>
             </>
           }
         />

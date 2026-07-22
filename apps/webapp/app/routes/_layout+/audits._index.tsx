@@ -1,5 +1,6 @@
 import type { AuditStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { DescriptionColumn } from "~/components/assets/assets-index/advanced-asset-columns";
@@ -19,6 +20,8 @@ import { DateS } from "~/components/shared/date";
 import { EmptyTableValue } from "~/components/shared/empty-table-value";
 import { UserBadge } from "~/components/shared/user-badge";
 import { Td, Th } from "~/components/table";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import type { AUDIT_LIST_INCLUDE } from "~/modules/audit/service.server";
 import { getAuditsForOrganization } from "~/modules/audit/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -36,12 +39,6 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 import { resolveUserDisplayName } from "~/utils/user";
-
-const AUDIT_SORTING_OPTIONS = {
-  name: "Name",
-  createdAt: "Creation Date",
-  dueDate: "Due date",
-} as const;
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -113,7 +110,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -121,18 +118,34 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.audits) }];
+};
 
 /** Loader data type re-exported for child components (e.g. bulk archive dialog). */
 export type AuditsIndexLoaderData = typeof loader;
 
 export default function AuditsIndexPage() {
+  const { t } = useTranslation();
   const { isSelfServiceOrBase } = useLoaderData<typeof loader>();
+
+  /** Sorting labels follow the active locale; keys stay the DB columns. */
+  const sortingOptions = {
+    name: t("list.sortName"),
+    createdAt: t("audits.sortCreationDate"),
+    dueDate: t("audits.dueDate"),
+  };
   return (
     <>
-      <Header>{!isSelfServiceOrBase && <NewAuditInfoDialog />}</Header>
+      <Header title={t("nav.audits")}>
+        {!isSelfServiceOrBase && <NewAuditInfoDialog />}
+      </Header>
       <ListContentWrapper>
         <Filters
           slots={{
@@ -149,7 +162,7 @@ export default function AuditsIndexPage() {
             ),
             "right-of-search": (
               <SortBy
-                sortingOptions={AUDIT_SORTING_OPTIONS}
+                sortingOptions={sortingOptions}
                 defaultSortingBy="createdAt"
                 defaultSortingDirection="desc"
               />
@@ -163,18 +176,18 @@ export default function AuditsIndexPage() {
           ItemComponent={ListItemContent}
           headerChildren={
             <>
-              <Th>Status</Th>
-              <Th>Description</Th>
-              <Th>Created by</Th>
-              <Th>Assignee</Th>
-              <Th className="whitespace-nowrap">Due date</Th>
-              <Th>Created</Th>
-              <Th>Started</Th>
-              <Th>Completed</Th>
-              <Th className="text-end">Expected</Th>
-              <Th className="text-end">Found</Th>
-              <Th className="text-end">Missing</Th>
-              <Th className="text-end">Unexpected</Th>
+              <Th>{t("assets.status")}</Th>
+              <Th>{t("assets.description")}</Th>
+              <Th>{t("audits.createdBy")}</Th>
+              <Th>{t("audits.assignee")}</Th>
+              <Th className="whitespace-nowrap">{t("audits.dueDate")}</Th>
+              <Th>{t("audits.created")}</Th>
+              <Th>{t("audits.started")}</Th>
+              <Th>{t("audits.completed")}</Th>
+              <Th className="text-end">{t("audits.expected")}</Th>
+              <Th className="text-end">{t("audits.found")}</Th>
+              <Th className="text-end">{t("audits.missing")}</Th>
+              <Th className="text-end">{t("audits.unexpected")}</Th>
             </>
           }
         />

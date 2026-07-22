@@ -1,5 +1,6 @@
 import { BookingStatus } from "@prisma/client";
 import { ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useMatches } from "react-router";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
@@ -13,12 +14,6 @@ import { Filters } from "../list/filters";
 import { SortBy } from "../list/filters/sort-by";
 import When from "../when/when";
 
-const BOOKING_SORTING_OPTIONS = {
-  from: "From Date",
-  to: "To Date",
-  name: "Name",
-} as const;
-
 type BookingFiltersProps = {
   className?: string;
   hideSortBy?: boolean;
@@ -28,7 +23,15 @@ export default function BookingFilters({
   className,
   hideSortBy = false,
 }: BookingFiltersProps) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
+
+  /** Sorting labels follow the active locale; keys stay the DB columns. */
+  const sortingOptions = {
+    from: t("bookings.sortFromDate"),
+    to: t("bookings.sortToDate"),
+    name: t("list.sortName"),
+  };
   const organization = useCurrentOrganization();
   const matches = useMatches();
 
@@ -43,7 +46,7 @@ export default function BookingFilters({
     canSeeAllCustody &&
     !["$userId.bookings", "me.bookings"].includes(
       // on the user bookings page we dont want to show the custodian filter becuase they are alreayd filtered for that user
-      currentRoute?.handle?.name
+      currentRoute?.handle?.name,
     );
 
   return (
@@ -53,7 +56,7 @@ export default function BookingFilters({
         "left-of-search": <StatusFilter statusItems={BookingStatus} />,
         "right-of-search": hideSortBy ? null : (
           <SortBy
-            sortingOptions={BOOKING_SORTING_OPTIONS}
+            sortingOptions={sortingOptions}
             defaultSortingBy="from"
             defaultSortingDirection="asc"
           />
@@ -64,7 +67,8 @@ export default function BookingFilters({
         <DynamicDropdown
           trigger={
             <div className="my-2 flex cursor-pointer items-center gap-2 md:my-0">
-              Custodian <ChevronRight className="hidden rotate-90 md:inline" />
+              {t("assets.custodian")}{" "}
+              <ChevronRight className="hidden rotate-90 md:inline" />
             </div>
           }
           model={{
@@ -73,8 +77,8 @@ export default function BookingFilters({
             deletedAt: null,
           }}
           renderItem={(item) => resolveTeamMemberName(item, true)}
-          label="Filter by custodian"
-          placeholder="Search team members"
+          label={t("list.filterByCustodian")}
+          placeholder={t("list.searchTeamMembers")}
           initialDataKey="teamMembers"
           countKey="totalTeamMembers"
         />
@@ -83,16 +87,17 @@ export default function BookingFilters({
       <DynamicDropdown
         trigger={
           <div className="flex cursor-pointer items-center gap-2">
-            Tags <ChevronRight className="hidden rotate-90 md:inline" />
+            {t("assets.tags")}{" "}
+            <ChevronRight className="hidden rotate-90 md:inline" />
           </div>
         }
         model={{ name: "tag", queryKey: "name" }}
-        label="Filter by tag"
+        label={t("list.filterByTag")}
         initialDataKey="tags"
         countKey="totalTags"
         withoutValueItem={{
           id: "untagged",
-          name: "Without tag",
+          name: t("list.withoutTag"),
         }}
       />
     </Filters>

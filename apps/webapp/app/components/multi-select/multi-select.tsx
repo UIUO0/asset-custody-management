@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import omit from "lodash/omit";
 import { InfoIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ReactTags } from "react-tag-autocomplete";
 import type { Tag } from "react-tag-autocomplete";
 import { tw } from "~/utils/tw";
@@ -39,6 +40,7 @@ export default function MultiSelect<T>({
   hideLabel = false,
   required = false,
 }: MultiSelectProps<T>) {
+  const { t } = useTranslation();
   /* This is a workaround for the SSR issue with react-tag-autocomplete */
   if (typeof document === "undefined") {
     React.useLayoutEffect = React.useEffect;
@@ -50,7 +52,7 @@ export default function MultiSelect<T>({
           label: item[labelKey] as string,
           value: item[valueKey] as string,
         }))
-      : []
+      : [],
   );
 
   const suggestions = useMemo(
@@ -59,21 +61,21 @@ export default function MultiSelect<T>({
         label: item[labelKey] as string,
         value: item[valueKey] as string,
       })),
-    [items, labelKey, valueKey]
+    [items, labelKey, valueKey],
   );
 
   const onAdd = useCallback(
     (newTag: Tag) => {
       setSelected([...selected, newTag]);
     },
-    [selected]
+    [selected],
   );
 
   const onDelete = useCallback(
     (tagIndex: number) => {
       setSelected(selected.filter((_, i) => i !== tagIndex));
     },
-    [selected]
+    [selected],
   );
 
   return (
@@ -107,7 +109,7 @@ export default function MultiSelect<T>({
 
         <ReactTags
           isDisabled={disabled}
-          labelText={`Select ${label}`}
+          labelText={t("assetForm.selectPlaceholder", { name: label })}
           selected={selected}
           suggestions={suggestions}
           onAdd={onAdd}
@@ -121,7 +123,7 @@ export default function MultiSelect<T>({
                 "relative w-full max-w-full rounded border border-gray-300 text-base text-gray-900 shadow outline-none placeholder:text-gray-900 focus:border-primary-300 focus:ring-0",
                 isDisabled &&
                   "cursor-not-allowed border-gray-300 bg-gray-50 placeholder:text-gray-300",
-                selected.length === 0 ? "px-3.5 py-2" : "px-3.5 py-1.5"
+                selected.length === 0 ? "px-3.5 py-2" : "px-3.5 py-1.5",
               )}
             >
               {children}

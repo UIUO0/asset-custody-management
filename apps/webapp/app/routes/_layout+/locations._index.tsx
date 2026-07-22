@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
 import ImageWithPreview from "~/components/image-with-preview/image-with-preview";
@@ -16,9 +17,10 @@ import LocationQuickActions from "~/components/location/location-quick-actions";
 import { Button } from "~/components/shared/button";
 import { Td, Th } from "~/components/table";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import type { LOCATION_LIST_INCLUDE } from "~/modules/location/service.server";
 import { getLocations } from "~/modules/location/service.server";
-import { LOCATION_SORTING_OPTIONS } from "~/modules/location/utils";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import {
   setCookie,
@@ -85,7 +87,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -93,23 +95,38 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React, so the locale is read from the root
+  // loader and the heading comes straight from the resource bundles.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.locations) }];
+};
 
 export default function LocationsIndexPage() {
+  const { t } = useTranslation();
   const { isBaseOrSelfService } = useUserRoleHelper();
+
+  /** Sorting labels follow the active locale; keys stay the DB columns. */
+  const sortingOptions = {
+    createdAt: t("list.sortDateCreated"),
+    name: t("list.sortName"),
+    assets: t("locations.sortNumberOfAssets"),
+  };
 
   return (
     <>
-      <Header>
+      <Header title={t("nav.locations")}>
         <Button
           to="new"
           role="link"
           aria-label={`new location`}
           data-test-id="createNewLocation"
         >
-          New location
+          {t("locations.newLocation")}
         </Button>
       </Header>
       <ListContentWrapper>
@@ -117,7 +134,7 @@ export default function LocationsIndexPage() {
           slots={{
             "right-of-search": (
               <SortBy
-                sortingOptions={LOCATION_SORTING_OPTIONS}
+                sortingOptions={sortingOptions}
                 defaultSortingBy="createdAt"
                 defaultSortingDirection="desc"
               />
@@ -129,20 +146,22 @@ export default function LocationsIndexPage() {
             isBaseOrSelfService ? undefined : <BulkActionsDropdown />
           }
           customEmptyStateContent={{
-            title: "No locations yet",
-            text: "Locations help you track where your assets are. Create locations to organize assets by room, building, or site.",
+            title: t("locations.emptyTitle"),
+            text: t("locations.emptyText"),
             newButtonRoute: "/locations/new",
-            newButtonContent: "Create your first location",
+            newButtonContent: t("locations.emptyCta"),
           }}
           ItemComponent={ListItemContent}
           headerChildren={
             <>
-              <Th>Description</Th>
-              <Th>Parent location</Th>
-              <Th className="whitespace-nowrap">Child locations</Th>
-              <Th>Assets</Th>
-              <Th>Kits</Th>
-              <Th>Actions</Th>
+              <Th>{t("assets.description")}</Th>
+              <Th>{t("locations.parentLocation")}</Th>
+              <Th className="whitespace-nowrap">
+                {t("locations.childLocations")}
+              </Th>
+              <Th>{t("nav.assets")}</Th>
+              <Th>{t("nav.kits")}</Th>
+              <Th>{t("list.actions")}</Th>
             </>
           }
         />

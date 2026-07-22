@@ -38,7 +38,7 @@ initEnv();
 
 export const getLoadContext: HonoServerOptions<ServerEnv>["getLoadContext"] = (
   c,
-  { build, mode }
+  { build, mode },
 ) => {
   const session = getSession<SessionData, FlashData>(c);
 
@@ -107,7 +107,7 @@ export default createHonoServer<ServerEnv>({
 
     // Store the X-Tab-Id header so sendNotification() can tag toasts per tab.
     server.use("*", async (c, next) =>
-      runWithTabId(c.req.header("X-Tab-Id"), () => next())
+      runWithTabId(c.req.header("X-Tab-Id"), () => next()),
     );
 
     // Apply URL shortener middleware only when host matches
@@ -164,7 +164,7 @@ export default createHonoServer<ServerEnv>({
             },
           };
         },
-      })
+      }),
     );
 
     /**
@@ -234,6 +234,11 @@ export default createHonoServer<ServerEnv>({
           "/api/public-stats",
           "/api/oss-friends",
           "/api/stripe-webhook",
+          // why: appearance preferences (locale/theme cookie) are deliberately
+          // unauthenticated — the switchers must work on the login screen
+          // before a session exists. The action only sets enum-validated
+          // cookies. See app/routes/api+/preferences.tsx.
+          "/api/preferences",
           "/qr",
           "/qr/:qrId",
           "/qr/:qrId/not-logged-in",
@@ -245,7 +250,7 @@ export default createHonoServer<ServerEnv>({
           // stay OUT of this prefix.
           "/api/calendar/feed/*path",
         ],
-      })
+      }),
     );
   },
 });

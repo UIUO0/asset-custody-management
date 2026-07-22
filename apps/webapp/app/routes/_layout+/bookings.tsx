@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Link, Outlet } from "react-router";
 import { ErrorContent } from "~/components/errors";
@@ -25,8 +26,14 @@ export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
   return skipRevalidationOnClientViewChange(args);
 }
 
+/** Breadcrumb link for the bookings section (component so it can use the hook). */
+function BookingsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/bookings">{t("nav.bookings")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/bookings">Bookings</Link>,
+  breadcrumb: () => <BookingsBreadcrumb />,
 };
 
 export default function BookingsPage() {

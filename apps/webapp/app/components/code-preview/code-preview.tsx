@@ -3,6 +3,7 @@ import type { CSSProperties, MouseEvent } from "react";
 import type { BarcodeType } from "@prisma/client";
 import { changeDpiDataUrl } from "changedpi";
 import { toPng } from "html-to-image";
+import { useTranslation } from "react-i18next";
 import { useReactToPrint } from "react-to-print";
 import { BarcodeDisplay } from "~/components/barcode/barcode-display";
 import { Button } from "~/components/shared/button";
@@ -127,6 +128,7 @@ export const CodePreview = ({
   sequentialId,
   showShelfBranding,
 }: CodePreviewProps) => {
+  const { t } = useTranslation();
   const captureDivRef = useRef<HTMLImageElement>(null);
   const downloadBtnRef = useRef<HTMLAnchorElement>(null);
   const { canUseBarcodes } = useBarcodePermissions();
@@ -134,7 +136,7 @@ export const CodePreview = ({
   const organization = useCurrentOrganization();
   const resolvedShowShelfBranding = resolveShowShelfBranding(
     showShelfBranding,
-    organization?.showShelfBranding
+    organization?.showShelfBranding,
   );
   const [isAddBarcodeDialogOpen, setIsAddBarcodeDialogOpen] = useState(false);
 
@@ -147,7 +149,7 @@ export const CodePreview = ({
       codes.push({
         id: qrObj.qr.id,
         type: "qr",
-        label: "Shelf QR Code",
+        label: t("assetOverview.qrCode"),
         qrData: {
           size: qrObj.qr.size,
           src: qrObj.qr.src,
@@ -183,7 +185,7 @@ export const CodePreview = ({
     // If a specific barcode is selected, prioritize it
     if (selectedBarcodeId) {
       const selectedBarcode = availableCodes.find(
-        (code) => code.id === selectedBarcodeId
+        (code) => code.id === selectedBarcodeId,
       );
       if (selectedBarcode) {
         return selectedBarcodeId;
@@ -198,7 +200,7 @@ export const CodePreview = ({
   // Notify parent of initial selection (moved to useEffect to avoid render-time side effects)
   useEffect(() => {
     const selectedBarcode = availableCodes.find(
-      (code) => code.id === selectedCodeId
+      (code) => code.id === selectedCodeId,
     );
     if (onCodeChange && selectedBarcode) {
       onCodeChange(selectedBarcode);
@@ -206,13 +208,13 @@ export const CodePreview = ({
   }, [selectedCodeId, availableCodes, onCodeChange]);
 
   const selectedCode = availableCodes.find(
-    (code) => code.id === selectedCodeId
+    (code) => code.id === selectedCodeId,
   );
 
   useEffect(() => {
     // Keep selection in sync when codes change (e.g., new QR after relink)
     const hasSelectedCode = availableCodes.some(
-      (code) => code.id === selectedCodeId
+      (code) => code.id === selectedCodeId,
     );
 
     if (hasSelectedCode) return;
@@ -229,7 +231,7 @@ export const CodePreview = ({
 
     const fallbackQr = availableCodes.find((code) => code.type === "qr");
     const fallbackBarcode = availableCodes.find(
-      (code) => code.type === "barcode"
+      (code) => code.type === "barcode",
     );
     setSelectedCodeId(fallbackQr?.id || fallbackBarcode?.id || "");
   }, [availableCodes, selectedBarcodeId, selectedCodeId]);
@@ -310,13 +312,13 @@ export const CodePreview = ({
             onChange={(e) => {
               setSelectedCodeId(e.target.value);
               const newSelectedCode = availableCodes.find(
-                (code) => code.id === e.target.value
+                (code) => code.id === e.target.value,
               );
               onCodeChange?.(newSelectedCode || null);
             }}
             className={tw(
               "min-w-0  flex-1 truncate rounded-md border border-gray-300 bg-white px-3 py-2 pe-7 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
-              isBaseOrSelfService ? "max-w-[320px]" : "max-w-[280px]"
+              isBaseOrSelfService ? "max-w-[320px]" : "max-w-[280px]",
             )}
           >
             {availableCodes.map((code) => (
@@ -396,7 +398,7 @@ export const CodePreview = ({
             variant="secondary"
             className="w-full"
           >
-            Download
+            {t("assetOverview.download")}
           </Button>
           <Button
             type="button"
@@ -405,7 +407,7 @@ export const CodePreview = ({
             className="w-full"
             onClick={printCode}
           >
-            Print
+            {t("assetOverview.print")}
           </Button>
         </div>
       </When>
@@ -460,16 +462,10 @@ export const QrLabel = React.forwardRef<HTMLDivElement, QrLabelProps>(
               ? sequentialId
               : data?.qr?.id}
           </div>
-          {showShelfBranding ? (
-            <div>
-              Powered by{" "}
-              <span className="font-semibold text-black">shelf.nu</span>
-            </div>
-          ) : null}
         </div>
       </div>
     );
-  }
+  },
 );
 
 // Barcode Label Component (new)
@@ -513,14 +509,8 @@ export const BarcodeLabel = React.forwardRef<HTMLDivElement, BarcodeLabelProps>(
               )}
             </div>
           </div>
-          {showShelfBranding ? (
-            <div>
-              Powered by{" "}
-              <span className="font-semibold text-black">shelf.nu</span>
-            </div>
-          ) : null}
         </div>
       </div>
     );
-  }
+  },
 );

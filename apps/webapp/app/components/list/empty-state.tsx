@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 
 import { useSearchParams } from "~/hooks/search-params";
@@ -27,6 +28,7 @@ export const EmptyState = ({
   customContent,
   modelName,
 }: CustomEmptyState) => {
+  const { t } = useTranslation();
   const {
     search,
     modelName: modelNameData,
@@ -42,19 +44,27 @@ export const EmptyState = ({
   const hasSearch = !!search;
   const isFiltered = hasSearch || !!hasActiveFilters;
 
+  /** Bare nouns for sentence composition — see the `entities` namespace. */
+  const pluralLabel = t(`entities.${singular}_plural`, {
+    defaultValue: plural,
+  });
+  const singularLabel = t(`entities.${singular}_singular`, {
+    defaultValue: singular,
+  });
+
   const filteredTexts = hasSearch
     ? {
-        title: `No ${plural} found`,
-        p: `Your search for "${search}" did not match any ${plural} in the database.`,
+        title: t("emptyState.noneFound"),
+        p: t("emptyState.searchNoMatch", { search }),
       }
     : {
-        title: `No ${plural} found`,
-        p: `No ${plural} match the applied filters. Try adjusting or clearing your filters.`,
+        title: t("emptyState.noneFound"),
+        p: t("emptyState.filtersNoMatch"),
       };
 
   const zeroDataTexts = {
-    title: `No ${plural} on database`,
-    p: `What are you waiting for? Create your first ${singular} now!`,
+    title: t("emptyState.noneOnDatabase", { name: pluralLabel }),
+    p: t("emptyState.createFirst", { singular: singularLabel }),
   };
 
   /** Determine which "clear" button to show */
@@ -71,7 +81,7 @@ export const EmptyState = ({
             setSearchParams(() => new URLSearchParams());
           }}
         >
-          Clear All
+          {t("emptyState.clearAll")}
         </Button>
       );
     }
@@ -89,7 +99,7 @@ export const EmptyState = ({
             });
           }}
         >
-          Clear Search
+          {t("emptyState.clearSearch")}
         </Button>
       );
     }
@@ -111,7 +121,7 @@ export const EmptyState = ({
           });
         }}
       >
-        Clear Filters
+        {t("emptyState.clearFilters")}
       </Button>
     );
   })();
@@ -120,7 +130,7 @@ export const EmptyState = ({
     <div
       className={tw(
         "flex h-full flex-col justify-center gap-[32px] px-4 py-[100px] text-center",
-        className
+        className,
       )}
     >
       <div className="flex flex-col items-center">
@@ -164,7 +174,7 @@ export const EmptyState = ({
               >
                 {customContent?.newButtonContent
                   ? customContent.newButtonContent
-                  : `New ${singular}`}
+                  : t("emptyState.newItem", { name: singularLabel })}
               </Button>
             )}
       </div>

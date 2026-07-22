@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { m } from "framer-motion";
 import { Package } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { useFetcher, useFetchers, useLoaderData } from "react-router";
 import { List, type ListProps } from "~/components/list";
 import { ListContentWrapper } from "~/components/list/content-wrapper";
@@ -60,6 +61,7 @@ export const AssetsList = ({
   disableBulkActions?: boolean;
   wrapperClassName?: string;
 }) => {
+  const { t } = useTranslation();
   const { items } = useLoaderData<AssetIndexLoaderData>();
   // We use the hook because it handles optimistic UI
   const { modeIsSimple } = useAssetIndexViewState();
@@ -80,35 +82,35 @@ export const AssetsList = ({
   const currentOrganization = useCurrentOrganization();
   /** Find the fetcher used for toggling between asset index modes */
   const modeFetcher = fetchers.find(
-    (fetcher) => fetcher.key === "asset-index-settings-mode"
+    (fetcher) => fetcher.key === "asset-index-settings-mode",
   );
   const isSwappingMode = modeFetcher?.formData;
   const headerChildren = modeIsSimple ? (
     <>
-      <Th>Category</Th>
-      <Th>Tags</Th>
+      <Th>{t("assets.category")}</Th>
+      <Th>{t("assets.tags")}</Th>
       <When truthy={!isUserPage}>
         <Th className="flex items-center gap-1 whitespace-nowrap">
-          Custodian{" "}
+          {t("assets.custodian")}{" "}
           <InfoTooltip
             iconClassName="size-4"
             content={
               <>
-                <h6>Asset custody</h6>
+                <h6>{t("assets.custodyTooltipTitle")}</h6>
                 <p>
-                  This column shows if a user has custody of the asset either
-                  via direct assignment or via a booking. If you see{" "}
-                  <GrayBadge>private</GrayBadge> that means you don't have the
-                  permissions to see who has custody of the asset.
+                  <Trans
+                    i18nKey="assets.custodyTooltipBody"
+                    components={{ badge: <GrayBadge /> }}
+                  />
                 </p>
               </>
             }
           />
         </Th>
       </When>
-      <Th>Location</Th>
-      <Th>Quantity</Th>
-      <Th>Actions</Th>
+      <Th>{t("assets.location")}</Th>
+      <Th>{t("assets.quantity")}</Th>
+      <Th>{t("assets.actions")}</Th>
     </>
   ) : (
     <AdvancedTableHeader columns={columns} />
@@ -121,7 +123,7 @@ export const AssetsList = ({
         modeIsSimple ? "gap-4 pb-5 pt-4" : "gap-2 py-2",
         isAvailabilityView ? "pb-3" : "",
         wrapperClassName,
-        isSwappingMode && "overflow-hidden"
+        isSwappingMode && "overflow-hidden",
       )}
     >
       <When truthy={!!isSwappingMode}>
@@ -207,7 +209,7 @@ export const AssetsList = ({
             </>
           ) : (
             <List
-              title="Assets"
+              title={t("nav.assets")}
               ItemComponent={modeIsSimple ? ListAssetContent : AdvancedAssetRow}
               customPagination={<AssetIndexPagination />}
               bulkActions={
@@ -260,7 +262,7 @@ export const ListAssetContent = ({
         <div
           className={tw(
             "flex justify-between gap-3 py-4  md:justify-normal",
-            bulkActions ? "md:ps-0 md:pe-6" : "md:px-6"
+            bulkActions ? "md:pe-6 md:ps-0" : "md:px-6",
           )}
         >
           <div className="flex items-center gap-3">

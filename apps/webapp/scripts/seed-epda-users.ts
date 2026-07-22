@@ -20,16 +20,15 @@
  */
 /* eslint-disable no-console */
 import { OrganizationRoles, Roles } from "@prisma/client";
-import { createClient } from "@supabase/supabase-js";
-
 import { createDatabaseClient } from "@shelf/database";
+import { createClient } from "@supabase/supabase-js";
 
 // Env is injected by dotenv-cli (see the `seed:epda` npm script)
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE, DATABASE_URL } = process.env;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE || !DATABASE_URL) {
   console.error(
-    "Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE / DATABASE_URL in .env"
+    "Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE / DATABASE_URL in .env",
   );
   process.exit(1);
 }
@@ -87,7 +86,9 @@ async function ensureAuthAccount(email: string, password: string) {
   const existing = await db.user.findUnique({ where: { email } });
   if (existing) return existing.id;
 
-  throw new Error(`Failed to create auth account for ${email}: ${error.message}`);
+  throw new Error(
+    `Failed to create auth account for ${email}: ${error.message}`,
+  );
 }
 
 async function main() {

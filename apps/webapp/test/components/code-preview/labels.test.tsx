@@ -7,6 +7,11 @@ vi.mock("lottie-react", () => ({
 
 import { BarcodeLabel, QrLabel } from "~/components/code-preview/code-preview";
 
+// why: the "Powered by shelf.nu" footer was removed from every printed label
+// for the EPDA deployment (branding must not reference shelf.nu — see
+// CLAUDE.md). These tests now assert the footer is absent regardless of the
+// `showShelfBranding` flag, which is retained only for API compatibility.
+
 describe("QrLabel", () => {
   const baseProps = {
     title: "Camera",
@@ -19,23 +24,18 @@ describe("QrLabel", () => {
     },
   } as const;
 
-  it("shows Shelf branding by default", () => {
+  it("never renders shelf.nu branding", () => {
     render(<QrLabel {...(baseProps as any)} />);
 
-    expect(screen.getByText(/Powered by/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Powered by/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/shelf\.nu/i)).not.toBeInTheDocument();
   });
 
-  it("hides Shelf branding when requested", () => {
-    render(
-      <QrLabel
-        {...({
-          ...baseProps,
-          showShelfBranding: false,
-        } as any)}
-      />
-    );
+  it("renders the QR title and id", () => {
+    render(<QrLabel {...(baseProps as any)} />);
 
-    expect(screen.queryByText(/Powered by/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Camera")).toBeInTheDocument();
+    expect(screen.getByText("qr-123")).toBeInTheDocument();
   });
 });
 
@@ -48,22 +48,16 @@ describe("BarcodeLabel", () => {
     },
   } as const;
 
-  it("shows Shelf branding by default", () => {
+  it("never renders shelf.nu branding", () => {
     render(<BarcodeLabel {...(baseProps as any)} />);
 
-    expect(screen.getByText(/Powered by/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Powered by/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/shelf\.nu/i)).not.toBeInTheDocument();
   });
 
-  it("hides Shelf branding when requested", () => {
-    render(
-      <BarcodeLabel
-        {...({
-          ...baseProps,
-          showShelfBranding: false,
-        } as any)}
-      />
-    );
+  it("renders the barcode value", () => {
+    render(<BarcodeLabel {...(baseProps as any)} />);
 
-    expect(screen.queryByText(/Powered by/i)).not.toBeInTheDocument();
+    expect(screen.getByText("1234567890123")).toBeInTheDocument();
   });
 });

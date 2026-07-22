@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Currency } from "@prisma/client";
 import { BarcodeIcon, CheckCircle2Icon, SparklesIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { PriceWithProduct } from "~/components/subscription/prices";
 import { BARCODE_ADDON } from "~/config/addon-copy";
@@ -86,15 +87,19 @@ function UnlockBarcodesModalContent({
   actionFetcher: ReturnType<typeof useFetcher>;
   disabled: boolean;
 }) {
+  const { t } = useTranslation();
+
   return (
     <AlertDialogContent className="max-w-lg">
       <AlertDialogHeader>
         <div className="mb-2 inline-flex size-10 items-center justify-center rounded-full border-[5px] border-solid border-primary-50 bg-primary-100 text-primary">
           <BarcodeIcon className="size-5" />
         </div>
-        <AlertDialogTitle>Unlock {BARCODE_ADDON.label}</AlertDialogTitle>
+        <AlertDialogTitle>
+          {t("addons.unlock", { name: t("addons.barcodeLabel") })}
+        </AlertDialogTitle>
         <AlertDialogDescription>
-          {BARCODE_ADDON.subtitle}
+          {t("addons.barcodeSubtitle")}
         </AlertDialogDescription>
       </AlertDialogHeader>
 
@@ -136,7 +141,7 @@ export function UnlockBarcodesModal({
   triggerVariant = "secondary",
   triggerSize,
   triggerIcon,
-  triggerLabel = "Learn more",
+  triggerLabel,
 }: {
   triggerClassName?: string;
   triggerVariant?: CommonButtonProps["variant"];
@@ -144,6 +149,7 @@ export function UnlockBarcodesModal({
   triggerIcon?: CommonButtonProps["icon"];
   triggerLabel?: string;
 }) {
+  const { t } = useTranslation();
   const state = useBarcodeAddonState();
 
   return (
@@ -156,7 +162,7 @@ export function UnlockBarcodesModal({
           icon={triggerIcon}
           className={triggerClassName}
         >
-          {triggerLabel}
+          {triggerLabel ?? t("common.learnMore")}
         </Button>
       </AlertDialogTrigger>
       <UnlockBarcodesModalContent {...state} />
@@ -166,16 +172,17 @@ export function UnlockBarcodesModal({
 
 /** Inline banner with "Learn more" that opens the unlock modal */
 export function UnlockBarcodesBanner() {
+  const { t } = useTranslation();
   const { isOwner } = useUserRoleHelper();
 
   if (!isOwner) {
     return (
       <div className="rounded border border-gray-200 bg-gray-50 p-4">
         <h4 className="text-sm font-semibold text-gray-900">
-          {BARCODE_ADDON.label}
+          {t("addons.barcodeLabel")}
         </h4>
         <p className="mt-1 text-sm text-gray-600">
-          {BARCODE_ADDON.nonOwnerDescription}
+          {t("addons.barcodeNonOwner")}
         </p>
       </div>
     );
@@ -186,18 +193,21 @@ export function UnlockBarcodesBanner() {
 
 /** Owner-only banner that loads prices and shows the unlock modal */
 function OwnerBarcodesBanner() {
+  const { t } = useTranslation();
   const state = useBarcodeAddonState();
 
   return (
     <div className="rounded border border-gray-200 bg-gray-50 p-4">
       <h4 className="text-sm font-semibold text-gray-900">
-        {BARCODE_ADDON.label}
+        {t("addons.barcodeLabel")}
       </h4>
-      <p className="mt-1 text-sm text-gray-600">{BARCODE_ADDON.description}</p>
+      <p className="mt-1 text-sm text-gray-600">
+        {t("addons.barcodeDescription")}
+      </p>
       <AlertDialog>
         <AlertDialogTrigger asChild>
           <Button type="button" variant="secondary" className="mt-3">
-            Learn more
+            {t("common.learnMore")}
           </Button>
         </AlertDialogTrigger>
         <UnlockBarcodesModalContent {...state} />
@@ -222,7 +232,7 @@ function BarcodeModalPricing({
   disabled: boolean;
 }) {
   const [selectedInterval, setSelectedInterval] = useState<"month" | "year">(
-    "year"
+    "year",
   );
   const [consentChecked, setConsentChecked] = useState(false);
 
@@ -237,7 +247,7 @@ function BarcodeModalPricing({
             (yearlyPrice.unit_amount || 0) /
               12 /
               (monthlyPrice.unit_amount || 1)) *
-            100
+            100,
         )
       : null;
 
@@ -252,7 +262,7 @@ function BarcodeModalPricing({
               "relative flex flex-1 flex-col items-center rounded-lg p-3 text-center transition-colors",
               selectedInterval === "month"
                 ? "border-2 border-primary-200 bg-primary-25"
-                : "border border-gray-200"
+                : "border border-gray-200",
             )}
           >
             <p
@@ -260,7 +270,7 @@ function BarcodeModalPricing({
                 "mb-0.5 text-xs font-medium",
                 selectedInterval === "month"
                   ? "text-primary-600"
-                  : "text-gray-500"
+                  : "text-gray-500",
               )}
             >
               Monthly
@@ -279,7 +289,7 @@ function BarcodeModalPricing({
               "relative flex flex-1 flex-col items-center rounded-lg p-3 text-center transition-colors",
               selectedInterval === "year"
                 ? "border-2 border-primary-200 bg-primary-25"
-                : "border border-gray-200"
+                : "border border-gray-200",
             )}
           >
             {yearlyDiscount != null && yearlyDiscount > 0 && (
@@ -292,7 +302,7 @@ function BarcodeModalPricing({
                 "mb-0.5 text-xs font-medium",
                 selectedInterval === "year"
                   ? "text-primary-600"
-                  : "text-gray-500"
+                  : "text-gray-500",
               )}
             >
               Yearly
@@ -300,7 +310,7 @@ function BarcodeModalPricing({
             <p className="text-lg font-semibold">
               {fmtPrice(
                 Math.round((yearlyPrice.unit_amount || 0) / 12),
-                yearlyPrice.currency
+                yearlyPrice.currency,
               )}
               <span className="text-xs font-normal text-gray-500">/mo</span>
             </p>
@@ -365,11 +375,11 @@ function BarcodeModalPricing({
               : selectedInterval === "year"
               ? `Subscribe yearly (${fmtPrice(
                   selectedPrice.unit_amount || 0,
-                  selectedPrice.currency
+                  selectedPrice.currency,
                 )}/yr)`
               : `Subscribe monthly (${fmtPrice(
                   selectedPrice.unit_amount || 0,
-                  selectedPrice.currency
+                  selectedPrice.currency,
                 )}/mo)`}
           </Button>
         </actionFetcher.Form>

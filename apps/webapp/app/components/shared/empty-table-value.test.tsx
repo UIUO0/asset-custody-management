@@ -1,5 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// why: EmptyTableValue resolves its default label through i18next. Map the
+// one key it reads to the English copy these assertions expect.
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => (key === "list.noData" ? "No data" : key),
+  }),
+}));
 
 import { EmptyTableValue } from "./empty-table-value";
 

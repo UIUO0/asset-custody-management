@@ -22,6 +22,7 @@ import { useMemo, useState } from "react";
 import type { Booking } from "@prisma/client";
 import { AssetStatus } from "@prisma/client";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
+import { useTranslation } from "react-i18next";
 import useApiQuery from "~/hooks/use-api-query";
 import { isQuantityTracked } from "~/modules/asset/utils";
 import type { ExtendedAssetStatus } from "~/utils/booking-assets";
@@ -84,6 +85,15 @@ export function AssetStatusBadge({
 }) {
   const inlineQuantityData = useMemo(() => getQuantityData(asset), [asset]);
 
+  const { t } = useTranslation();
+
+  /**
+   * Localised status label. Falls back to the shared `@shelf/labels`
+   * wording when a status has no translation key — that covers the
+   * booking-context pseudo-statuses, which have no `status.*` entry.
+   */
+  const statusLabel = t(`status.${status}`, userFriendlyAssetStatus(status));
+
   // Whether the asset is actually QT (by schema type). Used to gate the
   // qty-aware render branch AND the `ongoing-booking` fetch (the latter
   // exists for INDIVIDUAL assets only).
@@ -109,7 +119,7 @@ export function AssetStatusBadge({
   });
   const lazyQuantityData = useMemo(
     () => getQuantityData(lazyAsset ?? null),
-    [lazyAsset]
+    [lazyAsset],
   );
   const quantityData = inlineQuantityData ?? lazyQuantityData;
 
@@ -170,7 +180,7 @@ export function AssetStatusBadge({
 
     const { label, colors } = useCallerStatus
       ? {
-          label: userFriendlyAssetStatus(status),
+          label: statusLabel,
           colors: assetStatusColorMap(status),
         }
       : getQuantityBadgeLabelAndColor(quantityData);
@@ -209,7 +219,7 @@ export function AssetStatusBadge({
           )}
         </HoverCard>
         {!availableToBook && (
-          <UnavailableBadge title="This asset is marked as unavailable for bookings" />
+          <UnavailableBadge title={t("assets.unavailableForBookings")} />
         )}
       </span>
     );
@@ -223,10 +233,10 @@ export function AssetStatusBadge({
       <HoverCardTrigger asChild>
         <span className="flex items-center gap-1.5">
           <Badge color={colors.bg} textColor={colors.text}>
-            {userFriendlyAssetStatus(status)}
+            {statusLabel}
           </Badge>
           {!availableToBook && (
-            <UnavailableBadge title="This asset is marked as unavailable for bookings" />
+            <UnavailableBadge title={t("assets.unavailableForBookings")} />
           )}
         </span>
       </HoverCardTrigger>

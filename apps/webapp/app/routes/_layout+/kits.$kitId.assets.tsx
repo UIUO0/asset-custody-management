@@ -8,7 +8,7 @@ import { z } from "zod";
 import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { AssetImage } from "~/components/assets/asset-image";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
-import { ASSET_SORTING_OPTIONS } from "~/components/assets/assets-index/filters";
+import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
 import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import AssetRowActionsDropdown from "~/components/kits/asset-row-actions-dropdown";
@@ -96,6 +96,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 }
 
 export default function KitAssets() {
+  const assetSortingOptions = useAssetSortingOptions();
   const { roles } = useUserRoleHelper();
 
   const userRoleCanManageAssets = userHasPermission({
@@ -115,7 +116,7 @@ export default function KitAssets() {
           slots={{
             "right-of-search": (
               <SortBy
-                sortingOptions={ASSET_SORTING_OPTIONS}
+                sortingOptions={assetSortingOptions}
                 defaultSortingBy="createdAt"
               />
             ),

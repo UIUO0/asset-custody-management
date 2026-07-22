@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import { Link, Outlet, data } from "react-router";
 import { ErrorContent } from "~/components/errors";
@@ -31,8 +32,14 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
+/** Breadcrumb link for the locations section (component so it can use the hook). */
+function LocationsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/locations">{t("nav.locations")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/locations">Locations</Link>,
+  breadcrumb: () => <LocationsBreadcrumb />,
 };
 
 export default function LocationsPage() {

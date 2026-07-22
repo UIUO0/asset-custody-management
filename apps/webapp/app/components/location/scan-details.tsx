@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import type { parseScanData } from "~/modules/scan/utils.server";
 import { tw } from "~/utils/tw";
@@ -12,6 +13,7 @@ export function ScanDetails({
 }: {
   lastScan?: ReturnType<typeof parseScanData> | null;
 }) {
+  const { t } = useTranslation();
   let latitude, longitude;
 
   const hasLocation = lastScan?.coordinates !== "Unknown location";
@@ -40,7 +42,7 @@ export function ScanDetails({
             className={tw(
               "border-b-[1.1px] p-4 text-text-xs text-gray-600",
               "[&>div>p:first-child]:text-xs [&>div>p:first-child]:font-medium [&>div>p:first-child]:text-gray-900", // Styles for left column
-              "[&>div>p:last-child]:text-end [&>div>p:last-child]:text-sm [&>div>p:last-child]:font-normal [&>div>p:last-child]:text-gray-600" // Styles for right column
+              "[&>div>p:last-child]:text-end [&>div>p:last-child]:text-sm [&>div>p:last-child]:font-normal [&>div>p:last-child]:text-gray-600", // Styles for right column
             )}
           >
             <div className="flex justify-between py-2">
@@ -116,15 +118,15 @@ export function ScanDetails({
                 rel="nofollow noopener noreferrer"
                 className="w-full"
               >
-                See in Google Maps
+                {t("assetOverview.seeInGoogleMaps")}
               </Button>
             </div>
           ) : null}
         </>
       ) : (
         <MapPlaceholder
-          title="Waiting for first QR code scan"
-          description="Scan your asset’s QR code with a phone, grant location permissions. Wait a few seconds and see the first scan location on a map!"
+          title={t("assetOverview.waitingFirstScan")}
+          description={t("assetOverview.waitingFirstScanDesc")}
         />
       )}
     </div>

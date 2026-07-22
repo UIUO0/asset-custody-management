@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -44,7 +45,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       await getSelectedOrganization({ userId, request });
 
     const currentUserRoles = userOrganizations.find(
-      (uo) => uo.organizationId === organizationId
+      (uo) => uo.organizationId === organizationId,
     )?.roles;
     const isOwner = currentUserRoles?.includes("OWNER") ?? false;
 
@@ -134,7 +135,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           .string()
           .transform((v) => v === "true")
           .optional(),
-      })
+      }),
     );
 
     const { organizationId, currentOrganization } =
@@ -241,8 +242,14 @@ export function shouldRevalidate({
   return defaultShouldRevalidate;
 }
 
+/** Breadcrumb link for the audits section (component so it can use the hook). */
+function AuditsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/audits">{t("nav.audits")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/audits">Audits</Link>,
+  breadcrumb: () => <AuditsBreadcrumb />,
 };
 
 export default function AuditsPage() {

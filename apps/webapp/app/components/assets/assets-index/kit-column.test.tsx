@@ -16,6 +16,14 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+// why: the empty-state placeholder resolves "No data" through i18next; map
+// that key so the placeholder assertions keep matching the English copy.
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => (key === "list.noData" ? "No data" : key),
+  }),
+}));
+
 import type { AdvancedIndexAsset } from "~/modules/asset/types";
 
 // why: lottie-web touches canvas APIs that jsdom doesn't fully
@@ -62,7 +70,7 @@ function renderCell(kits: AdvancedIndexAsset["kits"]) {
           <KitColumn kits={kits} />
         </tr>
       </tbody>
-    </table>
+    </table>,
   );
 }
 

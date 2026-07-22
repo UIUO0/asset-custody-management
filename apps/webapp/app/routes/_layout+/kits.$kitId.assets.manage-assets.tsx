@@ -20,7 +20,7 @@ import {
 } from "~/atoms/list";
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
-import { ASSET_SORTING_OPTIONS } from "~/components/assets/assets-index/filters";
+import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
 import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import { StatusFilter } from "~/components/booking/status-filter";
@@ -243,7 +243,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const { assetIds, assetQuantities } = parseData(
       await request.formData(),
       ManageAssetsActionSchema,
-      { additionalData: { userId, organizationId, kitId } }
+      { additionalData: { userId, organizationId, kitId } },
     );
 
     await updateKitAssets({
@@ -263,17 +263,18 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function ManageAssetsInKit() {
+  const assetSortingOptions = useAssetSortingOptions();
   const { kit, items, totalItems } = useLoaderData<LoaderData>();
   // why: `.map` returns a new array each render. The effects below depend on
   // these lists, so without memoisation each render fired the effect and
   // re-triggered a render via setSelectedBulkItems → infinite loop.
   const kitAssetsList = useMemo(
     () => kit.assetKits.map((ak) => ak.asset),
-    [kit.assetKits]
+    [kit.assetKits],
   );
   const kitAssetIds = useMemo(
     () => kitAssetsList.map((asset) => asset.id),
-    [kitAssetsList]
+    [kitAssetsList],
   );
   /**
    * Snapshot of each qty-tracked asset's current AssetKit.quantity in
@@ -316,7 +317,7 @@ export default function ManageAssetsInKit() {
     (assetId: string, quantity: number) => {
       setQuantities((prev) => ({ ...prev, [assetId]: quantity }));
     },
-    []
+    [],
   );
 
   /** Drop the qty entry when the row is deselected. */
@@ -407,7 +408,7 @@ export default function ManageAssetsInKit() {
             "right-of-search": (
               <div className="flex items-center gap-2">
                 <SortBy
-                  sortingOptions={ASSET_SORTING_OPTIONS}
+                  sortingOptions={assetSortingOptions}
                   defaultSortingBy="createdAt"
                 />
                 <SelectWithSearchParams
@@ -496,7 +497,7 @@ export default function ManageAssetsInKit() {
             // cleaned up when toggled off. INDIVIDUAL rows skip both
             // (the service treats missing entries as "use 1").
             const isCurrentlySelected = selectedBulkItems.some(
-              (a) => a.id === item.id
+              (a) => a.id === item.id,
             );
             if (isCurrentlySelected) {
               removeQuantity(item.id);
@@ -903,8 +904,8 @@ const RowComponent = ({
                       1,
                       Math.min(
                         Math.floor(raw),
-                        Number.isFinite(max) ? max : raw
-                      )
+                        Number.isFinite(max) ? max : raw,
+                      ),
                     );
                     onQuantityChange(item.id, capped);
                   }}

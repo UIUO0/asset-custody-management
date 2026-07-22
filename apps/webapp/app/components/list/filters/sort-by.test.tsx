@@ -6,7 +6,7 @@ import { SortBy } from "./sort-by";
 
 const mockNavigationState = vi.hoisted(() => ({ value: "idle" }));
 const mockSearchParams = vi.hoisted(
-  () => new URLSearchParams("orderBy=createdAt&orderDirection=desc")
+  () => new URLSearchParams("orderBy=createdAt&orderDirection=desc"),
 );
 const mockSetSearchParams = vi.hoisted(() => vi.fn());
 
@@ -26,6 +26,23 @@ vi.mock("react-router", async () => {
 // why: control search params to test URL param handling without actual routing
 vi.mock("~/hooks/search-params", () => ({
   useSearchParams: () => [mockSearchParams, mockSetSearchParams] as const,
+}));
+
+// why: the component resolves its labels through i18next; the assertions
+// below use the English copy, so map the keys to en.json values instead of
+// booting a full i18n instance in JSDOM
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const en: Record<string, string> = {
+        "list.sortedBy": "Sorted by:",
+        "list.sortBy": "Sort by:",
+        "list.ascending": "Ascending",
+        "list.descending": "Descending",
+      };
+      return en[key] ?? key;
+    },
+  }),
 }));
 
 // why: Radix Popover doesn't render content in JSDOM, so we render it always for testing
@@ -158,7 +175,7 @@ describe("SortBy", () => {
 
       // Verify the updater produces correct new params
       const prevParams = new URLSearchParams(
-        "orderBy=createdAt&orderDirection=desc"
+        "orderBy=createdAt&orderDirection=desc",
       );
       const nextParams = capturedUpdater!(prevParams);
 
@@ -184,7 +201,7 @@ describe("SortBy", () => {
 
       // Verify the updater produces correct new params
       const prevParams = new URLSearchParams(
-        "orderBy=createdAt&orderDirection=desc"
+        "orderBy=createdAt&orderDirection=desc",
       );
       const nextParams = capturedUpdater!(prevParams);
 
@@ -210,7 +227,7 @@ describe("SortBy", () => {
       fireEvent.change(orderBySelect, { target: { value: "status" } });
 
       const prevParams = new URLSearchParams(
-        "orderBy=createdAt&orderDirection=desc&search=camera&category=electronics"
+        "orderBy=createdAt&orderDirection=desc&search=camera&category=electronics",
       );
       const nextParams = capturedUpdater!(prevParams);
 
@@ -282,14 +299,14 @@ describe("SortBy", () => {
 
     it("renders with custom className", () => {
       const { container } = render(
-        <SortBy {...defaultProps} className="custom-class" />
+        <SortBy {...defaultProps} className="custom-class" />,
       );
 
       // Verify component renders successfully with className prop
       // (actual className application tested via Playwright as it depends on Radix behavior)
       expect(container.firstChild).toBeTruthy();
       expect(
-        screen.getByRole("button", { name: /sorted by/i })
+        screen.getByRole("button", { name: /sorted by/i }),
       ).toBeInTheDocument();
     });
   });
@@ -297,7 +314,7 @@ describe("SortBy", () => {
   describe("hint tooltip", () => {
     it("renders the hint content when a hint is provided", () => {
       render(
-        <SortBy {...defaultProps} hint={<span>How sorting works</span>} />
+        <SortBy {...defaultProps} hint={<span>How sorting works</span>} />,
       );
       expect(screen.getByText("How sorting works")).toBeInTheDocument();
     });

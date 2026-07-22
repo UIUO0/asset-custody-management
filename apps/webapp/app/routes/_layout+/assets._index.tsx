@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LinksFunction,
@@ -16,6 +17,8 @@ import { db } from "~/database/db.server";
 
 import { useAssetIndexViewState } from "~/hooks/use-asset-index-view-state";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   advancedModeLoader,
   simpleModeLoader,
@@ -204,7 +207,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           formData,
           z
             .object({ assetIds: z.array(z.string()).min(1) })
-            .and(CurrentSearchParamsSchema)
+            .and(CurrentSearchParamsSchema),
         );
 
         await bulkDeleteAssets({
@@ -284,7 +287,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           z.object({
             presetId: z.string().min(1),
             starred: z.string().transform((val) => val === "true"),
-          })
+          }),
         );
 
         await togglePresetStar({
@@ -328,18 +331,31 @@ export function shouldRevalidate({
   return defaultShouldRevalidate;
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: appendToMetaTitle(data?.header.title) },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: the loader builds an English "<org>'s inventory" title, and `meta`
+  // runs outside React so it cannot use the translation hook. The active
+  // locale comes from the root loader, and the heading is read straight
+  // from the resource bundles.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.assets.inventoryTitle) }];
+};
 
 export default function AssetIndexPage() {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const { canImportAssets } = useLoaderData<typeof loader>();
   const { modeIsAdvanced } = useAssetIndexViewState();
 
   return (
     <div className="relative">
-      <Header hidePageDescription={modeIsAdvanced}>
+      <Header
+        title={t("assets.inventoryTitle")}
+        hidePageDescription={modeIsAdvanced}
+      >
         <When
           truthy={userHasPermission({
             roles,
@@ -355,10 +371,10 @@ export default function AssetIndexPage() {
       </Header>
       <AssetsList
         customEmptyStateContent={{
-          title: "No assets yet",
-          text: "Assets are the core of your inventory. Create your first asset to start tracking equipment, devices, or anything your team manages.",
+          title: t("assets.empty"),
+          text: t("assets.emptyText"),
           newButtonRoute: "/assets/new",
-          newButtonContent: "Create your first asset",
+          newButtonContent: t("assets.emptyCta"),
         }}
       />
     </div>

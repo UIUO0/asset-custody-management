@@ -6,6 +6,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 
 import { InfoTooltip } from "~/components/shared/info-tooltip";
@@ -34,6 +35,7 @@ export function SortBy<T extends Record<string, string>>({
   defaultSortingDirection = "desc",
   hint,
 }: SortByProps<T>) {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const rawOrderBy = searchParams.get("orderBy") || String(defaultSortingBy);
   const rawOrderDirection =
@@ -41,7 +43,7 @@ export function SortBy<T extends Record<string, string>>({
 
   const isOrderByValid = Object.prototype.hasOwnProperty.call(
     sortingOptions,
-    rawOrderBy
+    rawOrderBy,
   );
 
   const orderBy = isOrderByValid ? rawOrderBy : String(defaultSortingBy);
@@ -55,7 +57,7 @@ export function SortBy<T extends Record<string, string>>({
 
   function updateSearchParam(
     name: "orderBy" | "orderDirection",
-    value: string
+    value: string,
   ) {
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev);
@@ -69,7 +71,7 @@ export function SortBy<T extends Record<string, string>>({
       <PopoverTrigger
         className={tw(
           "inline-flex items-center gap-2 text-gray-500",
-          className
+          className,
         )}
         asChild
       >
@@ -79,7 +81,7 @@ export function SortBy<T extends Record<string, string>>({
           disabled={disabled}
         >
           <span className="truncate whitespace-nowrap text-[14px]">
-            Sorted by: {sortingOptions[orderBy as keyof T]}
+            {t("list.sortedBy")} {sortingOptions[orderBy as keyof T]}
           </span>
           <CaretSortIcon />
         </button>
@@ -91,7 +93,7 @@ export function SortBy<T extends Record<string, string>>({
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <div className="flex items-center gap-1.5">
-            <h5>Sort by:</h5>
+            <h5>{t("list.sortBy")}</h5>
             {hint ? (
               <InfoTooltip
                 content={hint}
@@ -129,8 +131,8 @@ export function SortBy<T extends Record<string, string>>({
                 updateSearchParam("orderDirection", event.currentTarget.value)
               }
             >
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
+              <option value="asc">{t("list.ascending")}</option>
+              <option value="desc">{t("list.descending")}</option>
             </select>
           </div>
         </PopoverContent>

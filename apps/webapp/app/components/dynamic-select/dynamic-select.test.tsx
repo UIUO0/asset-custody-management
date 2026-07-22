@@ -17,6 +17,23 @@ vi.mock("react-router", async () => {
 
 // why: controlling filter data and behavior to test DynamicSelect in isolation
 const mockUseModelFilters = vi.fn();
+// why: the component resolves its placeholder through i18next. These
+// assertions use the English copy, so map the two keys the component reads
+// instead of booting an i18n instance in JSDOM.
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      if (key === "assetForm.selectPlaceholder") {
+        return `Select ${options?.name as string}`;
+      }
+      if (key === "assetForm.searchIn") {
+        return `Search ${options?.name as string}`;
+      }
+      return (options?.defaultValue as string) ?? key;
+    },
+  }),
+}));
+
 vi.mock("~/hooks/use-model-filters", () => ({
   useModelFilters: (...args: any[]) => mockUseModelFilters(...args),
 }));
@@ -37,7 +54,7 @@ function createTestItems(count: number): ModelFilterItem[] {
  */
 function createMockUseModelFiltersReturn(
   items: ModelFilterItem[] = createTestItems(3),
-  overrides: Partial<ReturnType<typeof mockUseModelFilters>> = {}
+  overrides: Partial<ReturnType<typeof mockUseModelFilters>> = {},
 ) {
   return {
     searchQuery: "",
@@ -78,7 +95,7 @@ describe("DynamicSelect", () => {
           initialDataKey="categories"
           countKey="totalCategories"
           contentLabel="Category"
-        />
+        />,
       );
 
       // Should show placeholder
@@ -88,7 +105,7 @@ describe("DynamicSelect", () => {
     it("displays items in the popover when opened", async () => {
       const items = createTestItems(3);
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -97,7 +114,7 @@ describe("DynamicSelect", () => {
           initialDataKey="categories"
           countKey="totalCategories"
           contentLabel="Category"
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -119,7 +136,7 @@ describe("DynamicSelect", () => {
       const items = createTestItems(3);
       const onChange = vi.fn();
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -129,7 +146,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           onChange={onChange}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -165,7 +182,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           placeholder="Choose a category"
-        />
+        />,
       );
 
       expect(screen.getByText("Choose a category")).toBeInTheDocument();
@@ -180,7 +197,7 @@ describe("DynamicSelect", () => {
         name: "Uncategorized",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -190,7 +207,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -207,7 +224,7 @@ describe("DynamicSelect", () => {
     it("does not render withoutValueItem when not provided", async () => {
       const items = createTestItems(3);
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -216,7 +233,7 @@ describe("DynamicSelect", () => {
           initialDataKey="categories"
           countKey="totalCategories"
           contentLabel="Category"
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -238,7 +255,7 @@ describe("DynamicSelect", () => {
         name: "Without kit",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -248,7 +265,7 @@ describe("DynamicSelect", () => {
           countKey="totalKits"
           contentLabel="Kit"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -284,7 +301,7 @@ describe("DynamicSelect", () => {
         name: "Uncategorized",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -295,7 +312,7 @@ describe("DynamicSelect", () => {
           contentLabel="Category"
           withoutValueItem={withoutValueItem}
           onChange={onChange}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -327,7 +344,7 @@ describe("DynamicSelect", () => {
         name: "Without location",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -338,7 +355,7 @@ describe("DynamicSelect", () => {
           contentLabel="Location"
           withoutValueItem={withoutValueItem}
           defaultValue="without-location"
-        />
+        />,
       );
 
       const trigger = screen.getByRole("button");
@@ -352,7 +369,7 @@ describe("DynamicSelect", () => {
         name: "Untagged",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       render(
@@ -363,7 +380,7 @@ describe("DynamicSelect", () => {
           contentLabel="Tag"
           withoutValueItem={withoutValueItem}
           defaultValue="untagged"
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -399,7 +416,7 @@ describe("DynamicSelect", () => {
         name: "Uncategorized",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "" }),
       );
 
       render(
@@ -409,7 +426,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -432,7 +449,7 @@ describe("DynamicSelect", () => {
 
       // Initial state: empty search
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "" }),
       );
 
       const { rerender } = render(
@@ -442,7 +459,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -457,7 +474,7 @@ describe("DynamicSelect", () => {
 
       // Update mock to simulate search query
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "Item" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "Item" }),
       );
 
       // Re-render to reflect the search state
@@ -468,7 +485,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       // WithoutValueItem should now be hidden
@@ -484,7 +501,7 @@ describe("DynamicSelect", () => {
 
       // Start with active search
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "laptop" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "laptop" }),
       );
 
       const { rerender } = render(
@@ -494,7 +511,7 @@ describe("DynamicSelect", () => {
           countKey="totalKits"
           contentLabel="Kit"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -509,7 +526,7 @@ describe("DynamicSelect", () => {
 
       // Clear search
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "" }),
       );
 
       rerender(
@@ -519,7 +536,7 @@ describe("DynamicSelect", () => {
           countKey="totalKits"
           contentLabel="Kit"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       // WithoutValueItem should reappear
@@ -534,7 +551,7 @@ describe("DynamicSelect", () => {
       };
 
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "" }),
       );
 
       render(
@@ -544,7 +561,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           withoutValueItem={withoutValueItem}
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -570,7 +587,7 @@ describe("DynamicSelect", () => {
         name: "Uncategorized",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       const { rerender } = render(
@@ -582,7 +599,7 @@ describe("DynamicSelect", () => {
           withoutValueItem={withoutValueItem}
           defaultValue="uncategorized"
           onChange={onChange}
-        />
+        />,
       );
 
       // Initially showing withoutValueItem
@@ -609,7 +626,7 @@ describe("DynamicSelect", () => {
           withoutValueItem={withoutValueItem}
           defaultValue="item-1"
           onChange={onChange}
-        />
+        />,
       );
 
       // Should now show the regular item
@@ -625,7 +642,7 @@ describe("DynamicSelect", () => {
         name: "Without custody",
       };
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items)
+        createMockUseModelFiltersReturn(items),
       );
 
       const { rerender } = render(
@@ -637,7 +654,7 @@ describe("DynamicSelect", () => {
           withoutValueItem={withoutValueItem}
           defaultValue="item-1"
           onChange={onChange}
-        />
+        />,
       );
 
       // Initially showing regular item
@@ -664,7 +681,7 @@ describe("DynamicSelect", () => {
           withoutValueItem={withoutValueItem}
           defaultValue="without-custody"
           onChange={onChange}
-        />
+        />,
       );
 
       // Should now show withoutValueItem
@@ -688,7 +705,7 @@ describe("DynamicSelect", () => {
             searchQuery: value,
             setSearchQuery,
             resetModelFiltersFetcher,
-          })
+          }),
         );
       });
       const resetModelFiltersFetcher = vi.fn(() => {
@@ -700,7 +717,7 @@ describe("DynamicSelect", () => {
           searchQuery: "",
           setSearchQuery,
           resetModelFiltersFetcher,
-        })
+        }),
       );
 
       const { rerender } = render(
@@ -711,7 +728,7 @@ describe("DynamicSelect", () => {
           contentLabel="Category"
           closeOnSelect
           resetSearchOnClose
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -730,7 +747,7 @@ describe("DynamicSelect", () => {
           searchQuery: "da",
           setSearchQuery,
           resetModelFiltersFetcher,
-        })
+        }),
       );
       rerender(
         <DynamicSelect
@@ -740,7 +757,7 @@ describe("DynamicSelect", () => {
           contentLabel="Category"
           closeOnSelect
           resetSearchOnClose
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -771,7 +788,7 @@ describe("DynamicSelect", () => {
     it("keeps the typed search after selecting an item when resetSearchOnClose is not set (regression guard)", async () => {
       const items = createTestItems(3);
       mockUseModelFilters.mockReturnValue(
-        createMockUseModelFiltersReturn(items, { searchQuery: "da" })
+        createMockUseModelFiltersReturn(items, { searchQuery: "da" }),
       );
 
       render(
@@ -781,7 +798,7 @@ describe("DynamicSelect", () => {
           countKey="totalCategories"
           contentLabel="Category"
           closeOnSelect
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -825,14 +842,14 @@ describe("DynamicSelect", () => {
       // cache-fallback path under test is never exercised.
       const resetModelFiltersFetcher = vi.fn(() => {
         mockUseModelFilters.mockReturnValue(
-          createMockUseModelFiltersReturn([], { resetModelFiltersFetcher })
+          createMockUseModelFiltersReturn([], { resetModelFiltersFetcher }),
         );
       });
 
       mockUseModelFilters.mockReturnValue(
         createMockUseModelFiltersReturn(typeaheadItems, {
           resetModelFiltersFetcher,
-        })
+        }),
       );
 
       const { rerender } = render(
@@ -843,7 +860,7 @@ describe("DynamicSelect", () => {
           contentLabel="Category"
           closeOnSelect
           resetSearchOnClose
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -873,7 +890,7 @@ describe("DynamicSelect", () => {
           contentLabel="Category"
           closeOnSelect
           resetSearchOnClose
-        />
+        />,
       );
 
       // The trigger still shows the selected model, not the placeholder.

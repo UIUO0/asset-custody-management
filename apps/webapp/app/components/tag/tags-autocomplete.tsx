@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { Tag } from "react-tag-autocomplete";
 import MultiSelect from "../multi-select/multi-select";
 
@@ -20,18 +21,22 @@ export const TagsAutocomplete = ({
   hideLabel?: boolean;
   error?: string;
   required?: boolean;
-}) => (
-  <MultiSelect
-    className="w-full"
-    label="Tags"
-    items={suggestions}
-    defaultSelected={existingTags}
-    labelKey="label"
-    valueKey="value"
-    name="tags"
-    disabled={disabled}
-    hideLabel={hideLabel}
-    error={error}
-    required={required}
-  />
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <MultiSelect
+      className="w-full"
+      label={t("assets.tags")}
+      items={suggestions}
+      defaultSelected={existingTags}
+      labelKey="label"
+      valueKey="value"
+      name="tags"
+      disabled={disabled}
+      hideLabel={hideLabel}
+      error={error}
+      required={required}
+    />
+  );
+};

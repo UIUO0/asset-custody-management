@@ -22,6 +22,7 @@
  *
  * @see {@link file://./form.tsx} consumer
  */
+import { useTranslation } from "react-i18next";
 import DynamicSelect from "../dynamic-select/dynamic-select";
 import FormRow from "../forms/form-row";
 import InlineEntityCreationDialog from "../inline-entity-creation-dialog/inline-entity-creation-dialog";
@@ -55,20 +56,22 @@ export function AssetModelFormRow({
   onChange,
   error,
 }: AssetModelFormRowProps) {
+  const { t } = useTranslation();
+
   return (
     <FormRow
-      rowLabel="Asset Model"
+      rowLabel={t("assetForm.assetModel")}
       required={required}
       subHeading={
         <p>
-          Assign a model to group similar assets together.{" "}
+          {t("assetForm.assetModelHint")}{" "}
           <Button
             to="/settings/asset-models/new"
             variant="link-gray"
             className="text-gray-600 underline"
             target="_blank"
           >
-            Create asset models
+            {t("assetForm.createAssetModels")}
           </Button>
         </p>
       }
@@ -81,7 +84,7 @@ export function AssetModelFormRow({
           fieldName="assetModelId"
           model={{ name: "assetModel", queryKey: "name" }}
           triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
-          placeholder="Select asset model"
+          placeholder={t("assetForm.selectAssetModel")}
           contentLabel="Asset Models"
           label="Asset Model"
           hideLabel

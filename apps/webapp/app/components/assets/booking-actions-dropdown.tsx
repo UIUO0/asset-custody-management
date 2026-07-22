@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { getPrimaryKit } from "~/modules/asset/utils";
@@ -8,6 +9,7 @@ import type { BookLink } from "../shared/generic-add-to-bookings-actions-dropdow
 import { GenericBookActionsDropdown } from "../shared/generic-add-to-bookings-actions-dropdown";
 
 export default function BookingActionsDropdown() {
+  const { t } = useTranslation();
   const { asset } = useLoaderData<typeof loader>();
   const organization = useCurrentOrganization();
   const { availableToBook } = asset;
@@ -60,7 +62,7 @@ export default function BookingActionsDropdown() {
       <GenericBookActionsDropdown
         links={links}
         key={"asset"}
-        label={"Book"}
+        label={t("assetOverview.book")}
         disabledTrigger={disabledTrigger}
       />
     </div>

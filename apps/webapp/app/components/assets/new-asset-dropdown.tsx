@@ -27,6 +27,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { tw } from "~/utils/tw";
 import { Button } from "../shared/button";
@@ -40,6 +41,7 @@ export function NewAssetDropdown({
 }: {
   canImportAssets: boolean;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -51,7 +53,7 @@ export function NewAssetDropdown({
         data-test-id="createNewAsset"
         className="rounded-r-none border-r-0"
       >
-        New asset
+        {t("assets.newAsset")}
       </Button>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -66,7 +68,7 @@ export function NewAssetDropdown({
               // Rotate the caret 180° while the popover is open to
               // give the user a visual "expanded" affordance — same
               // convention as `actions-dropdown.css` .chev styling.
-              open && "[&>svg]:rotate-180"
+              open && "[&>svg]:rotate-180",
             )}
             data-test-id="newAssetDropdownTrigger"
           >
@@ -85,15 +87,15 @@ export function NewAssetDropdown({
           >
             <DropdownLink
               to="/assets/new?bulk=1"
-              label="Bulk create from model"
-              description="Create multiple assets at once from a model"
+              label={t("assets.bulkCreate")}
+              description={t("assets.bulkCreateDesc")}
               onClose={() => setOpen(false)}
             />
             {canImportAssets ? (
               <DropdownLink
                 to="/assets/import"
-                label="Import from CSV"
-                description="Onboard many assets from a spreadsheet"
+                label={t("assets.importCsv")}
+                description={t("assets.importCsvDesc")}
                 onClose={() => setOpen(false)}
               />
             ) : null}

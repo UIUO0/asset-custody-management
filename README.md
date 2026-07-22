@@ -1,173 +1,286 @@
-<a href="https://www.shelf.nu/" target="_blank">
-<img width="100%" src="./apps/webapp/public/static/images/readme-cover.jpg" alt="Shelf.nu" />
-</a>
+<div align="right">
 
-<h3 align="center">Open-source asset management infrastructure for everyone.</h3>
+<img src="./apps/webapp/public/static/images/epda-logo-full.png" alt="هيئة تطوير المنطقة الشرقية" width="320" />
 
-<p align="center">
-  <a href="https://github.com/Shelf-nu/shelf.nu/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Shelf-nu/shelf.nu?label=License" alt="License" /></a>
-  <a href="https://github.com/Shelf-nu/shelf.nu/actions/workflows/deploy.yml"><img src="https://github.com/Shelf-nu/shelf.nu/actions/workflows/deploy.yml/badge.svg" alt="Deploy" /></a>
-  <a href="https://github.com/Shelf-nu/shelf.nu/stargazers"><img src="https://img.shields.io/github/stars/Shelf-nu/shelf.nu" alt="Stars" /></a>
-  <a href="https://discord.gg/8he9W7aTJu"><img src="https://img.shields.io/badge/Discord-community-blue?logo=discord&logoColor=white" alt="Discord" /></a>
-</p>
+# نظام إدارة الأصول
 
-<p align="center">
-  <a href="https://www.shelf.nu/?ref=github"><b>Website</b></a> &middot;
-  <a href="https://docs.shelf.nu/?ref=github"><b>Documentation</b></a> &middot;
-  <a href="https://discord.gg/8he9W7aTJu"><b>Discord</b></a> &middot;
-  <a href="https://twitter.com/ShelfQR/?ref=github"><b>Twitter</b></a>
-</p>
+### هيئة تطوير المنطقة الشرقية
+
+**منصّة داخلية لتتبّع الأصول والعُهد والحجوزات — عربية بالكامل، تعمل على البنية التحتية للهيئة.**
+
+</div>
 
 ---
 
-Shelf is a platform for tracking physical assets — equipment, devices, tools, vehicles, props, inventory. It's built for teams that need to know what they have, where it is, and who's using it. Organizations use Shelf to manage thousands of assets across locations with role-based access for their teams.
+## نظرة عامة
 
-## Features
+نظام إدارة الأصول هو منصّة داخلية تتيح للهيئة معرفة **ما تملكه، وأين هو، ومن بحوزته** — في أي لحظة.
 
-- **QR asset tags** — Generate and print QR codes. Scan with any phone to view, check out, or report an asset.
-- **Bookings and reservations** — Schedule equipment, prevent double-bookings, set checkout/return dates with calendar integration.
-- **Custody tracking** — Assign assets to team members. Know who has what at all times.
-- **Location management** — Hierarchical locations (buildings, floors, rooms, shelves). GPS tagging support.
-- **Team roles** — Owner, Admin, Base, and Self Service roles with granular permissions.
-- **Custom fields** — Add any metadata to assets: purchase date, warranty info, serial numbers, condition.
-- **Categories and tags** — Organize assets into categories. Tag for flexible cross-cutting grouping.
-- **Kits** — Bundle assets into kits (e.g., laptop + charger + dock) and manage them as a unit.
-- **Search and filtering** — Full-text search with advanced filters. Saved filter presets.
-- **CSV import/export** — Bulk import assets from spreadsheets. Export for reporting.
-- **Asset reminders** — Schedule alerts for maintenance, calibration, warranty expiry.
-- **Audit trail** — Notes and activity logs on every asset.
-- **Multi-workspace** — Manage separate inventories for different organizations or departments.
-- **Scanner** — Built-in QR/barcode scanner with bulk actions: assign custody, update location, add to bookings.
+يغطي النظام دورة حياة الأصل كاملة: من التسجيل والترميز بـ QR، مرورًا بإسناد العُهدة والحجز والصيانة، وصولًا إلى الجرد والتقارير. الواجهة **عربية بالكامل باتجاه RTL**، وتحمل الهوية البصرية للهيئة، ولا تعتمد على أي خدمة سحابية خارجية في وضع التشغيل الداخلي.
 
-## Tech Stack
+### لماذا هذا النظام
 
-| Layer      | Technology                                                                      |
-| ---------- | ------------------------------------------------------------------------------- |
-| Framework  | [React Router](https://reactrouter.com/) 7 (React 19)                           |
-| Language   | [TypeScript](https://www.typescriptlang.org/) 5                                 |
-| Database   | [PostgreSQL](https://www.postgresql.org/) via [Supabase](https://supabase.com/) |
-| ORM        | [Prisma](https://www.prisma.io/) 6                                              |
-| Styling    | [Tailwind CSS](https://tailwindcss.com/) 3                                      |
-| Components | [Radix UI](https://www.radix-ui.com/) primitives                                |
-| Auth       | [Supabase Auth](https://supabase.com/docs/guides/auth) (email, SSO)             |
-| Job queue  | [pg-boss](https://github.com/timgit/pg-boss)                                    |
-| Payments   | [Stripe](https://stripe.com/)                                                   |
-| Email      | [Nodemailer](https://nodemailer.com/) (SMTP)                                    |
-| Build      | [Vite](https://vite.dev/) 7, [Turborepo](https://turbo.build/)                  |
-| Testing    | [Vitest](https://vitest.dev/), [Playwright](https://playwright.dev/)            |
+| التحدي                                   | ما يقدّمه النظام                                                     |
+| ---------------------------------------- | -------------------------------------------------------------------- |
+| الأصول موزّعة على مواقع ولا حصر دقيق لها | سجل مركزي واحد مع مواقع هرمية (مبنى ← دور ← غرفة ← رف)                |
+| لا يُعرف من بحوزته الجهاز                | تتبّع عُهد فوري مع سجل تدقيق لكل عملية تسليم واستلام                 |
+| الجرد اليدوي بطيء ومكلف                  | مسح QR بالجوال — جرد ميداني بدل الجداول الورقية                       |
+| تعارض حجوزات المعدّات                    | نظام حجوزات بتقويم يمنع الازدواجية تلقائيًا                           |
+| ضياع مواعيد الصيانة والضمان              | تذكيرات مجدولة للصيانة والمعايرة وانتهاء الضمان                       |
+| الأنظمة الجاهزة إنجليزية وباشتراك سنوي   | نظام معرّب بالكامل، مملوك للهيئة، بدون رسوم تراخيص متكرّرة            |
 
-## Getting Started
+---
 
-### Prerequisites
+## القدرات الأساسية
 
-- [Node.js](https://nodejs.org/) >= 22.20.0
-- [pnpm](https://pnpm.io/) >= 9.15.4
-- A [Supabase](https://supabase.com/) project (free tier works)
+**إدارة الأصول** — تسجيل الأصول مع حقول مخصّصة (تاريخ الشراء، الرقم التسلسلي، الضمان، الحالة)، وتصنيفات ووسوم مرنة، وحُزم (Kits) لتجميع الأصول المترابطة كوحدة واحدة.
 
-### Setup
+**الترميز والمسح** — توليد وطباعة رموز QR وباركود، ومسحها من أي جوال لعرض الأصل أو تسليمه أو الإبلاغ عنه. يدعم الماسح العمليات الجماعية: إسناد عُهدة، تحديث موقع، إضافة لحجز.
 
-```bash
-# Clone the repository
-git clone https://github.com/Shelf-nu/shelf.nu.git
-cd shelf.nu
+**العُهد والحجوزات** — إسناد الأصول للموظفين مع معرفة دقيقة بمن يحمل ماذا، ونظام حجز بتقويم مع تواريخ تسليم واستلام ومنع تعارض.
 
-# Install dependencies
-pnpm install
+**التنظيم والبحث** — بحث نصي كامل مع فلاتر متقدّمة وقوالب فلترة محفوظة، واستيراد وتصدير CSV للعمليات الجماعية.
 
-# Copy environment template
-cp .env.example .env
+**الحوكمة** — أدوار صلاحيات متدرّجة (مالك، مدير، مستخدم، خدمة ذاتية)، وعزل كامل للبيانات بين مساحات العمل، وسجل تدقيق وملاحظات على كل أصل.
+
+**تطبيق الجوال المرافق** — تطبيق iOS و Android للمسح الميداني وإدارة الأصول والجرد والحجوزات.
+
+---
+
+## التخصيصات المنفّذة للهيئة
+
+بُني النظام على قاعدة مفتوحة المصدر، وأُجريت عليها التخصيصات التالية لتناسب متطلبات الهيئة:
+
+### التعريب والاتجاه
+
+- **العربية هي اللغة الافتراضية** مع تبديل فوري للإنجليزية دون إعادة تحميل.
+- اتجاه التخطيط (RTL/LTR) يتبع اللغة تلقائيًا عبر الخصائص المنطقية في Tailwind.
+- وضع فاتح وداكن وحسب إعداد النظام.
+- كشف اللغة مكتوب يدويًا في `app/i18n/i18n.server.ts` — تم تجنّب `remix-i18next` لأنه يجرّ `react-router-dom@6` المتعارض مع React Router 7.
+
+📖 [توثيق التعريب والمظهر](./apps/docs/epda-i18n-and-theming.md)
+
+### الهوية البصرية
+
+- شعارات الهيئة الرسمية (كامل / نص أبيض / رمز) واللون الأساسي **`#044E8B`** المشتق من الشعار.
+- الهوية مطبّقة على الواجهة وقوالب البريد الإلكتروني وملفات PDF المولّدة.
+
+### المصادقة والأمان
+
+- دخول محلي بالبريد وكلمة المرور، مع **تعطيل التسجيل الذاتي** — الحسابات تُنشأ إداريًا فقط.
+- تكامل **Azure AD (Entra ID)** جاهز بنيويًا؛ تفعيله إعدادات فقط دون تعديل كود.
+  📖 [دليل تكامل Azure Entra](./apps/docs/epda-azure-entra-sso.md)
+- عزل بيانات على مستوى الصف (RLS) عبر سياسات قاعدة البيانات.
+- **مراجع أمني آلي** يعمل قبل كل commit على الملفات الحسّاسة (المسارات، الخوادم، Prisma) ويرصد ثغرات تجاوز الصلاحيات بين المؤسسات، والتحقق الناقص من المدخلات، وفجوات سجل التدقيق.
+  📖 [توثيق المراجع الأمني](./apps/docs/security-review-agent.md)
+
+### الجودة والوصولية
+
+- التزام **WCAG 2.1 AA** كحد أدنى: تباين ألوان كافٍ، تشغيل كامل بلوحة المفاتيح، تسميات مرتبطة بكل حقل، ومؤشرات تركيز ظاهرة.
+- فحص `react-doctor` يعمل في CI على كل PR للواجهة والتطبيق المرافق.
+- تحقّق مزدوج من صحة النماذج: تحقّق في المتصفح مع رسائل الخادم كطبقة احتياطية.
+
+---
+
+## البنية التقنية
+
+| الطبقة           | التقنية                                        |
+| ---------------- | ---------------------------------------------- |
+| إطار العمل       | React Router 7 (React 19)                      |
+| اللغة            | TypeScript 5                                   |
+| قاعدة البيانات   | PostgreSQL عبر Supabase                        |
+| طبقة البيانات    | Prisma 6                                       |
+| التنسيق          | Tailwind CSS 3 + Radix UI                      |
+| المصادقة         | Supabase Auth (بريد + SSO عبر Azure Entra)     |
+| إدارة الحالة     | Jotai                                          |
+| طابور المهام     | pg-boss                                        |
+| تطبيق الجوال     | Expo / React Native                            |
+| البناء           | Vite 7 + Turborepo                             |
+| الاختبار         | Vitest + Playwright + Maestro                  |
+
+### هيكل المستودع
+
+```
+sda-assets-management/
+├── apps/
+│   ├── webapp/          # التطبيق الرئيسي (React Router + Hono)
+│   │   └── app/
+│   │       ├── routes/      # المسارات (توجيه قائم على الملفات)
+│   │       ├── modules/     # منطق الأعمال (أصول، حجوزات، عُهد)
+│   │       ├── components/  # مكوّنات الواجهة
+│   │       ├── i18n/        # الترجمة والاتجاه
+│   │       └── config/      # إعدادات النظام والهوية
+│   ├── companion/       # تطبيق الجوال المرافق (Expo)
+│   └── docs/            # موقع التوثيق الفني (VitePress)
+├── packages/
+│   └── database/        # سكيما Prisma والترحيلات وعميل قاعدة البيانات
+└── tooling/
+    └── typescript/      # إعدادات TypeScript المشتركة
 ```
 
-Edit `.env` with your Supabase credentials and other configuration. See the [Supabase setup guide](https://docs.shelf.nu/supabase-setup) for step-by-step instructions.
+المستودع مُدار بـ **pnpm workspaces + Turborepo**. حزمة `@shelf/database` تملك جميع شؤون قاعدة البيانات — السكيما والترحيلات وتوليد العميل — والتطبيق يستهلكها كاعتمادية داخلية.
+
+---
+
+## التشغيل المحلي
+
+### المتطلبات
+
+- [Node.js](https://nodejs.org/) **22.20.0** فأعلى
+- [pnpm](https://pnpm.io/) **9.15.9** فأعلى
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) — يجب أن يكون **شغّالاً** قبل البدء
+- [Supabase CLI](https://supabase.com/docs/guides/cli)
+
+### خطوات التشغيل
 
 ```bash
-# Generate Prisma client and run migrations
+# 1. تثبيت الاعتماديات
+pnpm install
+
+# 2. تشغيل Supabase محليًا — قاعدة بيانات ومصادقة وتخزين بدون خدمات خارجية
+supabase start
+
+# 3. إعداد ملف البيئة في جذر المستودع (وليس داخل apps/webapp)
+cp .env.example .env
+# املأ القيم من مخرجات supabase start — انظر الجدول أدناه
+
+# 4. توليد عميل Prisma وتطبيق الترحيلات
 pnpm webapp:setup
 
-# Start development server
+# 5. إنشاء الحسابات التجريبية (سوبر أدمن + مستخدمَين)
+pnpm webapp:seed:epda
+
+# 6. تشغيل خادم التطوير
 pnpm webapp:dev
 ```
 
-The app runs at `https://localhost:3000` (the dev server uses HTTPS with local certificates by default).
+يعمل التطبيق على **`https://localhost:3000`** (خادم التطوير يستخدم HTTPS بشهادات محلية).
 
-For detailed setup instructions including SSL certificates and troubleshooting, see the [local development guide](https://docs.shelf.nu/local-development).
+### متغيّرات البيئة المطلوبة
 
-## Project Structure
+ملف `.env` يوجد في **جذر المستودع**، ومنه تقرأ Vite و Prisma وجميع أوامر `db:*`.
 
+| المتغيّر                | المصدر                                             |
+| ----------------------- | -------------------------------------------------- |
+| `DATABASE_URL`          | من مخرجات `supabase start` (مع pooler)              |
+| `DIRECT_URL`            | من مخرجات `supabase start` (اتصال مباشر للترحيلات)  |
+| `SUPABASE_URL`          | من مخرجات `supabase start` (API URL)                |
+| `SUPABASE_ANON_PUBLIC`  | مفتاح `anon` من مخرجات `supabase start`             |
+| `SUPABASE_SERVICE_ROLE` | مفتاح `service_role` من مخرجات `supabase start`     |
+| `SESSION_SECRET`        | أي نص عشوائي — `openssl rand -base64 32`            |
+| `SERVER_URL`            | `https://localhost:3000` للتطوير المحلي             |
+| `DISABLE_SIGNUP`        | `"true"` — تعطيل التسجيل الذاتي                     |
+| `DISABLE_SSO`           | `"true"` حتى تفعيل Azure Entra                      |
+
+> **تنبيه أمني:** أمر `supabase start` يطبع مفاتيح `anon` و `service_role` المحلية — انسخها إلى `.env`. لا تضع أبدًا مفاتيح بيئة الإنتاج في مستودع Git؛ ملف `.env` مستثنى في `.gitignore` وعليه أن يبقى كذلك.
+
+### الحسابات التجريبية
+
+| الحساب              | الدور                        |
+| ------------------- | ---------------------------- |
+| `admin@epda.local`  | سوبر أدمن + مالك مساحة العمل |
+| `user1@epda.local`  | مستخدم عادي                  |
+| `user2@epda.local`  | خدمة ذاتية                   |
+
+كلمات المرور معرّفة في `apps/webapp/scripts/seed-epda-users.ts`. **هذه الحسابات للتطوير المحلي فقط — لا تُنشر إلى بيئة الإنتاج، وتُغيّر كلمات المرور فورًا في أي بيئة مشتركة.**
+
+### تشغيل تطبيق الجوال
+
+```bash
+pnpm companion:dev            # خادم Metro (مع بناء قائم)
+pnpm companion:build:ios      # بناء ونشر على محاكي iOS
+pnpm companion:build:android  # بناء ونشر على جهاز أو محاكي Android
 ```
-shelf.nu/
-├── apps/
-│   ├── webapp/          # Main application (React Router + Hono)
-│   │   ├── app/
-│   │   │   ├── routes/      # File-based routing
-│   │   │   ├── modules/     # Business logic (booking, asset, kit, etc.)
-│   │   │   ├── components/  # React components
-│   │   │   └── utils/       # Shared utilities
-│   │   └── public/          # Static assets
-│   └── docs/            # Documentation site (VitePress)
-├── packages/
-│   └── database/        # Prisma schema, migrations, client
-└── tooling/
-    └── typescript/      # Shared TypeScript config
-```
 
-The monorepo is managed with pnpm workspaces and Turborepo. The `@shelf/database` package owns all database concerns — schema, migrations, and Prisma client generation.
+راجع [`apps/companion/README.md`](./apps/companion/README.md) لإعداد عناوين الشبكة المحلية وثقة الأجهزة.
 
-## Commands
+---
 
-| Command                     | Description                             |
-| --------------------------- | --------------------------------------- |
-| `pnpm webapp:dev`           | Start development server                |
-| `pnpm webapp:build`         | Production build                        |
-| `pnpm webapp:test`          | Run tests (Vitest)                      |
-| `pnpm webapp:validate`      | Lint + typecheck + test                 |
-| `pnpm webapp:doctor`        | React health scan (react-doctor)        |
-| `pnpm companion:doctor`     | React Native health scan (react-doctor) |
-| `pnpm webapp:setup`         | Generate Prisma client + run migrations |
-| `pnpm db:prepare-migration` | Create a new database migration         |
-| `pnpm db:deploy-migration`  | Apply pending migrations                |
-| `pnpm db:reset`             | Reset database (destructive)            |
-| `pnpm docs:dev`             | Start documentation site                |
-| `pnpm typecheck`            | TypeScript type checking                |
-| `pnpm lint`                 | ESLint                                  |
+## الأوامر المرجعية
 
-## Deployment
+### التطوير
 
-### Fly.io
+| الأمر                | الوصف                              |
+| -------------------- | ---------------------------------- |
+| `pnpm webapp:dev`    | خادم التطوير على المنفذ 3000        |
+| `pnpm webapp:build`  | بناء الإنتاج                        |
+| `pnpm webapp:start`  | تشغيل نسخة الإنتاج محليًا           |
+| `pnpm docs:dev`      | موقع التوثيق على المنفذ 5173        |
 
-Shelf deploys to [Fly.io](https://fly.io/) with GitHub Actions for CI/CD. Pushes to `dev` trigger staging deploys and pushes to `main` trigger production deploys; in both cases we run lint, typecheck, test, Docker build, and deploy.
+### الجودة
 
-See the [deployment guide](https://docs.shelf.nu/deployment) for full setup instructions.
+| الأمر                       | الوصف                                     |
+| --------------------------- | ----------------------------------------- |
+| `pnpm webapp:validate`      | **التحقق الشامل — يُشغّل قبل كل commit**   |
+| `pnpm webapp:test -- --run` | اختبارات الوحدة (استخدم `--run` دائمًا)    |
+| `pnpm webapp:lint`          | فحص ESLint                                |
+| `pnpm turbo typecheck`      | فحص أنواع TypeScript                      |
+| `pnpm webapp:doctor`        | فحص صحة React للواجهة                     |
+| `pnpm companion:doctor`     | فحص صحة React Native للتطبيق المرافق       |
 
-### Docker
+> **مهم:** عند تشغيل الاختبارات يدويًا استخدم `--run` دائمًا. بدونه يعمل Vitest في وضع المراقبة ويستهلك ذاكرة مفرطة. لا تشغّل أكثر من عملية اختبار بالتوازي.
 
-Community-maintained Docker support is available for self-hosting. Requires an external Supabase instance.
+### قاعدة البيانات
 
-See the [Docker guide](https://docs.shelf.nu/docker).
+| الأمر                       | الوصف                             |
+| --------------------------- | --------------------------------- |
+| `pnpm db:generate`          | توليد عميل Prisma بعد تعديل السكيما |
+| `pnpm db:prepare-migration` | إنشاء ترحيل جديد                   |
+| `pnpm db:deploy-migration`  | تطبيق الترحيلات وإعادة توليد العميل |
+| `pnpm db:reset`             | **إعادة تعيين — يمسح كل البيانات**  |
 
-## Documentation
+---
 
-| Guide                                                        | Description                                  |
-| ------------------------------------------------------------ | -------------------------------------------- |
-| [Local Development](https://docs.shelf.nu/local-development) | Full local setup with SSL, monorepo overview |
-| [Supabase Setup](https://docs.shelf.nu/supabase-setup)       | Database, auth, storage configuration        |
-| [Deployment](https://docs.shelf.nu/deployment)               | Fly.io + GitHub Actions CI/CD                |
-| [Docker](https://docs.shelf.nu/docker)                       | Self-hosted Docker setup                     |
-| [App Configuration](https://docs.shelf.nu/app-configuration) | `shelf.config.ts` options                    |
-| [Error Handling](https://docs.shelf.nu/handling-errors)      | Error patterns and conventions               |
-| [Accessibility](https://docs.shelf.nu/accessibility)         | WCAG 2.1 AA compliance                       |
-| [Contributing](./CONTRIBUTING.md)                            | How to contribute                            |
+## معايير التطوير
 
-For developer onboarding and codebase conventions, see [`CLAUDE.md`](./CLAUDE.md).
+قبل أي مساهمة في المستودع، راجع [`CLAUDE.md`](./CLAUDE.md) — يوثّق الاتفاقيات الإلزامية:
 
-## Contributing
+- **التعريب:** كل نص ظاهر يمر عبر `t()` ويُضاف إلى `ar.json` و `en.json` معًا. الخصائص المنطقية (`ms-`/`me-`/`text-start`) بدل الفيزيائية في الواجهة — عدا قوالب البريد و PDF.
+- **التوثيق:** كل ملف وكل تصدير عام يحمل تعليق JSDoc يشرح الغرض والمعاملات والأخطاء.
+- **الأنواع:** ممنوع استخدام `any` كاختصار — استخدم `unknown` مع تضييق النوع إن كان الشكل ديناميكيًا فعلًا.
+- **النماذج:** أخطاء التحقق من الخادم تُعرض دائمًا كطبقة احتياطية للتحقق في المتصفح.
+- **الأزرار:** كل `<Button>` يُصيَّر كعنصر `<button>` يحتاج خاصية `type` صريحة.
+- **الرسائل:** التزام [Conventional Commits](https://www.conventionalcommits.org/)، وكل سطر في متن الرسالة ≤ 100 حرف.
+- **الاختبارات:** اختبارات موجّهة بالسلوك، وكل mock مصحوب بتعليق `// why:` يبرّره.
 
-We welcome contributions. Check the [contribution guidelines](./CONTRIBUTING.md) and look for issues labeled [**"Open for contributions"**](https://github.com/Shelf-nu/shelf.nu/issues?q=is%3Aissue+is%3Aopen+label%3A%22Open+for+contributions%22).
+قبل كل commit: `pnpm webapp:validate`
 
-The project uses [conventional commits](https://www.conventionalcommits.org/), enforced by commitlint. Pre-commit hooks run ESLint, Prettier, and TypeScript checking via Lefthook.
+---
 
-Join the [Discord](https://discord.gg/8he9W7aTJu) if you have questions or want to discuss your contribution.
+## التوثيق الفني
 
-## License
+| الدليل                                                     | الوصف                          |
+| ---------------------------------------------------------- | ------------------------------ |
+| [التعريب والمظهر](./apps/docs/epda-i18n-and-theming.md)    | i18n و RTL والوضع الداكن        |
+| [تكامل Azure Entra](./apps/docs/epda-azure-entra-sso.md)   | تفعيل الدخول الموحّد            |
+| [المراجع الأمني](./apps/docs/security-review-agent.md)     | الفحص الأمني قبل الـ commit     |
+| [التطوير المحلي](./apps/docs/local-development.md)         | الإعداد الكامل واستكشاف الأعطال  |
+| [النشر](./apps/docs/deployment.md)                         | إعداد بيئات النشر               |
+| [Docker](./apps/docs/docker.md)                            | التشغيل عبر الحاويات            |
+| [محفّزات قاعدة البيانات](./apps/docs/database-triggers.md) | المحفّزات والدوال               |
+| [الوصولية](./apps/docs/accessibility.md)                   | معايير WCAG 2.1 AA              |
+| [نمط تحديد الكل](./apps/docs/select-all-pattern.md)        | العمليات الجماعية عبر الصفحات   |
 
-Shelf.nu is licensed under [AGPL-3.0](./LICENSE).
+لتشغيل موقع التوثيق محليًا: `pnpm docs:dev`
+
+---
+
+## الترخيص والنسبة
+
+هذا النظام مبني على **[Shelf.nu](https://www.shelf.nu/)** — منصّة إدارة أصول مفتوحة المصدر، مرخّصة بموجب **[GNU AGPL-3.0](./LICENSE)**.
+
+يخضع هذا المستودع — بما فيه جميع التخصيصات المذكورة أعلاه — لنفس ترخيص **AGPL-3.0**. يعني ذلك عمليًا:
+
+- يحق للهيئة استخدام النظام وتعديله ونشره داخليًا دون رسوم تراخيص.
+- عند إتاحة النظام عبر الشبكة لمستخدمين خارج الهيئة، يُلزم الترخيص بإتاحة الشيفرة المصدرية المعدّلة لهؤلاء المستخدمين.
+- يجب الإبقاء على إشعار الترخيص وعلى نسبة العمل الأصلي في أي توزيع لاحق.
+
+الشكر لفريق Shelf.nu ولمجتمع المساهمين على القاعدة التي بُني عليها هذا العمل.
+
+---
+
+<div align="center">
+
+**هيئة تطوير المنطقة الشرقية** — إدارة تقنية المعلومات
+
+</div>

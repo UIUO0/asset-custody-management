@@ -17,6 +17,14 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
+// why: the empty-state placeholder resolves "No data" through i18next; map
+// that key so the placeholder assertions keep matching the English copy.
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => (key === "list.noData" ? "No data" : key),
+  }),
+}));
+
 import type { AdvancedIndexAsset } from "~/modules/asset/types";
 
 vi.mock("lottie-react", () => ({
@@ -61,7 +69,7 @@ function renderCell(locations: AdvancedIndexAsset["locations"]) {
           <LocationColumn locations={locations} />
         </tr>
       </tbody>
-    </table>
+    </table>,
   );
 }
 
@@ -69,7 +77,7 @@ function makeLocation(
   id: string,
   name: string,
   parentId: string | null = null,
-  childCount: number = 0
+  childCount: number = 0,
 ): AdvancedIndexAsset["locations"][number] {
   return { id, name, parentId, childCount };
 }

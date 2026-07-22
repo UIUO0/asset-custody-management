@@ -1,5 +1,6 @@
 import { BarcodeType, OrganizationRoles } from "@prisma/client";
 import { DateTime } from "luxon";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LinksFunction,
@@ -102,7 +103,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         request,
         entity: PermissionEntity.asset,
         action: PermissionAction.read,
-      }
+      },
     );
 
     const asset = await getAsset({
@@ -204,7 +205,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         const remaining = await computeBookingAssetRemainingToCheckOut(
           db,
           bookingId,
-          asset.id
+          asset.id,
         );
         // effective claimed = booked − remaining-to-check-out, floored at 0
         const effectiveQuantity = Math.max(0, agg.bookedQuantity - remaining);
@@ -215,7 +216,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           assetKitId: null,
           booking: agg.booking,
         } as RawBookingAssetRow;
-      })
+      }),
     );
 
     // Drop ONGOING/OVERDUE rows with zero effective quantity — they
@@ -223,7 +224,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // brand-new ONGOING booking awaiting its first scan). The tooltip
     // should only show bookings that contribute to the checked-out count.
     const cleanedActiveRows = effectiveActiveRows.filter(
-      (row) => (row.quantity ?? 0) > 0
+      (row) => (row.quantity ?? 0) > 0,
     );
 
     const assetWithEffectiveBookingAssets = {
@@ -279,7 +280,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           "set-reminder",
           "add-barcode",
         ]),
-      })
+      }),
     );
 
     const intent2ActionMap: { [K in typeof intent]: PermissionAction } = {
@@ -300,7 +301,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       case "delete": {
         const { mainImageUrl } = parseData(
           formData,
-          z.object({ mainImageUrl: z.string().optional() })
+          z.object({ mainImageUrl: z.string().optional() }),
         );
 
         await deleteAsset({ organizationId, id });
@@ -327,7 +328,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       case "relink-qr-code": {
         const { newQrId } = parseData(
           formData,
-          z.object({ newQrId: z.string() })
+          z.object({ newQrId: z.string() }),
         );
 
         await relinkAssetQrCode({
@@ -351,7 +352,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         const { redirectTo, ...payload } = parseData(
           formData,
           setReminderSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
         const hints = getHints(request);
 
@@ -360,7 +361,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           DATE_TIME_FORMAT,
           {
             zone: hints.timeZone,
-          }
+          },
         ).toJSDate();
 
         await createAssetReminder({
@@ -387,17 +388,17 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({
             barcodeType: z.nativeEnum(BarcodeType),
             barcodeValue: z.string().min(1, "Barcode value is required"),
-          })
+          }),
         );
 
         // Validate barcode value
         const normalizedValue = normalizeBarcodeValue(
           barcodeType,
-          barcodeValue
+          barcodeValue,
         );
         const validationError = validateBarcodeValue(
           barcodeType,
-          normalizedValue
+          normalizedValue,
         );
 
         if (validationError) {
@@ -433,7 +434,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
               payload({ error: validationErrors["barcodes[0].value"].message }),
               {
                 status: reason.status,
-              }
+              },
             );
           }
 
@@ -467,20 +468,21 @@ export const links: LinksFunction = () => [
 ];
 
 export default function AssetDetailsPage() {
+  const { t } = useTranslation();
   const { asset } = useLoaderData<typeof loader>();
 
   const { roles } = useUserRoleHelper();
 
   const items = [
-    { to: "overview", content: "Overview" },
-    { to: "activity", content: "Activity" },
-    { to: "bookings", content: "Bookings" },
+    { to: "overview", content: t("assetOverview.overview") },
+    { to: "activity", content: t("assetOverview.activity") },
+    { to: "bookings", content: t("assetOverview.bookings") },
     ...(userHasPermission({
       roles,
       entity: PermissionEntity.assetReminders,
       action: PermissionAction.read,
     })
-      ? [{ to: "reminders", content: "Reminders" }]
+      ? [{ to: "reminders", content: t("assetOverview.reminders") }]
       : []),
   ];
 
@@ -499,7 +501,7 @@ export default function AssetDetailsPage() {
               }}
               alt={`Image of ${asset.title}`}
               className={tw(
-                "me-4 size-14 cursor-pointer rounded border object-cover"
+                "me-4 size-14 cursor-pointer rounded border object-cover",
               )}
               withPreview
             />

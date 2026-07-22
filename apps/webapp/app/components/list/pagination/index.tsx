@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { useTranslation } from "react-i18next";
 import {
   ChevronRight,
   ChevronLeftDoubleIcon,
@@ -6,11 +6,10 @@ import {
 import { Button } from "~/components/shared/button";
 import { usePagination } from "~/hooks/use-pagination";
 import { tw } from "~/utils/tw";
-import type { IndexResponse } from "..";
 import PerPageItemsSelect from "./per-page-items-select";
 
 export const Pagination = ({ className }: { className?: string }) => {
-  const { modelName } = useLoaderData<IndexResponse>();
+  const { t } = useTranslation();
   const {
     page,
     totalPages,
@@ -27,7 +26,7 @@ export const Pagination = ({ className }: { className?: string }) => {
     <div
       className={tw(
         "flex flex-wrap items-center justify-center gap-3 px-1 pb-4 pt-3 md:px-4",
-        className
+        className,
       )}
     >
       <div className="inline-flex items-center rounded border border-gray-300 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
@@ -57,13 +56,13 @@ export const Pagination = ({ className }: { className?: string }) => {
 
         <div className="flex items-center gap-2 px-2.5 py-[4px] leading-none text-gray-400">
           <span className="whitespace-nowrap text-[14px] font-medium text-gray-500">
-            Page
+            {t("list.page")}
           </span>
           <span className="whitespace-nowrap text-[14px] font-semibold text-gray-700">
             {page}
           </span>
           <span className="whitespace-nowrap text-[14px] font-medium text-gray-500">
-            of
+            {t("list.of")}
           </span>
           <span className="whitespace-nowrap text-[14px] font-semibold text-gray-700">
             {total === 0 ? 1 : total}
@@ -97,7 +96,7 @@ export const Pagination = ({ className }: { className?: string }) => {
       <div className="flex items-center gap-2">
         <PerPageItemsSelect />
         <p className="hidden whitespace-nowrap text-[14px] font-medium text-gray-500 lg:block">
-          <span className="capitalize">{modelName.plural}</span> per page
+          {t("list.perPage")}
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import colors from "tailwindcss/colors";
 import type { ASSET_REMINDER_INCLUDE_FIELDS } from "~/modules/asset-reminder/fields";
@@ -20,22 +21,24 @@ type RemindersTableProps = {
   isAssetReminderPage?: boolean;
 };
 
-export const REMINDERS_SORTING_OPTIONS = {
-  name: "Name",
-  alertDateTime: "Alert Time",
-  createdAt: "Date Created",
-  updatedAt: "Date Updated",
-} as const;
-
 export default function RemindersTable({
   isAssetReminderPage,
 }: RemindersTableProps) {
+  const { t } = useTranslation();
   const [isReminderDialogOpen, setIsReminderDialogOpen] = useState(false);
   const { assetId } = useParams<{ assetId: string }>();
 
+  /** Sorting labels are translated, so the map is built per-render. */
+  const sortingOptions = {
+    name: t("reminders.sortName"),
+    alertDateTime: t("reminders.sortAlertTime"),
+    createdAt: t("reminders.sortDateCreated"),
+    updatedAt: t("reminders.sortDateUpdated"),
+  } as const;
+
   const emptyStateTitle = isAssetReminderPage
-    ? "No reminders for this asset"
-    : "No reminders created yet.";
+    ? t("reminders.emptyTitleAsset")
+    : t("reminders.emptyTitle");
 
   return (
     <ListContentWrapper className="mb-4">
@@ -43,7 +46,7 @@ export default function RemindersTable({
         slots={{
           "right-of-search": (
             <SortBy
-              sortingOptions={REMINDERS_SORTING_OPTIONS}
+              sortingOptions={sortingOptions}
               defaultSortingBy="alertDateTime"
             />
           ),
@@ -57,7 +60,7 @@ export default function RemindersTable({
           title: emptyStateTitle,
           text: (
             <p>
-              What are you waiting for? Create your first{" "}
+              {t("reminders.emptyTextStart")}{" "}
               {isAssetReminderPage ? (
                 <Button
                   type="button"
@@ -66,24 +69,24 @@ export default function RemindersTable({
                     setIsReminderDialogOpen(true);
                   }}
                 >
-                  reminder
+                  {t("reminders.emptyTextReminder")}
                 </Button>
               ) : (
-                "reminder"
+                t("reminders.emptyTextReminder")
               )}{" "}
-              now!
+              {t("reminders.emptyTextEnd")}
             </p>
           ),
         }}
         headerChildren={
           <>
-            <Th>Message</Th>
+            <Th>{t("reminders.message")}</Th>
             <When truthy={!isAssetReminderPage}>
-              <Td>Asset</Td>
+              <Td>{t("reminders.asset")}</Td>
             </When>
-            <Th>Alert Date</Th>
-            <Th>Status</Th>
-            <Th>Users</Th>
+            <Th>{t("reminders.alertDate")}</Th>
+            <Th>{t("reminders.status")}</Th>
+            <Th>{t("reminders.users")}</Th>
           </>
         }
         extraItemComponentProps={{ isAssetReminderPage }}

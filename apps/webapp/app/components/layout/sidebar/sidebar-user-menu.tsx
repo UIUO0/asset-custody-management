@@ -3,10 +3,7 @@ import { LogOutIcon, UserPenIcon, UserRoundIcon, Wallet } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useFetcher, useLoaderData } from "react-router";
 import { ChevronRight } from "~/components/icons/library";
-import {
-  LanguageSwitcher,
-  ThemeSwitcher,
-} from "~/components/layout/appearance-switcher";
+import { LanguageSwitcher } from "~/components/layout/appearance-switcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,22 +111,19 @@ export default function SidebarUserMenu() {
             >
               <NavLink to="/account-details/subscription">
                 <Wallet className="size-4" />
-                Subscriptions
+                {t("userMenu.subscriptions")}
               </NavLink>
             </DropdownMenuItem>
-            {/* Appearance controls live in the menu (not a settings page) so
-                language and theme are one click away from anywhere. Wrapped in
-                a plain div rather than DropdownMenuItem: these are forms, and
-                a menu item would swallow the submit and close the menu. */}
+            {/* The language switcher lives in the menu (not a settings page)
+                so it is one click away from anywhere. Wrapped in a plain div
+                rather than DropdownMenuItem: it is a form, and a menu item
+                would swallow the submit and close the menu. Dark mode is
+                removed EPDA-wide, so there is no theme control. */}
             <div className="flex flex-col gap-2 border-b border-gray-200 p-2">
               <span className="text-xs font-medium text-gray-500">
                 {t("common.language")}
               </span>
               <LanguageSwitcher />
-              <span className="mt-1 text-xs font-medium text-gray-500">
-                {t("common.theme")}
-              </span>
-              <ThemeSwitcher />
             </div>
             <DropdownMenuItem
               className="mt-1 cursor-pointer gap-2 border-b border-gray-200 p-2"

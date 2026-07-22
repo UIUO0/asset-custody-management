@@ -23,7 +23,7 @@ import {
 } from "~/atoms/list";
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
-import { ASSET_SORTING_OPTIONS } from "~/components/assets/assets-index/filters";
+import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
 import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import { StatusFilter } from "~/components/booking/status-filter";
@@ -76,7 +76,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ locationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -198,7 +198,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ locationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -220,7 +220,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         }),
         {
           additionalData: { userId, organizationId, locationId },
-        }
+        },
       );
 
     await updateLocationAssets({
@@ -249,6 +249,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function AddAssetsToLocation() {
+  const assetSortingOptions = useAssetSortingOptions();
   const { location, totalItems } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSearching = isFormProcessing(navigation.state);
@@ -269,7 +270,7 @@ export default function AddAssetsToLocation() {
   // the component logic expects.
   const locationAssets = useMemo(
     () => location.assetLocations.map((al) => al.asset),
-    [location.assetLocations]
+    [location.assetLocations],
   );
   const locationAssetsCount = locationAssets.length;
   const hasUnsavedChanges = selectedBulkItemsCount !== locationAssetsCount;
@@ -295,10 +296,10 @@ export default function AddAssetsToLocation() {
       locationAssets.filter(
         (asset) =>
           !selectedBulkItems.some(
-            (selectedItem) => selectedItem.id === asset.id
-          )
+            (selectedItem) => selectedItem.id === asset.id,
+          ),
       ),
-    [locationAssets, selectedBulkItems]
+    [locationAssets, selectedBulkItems],
   );
 
   /**
@@ -316,7 +317,7 @@ export default function AddAssetsToLocation() {
     (assetId: string, quantity: number) => {
       setQuantities((prev) => ({ ...prev, [assetId]: quantity }));
     },
-    []
+    [],
   );
 
   /** Drop the qty entry when the row is deselected. */
@@ -383,7 +384,7 @@ export default function AddAssetsToLocation() {
           "left-of-search": <StatusFilter statusItems={AssetStatus} />,
           "right-of-search": (
             <SortBy
-              sortingOptions={ASSET_SORTING_OPTIONS}
+              sortingOptions={assetSortingOptions}
               defaultSortingBy="createdAt"
             />
           ),
@@ -446,7 +447,7 @@ export default function AddAssetsToLocation() {
             // toggle. Mirrors the kit picker's qty-on-toggle behaviour:
             // INDIVIDUAL rows skip both branches (no qty input renders).
             const isCurrentlySelected = selectedBulkItems.some(
-              (a) => a.id === item.id
+              (a) => a.id === item.id,
             );
             if (isCurrentlySelected) {
               removeQuantity(item.id);
@@ -713,8 +714,8 @@ const RowComponent = ({
                       1,
                       Math.min(
                         Math.floor(raw),
-                        Number.isFinite(max) ? max : raw
-                      )
+                        Number.isFinite(max) ? max : raw,
+                      ),
                     );
                     onQuantityChange(item.id, capped);
                   }}

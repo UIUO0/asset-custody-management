@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -66,6 +67,7 @@ export default function BulkActionsDropdown() {
 // react-doctor:no-giant-component — deferred for follow-up refactor
 function ConditionalDropdown() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const isLoading = isFormProcessing(navigation.state);
   const [isBulkDownloadQrOpen, setIsBulkDownloadQrOpen] = useState(false);
 
@@ -99,16 +101,16 @@ function ConditionalDropdown() {
     selectedAssets.every((asset) => asset.status === "AVAILABLE");
 
   const someAssetCheckedOut = selectedAssets.some(
-    (asset) => asset.status === "CHECKED_OUT"
+    (asset) => asset.status === "CHECKED_OUT",
   );
 
   const someAssetPartOfUnavailableKit = selectedAssets.some(
-    (asset) => asset?.kit && asset.kit.status !== "AVAILABLE"
+    (asset) => asset?.kit && asset.kit.status !== "AVAILABLE",
   );
 
   const selfUserCustody = selectedAssets.some((a) => {
     const primary = getPrimaryCustody(
-      a?.custody as Record<string, unknown>[] | undefined
+      a?.custody as Record<string, unknown>[] | undefined,
     ) as { custodian?: { userId?: string } } | null;
     return primary?.custodian?.userId === user?.id;
   });
@@ -123,7 +125,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -207,7 +209,7 @@ function ConditionalDropdown() {
                 : false
             }
           >
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">{t("list.actions")}</span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -219,7 +221,7 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("list.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />

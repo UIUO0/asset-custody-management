@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Prisma } from "@prisma/client";
 import { KitStatus, OrganizationRoles } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -37,6 +38,8 @@ import { db } from "~/database/db.server";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useIsAvailabilityView } from "~/hooks/use-is-availability-view";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
 import { getLocationsForCreateAndEdit } from "~/modules/asset/service.server";
 import { resolveDisplayCode } from "~/modules/barcode/display";
@@ -254,7 +257,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
       {
         headers: [...(filtersCookie ? [setCookie(filtersCookie)] : [])],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -262,15 +265,22 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: appendToMetaTitle(data?.header.title) },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.kits) }];
+};
 
 export const handle = {
   name: "kits.index",
 };
 
 export default function KitsIndexPage() {
+  const { t } = useTranslation();
   const { items } = useLoaderData<typeof loader>();
   const { roles, isBase } = useUserRoleHelper();
   const canCreateKit = userHasPermission({
@@ -291,10 +301,10 @@ export default function KitsIndexPage() {
 
   return (
     <>
-      <Header>
+      <Header title={t("nav.kits")}>
         {canCreateKit && (
           <Button to="new" role="link" aria-label="new kit">
-            New kit
+            {t("kits.newKit")}
           </Button>
         )}
       </Header>
@@ -317,13 +327,13 @@ export default function KitsIndexPage() {
             <DynamicDropdown
               trigger={
                 <div className="my-2 flex cursor-pointer items-center gap-2 md:my-0">
-                  Custodian{" "}
+                  {t("assets.custodian")}{" "}
                   <ChevronRight className="hidden rotate-90 md:inline" />
                 </div>
               }
               model={{ name: "teamMember", queryKey: "name", deletedAt: null }}
-              label="Filter by custodian"
-              placeholder="Search team members"
+              label={t("list.filterByCustodian")}
+              placeholder={t("list.searchTeamMembers")}
               countKey="totalTeamMembers"
               initialDataKey="teamMembers"
               transformItem={(item) => ({
@@ -380,36 +390,35 @@ export default function KitsIndexPage() {
             ItemComponent={ListContent}
             bulkActions={isBase ? undefined : <BulkActionsDropdown />}
             customEmptyStateContent={{
-              title: "No kits yet",
-              text: "Kits let you group related assets together. Create a kit to bundle equipment that's typically used as a set.",
+              title: t("kits.emptyTitle"),
+              text: t("kits.emptyText"),
               newButtonRoute: "/kits/new",
-              newButtonContent: "Create your first kit",
+              newButtonContent: t("kits.emptyCta"),
             }}
             headerChildren={
               <>
-                <Th>Category</Th>
-                <Th>Location</Th>
-                <Th>Description</Th>
-                <Th>Assets</Th>
+                <Th>{t("assets.category")}</Th>
+                <Th>{t("assets.location")}</Th>
+                <Th>{t("assets.description")}</Th>
+                <Th>{t("nav.assets")}</Th>
                 <Th className="flex items-center gap-1 whitespace-nowrap">
-                  Custodian{" "}
+                  {t("assets.custodian")}{" "}
                   <InfoTooltip
                     iconClassName="size-4"
                     content={
                       <>
-                        <h6>Asset custody</h6>
+                        <h6>{t("assets.custodyTooltipTitle")}</h6>
                         <p>
-                          This column shows if a user has custody of the asset
-                          either via direct assignment or via a booking. If you
-                          see <GrayBadge>private</GrayBadge> that means you
-                          don't have the permissions to see who has custody of
-                          the asset.
+                          <Trans
+                            i18nKey="assets.custodyTooltipBody"
+                            components={{ badge: <GrayBadge /> }}
+                          />
                         </p>
                       </>
                     }
                   />
                 </Th>
-                <Th>Actions</Th>
+                <Th>{t("list.actions")}</Th>
               </>
             }
           />
@@ -461,7 +470,7 @@ function ListContent({
           to={`/kits/${item.id}/assets`}
           className={tw(
             "flex justify-between gap-3 py-4  md:justify-normal",
-            bulkActions ? "md:ps-0 md:pe-6" : "md:px-6"
+            bulkActions ? "md:pe-6 md:ps-0" : "md:px-6",
           )}
         >
           <div className="flex items-center gap-3">

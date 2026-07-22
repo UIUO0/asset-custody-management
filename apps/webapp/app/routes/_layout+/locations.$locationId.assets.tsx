@@ -15,7 +15,7 @@ import z from "zod";
 import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { AssetImage } from "~/components/assets/asset-image";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
-import { ASSET_SORTING_OPTIONS } from "~/components/assets/assets-index/filters";
+import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
 import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
@@ -187,7 +187,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       case "removeAsset": {
         const { assetId } = parseData(
           formData,
-          z.object({ assetId: z.string() })
+          z.object({ assetId: z.string() }),
         );
 
         await updateLocationAssets({
@@ -214,7 +214,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           formData,
           z.object({
             assetIds: z.array(z.string()).min(1),
-          })
+          }),
         );
 
         const resolvedAssetIds = await resolveLocationAssetIds({
@@ -260,6 +260,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function LocationAssets() {
+  const assetSortingOptions = useAssetSortingOptions();
   const { roles } = useUserRoleHelper();
   const { location } = useLoaderData<typeof loader>();
   const userRoleCanManageAssets = userHasPermission({
@@ -287,7 +288,7 @@ export default function LocationAssets() {
             "right-of-search": (
               <div className="flex flex-col items-stretch gap-2 md:flex-row md:items-center">
                 <SortBy
-                  sortingOptions={ASSET_SORTING_OPTIONS}
+                  sortingOptions={assetSortingOptions}
                   defaultSortingBy="createdAt"
                 />
                 <When truthy={canReadCustody}>
@@ -486,11 +487,11 @@ const ListAssetContent = ({
                        */
                       const unit = item.unitOfMeasure || "units";
                       const rowsAtThisLocation = item.assetLocations.filter(
-                        (al) => al.locationId === locationId
+                        (al) => al.locationId === locationId,
                       );
                       const atLocation = rowsAtThisLocation.reduce(
                         (sum, al) => sum + (al.quantity ?? 0),
-                        0
+                        0,
                       );
                       // An asset can have multiple kit-driven rows at
                       // the same location (one per AssetKit) — see the

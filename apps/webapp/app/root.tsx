@@ -26,25 +26,20 @@ import { AnimationProvider } from "./components/shared/animation-provider";
 import { TooltipProvider } from "./components/shared/tooltip";
 import { config } from "./config/shelf.config";
 import { useNprogress } from "./hooks/use-nprogress";
+import { DEFAULT_LOCALE, getDirection } from "./i18n/config";
+import { getLocale } from "./i18n/i18n.server";
 import fontsStylesheetUrl from "./styles/fonts.css?url";
 import globalStylesheetUrl from "./styles/global.css?url";
 import nProgressCustomStyles from "./styles/nprogress.css?url";
 import pmDocStylesheetUrl from "./styles/pm-doc.css?url";
 import styles from "./tailwind.css?url";
-import { DEFAULT_LOCALE, getDirection } from "./i18n/config";
-import { getLocale } from "./i18n/i18n.server";
-import { tw } from "./utils/tw";
 import { ClientHintCheck, getClientHint } from "./utils/client-hints";
 import { getBrowserEnv, MAINTENANCE_MODE } from "./utils/env";
 import { payload } from "./utils/http.server";
 import { useNonce } from "./utils/nonce-provider";
 import { isAdmin } from "./utils/roles.server";
 import { splashScreenLinks } from "./utils/splash-screen-links";
-import {
-  DEFAULT_THEME_PREFERENCE,
-  getThemeInitScript,
-  getThemePreference,
-} from "./utils/theme";
+import { tw } from "./utils/tw";
 
 export interface RootData {
   env: typeof getBrowserEnv;
@@ -84,18 +79,18 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     ? await isAdmin(context).catch(() => null)
     : null;
 
-  // Locale and theme are resolved here (not in a child route) because the
-  // <html> element lives in this module's Layout — they must be known before
-  // any markup is emitted to avoid a direction/theme flash.
+  // Locale is resolved here (not in a child route) because the <html>
+  // element lives in this module's Layout — it must be known before any
+  // markup is emitted to avoid a direction flash.
+  // why: dark mode is intentionally removed EPDA-wide — the system always
+  // renders the light theme, so no theme preference is resolved.
   const locale = getLocale(request);
-  const themePreference = getThemePreference(request.headers.get("Cookie"));
 
   return payload({
     env: getBrowserEnv(),
     maintenanceMode: MAINTENANCE_MODE && !admin,
     locale,
     dir: getDirection(locale),
-    themePreference,
     requestInfo: {
       hints: getClientHint(request),
     },
@@ -124,39 +119,27 @@ export function Layout({ children }: { children: ReactNode }) {
   const hasCookies = useSyncExternalStore(
     subscribeCookieEnabled,
     getCookieEnabledSnapshot,
-    getCookieEnabledServerSnapshot
+    getCookieEnabledServerSnapshot,
   );
 
   // Fall back to the defaults when the root loader hasn't run (error boundary
   // renders Layout without loader data).
   const locale = data?.locale ?? DEFAULT_LOCALE;
   const dir = data?.dir ?? getDirection(DEFAULT_LOCALE);
-  const themePreference = data?.themePreference ?? DEFAULT_THEME_PREFERENCE;
 
   return (
     <html
       lang={locale}
       dir={dir}
-      className={tw(
-        "overflow-hidden",
-        // Server-side guess for the concrete theme. "system" resolves in the
-        // inline script below, which runs before paint.
-        themePreference === "dark" && "dark"
-      )}
+      // why: dark mode is removed EPDA-wide — the `dark` class is never
+      // applied and the color scheme is pinned to light so form controls
+      // and scrollbars don't follow the OS dark preference.
+      className="overflow-hidden"
+      style={{ colorScheme: "light" }}
     >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        {/* why: must run synchronously before first paint to prevent a
-            flash of the wrong theme; React's <style>/<script> children
-            do not execute. Content is generated from a typed enum, not
-            user input. */}
-        <script
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{
-            __html: getThemeInitScript(themePreference),
-          }}
-        />
         {/* why: iOS Smart App Banner must be rendered here in <head>, not via a
             route `meta` export. React Router renders the leaf route's meta
             (not a merge of root + leaf), and 150+ routes export their own

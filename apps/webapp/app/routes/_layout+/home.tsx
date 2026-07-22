@@ -10,6 +10,7 @@
  * into the corresponding index page or report.
  */
 import { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -33,6 +34,8 @@ import UpcomingReminders from "~/components/home/upcoming-reminders";
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
 import { db } from "~/database/db.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getUpcomingRemindersForHomePage } from "~/modules/asset-reminder/service.server";
 import { getBookings } from "~/modules/booking/service.server";
 
@@ -136,7 +139,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
             SELECT COALESCE(SUM(COALESCE(value, 0) * COALESCE(quantity, 1)), 0) AS total
             FROM "Asset"
             WHERE "organizationId" = ${organizationId}
-          `
+          `,
           )
           .catch((cause) => {
             throw new ShelfError({
@@ -319,7 +322,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
               locationId: l.id,
               locationName: l.name,
               assetCount: l._count.assetLocations,
-            }))
+            })),
         ),
 
       // KPI: total locations
@@ -386,24 +389,37 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = () => [
-  { title: appendToMetaTitle("Home") },
-];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.home) }];
+};
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
+/** Breadcrumb link for the home page (component so it can use the hook). */
+function HomeBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/home">{t("nav.home")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/home">Home</Link>,
+  breadcrumb: () => <HomeBreadcrumb />,
 };
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const { skipOnboardingChecklist, checklistOptions } =
     useLoaderData<typeof loader>();
   const completedAllChecks = Object.values(checklistOptions).every(Boolean);
 
   return (
     <div>
-      <Header> </Header>
+      <Header title={t("nav.home")}> </Header>
       {completedAllChecks || skipOnboardingChecklist ? (
         <div className="pb-8">
           <AnnouncementBar />

@@ -1,5 +1,6 @@
 import { TagUseFor } from "@prisma/client";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, redirect, redirectDocument, useLoaderData } from "react-router";
 import { dynamicTitleAtom } from "~/atoms/dynamic-title-atom";
@@ -10,6 +11,8 @@ import {
 } from "~/components/assets/form";
 import Header from "~/components/layout/header";
 import { useSearchParams } from "~/hooks/search-params";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { estimateNextSequentialId } from "~/modules/asset/sequential-id.server";
 import {
   bulkCreateAssetsFromModel,
@@ -115,12 +118,24 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.assetForm.newAsset) }];
+};
+
+/** Breadcrumb label for the new-asset page (component so it can use the hook). */
+function NewAssetBreadcrumb() {
+  const { t } = useTranslation();
+  return <span>{t("assetForm.newAsset")}</span>;
+}
 
 export const handle = {
-  breadcrumb: () => <span>{title}</span>,
+  breadcrumb: () => <NewAssetBreadcrumb />,
 };
 
 export async function action({ context, request }: LoaderFunctionArgs) {
@@ -323,7 +338,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
     if (primaryLocation) {
       const locationLink = wrapLinkForNote(
         `/locations/${primaryLocation.id}`,
-        primaryLocation.name.trim()
+        primaryLocation.name.trim(),
       );
       postCreationTasks.push(
         createNote({
@@ -332,7 +347,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
           userId: authSession.userId,
           assetId: asset.id,
           organizationId,
-        })
+        }),
       );
     }
 
@@ -358,6 +373,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
 }
 
 export default function NewAssetPage() {
+  const { t } = useTranslation();
   const title = useAtomValue(dynamicTitleAtom);
   const { nextSequentialId } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
@@ -376,7 +392,11 @@ export default function NewAssetPage() {
     <div className="relative">
       <Header
         title={
-          title ? title : bulkMode ? "Bulk create assets" : "Untitled Asset"
+          title
+            ? title
+            : bulkMode
+            ? t("assetForm.bulkCreateAssets")
+            : t("assetForm.untitled")
         }
       />
       <div>
