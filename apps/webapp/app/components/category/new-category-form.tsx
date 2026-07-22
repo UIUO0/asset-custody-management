@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { Category } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import z from "zod";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
@@ -42,6 +43,7 @@ export default function NewCategoryForm({
   onCancel,
   onSuccess,
 }: NewCategoryFormProps) {
+  const { t } = useTranslation();
   const zo = useZorm("NewQuestionWizardScreen", NewCategoryFormSchema);
   const fetcher = useFetcherWithReset<typeof action>();
   const disabled = useDisabled(fetcher);
@@ -70,7 +72,7 @@ export default function NewCategoryForm({
 
   // Get validation errors from server response using the standard helper
   const validationErrors = getValidationErrors<typeof NewCategoryFormSchema>(
-    fetcher.data?.error
+    fetcher.data?.error,
   );
 
   // Compute field-specific errors: prefer Zod client-side validation errors,
@@ -88,7 +90,7 @@ export default function NewCategoryForm({
       method="post"
       className={tw(
         "w-full rounded border border-gray-200 bg-white px-6 py-5 md:flex md:items-center md:justify-between",
-        formClassName
+        formClassName,
       )}
       ref={zo.ref}
       action={apiUrl}
@@ -96,8 +98,8 @@ export default function NewCategoryForm({
       <div className={tw("gap-4 md:flex md:items-center", className)}>
         <Input
           ref={nameInputRef}
-          label="Name"
-          placeholder="Category name"
+          label={t("categories.name")}
+          placeholder={t("categories.namePlaceholder")}
           className={tw("mb-4 lg:mb-0 lg:max-w-[180px]", inputClassName)}
           name={zo.fields.name()}
           disabled={disabled}
@@ -107,8 +109,8 @@ export default function NewCategoryForm({
           required={zodFieldIsRequired(NewCategoryFormSchema.shape.name)}
         />
         <Input
-          label="Description"
-          placeholder="Description (optional)"
+          label={t("categories.description")}
+          placeholder={t("categories.descriptionPlaceholder")}
           name={zo.fields.description()}
           disabled={disabled}
           data-test-id="categoryDescription"
@@ -144,7 +146,7 @@ export default function NewCategoryForm({
               className="flex-1"
               disabled={disabled}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           ) : (
             <Button
@@ -154,7 +156,7 @@ export default function NewCategoryForm({
               className="flex-1"
               disabled={disabled}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           )}
           <Button
@@ -163,7 +165,7 @@ export default function NewCategoryForm({
             className="flex-1"
             disabled={disabled}
           >
-            {disabled ? "Creating..." : "Create"}
+            {disabled ? t("common.creating") : t("common.create")}
           </Button>
         </div>
 

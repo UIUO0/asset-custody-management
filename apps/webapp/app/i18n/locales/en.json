@@ -35,7 +35,9 @@
     "settings": "Settings",
     "language": "Language",
     "theme": "Theme",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "creating": "Creating...",
+    "update": "Update"
   },
   "language": {
     "switch": "Switch language",
@@ -277,13 +279,20 @@
     "parentLocation": "Parent location",
     "childLocations": "Child locations",
     "sortNumberOfAssets": "Number of assets",
-    "address": "Address"
+    "address": "Address",
+    "untitled": "Untitled location",
+    "editTitle": "Edit location"
   },
   "categories": {
     "newCategory": "New category",
     "emptyTitle": "No categories yet",
     "emptyText": "Categories help you organize assets by type. Create categories to group and filter your inventory.",
-    "emptyCta": "Create your first category"
+    "emptyCta": "Create your first category",
+    "name": "Name",
+    "namePlaceholder": "Category name",
+    "description": "Description",
+    "descriptionPlaceholder": "Description (optional)",
+    "editTitle": "Edit category"
   },
   "tags": {
     "newTag": "New tag",
@@ -292,13 +301,21 @@
     "emptyCta": "Create your first tag",
     "useFor": "Use for",
     "tagPrefix": "Tag: {{name}}",
-    "filterByUsage": "Filter by usage"
+    "filterByUsage": "Filter by usage",
+    "name": "Name",
+    "namePlaceholder": "Tag name",
+    "description": "Description",
+    "descriptionPlaceholder": "Description (optional)",
+    "useForPlaceholder": "Select use for",
+    "useForTooltip": "When no specific entry is selected, this tag will be available for all entries.",
+    "editTitle": "Edit tag"
   },
   "kits": {
     "newKit": "New kit",
     "emptyTitle": "No kits yet",
     "emptyText": "Kits let you group related assets together. Create a kit to bundle equipment that's typically used as a set.",
-    "emptyCta": "Create your first kit"
+    "emptyCta": "Create your first kit",
+    "untitled": "Untitled kit"
   },
   "emptyState": {
     "noneFound": "No results found",
@@ -473,5 +490,38 @@
     "edit": "Edit",
     "duplicate": "Duplicate",
     "delete": "Delete"
+  },
+  "locationForm": {
+    "name": "Name",
+    "namePlaceholder": "Storage room",
+    "parentLocation": "Parent location",
+    "parentHint": "Optional. Nest this location under an existing one to build breadcrumbs.",
+    "noParent": "No parent",
+    "mainImage": "Main image",
+    "imageHint": "Accepts PNG, JPG, JPEG, or WebP (max.4 MB)",
+    "address": "Address",
+    "addressHint": "Will set location’s geo position to address. Make sure to add an accurate address, to ensure the map location is as accurate as possible",
+    "description": "Description",
+    "descriptionHint": "This is the initial object description. It will be shown on the location page. You can always change it.",
+    "descriptionPlaceholder": "Add a description for your location.",
+    "addAnotherHint": "Save the location and add a new one"
+  },
+  "kitForm": {
+    "name": "Name",
+    "description": "Description",
+    "descriptionSubheading": "Briefly describe what is included and/or what is will be used for. It will be shown on the kit’s overview page.",
+    "descriptionPlaceholder": "Write your description here...",
+    "category": "Category",
+    "categorySubheadingText": "Make it unique. Each kit can have 1 category. It will show on your index.",
+    "createCategories": "Create categories",
+    "location": "Location",
+    "locationSubheadingText": "A location is a place where an item is supposed to be located. This is different than the last scanned location",
+    "createLocations": "Create locations",
+    "createNewCategory": "Create new category",
+    "createNewLocation": "Create new location",
+    "image": "Image",
+    "imageHint": "Accepts PNG, JPG, JPEG, or WebP (max.8 MB)",
+    "barcodes": "Barcodes",
+    "barcodesSubheading": "Add additional barcodes to this kit (Code 128, Code 39, or Data Matrix). Note: Each kit automatically gets a default QR code for tracking."
   }
 }

@@ -4,6 +4,8 @@ import NewCategoryForm, {
   NewCategoryFormSchema,
 } from "~/components/category/new-category-form";
 
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { createCategory } from "~/modules/category/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { sendNotification } from "~/utils/emitter/send-notification.server";
@@ -40,9 +42,14 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.categories.newCategory) }];
+};
 
 export async function action({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -61,7 +68,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
       NewCategoryFormSchema,
       {
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     const category = await createCategory({

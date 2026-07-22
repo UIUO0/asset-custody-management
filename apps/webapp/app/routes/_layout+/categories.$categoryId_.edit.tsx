@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
   data,
@@ -14,6 +15,8 @@ import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getCategory, updateCategory } from "~/modules/category/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { sendNotification } from "~/utils/emitter/send-notification.server";
@@ -45,7 +48,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ categoryId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -69,9 +72,14 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.categories.editTitle) }];
+};
 
 export async function action({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -81,7 +89,7 @@ export async function action({ context, request, params }: LoaderFunctionArgs) {
     z.object({ categoryId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -97,7 +105,7 @@ export async function action({ context, request, params }: LoaderFunctionArgs) {
       UpdateCategoryFormSchema,
       {
         additionalData: { userId, id, organizationId },
-      }
+      },
     );
 
     await updateCategory({
@@ -121,6 +129,7 @@ export async function action({ context, request, params }: LoaderFunctionArgs) {
 }
 
 export default function EditCategory() {
+  const { t } = useTranslation();
   const zo = useZorm("NewQuestionWizardScreen", UpdateCategoryFormSchema);
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
@@ -141,8 +150,8 @@ export default function EditCategory() {
         <div className="gap-3 lg:flex lg:items-end">
           <Input
             ref={nameInputRef}
-            label="Name"
-            placeholder="Category name"
+            label={t("categories.name")}
+            placeholder={t("categories.namePlaceholder")}
             className="mb-4 lg:mb-0 lg:max-w-[180px]"
             name={zo.fields.name()}
             disabled={disabled}
@@ -152,14 +161,14 @@ export default function EditCategory() {
             defaultValue={category.name}
           />
           <Input
-            label="Description"
-            placeholder="Description (optional)"
+            label={t("categories.description")}
+            placeholder={t("categories.descriptionPlaceholder")}
             name={zo.fields.description()}
             disabled={disabled}
             data-test-id="categoryDescription"
             className="mb-4 lg:mb-0"
             required={zodFieldIsRequired(
-              UpdateCategoryFormSchema.shape.description
+              UpdateCategoryFormSchema.shape.description,
             )}
             defaultValue={category.description || undefined}
           />
@@ -171,7 +180,7 @@ export default function EditCategory() {
               hideErrorText
               colorFromServer={colorFromServer}
               required={zodFieldIsRequired(
-                UpdateCategoryFormSchema.shape.color
+                UpdateCategoryFormSchema.shape.color,
               )}
             />
           </div>
@@ -179,10 +188,10 @@ export default function EditCategory() {
 
         <div className="flex items-center gap-1">
           <Button variant="secondary" to="/categories" size="sm">
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" size="sm">
-            Update
+            {t("common.update")}
           </Button>
         </div>
       </div>

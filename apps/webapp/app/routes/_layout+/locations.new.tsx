@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -13,6 +14,8 @@ import {
 } from "~/components/location/form";
 
 import { db } from "~/database/db.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getLocationsForCreateAndEdit } from "~/modules/asset/service.server";
 import {
   createLocation,
@@ -57,12 +60,23 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.locations.newLocation) }];
+};
+
+/** Breadcrumb for the new-location page (component so it can use the hook). */
+function NewLocationBreadcrumb() {
+  const { t } = useTranslation();
+  return <span>{t("locations.newLocation")}</span>;
+}
 
 export const handle = {
-  breadcrumb: () => <span>{title}</span>,
+  breadcrumb: () => <NewLocationBreadcrumb />,
   name: "locations.new",
 };
 
@@ -91,7 +105,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       NewLocationFormSchema,
       {
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     const {
@@ -153,11 +167,12 @@ export async function action({ context, request }: ActionFunctionArgs) {
 }
 
 export default function NewLocationPage() {
+  const { t } = useTranslation();
   const title = useAtomValue(dynamicTitleAtom);
 
   return (
     <div className="relative">
-      <Header title={title ? title : "Untitled location"} />
+      <Header title={title ? title : t("locations.untitled")} />
       <div>
         <LocationForm />
       </div>

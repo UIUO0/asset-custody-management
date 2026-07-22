@@ -35,7 +35,9 @@
     "settings": "الإعدادات",
     "language": "اللغة",
     "theme": "المظهر",
-    "learnMore": "اعرف المزيد"
+    "learnMore": "اعرف المزيد",
+    "creating": "جارٍ الإنشاء...",
+    "update": "تحديث"
   },
   "language": {
     "switch": "تغيير اللغة",
@@ -313,13 +315,20 @@
     "parentLocation": "الموقع الأعلى",
     "childLocations": "المواقع الفرعية",
     "sortNumberOfAssets": "عدد الأصول",
-    "address": "العنوان"
+    "address": "العنوان",
+    "untitled": "موقع بلا اسم",
+    "editTitle": "تعديل الموقع"
   },
   "categories": {
     "newCategory": "تصنيف جديد",
     "emptyTitle": "لا توجد تصنيفات بعد",
     "emptyText": "التصنيفات تساعدك على تنظيم الأصول حسب النوع. أنشئ تصنيفات لتجميع أصولك وتصفيتها.",
-    "emptyCta": "أنشئ أول تصنيف"
+    "emptyCta": "أنشئ أول تصنيف",
+    "name": "الاسم",
+    "namePlaceholder": "اسم التصنيف",
+    "description": "الوصف",
+    "descriptionPlaceholder": "الوصف (اختياري)",
+    "editTitle": "تعديل التصنيف"
   },
   "tags": {
     "newTag": "وسم جديد",
@@ -328,13 +337,21 @@
     "emptyCta": "أنشئ أول وسم",
     "useFor": "يُستخدم لـ",
     "tagPrefix": "وسم: {{name}}",
-    "filterByUsage": "تصفية حسب الاستخدام"
+    "filterByUsage": "تصفية حسب الاستخدام",
+    "name": "الاسم",
+    "namePlaceholder": "اسم الوسم",
+    "description": "الوصف",
+    "descriptionPlaceholder": "الوصف (اختياري)",
+    "useForPlaceholder": "اختر الاستخدام",
+    "useForTooltip": "عندما لا يتم اختيار إدخال محدد، سيكون هذا الوسم متاحاً لجميع الإدخالات.",
+    "editTitle": "تعديل الوسم"
   },
   "kits": {
     "newKit": "مجموعة جديدة",
     "emptyTitle": "لا توجد مجموعات بعد",
     "emptyText": "المجموعات تتيح لك تجميع الأصول المترابطة. أنشئ مجموعة لضمّ المعدّات التي تُستخدم عادةً معاً.",
-    "emptyCta": "أنشئ أول مجموعة"
+    "emptyCta": "أنشئ أول مجموعة",
+    "untitled": "مجموعة بلا اسم"
   },
   "emptyState": {
     "noneFound": "لا توجد نتائج",
@@ -509,5 +526,38 @@
     "edit": "تعديل",
     "duplicate": "نسخ",
     "delete": "حذف"
+  },
+  "locationForm": {
+    "name": "الاسم",
+    "namePlaceholder": "غرفة التخزين",
+    "parentLocation": "الموقع الأعلى",
+    "parentHint": "اختياري. اجعل هذا الموقع فرعاً من موقع قائم لبناء مسار التنقّل.",
+    "noParent": "بلا موقع أعلى",
+    "mainImage": "الصورة الرئيسية",
+    "imageHint": "يقبل PNG أو JPG أو JPEG أو WebP (بحد أقصى ٤ ميغابايت)",
+    "address": "العنوان",
+    "addressHint": "سيُضبط الموقع الجغرافي حسب العنوان. تأكّد من دقّة العنوان لضمان دقّة موضع الخريطة قدر الإمكان.",
+    "description": "الوصف",
+    "descriptionHint": "هذا الوصف الأولي للموقع. سيظهر في صفحة الموقع. يمكنك تغييره في أي وقت.",
+    "descriptionPlaceholder": "أضف وصفاً للموقع.",
+    "addAnotherHint": "احفظ الموقع وأضف موقعاً جديداً"
+  },
+  "kitForm": {
+    "name": "الاسم",
+    "description": "الوصف",
+    "descriptionSubheading": "صِف باختصار ما تحتويه المجموعة و/أو الغرض من استخدامها. سيظهر ذلك في صفحة نظرة عامة المجموعة.",
+    "descriptionPlaceholder": "اكتب الوصف هنا...",
+    "category": "التصنيف",
+    "categorySubheadingText": "اجعلها مميزة. يمكن أن تحتوي كل مجموعة على تصنيف واحد. سيظهر في فهرسك.",
+    "createCategories": "أنشئ تصنيفات",
+    "location": "الموقع",
+    "locationSubheadingText": "الموقع هو المكان الذي يُفترض أن يوجد فيه العنصر. يختلف هذا عن آخر موقع تم مسحه.",
+    "createLocations": "أنشئ مواقع",
+    "createNewCategory": "إنشاء تصنيف جديد",
+    "createNewLocation": "إنشاء موقع جديد",
+    "image": "صورة",
+    "imageHint": "يقبل PNG أو JPG أو JPEG أو WebP (بحد أقصى 8 ميغابايت)",
+    "barcodes": "الباركود",
+    "barcodesSubheading": "أضف باركودات إضافية لهذه المجموعة (Code 128 أو Code 39 أو Data Matrix). ملاحظة: تحصل كل مجموعة تلقائياً على رمز QR افتراضي للتتبع."
   }
 }

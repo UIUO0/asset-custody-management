@@ -1,4 +1,5 @@
 import { TagUseFor } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
@@ -12,6 +13,8 @@ import { useAutoFocus } from "~/hooks/use-auto-focus";
 
 import { useDisabled } from "~/hooks/use-disabled";
 
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getTag, updateTag } from "~/modules/tag/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { sendNotification } from "~/utils/emitter/send-notification.server";
@@ -80,9 +83,14 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.tags.editTitle) }];
+};
 
 export async function action({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -124,6 +132,7 @@ export async function action({ context, request, params }: LoaderFunctionArgs) {
 }
 
 export default function EditTag() {
+  const { t } = useTranslation();
   // Focus the Name input on mount of the edit page.
   const nameInputRef = useAutoFocus<HTMLInputElement>();
   const zo = useZorm("NewQuestionWizardScreen", UpdateTagFormSchema);
@@ -142,8 +151,8 @@ export default function EditTag() {
           <div className="gap-3 lg:flex lg:items-end">
             <Input
               ref={nameInputRef}
-              label="Name"
-              placeholder="Tag name"
+              label={t("tags.name")}
+              placeholder={t("tags.namePlaceholder")}
               className="mb-4 lg:mb-0 lg:max-w-[180px]"
               name={zo.fields.name()}
               disabled={disabled}
@@ -153,14 +162,14 @@ export default function EditTag() {
               defaultValue={tag.name}
             />
             <Input
-              label="Description"
-              placeholder="Description (optional)"
+              label={t("tags.description")}
+              placeholder={t("tags.descriptionPlaceholder")}
               name={zo.fields.description()}
               disabled={disabled}
               data-test-id="tagDescription"
               className="mb-4 lg:mb-0"
               required={zodFieldIsRequired(
-                UpdateTagFormSchema.shape.description
+                UpdateTagFormSchema.shape.description,
               )}
               defaultValue={tag.description || undefined}
             />
@@ -184,12 +193,11 @@ export default function EditTag() {
               items={tagUseFor}
               labelKey="label"
               valueKey="value"
-              label="Use for"
-              placeholder="Select use for"
+              label={t("tags.useFor")}
+              placeholder={t("tags.useForPlaceholder")}
               tooltip={{
-                title: "Use for",
-                content:
-                  "When no specific entry is selected, this tag will be available for all entries.",
+                title: t("tags.useFor"),
+                content: t("tags.useForTooltip"),
               }}
             />
           </div>
@@ -201,10 +209,10 @@ export default function EditTag() {
               size="sm"
               disabled={disabled}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" size="sm" disabled={disabled}>
-              Update
+              {t("common.update")}
             </Button>
           </div>
         </div>

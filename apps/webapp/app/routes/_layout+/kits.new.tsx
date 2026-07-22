@@ -1,10 +1,13 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { data, redirect, useLoaderData } from "react-router";
 import type { MetaFunction, LoaderFunctionArgs } from "react-router";
 import { dynamicTitleAtom } from "~/atoms/dynamic-title-atom";
 import KitsForm, { NewKitFormSchema } from "~/components/kits/form";
 import Header from "~/components/layout/header";
 import { useSearchParams } from "~/hooks/search-params";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   getCategoriesForCreateAndEdit,
   getLocationsForCreateAndEdit,
@@ -30,6 +33,12 @@ import { requirePermission } from "~/utils/roles.server";
 const header = {
   title: "Untitled kit",
 };
+
+/** Breadcrumb for the new-kit page (component so it can use the hook). */
+function NewKitBreadcrumb() {
+  const { t } = useTranslation();
+  return <span>{t("kits.untitled")}</span>;
+}
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -69,12 +78,17 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.kits.untitled) }];
+};
 
 export const handle = {
-  breadcrumb: () => <span>{header.title}</span>,
+  breadcrumb: () => <NewKitBreadcrumb />,
 };
 
 export async function action({ context, request }: LoaderFunctionArgs) {
@@ -139,13 +153,14 @@ export async function action({ context, request }: LoaderFunctionArgs) {
 }
 
 export default function CreateNewKit() {
+  const { t } = useTranslation();
   const title = useAtomValue(dynamicTitleAtom);
   const { referer } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const qrId = searchParams.get("qrId");
   return (
     <>
-      <Header title={title ?? "Untitled kit"} />
+      <Header title={title ?? t("kits.untitled")} />
       <KitsForm qrId={qrId} referer={referer} />
     </>
   );

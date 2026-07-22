@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   MetaFunction,
@@ -14,6 +15,8 @@ import {
   NewLocationFormSchema,
 } from "~/components/location/form";
 import { Button } from "~/components/shared/button";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getLocationsForCreateAndEdit } from "~/modules/asset/service.server";
 import {
   getLocation,
@@ -45,7 +48,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ locationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -90,12 +93,24 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ data, matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  const name = data?.location?.name ?? "";
+  return [{ title: appendToMetaTitle(`${resources.common.edit} | ${name}`) }];
+};
+
+/** Breadcrumb for the edit-location page (component so it can use the hook). */
+function EditLocationBreadcrumb() {
+  const { t } = useTranslation();
+  return <span>{t("common.edit")}</span>;
+}
 
 export const handle = {
-  breadcrumb: () => <span>Edit</span>,
+  breadcrumb: () => <EditLocationBreadcrumb />,
   name: "locations.$locationId.edit",
 };
 
@@ -107,7 +122,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ locationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -124,7 +139,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       NewLocationFormSchema,
       {
         additionalData: { userId, organizationId, id },
-      }
+      },
     );
 
     const { name, description, address, parentId } = parsedData;
