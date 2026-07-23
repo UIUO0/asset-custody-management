@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useActionData, useLoaderData } from "react-router";
 import z from "zod";
 import {
@@ -38,6 +39,7 @@ export default function BulkPartialCheckinDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const totalSelectedItems = useAtomValue(selectedBulkItemsCountAtom);
   const { booking, partialCheckinProgress, partialCheckinDetails } =
@@ -76,7 +78,7 @@ export default function BulkPartialCheckinDialog({
           kit: sourceKit?.kit ?? null,
         };
       }),
-    [booking.bookingAssets]
+    [booking.bookingAssets],
   );
 
   // Flatten/enrich the selection via the SHARED resolver (single source of
@@ -84,24 +86,24 @@ export default function BulkPartialCheckinDialog({
   // that are actually checkable-in.
   const flattenedItems = flattenSelectedBookingItems(
     rawSelectedItems,
-    assetsList
+    assetsList,
   );
   const selectedItems = flattenedItems.filter((item) => {
     if (item.type === "kit" || (item.name && item._count)) return true;
     return isAssetCheckableIn(
       item as AssetWithStatus,
       partialCheckinDetails,
-      booking.status
+      booking.status,
     );
   });
 
   // Distinct selected vs. eligible asset ids, for the skip-note and submit
   // guard. Kits (which carry _count) are excluded — only assets are submitted.
   const allSelectedAssetIds = new Set(
-    flattenedItems.filter((i) => i.title && !i._count).map((i) => i.id)
+    flattenedItems.filter((i) => i.title && !i._count).map((i) => i.id),
   );
   const eligibleAssetIds = new Set(
-    selectedItems.filter((i) => i.title && !i._count).map((i) => i.id)
+    selectedItems.filter((i) => i.title && !i._count).map((i) => i.id),
   );
   const skippedCount = allSelectedAssetIds.size - eligibleAssetIds.size;
   const noAssetsToCheckIn = eligibleAssetIds.size === 0;
@@ -114,7 +116,7 @@ export default function BulkPartialCheckinDialog({
   // Check if this would be a final check-in (all remaining CHECKED_OUT assets are being selected)
   // Need to exclude assets that have already been checked in through partial check-ins
   const checkedInAssetIds = new Set(
-    partialCheckinProgress?.checkedInAssetIds || []
+    partialCheckinProgress?.checkedInAssetIds || [],
   );
   // Source remaining-CHECKED_OUT assets from the denormalised `assetsList`
   // (pivot-aware) — `booking.assets` was the pre-pivot shape and no longer
@@ -123,7 +125,7 @@ export default function BulkPartialCheckinDialog({
   // to detect the "final checkin" case.
   const remainingCheckedOutAssets = assetsList.filter(
     (asset) =>
-      asset.status === "CHECKED_OUT" && !checkedInAssetIds.has(asset.id)
+      asset.status === "CHECKED_OUT" && !checkedInAssetIds.has(asset.id),
   );
   // Deduped asset ids being checked in (kits excluded). The selection can
   // contain the same asset twice (e.g. selected standalone and as a kit
@@ -137,7 +139,7 @@ export default function BulkPartialCheckinDialog({
 
   // Check if it's an early check-in (only relevant for final check-ins)
   const isEarlyCheckin = Boolean(
-    isFinalCheckin && booking.to && isBookingEarlyCheckin(booking.to)
+    isFinalCheckin && booking.to && isBookingEarlyCheckin(booking.to),
   );
 
   function handleCloseDialog() {
@@ -190,10 +192,8 @@ export default function BulkPartialCheckinDialog({
         title={
           <div className="w-full">
             <div className={tw("mb-2")}>
-              <h4>Check in selected items</h4>
-              <p>
-                The following items will be checked in and marked as Available.
-              </p>
+              <h4>{t("bookings.checkInSelected")}</h4>
+              <p>{t("bookings.checkInSelectedDescription")}</p>
             </div>
           </div>
         }
@@ -222,9 +222,7 @@ export default function BulkPartialCheckinDialog({
 
           {skippedCount > 0 && (
             <p className="mb-3 rounded border border-warning-200 bg-warning-50 p-2 text-xs text-warning-800">
-              {skippedCount} selected item{skippedCount === 1 ? "" : "s"}{" "}
-              {skippedCount === 1 ? "is" : "are"} not eligible for check-in and
-              will be skipped.
+              {t("bookings.skippedNotEligible", { count: skippedCount })}
             </p>
           )}
 
@@ -233,20 +231,20 @@ export default function BulkPartialCheckinDialog({
             {(() => {
               // Separate kits and individual assets
               const kits = selectedItems.filter(
-                (item: any) => item.name && item._count
+                (item: any) => item.name && item._count,
               );
               const assets = selectedItems.filter(
-                (item: any) => item.title && !item._count
+                (item: any) => item.title && !item._count,
               );
               const individualAssets = assets.filter(
-                (asset: any) => !asset.kitId
+                (asset: any) => !asset.kitId,
               );
 
               // Group assets by kit and filter out kits with no assets to check in
               const kitGroups = kits
                 .map((kit: any) => {
                   const kitAssets = assets.filter(
-                    (asset: any) => asset.kitId === kit.id
+                    (asset: any) => asset.kitId === kit.id,
                   );
                   return { kit, assets: kitAssets };
                 })
@@ -270,10 +268,10 @@ export default function BulkPartialCheckinDialog({
                         />
                         <span className="text-sm font-medium">{kit.name}</span>
                         <span className="text-xs text-gray-500">
-                          ({kitAssets.length} assets)
+                          ({t("models.asset", { count: kitAssets.length })})
                         </span>
                         <span className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600">
-                          KIT
+                          {t("bookings.kitBadge")}
                         </span>
                       </div>
 
@@ -353,7 +351,7 @@ export default function BulkPartialCheckinDialog({
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
 
             {/* Submit button - conditional based on early check-in */}
@@ -365,7 +363,9 @@ export default function BulkPartialCheckinDialog({
                   to: booking.to,
                   from: booking.from,
                 }}
-                label={`Check in  item${totalSelectedItems !== 1 ? "s" : ""}`}
+                label={t("bookings.checkInItemsLabel", {
+                  count: totalSelectedItems,
+                })}
                 variant="primary"
                 disabled={disabled}
                 portalContainer={formElement || undefined}
@@ -383,7 +383,7 @@ export default function BulkPartialCheckinDialog({
                 name="intent"
                 value="partial-checkin"
               >
-                Check in items
+                {t("bookings.checkInItems")}
               </Button>
             )}
           </div>

@@ -28,6 +28,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { VerticalDotsIcon } from "~/components/icons/library";
@@ -60,23 +61,27 @@ type TriggerButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const TriggerButton = forwardRef<HTMLButtonElement, TriggerButtonProps>(
-  ({ fullWidth, className, ...props }, ref) => (
-    <button
-      ref={ref}
-      type="button"
-      aria-label="Actions Trigger"
-      {...props}
-      className={tw("asset-actions", fullWidth ? "w-full" : "", className)}
-    >
-      <span className="flex size-6 items-center justify-center gap-2 text-center">
-        <VerticalDotsIcon />
-      </span>
-    </button>
-  )
+  ({ fullWidth, className, ...props }, ref) => {
+    const { t } = useTranslation();
+    return (
+      <button
+        ref={ref}
+        type="button"
+        aria-label={t("bookings.actionsTrigger")}
+        {...props}
+        className={tw("asset-actions", fullWidth ? "w-full" : "", className)}
+      >
+        <span className="flex size-6 items-center justify-center gap-2 text-center">
+          <VerticalDotsIcon />
+        </span>
+      </button>
+    );
+  },
 );
 TriggerButton.displayName = "AssetRowActionsTrigger";
 
 const ConditionalActionsDropdown = ({ asset, fullWidth }: Props) => {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<{ booking: BookingWithCustodians }>();
   const [isAdjustDialogOpen, setIsAdjustDialogOpen] = useState(false);
   const isQtyTracked = isQuantityTracked(asset);
@@ -127,7 +132,7 @@ const ConditionalActionsDropdown = ({ asset, fullWidth }: Props) => {
         next.delete("adjustQty");
         return next;
       },
-      { replace: true, preventScrollReset: true }
+      { replace: true, preventScrollReset: true },
     );
   }, [asset.id, isQtyTracked, searchParams, setSearchParams]);
 
@@ -136,7 +141,7 @@ const ConditionalActionsDropdown = ({ asset, fullWidth }: Props) => {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -182,7 +187,7 @@ const ConditionalActionsDropdown = ({ asset, fullWidth }: Props) => {
                       handleMenuClose();
                     }}
                   >
-                    Adjust quantity
+                    {t("bookings.adjustQuantity")}
                   </Button>
                 </div>
               ) : null}
@@ -199,7 +204,7 @@ const ConditionalActionsDropdown = ({ asset, fullWidth }: Props) => {
                       className="justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
                       width="full"
                     >
-                      Remove
+                      {t("common.remove")}
                     </Button>
                   }
                 />
@@ -214,7 +219,7 @@ const ConditionalActionsDropdown = ({ asset, fullWidth }: Props) => {
                   width="full"
                   onClick={handleMenuClose}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>
@@ -261,7 +266,7 @@ export const AssetRowActionsDropdown = ({ asset, fullWidth }: Props) => {
         // the kit row's wider content), creating a visible column-
         // alignment misalignment between asset and kit rows.
         "actions-dropdown flex justify-end",
-        fullWidth ? "w-full" : ""
+        fullWidth ? "w-full" : "",
       )}
     >
       <ConditionalActionsDropdown asset={asset} fullWidth={fullWidth} />

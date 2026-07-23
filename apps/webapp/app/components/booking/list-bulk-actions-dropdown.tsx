@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { BookingStatus } from "@prisma/client";
 import { useAtomValue } from "jotai";
 import { ChevronRight, PackageCheck, PackageMinus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -30,13 +31,14 @@ import {
 import { MobileDropdownStyles } from "../shared/mobile-dropdown-styles";
 
 export default function ListBulkActionsDropdown() {
+  const { t } = useTranslation();
   const isHydrated = useHydrated();
 
   if (!isHydrated) {
     return (
       <Button variant="secondary" to="#">
         <span className="flex items-center gap-2">
-          Actions <ChevronRight className="chev rotate-90" />
+          {t("common.actions")} <ChevronRight className="chev rotate-90" />
         </span>
       </Button>
     );
@@ -50,6 +52,7 @@ export default function ListBulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const selectedItems = useAtomValue(selectedBulkItemsAtom);
   const {
     booking,
@@ -58,7 +61,7 @@ function ConditionalDropdown() {
     remainingToCheckOutByAsset = {},
   } = useLoaderData<BookingPageLoaderData>();
   const bookingStatus = useBookingStatusHelpers(
-    booking.status as BookingStatus
+    booking.status as BookingStatus,
   );
   const actionsButtonDisabled = selectedItems.length === 0;
 
@@ -104,7 +107,7 @@ function ConditionalDropdown() {
           kit: matchedAssetKit?.kit ?? null,
         };
       }),
-    [booking.bookingAssets]
+    [booking.bookingAssets],
   );
 
   // Resolve the selection to enriched asset rows (kits excluded) with the SAME
@@ -112,7 +115,7 @@ function ConditionalDropdown() {
   // disagree with what a dialog would actually act on.
   const selectedAssets = flattenSelectedBookingItems(
     selectedItems,
-    assetsList
+    assetsList,
   ).filter((item) => item.title && !item._count);
 
   const checkedOutIdsSet = new Set(checkedOutAssetIds);
@@ -122,8 +125,8 @@ function ConditionalDropdown() {
     isAssetCheckableIn(
       asset as AssetWithStatus,
       partialCheckinDetails,
-      booking.status
-    )
+      booking.status,
+    ),
   ).length;
   // QT-aware top-off: pass the per-booking remaining map so QUANTITY_TRACKED
   // assets stay eligible while units remain, even if some are already out.
@@ -131,7 +134,7 @@ function ConditionalDropdown() {
   const checkOutEligibleCount = selectedAssets.filter((asset) =>
     isAssetCheckableOut(asset as AssetWithStatus, checkedOutIdsSet, {
       remainingByAssetId: remainingToCheckOutByAsset ?? {},
-    })
+    }),
   ).length;
 
   // Grey out check-in when nothing in the selection is checked out. Tailor the
@@ -142,34 +145,33 @@ function ConditionalDropdown() {
       isAssetPartiallyCheckedIn(
         asset as AssetWithStatus,
         partialCheckinDetails,
-        booking.status
-      )
+        booking.status,
+      ),
     );
   const partialCheckinDisabled =
     selectedAssets.length === 0
-      ? { reason: "Select one or more assets to check in." }
+      ? { reason: t("bookings.selectAssetsToCheckIn") }
       : checkInEligibleCount === 0
       ? {
           reason: allSelectedAlreadyCheckedIn
-            ? "All selected items are already checked in. Select items that are still checked out."
-            : "None of the selected items are checked out, so there's nothing to check in.",
+            ? t("bookings.allAlreadyCheckedIn")
+            : t("bookings.noneCheckedOut"),
         }
       : false;
 
   // Grey out check-out when every selected asset is already checked out.
   const partialCheckoutDisabled =
     selectedAssets.length === 0
-      ? { reason: "Select one or more assets to check out." }
+      ? { reason: t("bookings.selectAssetsToCheckOut") }
       : checkOutEligibleCount === 0
       ? {
-          reason:
-            "All selected items are already checked out. Select items that are still booked.",
+          reason: t("bookings.allAlreadyCheckedOut"),
         }
       : false;
 
   // Mirror per-row Remove: can't remove items from a finished booking.
   const removeDisabled = isFinished
-    ? { reason: "Can't remove items from a completed or archived booking." }
+    ? { reason: t("bookings.cantRemoveFinished") }
     : false;
 
   const {
@@ -194,7 +196,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -224,7 +226,9 @@ function ConditionalDropdown() {
           disabled={actionsButtonDisabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -236,7 +240,7 @@ function ConditionalDropdown() {
           disabled={actionsButtonDisabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -259,7 +263,7 @@ function ConditionalDropdown() {
                   type="button"
                   variant="link"
                   className={tw(
-                    "flex w-full items-center justify-start gap-2 whitespace-nowrap px-4 py-3 text-gray-700 hover:text-gray-700"
+                    "flex w-full items-center justify-start gap-2 whitespace-nowrap px-4 py-3 text-gray-700 hover:text-gray-700",
                   )}
                   onClick={() => {
                     setPartialCheckoutDialogOpen(true);
@@ -268,7 +272,7 @@ function ConditionalDropdown() {
                   disabled={partialCheckoutDisabled}
                 >
                   <PackageMinus className="me-2 inline size-5" />
-                  <span>Check out selected items</span>
+                  <span>{t("bookings.checkOutSelected")}</span>
                 </Button>
               </DropdownMenuItem>
             )}
@@ -283,7 +287,7 @@ function ConditionalDropdown() {
                   type="button"
                   variant="link"
                   className={tw(
-                    "flex w-full items-center justify-start gap-2 whitespace-nowrap px-4 py-3 text-gray-700 hover:text-gray-700"
+                    "flex w-full items-center justify-start gap-2 whitespace-nowrap px-4 py-3 text-gray-700 hover:text-gray-700",
                   )}
                   onClick={() => {
                     setPartialCheckinDialogOpen(true);
@@ -292,7 +296,7 @@ function ConditionalDropdown() {
                   disabled={partialCheckinDisabled}
                 >
                   <PackageCheck className="me-2 inline size-5" />
-                  <span>Check in selected items</span>
+                  <span>{t("bookings.checkInSelected")}</span>
                 </Button>
               </DropdownMenuItem>
             )}
@@ -304,7 +308,7 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="trash"
-                label="Remove assets/kits"
+                label={t("bookings.removeAssetsKits")}
                 onClick={closeMenu}
                 disabled={removeDisabled}
               />

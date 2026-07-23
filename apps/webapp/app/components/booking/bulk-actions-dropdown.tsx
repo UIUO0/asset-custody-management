@@ -1,5 +1,6 @@
 import { BookingStatus } from "@prisma/client";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -28,13 +29,14 @@ import {
 import { MobileDropdownStyles } from "../shared/mobile-dropdown-styles";
 
 export default function BulkActionsDropdown() {
+  const { t } = useTranslation();
   const isHydrated = useHydrated();
 
   if (!isHydrated) {
     return (
       <Button variant="secondary" to="#">
         <span className="flex items-center gap-2">
-          Actions <ChevronRight className="chev rotate-90" />
+          {t("common.actions")} <ChevronRight className="chev rotate-90" />
         </span>
       </Button>
     );
@@ -48,10 +50,11 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const selectedBookings = useAtomValue(selectedBulkItemsAtom);
 
   const someBookingInDraft = selectedBookings.some(
-    (booking) => booking.status === "DRAFT"
+    (booking) => booking.status === "DRAFT",
   );
 
   /**
@@ -62,7 +65,7 @@ function ConditionalDropdown() {
   const allBookingsArchivable =
     selectedBookings.length > 0 &&
     selectedBookings.every((b) =>
-      isBookingArchivable({ status: b.status, to: b.to })
+      isBookingArchivable({ status: b.status, to: b.to }),
     );
 
   const cancelIsDisabled = selectedBookings.some((b) =>
@@ -71,7 +74,7 @@ function ConditionalDropdown() {
       BookingStatus.CANCELLED,
       BookingStatus.COMPLETE,
       BookingStatus.DRAFT,
-    ].includes(b.status as any)
+    ].includes(b.status as any),
   );
 
   const { isBase, roles } = useUserRoleHelper();
@@ -109,7 +112,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -133,7 +136,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -145,7 +150,7 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -165,13 +170,12 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="cancel"
-                label="Cancel"
+                label={t("common.cancel")}
                 onClick={closeMenu}
                 disabled={
                   cancelIsDisabled
                     ? {
-                        reason:
-                          "Some of the selected bookings are not reserved or in progress. You can only cancel bookings that are reserved or in progress.",
+                        reason: t("bookings.bulkCancelDisabledReason"),
                       }
                     : isLoading
                 }
@@ -186,12 +190,11 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="archive"
-                label="Archive"
+                label={t("bookings.archive")}
                 disabled={
                   archiveDisabled
                     ? {
-                        reason:
-                          "Some selected bookings can't be archived. You can only archive completed bookings, or reserved bookings whose end date has passed.",
+                        reason: t("bookings.bulkArchiveDisabledReason"),
                       }
                     : isLoading
                 }
@@ -207,13 +210,12 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="trash"
-                label="Delete"
+                label={t("common.delete")}
                 onClick={closeMenu}
                 disabled={
                   deleteDisabled
                     ? {
-                        reason:
-                          "Some of the selected bookings are not in draft or you have self user permissions. You can only delete draft bookings.",
+                        reason: t("bookings.bulkDeleteDisabledReason"),
                       }
                     : isLoading
                 }

@@ -23,6 +23,7 @@
  */
 import type { Booking } from "@prisma/client";
 import { ChevronRightIcon, ScanLine } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useControlledDropdownMenu } from "~/hooks/use-controlled-dropdown-menu";
 import { tw } from "~/utils/tw";
 import CheckoutDialog from "./checkout-dialog";
@@ -81,6 +82,7 @@ export default function CheckoutDropdown({
   canCheckOutRemaining,
   canScanCheckOut,
 }: CheckoutDropdownProps) {
+  const { t } = useTranslation();
   const {
     ref: dropdownRef,
     defaultApplied,
@@ -101,8 +103,8 @@ export default function CheckoutDropdown({
     ? "checkOutRemaining"
     : "checkOut";
   const quickCheckoutLabel = canCheckOutRemaining
-    ? "Check out remaining"
-    : "Check out";
+    ? t("bookings.checkoutRemaining")
+    : t("bookings.checkoutQuick");
 
   // The full check-out (RESERVED) must validate the WHOLE booking up front, so
   // it carries the strict precondition reasons (in custody, already booked,
@@ -122,7 +124,7 @@ export default function CheckoutDropdown({
     <Button
       variant="link"
       className={tw(
-        "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700"
+        "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700",
       )}
       width="full"
       onClick={closeMenu}
@@ -130,7 +132,7 @@ export default function CheckoutDropdown({
       to={`/bookings/${booking.id}/overview/checkout-assets`}
     >
       <span className="flex items-center gap-2">
-        <ScanLine className="size-4" /> Scan to check out
+        <ScanLine className="size-4" /> {t("bookings.scanToCheckOut")}
       </span>
     </Button>
   );
@@ -147,7 +149,7 @@ export default function CheckoutDropdown({
         to={`/bookings/${booking.id}/overview/checkout-assets`}
         disabled={disabled}
       >
-        Scan to check out
+        {t("bookings.scanToCheckOut")}
       </Button>
     );
   }
@@ -199,7 +201,8 @@ export default function CheckoutDropdown({
             size="sm"
           >
             <span className="flex items-center gap-2">
-              Check out <ChevronRightIcon className="chev size-4 rotate-90" />
+              {t("bookings.checkoutQuick")}{" "}
+              <ChevronRightIcon className="chev size-4 rotate-90" />
             </span>
           </Button>
         </DropdownMenuTrigger>
@@ -214,7 +217,8 @@ export default function CheckoutDropdown({
           size="sm"
         >
           <span className="flex items-center gap-2">
-            Check out <ChevronRightIcon className="chev size-4" />
+            {t("bookings.checkoutQuick")}{" "}
+            <ChevronRightIcon className="chev size-4" />
           </span>
         </Button>
 

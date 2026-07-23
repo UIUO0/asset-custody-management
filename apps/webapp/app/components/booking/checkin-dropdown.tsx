@@ -1,5 +1,6 @@
 import type { Booking } from "@prisma/client";
 import { ChevronRightIcon, ListChecks } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useControlledDropdownMenu } from "~/hooks/use-controlled-dropdown-menu";
 import { tw } from "~/utils/tw";
 import CheckinDialog from "./checkin-dialog";
@@ -28,6 +29,7 @@ export default function CheckinDropdown({
   formId,
   requireExplicitCheckin,
 }: CheckinDropdownProps) {
+  const { t } = useTranslation();
   const {
     ref: dropdownRef,
     defaultApplied,
@@ -50,7 +52,7 @@ export default function CheckinDropdown({
         size="sm"
         to={`/bookings/${booking.id}/overview/checkin-assets`}
       >
-        Check-in
+        {t("bookings.checkIn")}
       </Button>
     );
   }
@@ -80,7 +82,8 @@ export default function CheckinDropdown({
         >
           <Button type="button" disabled={disabled} className="grow" size="sm">
             <span className="flex items-center gap-2">
-              Check-in <ChevronRightIcon className="chev size-4 rotate-90" />
+              {t("bookings.checkIn")}{" "}
+              <ChevronRightIcon className="chev size-4 rotate-90" />
             </span>
           </Button>
         </DropdownMenuTrigger>
@@ -94,7 +97,7 @@ export default function CheckinDropdown({
           size="sm"
         >
           <span className="flex items-center gap-2">
-            Check-in <ChevronRightIcon className="chev size-4" />
+            {t("bookings.checkIn")} <ChevronRightIcon className="chev size-4" />
           </span>
         </Button>
 
@@ -115,7 +118,7 @@ export default function CheckinDropdown({
                 portalContainer={portalContainer}
                 formId={formId}
                 onClose={closeMenu}
-                label="Quick check-in"
+                label={t("bookings.quickCheckin")}
                 variant="dropdown"
               />
             </DropdownMenuItem>
@@ -123,7 +126,7 @@ export default function CheckinDropdown({
               <Button
                 variant="link"
                 className={tw(
-                  "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700"
+                  "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700",
                 )}
                 width="full"
                 onClick={closeMenu}
@@ -131,7 +134,8 @@ export default function CheckinDropdown({
                 to={`/bookings/${booking.id}/overview/checkin-assets`}
               >
                 <span className="flex items-center gap-2">
-                  <ListChecks className="size-4" /> Explicit check-in
+                  <ListChecks className="size-4" />{" "}
+                  {t("bookings.explicitCheckin")}
                 </span>
               </Button>
             </DropdownMenuItem>

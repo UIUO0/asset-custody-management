@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Asset } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -34,6 +35,7 @@ export const RemoveAssetFromBooking = ({
   asset: Asset;
   trigger?: ReactNode;
 }) => {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<{ booking: BookingWithCustodians }>();
   const { isArchived, isCompleted } = useBookingStatusHelpers(booking.status);
   const disabled = useDisabled();
@@ -48,17 +50,17 @@ export const RemoveAssetFromBooking = ({
             data-test-id="deleteBookingButton"
             icon="trash"
             className={tw(
-              "justify-start rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none   hover:bg-slate-100 hover:text-gray-700"
+              "justify-start rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none   hover:bg-slate-100 hover:text-gray-700",
             )}
             title={
               isArchived || isCompleted
-                ? "Cannot remove assets from completed bookings"
+                ? t("bookings.cannotRemoveTooltip")
                 : undefined
             }
             width="full"
             disabled={disabled || isArchived || isCompleted}
           >
-            Remove
+            {t("common.remove")}
           </Button>
         )}
       </AlertDialogTrigger>
@@ -71,17 +73,17 @@ export const RemoveAssetFromBooking = ({
             </span>
           </div>
           <AlertDialogTitle>
-            Remove "{asset.title}" from booking
+            {t("bookings.removeAssetTitle", { name: asset.title })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to remove this asset from the booking?
+            {t("bookings.removeAssetConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -93,7 +95,7 @@ export const RemoveAssetFromBooking = ({
                 value="removeAsset"
                 disabled={disabled}
               >
-                Remove
+                {t("common.remove")}
               </Button>
             </Form>
           </div>

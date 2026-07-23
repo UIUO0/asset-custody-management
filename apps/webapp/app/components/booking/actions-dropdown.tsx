@@ -1,4 +1,5 @@
 import { BookingStatus } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useSubmit } from "react-router";
 import { ChevronRight } from "~/components/icons/library";
 import {
@@ -35,6 +36,7 @@ interface Props {
 }
 
 export const ActionsDropdown = ({ fullWidth }: Props) => {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<typeof loader>();
   const {
     isCompleted,
@@ -81,7 +83,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
           className="flex"
         >
           <span className="flex items-center gap-2">
-            Actions <ChevronRight className="chev rotate-90" />
+            {t("common.actions")} <ChevronRight className="chev rotate-90" />
           </span>
         </Button>
       </DropdownMenuTrigger>
@@ -128,7 +130,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
                   void submit(formData, { method: "post" });
                 }}
               >
-                Archive
+                {t("bookings.archive")}
               </Button>
             </DropdownMenuItem>
           </When>
@@ -140,7 +142,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
               width="full"
               to="duplicate"
             >
-              Duplicate booking
+              {t("bookings.duplicateBooking")}
             </Button>
           </DropdownMenuItem>
 
@@ -168,7 +170,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
             booking={{
               ...booking,
               assets: booking.bookingAssets.map(
-                (ba: { asset: { id: string } }) => ba.asset
+                (ba: { asset: { id: string } }) => ba.asset,
               ),
             }}
             timeStamp={new Date().getTime()}

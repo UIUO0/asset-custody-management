@@ -1,4 +1,5 @@
 import type { Booking } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { Button } from "~/components/shared/button";
 
@@ -24,6 +25,7 @@ export const DeleteBooking = ({
     name: Booking["name"];
   };
 }) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
   return (
@@ -36,7 +38,7 @@ export const DeleteBooking = ({
           className="justify-start rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-100 hover:text-gray-700"
           width="full"
         >
-          Delete
+          {t("common.delete")}
         </Button>
       </AlertDialogTrigger>
 
@@ -47,24 +49,25 @@ export const DeleteBooking = ({
               <TrashIcon />
             </span>
           </div>
-          <AlertDialogTitle>Delete {booking.name}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("bookings.deleteBookingTitle", { name: booking.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this Booking? This action cannot be
-            undone. All assets associated with this booking will be released.
+            {t("bookings.deleteBookingConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
             <Form method="delete">
               <Button
                 className={tw(
-                  "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
+                  "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800",
                 )}
                 type="submit"
                 data-test-id="confirmDeleteBookingButton"
@@ -72,7 +75,7 @@ export const DeleteBooking = ({
                 value="delete"
                 disabled={disabled}
               >
-                Delete
+                {t("common.delete")}
               </Button>
             </Form>
           </div>

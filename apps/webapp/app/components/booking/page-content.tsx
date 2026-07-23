@@ -1,4 +1,5 @@
 import { BookingStatus } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { formatBookingDuration } from "~/modules/booking/helpers";
 import type { BookingPageLoaderData } from "~/routes/_layout+/bookings.$bookingId.overview";
@@ -9,6 +10,7 @@ import { EditBookingForm } from "./forms/edit-booking-form";
 import { Card } from "../shared/card";
 
 export function BookingPageContent() {
+  const { t } = useTranslation();
   const {
     booking,
     teamMembers,
@@ -27,7 +29,7 @@ export function BookingPageContent() {
   const custodian = (teamMembersForForm || teamMembers).find((member) =>
     booking.custodianTeamMemberId
       ? booking.custodianTeamMemberId === member.id
-      : booking.custodianUserId === member?.userId
+      : booking.custodianUserId === member?.userId,
   );
 
   return (
@@ -35,7 +37,9 @@ export function BookingPageContent() {
       {booking.status === BookingStatus.CANCELLED &&
         booking.cancellationReason && (
           <div className="mb-4 rounded-lg border border-warning-200 bg-warning-25 p-4">
-            <p className="mb-1 text-sm font-semibold ">Cancellation reason</p>
+            <p className="mb-1 text-sm font-semibold ">
+              {t("bookings.cancellationReason")}
+            </p>
             <p className="text-sm ">{booking.cancellationReason}</p>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { BookingStatus, type Booking } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import { useDisabled } from "~/hooks/use-disabled";
 import { Dialog, DialogPortal } from "../layout/dialog";
 import { Button } from "../shared/button";
@@ -9,6 +10,7 @@ type RevertToDraftProps = {
 };
 
 export default function RevertToDraftDialog({ booking }: RevertToDraftProps) {
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const disabled = useDisabled();
   function handleOpenDialog() {
@@ -29,7 +31,7 @@ export default function RevertToDraftDialog({ booking }: RevertToDraftProps) {
         onClick={handleOpenDialog}
         disabled={booking.status !== BookingStatus.RESERVED}
       >
-        Revert to Draft
+        {t("bookings.revertToDraft")}
       </Button>
       <DialogPortal>
         <Dialog
@@ -38,15 +40,17 @@ export default function RevertToDraftDialog({ booking }: RevertToDraftProps) {
           onClose={handleCloseDialog}
           title={
             <div>
-              <h3>Reverting to draft state</h3>
+              <h3>{t("bookings.revertToDraftTitle")}</h3>
             </div>
           }
         >
           <div className="px-6 pb-4">
             <p className="mb-4">
-              Are you sure you want to revert{" "}
-              <span className="font-bold">{booking.name}</span> booking back to
-              draft?
+              <Trans
+                i18nKey="bookings.revertToDraftConfirm"
+                values={{ name: booking.name }}
+                components={{ bold: <span className="font-bold" /> }}
+              />
             </p>
 
             <form method="post" className="flex w-full items-center gap-4">
@@ -57,10 +61,10 @@ export default function RevertToDraftDialog({ booking }: RevertToDraftProps) {
                 type="button"
                 onClick={handleCloseDialog}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button className="flex-1" type="submit" disabled={disabled}>
-                Confirm
+                {t("common.confirm")}
               </Button>
             </form>
           </div>
@@ -76,7 +80,7 @@ export default function RevertToDraftDialog({ booking }: RevertToDraftProps) {
         onClick={handleOpenDialog}
         disabled={booking.status !== BookingStatus.RESERVED}
       >
-        Revert to Draft
+        {t("bookings.revertToDraft")}
       </Button>
     </>
   );

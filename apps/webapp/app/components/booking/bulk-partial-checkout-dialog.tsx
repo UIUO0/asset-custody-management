@@ -25,6 +25,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssetType } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useActionData, useLoaderData } from "react-router";
 import z from "zod";
 import {
@@ -127,9 +128,12 @@ function CheckoutQtyInput({
   value: string;
   onChange: (bookingAssetId: string, next: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <label className="ms-auto flex items-center gap-2">
-      <span className="text-xs font-medium text-gray-700">Checked out</span>
+      <span className="text-xs font-medium text-gray-700">
+        {t("bookings.checkedOut")}
+      </span>
       <input
         type="number"
         min={1}
@@ -138,16 +142,18 @@ function CheckoutQtyInput({
         value={value}
         onChange={(e) => onChange(bookingAssetId, e.target.value)}
         inputMode="numeric"
-        aria-label="Checkout quantity"
+        aria-label={t("bookings.checkoutQuantity")}
         className={tw(
           "w-14 rounded-md border border-gray-200 px-2 py-1 text-end text-sm tabular-nums text-gray-900",
           "focus:outline-none focus:ring-1 focus:ring-primary-500",
           "[appearance:textfield]",
           "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none",
-          "[&::-webkit-outer-spin-button]:appearance-none"
+          "[&::-webkit-outer-spin-button]:appearance-none",
         )}
       />
-      <span className="text-xs tabular-nums text-gray-500">of {max}</span>
+      <span className="text-xs tabular-nums text-gray-500">
+        {t("bookings.ofCount", { count: max })}
+      </span>
     </label>
   );
 }
@@ -166,6 +172,7 @@ export default function BulkPartialCheckoutDialog({
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const { booking, checkedOutAssetIds, remainingToCheckOutByAsset } =
     useLoaderData<BookingPageLoaderData>();
@@ -214,7 +221,7 @@ export default function BulkPartialCheckoutDialog({
           kit: matchedAssetKit?.kit ?? null,
         };
       }),
-    [booking.bookingAssets]
+    [booking.bookingAssets],
   );
 
   // Set of asset ids already checked out for THIS booking (partial-checkout
@@ -222,7 +229,7 @@ export default function BulkPartialCheckoutDialog({
   // shared `isAssetCheckableOut` helper.
   const checkedOutIdsSet = useMemo(
     () => new Set(checkedOutAssetIds || []),
-    [checkedOutAssetIds]
+    [checkedOutAssetIds],
   );
 
   /**
@@ -236,7 +243,7 @@ export default function BulkPartialCheckoutDialog({
    */
   const remainingByAssetId = useMemo(
     () => remainingToCheckOutByAsset ?? {},
-    [remainingToCheckOutByAsset]
+    [remainingToCheckOutByAsset],
   );
 
   // Flatten/enrich the selection via the SHARED resolver (single source of
@@ -246,7 +253,7 @@ export default function BulkPartialCheckoutDialog({
   // our previous inline branch into one helper.
   const flattenedItems = useMemo(
     () => flattenSelectedBookingItems(rawSelectedItems, assetsList),
-    [rawSelectedItems, assetsList]
+    [rawSelectedItems, assetsList],
   );
   const selectedItems = useMemo(
     () =>
@@ -256,7 +263,7 @@ export default function BulkPartialCheckoutDialog({
           remainingByAssetId,
         });
       }),
-    [flattenedItems, checkedOutIdsSet, remainingByAssetId]
+    [flattenedItems, checkedOutIdsSet, remainingByAssetId],
   );
 
   /** Use state instead of ref so the component re-renders once the form
@@ -272,7 +279,7 @@ export default function BulkPartialCheckoutDialog({
   const remainingBookedAssets = assetsList.filter((asset) =>
     isAssetCheckableOut(asset as AssetWithStatus, checkedOutIdsSet, {
       remainingByAssetId,
-    })
+    }),
   );
 
   // Count only individual assets (exclude kit IDs), deduped, for final-checkout
@@ -282,15 +289,15 @@ export default function BulkPartialCheckoutDialog({
     new Set(
       selectedItems
         .filter((item: any) => item.title && !item._count) // Only assets, not kits
-        .map((asset: any) => asset.id)
-    )
+        .map((asset: any) => asset.id),
+    ),
   );
 
   // Final checkout = the selected set IS exactly the still-Booked set. Use set
   // membership (not just count equality) so duplicates or an unrelated selection
   // of the same size can't be misread as "final".
   const remainingBookedAssetIds = new Set(
-    remainingBookedAssets.map((asset) => asset.id)
+    remainingBookedAssets.map((asset) => asset.id),
   );
   const isFinalCheckout =
     selectedAssetIds.length > 0 &&
@@ -302,7 +309,7 @@ export default function BulkPartialCheckoutDialog({
   // Once the booking is ONGOING/OVERDUE the start date is fixed and the date
   // choice is ignored server-side, so the prompt would be a confusing no-op.
   const isEarlyCheckout = Boolean(
-    isFinalCheckout && shouldPromptEarlyCheckout(booking.status, booking.from)
+    isFinalCheckout && shouldPromptEarlyCheckout(booking.status, booking.from),
   );
 
   function handleCloseDialog() {
@@ -489,7 +496,7 @@ export default function BulkPartialCheckoutDialog({
           };
         })
         .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
-    [qtySlices, qtyByBookingAssetId]
+    [qtySlices, qtyByBookingAssetId],
   );
 
   /**
@@ -527,11 +534,8 @@ export default function BulkPartialCheckoutDialog({
         title={
           <div className="w-full">
             <div className={tw("mb-2")}>
-              <h4>Check out selected items</h4>
-              <p>
-                The following items will be checked out and marked as Checked
-                out.
-              </p>
+              <h4>{t("bookings.checkOutSelected")}</h4>
+              <p>{t("bookings.checkOutSelectedDescription")}</p>
             </div>
           </div>
         }
@@ -569,9 +573,7 @@ export default function BulkPartialCheckoutDialog({
 
           {skippedCount > 0 && (
             <p className="mb-3 rounded border border-warning-200 bg-warning-50 p-2 text-xs text-warning-800">
-              {skippedCount} selected item{skippedCount === 1 ? "" : "s"}{" "}
-              {skippedCount === 1 ? "is" : "are"} already checked out and will
-              be skipped.
+              {t("bookings.skippedAlreadyCheckedOut", { count: skippedCount })}
             </p>
           )}
 
@@ -580,20 +582,20 @@ export default function BulkPartialCheckoutDialog({
             {(() => {
               // Separate kits and individual assets
               const kits = selectedItems.filter(
-                (item: any) => item.name && item._count
+                (item: any) => item.name && item._count,
               );
               const assets = selectedItems.filter(
-                (item: any) => item.title && !item._count
+                (item: any) => item.title && !item._count,
               );
               const individualAssets = assets.filter(
-                (asset: any) => !asset.kitId
+                (asset: any) => !asset.kitId,
               );
 
               // Group assets by kit and filter out kits with no assets to check out
               const kitGroups = kits
                 .map((kit: any) => {
                   const kitAssets = assets.filter(
-                    (asset: any) => asset.kitId === kit.id
+                    (asset: any) => asset.kitId === kit.id,
                   );
                   return { kit, assets: kitAssets };
                 })
@@ -617,10 +619,10 @@ export default function BulkPartialCheckoutDialog({
                         />
                         <span className="text-sm font-medium">{kit.name}</span>
                         <span className="text-xs text-gray-500">
-                          ({kitAssets.length} assets)
+                          ({t("models.asset", { count: kitAssets.length })})
                         </span>
                         <span className="rounded bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600">
-                          KIT
+                          {t("bookings.kitBadge")}
                         </span>
                       </div>
 
@@ -747,7 +749,7 @@ export default function BulkPartialCheckoutDialog({
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
 
             {/* Submit button - conditional based on early check-out. The
@@ -780,7 +782,7 @@ export default function BulkPartialCheckoutDialog({
                 value="partial-checkout"
                 className="whitespace-nowrap"
               >
-                Check out items
+                {t("bookings.checkOutItems")}
               </Button>
             )}
           </div>

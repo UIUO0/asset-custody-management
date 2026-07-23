@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { cloneElement, useState } from "react";
 import type { TeamMember } from "@prisma/client";
 import { CalendarRangeIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useSearchParams } from "~/hooks/search-params";
 import { useUserData } from "~/hooks/use-user-data";
@@ -18,6 +19,7 @@ export default function CreateBookingDialog({
   className,
   trigger,
 }: CreateBookingDialogProps) {
+  const { t } = useTranslation();
   const { teamMembersForForm, isSelfServiceOrBase } = useLoaderData<{
     teamMembersForForm: TeamMember[];
     isSelfServiceOrBase: boolean;
@@ -50,7 +52,7 @@ export default function CreateBookingDialog({
         <Dialog
           className={tw(
             "overflow-auto py-0 md:max-h-[85vh] lg:w-[600px]",
-            className
+            className,
           )}
           open={isDialogOpen}
           onClose={closeDialog}
@@ -62,12 +64,8 @@ export default function CreateBookingDialog({
         >
           <div className="px-6 py-4">
             <div className="mb-5">
-              <h4>Create new booking</h4>
-              <p>
-                Choose a name for your booking, select a start and end time and
-                choose the custodian. Based on the selected information, asset
-                availability will be determined.
-              </p>
+              <h4>{t("bookings.createNewBooking")}</h4>
+              <p>{t("bookings.createNewBookingDescription")}</p>
             </div>
 
             <NewBookingForm

@@ -14,6 +14,7 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
@@ -71,6 +72,7 @@ export function AdjustBookingAssetQuantityDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: AdjustBookingAssetQuantityDialogProps) {
+  const { t } = useTranslation();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -82,7 +84,7 @@ export function AdjustBookingAssetQuantityDialog({
         setInternalOpen(v);
       }
     },
-    [isControlled, controlledOnOpenChange]
+    [isControlled, controlledOnOpenChange],
   );
 
   const [quantityError, setQuantityError] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export function AdjustBookingAssetQuantityDialog({
   // for the Radix portal mount and re-focuses on every closed → open flip.
   const quantityInputRef = useAutoFocus<HTMLInputElement>({ when: open });
 
-  const unitLabel = unitOfMeasure || "units";
+  const unitLabel = unitOfMeasure || t("bookings.units");
   const isSubmitting = isFormProcessing(fetcher.state);
 
   /** Server-side error message from the action response */
@@ -121,13 +123,16 @@ export function AdjustBookingAssetQuantityDialog({
     const qty = Number(formData.get("quantity"));
 
     if (!Number.isInteger(qty) || qty < 1) {
-      setQuantityError("Quantity must be a whole number greater than 0.");
+      setQuantityError(t("bookings.quantityWholeNumber"));
       return;
     }
 
     if (maxQuantity != null && qty > maxQuantity) {
       setQuantityError(
-        `Only ${maxQuantity} ${unitLabel} available. Please reduce the quantity.`
+        t("bookings.quantityMaxAvailable", {
+          count: maxQuantity,
+          unit: unitLabel,
+        }),
       );
       return;
     }
@@ -147,11 +152,14 @@ export function AdjustBookingAssetQuantityDialog({
 
       <AlertDialogContent onEscapeKeyDown={() => setOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Adjust booked quantity</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("bookings.adjustBookedQuantity")}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Set how many {unitLabel} of
-            {assetTitle ? ` "${assetTitle}"` : " this asset"} to reserve for
-            this booking.
+            {t("bookings.adjustQuantityDescription", {
+              unit: unitLabel,
+              asset: assetTitle ? `"${assetTitle}"` : t("bookings.thisAsset"),
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -167,7 +175,7 @@ export function AdjustBookingAssetQuantityDialog({
               ref={quantityInputRef}
               name="quantity"
               type="number"
-              label={`Quantity (${unitLabel})`}
+              label={t("bookings.quantityLabel", { unit: unitLabel })}
               min={1}
               max={maxQuantity ?? undefined}
               step={1}
@@ -178,7 +186,10 @@ export function AdjustBookingAssetQuantityDialog({
             />
             {maxQuantity != null ? (
               <p className="-mt-2 text-xs text-gray-500">
-                Max: {maxQuantity} {unitLabel}
+                {t("bookings.maxQuantityLabel", {
+                  count: maxQuantity,
+                  unit: unitLabel,
+                })}
               </p>
             ) : null}
           </div>
@@ -187,7 +198,7 @@ export function AdjustBookingAssetQuantityDialog({
         <AlertDialogFooter className="mt-4 gap-2">
           <AlertDialogCancel asChild>
             <Button type="button" variant="secondary" disabled={isSubmitting}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
 
@@ -197,7 +208,7 @@ export function AdjustBookingAssetQuantityDialog({
             onClick={handleSubmit}
             disabled={disabled}
           >
-            {isSubmitting ? "Saving..." : "Save"}
+            {isSubmitting ? t("common.saving") : t("common.save")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

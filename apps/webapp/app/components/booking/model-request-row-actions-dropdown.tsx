@@ -33,6 +33,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { TrashIcon, VerticalDotsIcon } from "~/components/icons/library";
@@ -80,19 +81,22 @@ type TriggerButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const TriggerButton = forwardRef<HTMLButtonElement, TriggerButtonProps>(
-  ({ fullWidth, className, ...props }, ref) => (
-    <button
-      ref={ref}
-      type="button"
-      aria-label="Actions Trigger"
-      {...props}
-      className={tw("asset-actions", fullWidth ? "w-full" : "", className)}
-    >
-      <span className="flex size-6 items-center justify-center gap-2 text-center">
-        <VerticalDotsIcon />
-      </span>
-    </button>
-  )
+  ({ fullWidth, className, ...props }, ref) => {
+    const { t } = useTranslation();
+    return (
+      <button
+        ref={ref}
+        type="button"
+        aria-label={t("bookings.actionsTrigger")}
+        {...props}
+        className={tw("asset-actions", fullWidth ? "w-full" : "", className)}
+      >
+        <span className="flex size-6 items-center justify-center gap-2 text-center">
+          <VerticalDotsIcon />
+        </span>
+      </button>
+    );
+  },
 );
 TriggerButton.displayName = "ModelRequestRowActionsTrigger";
 
@@ -103,6 +107,7 @@ const ConditionalActionsDropdown = ({
   canManage,
   fullWidth,
 }: Props) => {
+  const { t } = useTranslation();
   // `skipDefault: true` — no auto-open-on-QR-scan behaviour for this row.
   const {
     ref: popoverContentRef,
@@ -131,7 +136,7 @@ const ConditionalActionsDropdown = ({
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -171,7 +176,7 @@ const ConditionalActionsDropdown = ({
                     width="full"
                     onClick={handleMenuClose}
                   >
-                    Scan to assign
+                    {t("bookings.scanToAssign")}
                   </Button>
                 </div>
               ) : null}
@@ -189,7 +194,7 @@ const ConditionalActionsDropdown = ({
                         className="justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
                         width="full"
                       >
-                        Remove
+                        {t("common.remove")}
                       </Button>
                     }
                     onRequestClose={handleMenuClose}
@@ -206,7 +211,7 @@ const ConditionalActionsDropdown = ({
                   width="full"
                   onClick={handleMenuClose}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>
@@ -246,7 +251,7 @@ export const ModelRequestRowActionsDropdown = ({
     <div
       className={tw(
         "actions-dropdown flex justify-end",
-        fullWidth ? "w-full" : ""
+        fullWidth ? "w-full" : "",
       )}
     >
       <ConditionalActionsDropdown
@@ -280,6 +285,7 @@ function RemoveReservation({
   trigger: ReactNode;
   onRequestClose?: () => void;
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher({
     key: `booking-model-request-remove-${request.assetModelId}`,
   });
@@ -297,19 +303,21 @@ function RemoveReservation({
             </span>
           </div>
           <AlertDialogTitle>
-            Remove reservation for "{request.assetModel.name}"
+            {t("bookings.removeReservationTitle", {
+              name: request.assetModel.name,
+            })}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This cancels the {request.quantity}-unit model-level reservation.
-            The booking stays in place — you can add a new reservation or
-            specific assets afterwards.
+            {t("bookings.removeReservationConfirm", {
+              count: request.quantity,
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -324,7 +332,7 @@ function RemoveReservation({
                 value={request.assetModelId}
               />
               <Button type="submit" disabled={disabled}>
-                Remove
+                {t("common.remove")}
               </Button>
             </fetcher.Form>
           </div>

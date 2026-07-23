@@ -13,6 +13,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BellIcon, ChevronDownIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import { useBookingSettings } from "~/hooks/use-booking-settings";
@@ -32,6 +33,7 @@ import { Button } from "../shared/button";
  * Triggered from the booking Actions dropdown.
  */
 export default function ManageNotificationsDialog() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const fetcher = useFetcherWithReset<DataOrErrorResponse>();
   const disabled = useDisabled(fetcher);
@@ -42,16 +44,16 @@ export default function ManageNotificationsDialog() {
     []) as NotificationRecipientTeamMember[];
 
   const [selectedIds, setSelectedIds] = useState<string[]>(() =>
-    defaultRecipients.map((tm) => tm.id)
+    defaultRecipients.map((tm) => tm.id),
   );
   const [selectedNameMap, setSelectedNameMap] = useState<Map<string, string>>(
     () => {
       const map = new Map<string, string>();
       defaultRecipients.forEach((tm) =>
-        map.set(tm.id, resolveTeamMemberName(tm))
+        map.set(tm.id, resolveTeamMemberName(tm)),
       );
       return map;
-    }
+    },
   );
 
   function handleOpen() {
@@ -72,7 +74,7 @@ export default function ManageNotificationsDialog() {
         handleClose();
       }
     },
-    [fetcher?.data, handleClose]
+    [fetcher?.data, handleClose],
   );
 
   /** When DynamicDropdown selection changes */
@@ -101,7 +103,7 @@ export default function ManageNotificationsDialog() {
       }
       return name;
     },
-    [selectedNameMap]
+    [selectedNameMap],
   );
 
   /** Custodian display name */
@@ -179,7 +181,7 @@ export default function ManageNotificationsDialog() {
         width="full"
         onClick={handleOpen}
       >
-        Manage notifications
+        {t("bookings.manageNotifications")}
       </Button>
 
       <DialogPortal>
@@ -196,9 +198,9 @@ export default function ManageNotificationsDialog() {
           }
         >
           <div className="px-6 pb-4">
-            <h3 className="mb-1">Manage notifications</h3>
+            <h3 className="mb-1">{t("bookings.manageNotifications")}</h3>
             <p className="mb-4 text-sm text-gray-600">
-              Choose who receives email notifications for this booking.
+              {t("bookings.manageNotificationsDescription")}
             </p>
 
             <fetcher.Form method="POST">
@@ -210,11 +212,11 @@ export default function ManageNotificationsDialog() {
                       <span className="truncate text-gray-500">
                         {(() => {
                           const count = previewRecipients.filter(
-                            (r) => r.reason === "booking_recipient"
+                            (r) => r.reason === "booking_recipient",
                           ).length;
                           return count > 0
-                            ? `${count} user${count !== 1 ? "s" : ""} selected`
-                            : "Add notification recipients...";
+                            ? t("bookingForm.usersSelected", { count })
+                            : t("bookingForm.addNotificationRecipients");
                         })()}
                       </span>
                       <ChevronDownIcon className="size-4 shrink-0 text-gray-400" />
@@ -237,11 +239,11 @@ export default function ManageNotificationsDialog() {
                   defaultValues={selectedIds}
                   onSelectionChange={handleSelectionChange}
                   renderItem={renderItem}
-                  label="Notification recipients"
-                  placeholder="Search team members..."
+                  label={t("bookingForm.notificationRecipients")}
+                  placeholder={t("bookingForm.searchTeamMembers")}
                 />
                 <p className="mt-1.5 text-[13px] text-gray-500">
-                  Only administrators can be added.
+                  {t("bookingForm.onlyAdmins")}
                 </p>
               </div>
 
@@ -273,10 +275,10 @@ export default function ManageNotificationsDialog() {
                   className="flex-1"
                   onClick={handleClose}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button type="submit" className="flex-1" disabled={disabled}>
-                  Save
+                  {t("common.save")}
                 </Button>
               </div>
             </fetcher.Form>

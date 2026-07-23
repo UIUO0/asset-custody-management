@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -13,6 +14,7 @@ export const BulkDeleteBookingSchema = z.object({
 });
 
 export default function BulkDeleteDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<BookingsIndexLoaderData>();
 
   const zo = useZorm("BulkDeleteBookings", BulkDeleteBookingSchema);
@@ -29,8 +31,10 @@ export default function BulkDeleteDialog() {
       type="trash"
       arrayFieldId="bookingIds"
       actionUrl="/api/bookings/bulk-actions"
-      title={`Delete ${totalSelected} bookings`}
-      description={`Are your sure you want to delete all (${totalSelected}) bookings. This action cannot be undone.`}
+      title={t("bookings.bulkDeleteTitle", { count: totalSelected })}
+      description={t("bookings.bulkDeleteDescription", {
+        count: totalSelected,
+      })}
     >
       {({ fetcherError, disabled, handleCloseDialog }) => (
         <>
@@ -48,7 +52,7 @@ export default function BulkDeleteDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -57,7 +61,7 @@ export default function BulkDeleteDialog() {
               disabled={disabled}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

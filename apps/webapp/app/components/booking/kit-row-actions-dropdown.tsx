@@ -25,6 +25,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { useBookingStatusHelpers } from "~/hooks/use-booking-status";
@@ -63,23 +64,27 @@ type TriggerButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const TriggerButton = forwardRef<HTMLButtonElement, TriggerButtonProps>(
-  ({ fullWidth, className, ...props }, ref) => (
-    <button
-      ref={ref}
-      type="button"
-      aria-label="Actions Trigger"
-      {...props}
-      className={tw("asset-actions", fullWidth ? "w-full" : "", className)}
-    >
-      <span className="flex size-6 items-center justify-center gap-2 text-center">
-        <VerticalDotsIcon />
-      </span>
-    </button>
-  )
+  ({ fullWidth, className, ...props }, ref) => {
+    const { t } = useTranslation();
+    return (
+      <button
+        ref={ref}
+        type="button"
+        aria-label={t("bookings.actionsTrigger")}
+        {...props}
+        className={tw("asset-actions", fullWidth ? "w-full" : "", className)}
+      >
+        <span className="flex size-6 items-center justify-center gap-2 text-center">
+          <VerticalDotsIcon />
+        </span>
+      </button>
+    );
+  },
 );
 TriggerButton.displayName = "KitRowActionsTrigger";
 
 function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<{ booking: BookingWithCustodians }>();
   const { isArchived, isCompleted } = useBookingStatusHelpers(booking.status);
   const disabled = useDisabled();
@@ -105,7 +110,7 @@ function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -149,12 +154,12 @@ function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
                       width="full"
                       title={
                         removeDisabled
-                          ? "Cannot remove assets from completed bookings"
+                          ? t("bookings.cannotRemoveTooltip")
                           : undefined
                       }
                       disabled={removeDisabled}
                     >
-                      Remove
+                      {t("common.remove")}
                     </Button>
                   </AlertDialogTrigger>
 
@@ -166,11 +171,10 @@ function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
                         </span>
                       </div>
                       <AlertDialogTitle>
-                        Remove "{kit.name}" from booking
+                        {t("bookings.removeKitTitle", { name: kit.name })}
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to remove this kit from the
-                        booking?
+                        {t("bookings.removeKitConfirm")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -181,7 +185,7 @@ function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
                             variant="secondary"
                             disabled={disabled}
                           >
-                            Cancel
+                            {t("common.cancel")}
                           </Button>
                         </AlertDialogCancel>
 
@@ -193,7 +197,7 @@ function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
                             value="removeKit"
                             disabled={disabled}
                           >
-                            Remove
+                            {t("common.remove")}
                           </Button>
                         </Form>
                       </div>
@@ -211,7 +215,7 @@ function ConditionalActionsDropdown({ kit, fullWidth }: Props) {
                   width="full"
                   onClick={handleMenuClose}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>
@@ -242,7 +246,7 @@ export default function KitRowActionsDropdown({ kit, fullWidth }: Props) {
         // this the kit kebab would sit at the left of its cell creating
         // a column-alignment mismatch between asset and kit rows.
         "actions-dropdown flex justify-end",
-        fullWidth ? "w-full" : ""
+        fullWidth ? "w-full" : "",
       )}
     >
       <ConditionalActionsDropdown kit={kit} fullWidth={fullWidth} />

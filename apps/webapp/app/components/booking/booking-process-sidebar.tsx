@@ -1,6 +1,7 @@
 import { Close } from "@radix-ui/react-dialog";
 import type { LucideIcon } from "lucide-react";
 import { ArrowLeft, ArrowRight, ClockIcon, InfoIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import { XIcon } from "../icons/library";
 import { Button } from "../shared/button";
@@ -19,50 +20,49 @@ type ProcessItem = {
   iconClassName: string;
 };
 
-const ITEMS: Array<ProcessItem> = [
-  {
-    id: "submit-request",
-    icon: ClockIcon,
-    title: "Submit Request",
-    description: `Fill in all required information and select the assets you need. Click "Request reservation" to submit your request.`,
-    iconClassName: "bg-blue-100 text-blue-500",
-  },
-  {
-    id: "admin-review",
-    icon: InfoIcon,
-    title: "Admin Review",
-    description:
-      "Your booking will be shown as reserved, however the admin can choose to revert it back to draft or cancel it at any point, if there are any conflicts with other bookings.",
-    iconClassName: "bg-warning-100 text-warning-500",
-  },
-  {
-    id: "check-out",
-    icon: ArrowRight,
-    title: "Check-Out",
-    description:
-      "On the start date of your booking, an administrator will check out the equipment on your behalf. You'll be responsible for the equipment during your booking period.",
-    iconClassName: "bg-violet-100 text-violet-500",
-  },
-  {
-    id: "check-in",
-    icon: ArrowLeft,
-    title: "Check-In",
-    description:
-      "At the end of you booking period, return the equipment to the administrator who will perform the check in action.",
-    iconClassName: "bg-indigo-100 text-indigo-500",
-  },
-];
-
 export default function BookingProcessSidebar({
   className,
 }: BookingProcessSidebarProps) {
+  const { t } = useTranslation();
+
+  const ITEMS: Array<ProcessItem> = [
+    {
+      id: "submit-request",
+      icon: ClockIcon,
+      title: t("bookings.processSubmitTitle"),
+      description: t("bookings.processSubmitDesc"),
+      iconClassName: "bg-blue-100 text-blue-500",
+    },
+    {
+      id: "admin-review",
+      icon: InfoIcon,
+      title: t("bookings.processReviewTitle"),
+      description: t("bookings.processReviewDesc"),
+      iconClassName: "bg-warning-100 text-warning-500",
+    },
+    {
+      id: "check-out",
+      icon: ArrowRight,
+      title: t("bookings.processCheckoutTitle"),
+      description: t("bookings.processCheckoutDesc"),
+      iconClassName: "bg-violet-100 text-violet-500",
+    },
+    {
+      id: "check-in",
+      icon: ArrowLeft,
+      title: t("bookings.processCheckinTitle"),
+      description: t("bookings.processCheckinDesc"),
+      iconClassName: "bg-indigo-100 text-indigo-500",
+    },
+  ];
+
   return (
     <Sheet>
       <SheetTrigger asChild>
         <Button type="button" variant="block-link-gray" className={"mt-0"}>
           <div className="flex items-center gap-2">
             <InfoIcon className="size-4" />
-            How bookings work
+            {t("bookings.howBookingsWork")}
           </div>
         </Button>
       </SheetTrigger>
@@ -74,20 +74,18 @@ export default function BookingProcessSidebar({
         <div className="flex items-center justify-between bg-blue-500 p-4 text-static-white">
           <div className="flex items-center gap-2 text-lg font-bold">
             <InfoIcon className="size-4" />
-            Booking Process
+            {t("bookings.bookingProcess")}
           </div>
 
           <Close className="opacity-70 transition-opacity hover:opacity-100">
             <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("common.close")}</span>
           </Close>
         </div>
 
         <div className="p-4">
           <p className="mb-8 border-b-2 border-blue-500 bg-blue-50 p-2 text-blue-500">
-            Base users reserve bookings that require admin approval and can be
-            cancelled at any time if there are conflicts with other bookings.
-            Admins handle equipment check-out and check-in.
+            {t("bookings.processIntro")}
           </p>
 
           <div className="mb-8 flex flex-col gap-4">
@@ -96,7 +94,7 @@ export default function BookingProcessSidebar({
                 <div
                   className={tw(
                     "flex items-center justify-center rounded-full p-4",
-                    item.iconClassName
+                    item.iconClassName,
                   )}
                 >
                   {}
@@ -114,21 +112,12 @@ export default function BookingProcessSidebar({
           </div>
 
           <div className="rounded-md bg-gray-50 p-4">
-            <h3 className="mb-1">Important Notes</h3>
+            <h3 className="mb-1">{t("bookings.importantNotes")}</h3>
 
             <ul className="list-inside list-disc">
-              <li>
-                Equipment must be returned in the same condition it was checked
-                out.
-              </li>
-              <li>
-                If you need to extend your booking, contact an administrator
-                before your booking end date.
-              </li>
-              <li>
-                Administrators have final say on booking approvals based on
-                equipment availability and priorities.
-              </li>
+              <li>{t("bookings.note1")}</li>
+              <li>{t("bookings.note2")}</li>
+              <li>{t("bookings.note3")}</li>
             </ul>
           </div>
         </div>

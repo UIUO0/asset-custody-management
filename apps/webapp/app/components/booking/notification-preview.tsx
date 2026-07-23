@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 /** A single recipient entry for the notification preview. */
 type PreviewRecipient = {
   /** Stable identifier for removable items (team member ID for booking_recipient) */
@@ -17,17 +19,6 @@ type NotificationPreviewProps = {
 };
 
 /**
- * Maps internal reason codes to human-readable labels displayed next to each
- * recipient name in the preview list.
- */
-const reasonLabels: Record<string, string> = {
-  custodian: "custodian — always notified",
-  creator: "creator — workspace setting",
-  always_notify: "always notified — workspace setting",
-  booking_recipient: "added to this booking",
-};
-
-/**
  * Read-only preview of all notification recipients for a booking.
  *
  * Lists each recipient with their reason (custodian, creator, always-notify,
@@ -44,6 +35,19 @@ export function NotificationPreview({
   notifyAdminsOnNewBooking,
   onRemoveRecipient,
 }: NotificationPreviewProps) {
+  const { t } = useTranslation();
+
+  /**
+   * Maps internal reason codes to human-readable labels displayed next to each
+   * recipient name in the preview list.
+   */
+  const reasonLabels: Record<string, string> = {
+    custodian: t("bookings.reasonCustodian"),
+    creator: t("bookings.reasonCreator"),
+    always_notify: t("bookings.reasonAlwaysNotify"),
+    booking_recipient: t("bookings.reasonBookingRecipient"),
+  };
+
   if (recipients.length === 0 && adminCount === 0) {
     return null;
   }
@@ -51,7 +55,7 @@ export function NotificationPreview({
   return (
     <div className="mt-3 rounded border border-gray-200 bg-gray-50 p-3">
       <p className="mb-2 text-[14px] font-medium text-gray-700">
-        Who will be notified
+        {t("bookings.whoWillBeNotified")}
       </p>
       <ul className="space-y-1">
         {recipients.map((r) => (
@@ -73,7 +77,7 @@ export function NotificationPreview({
                 type="button"
                 className="ms-2 inline-flex size-4 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
                 onClick={() => onRemoveRecipient(r.id!)}
-                aria-label={`Remove ${r.name}`}
+                aria-label={t("bookings.removeRecipient", { name: r.name })}
               >
                 <svg
                   className="size-3"
@@ -92,10 +96,8 @@ export function NotificationPreview({
       {notifyAdminsOnNewBooking ? (
         <p className="mt-1 text-[13px] text-gray-500">
           {adminCount > 0
-            ? `+ ${adminCount} admin${
-                adminCount !== 1 ? "s" : ""
-              } will be notified on reservation`
-            : "+ Workspace admins will be notified on reservation"}
+            ? t("bookings.adminsNotifiedCount", { count: adminCount })
+            : t("bookings.adminsNotified")}
         </p>
       ) : null}
     </div>
