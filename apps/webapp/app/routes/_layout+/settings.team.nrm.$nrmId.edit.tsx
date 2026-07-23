@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import {
   data,
@@ -15,6 +16,8 @@ import { UserIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getTeamMember } from "~/modules/team-member/service.server";
 import styles from "~/styles/layout/custom-modal.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -53,7 +56,18 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     throw data(error(reason), { status: reason.status });
   }
 }
-export const meta = () => [{ title: appendToMetaTitle("Edit team member") }];
+export const meta = ({
+  matches,
+}: {
+  matches: Array<{ id: string; data?: unknown }>;
+}) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.team.editMember) }];
+};
 
 export async function action({ context, request, params }: ActionFunctionArgs) {
   const authSession = context.getSession();
@@ -97,6 +111,7 @@ export function links() {
 }
 
 export default function EditNrm() {
+  const { t } = useTranslation();
   const zo = useZorm("EditMember", NewOrEditMemberSchema);
 
   const { teamMember } = useLoaderData<typeof loader>();
@@ -113,7 +128,7 @@ export default function EditNrm() {
         <UserIcon />
       </div>
 
-      <h4 className="mb-5">Edit team member</h4>
+      <h4 className="mb-5">{t("team.editMember")}</h4>
 
       <Form method="post" ref={zo.ref}>
         <Input
@@ -121,9 +136,9 @@ export default function EditNrm() {
           defaultValue={teamMember.name}
           name={zo.fields.name()}
           type="text"
-          label="Name"
+          label={t("team.name")}
           className="mb-8"
-          placeholder="Enter team member’s name"
+          placeholder={t("team.enterMemberName")}
           required
           error={zo.errors.name()?.message}
           disabled={disabled}
@@ -134,7 +149,7 @@ export default function EditNrm() {
           type="submit"
           disabled={disabled}
         >
-          Save
+          {t("common.save")}
         </Button>
       </Form>
       {actionData?.error && (

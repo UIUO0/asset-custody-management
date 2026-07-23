@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { OrganizationType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -13,6 +14,8 @@ import { ErrorContent } from "~/components/errors";
 import type { HeaderData } from "~/components/layout/header/types";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { EMAIL_FOOTER_MAX_LENGTH } from "~/modules/email-footer/constants";
 import { processEmailFooter } from "~/modules/email-footer/email-footer-validator.server";
 import { updateOrganization } from "~/modules/organization/service.server";
@@ -69,13 +72,24 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
+/** Breadcrumb for email settings (component so it can use the hook). */
+function EmailsBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("settings.emails")}</>;
+}
+
 export const handle = {
-  breadcrumb: () => "Emails",
+  breadcrumb: () => <EmailsBreadcrumb />,
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.emailSettings.title) }];
+};
 
 export const ErrorBoundary = () => <ErrorContent />;
 
@@ -112,9 +126,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
                 customEmailFooter: { message: result.error },
               },
             },
-          })
+          }),
         ),
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -139,20 +153,21 @@ export async function action({ context, request }: ActionFunctionArgs) {
 }
 
 export default function EmailSettingsPage() {
+  const { t } = useTranslation();
   const { organization } = useLoaderData<typeof loader>();
   const zo = useZorm("emailFooter", emailFooterSchema);
   const disabled = useDisabled();
 
   const actionData = useActionData<DataOrErrorResponse>();
   const validationErrors = getValidationErrors<typeof emailFooterSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   const currentFooter = organization.customEmailFooter || "";
   const [charCount, setCharCount] = useState(currentFooter.length);
   const [footerPreview, setFooterPreview] = useState(currentFooter);
   const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">(
-    "desktop"
+    "desktop",
   );
 
   return (
@@ -160,42 +175,54 @@ export default function EmailSettingsPage() {
       {/* Left column: Form */}
       <div className="flex flex-1 flex-col gap-4">
         <div>
-          <h3 className="text-text-lg font-semibold">Custom email footer</h3>
+          <h3 className="text-text-lg font-semibold">
+            {t("emailSettings.footerTitle")}
+          </h3>
           <p className="text-sm text-gray-600">
-            Add a custom message that appears at the bottom of all workspace
-            emails sent to team members.
+            {t("emailSettings.footerDesc")}
           </p>
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
           <p className="mb-2 text-sm font-medium text-gray-700">
-            This footer will appear on the following emails:
+            {t("emailSettings.appearsOn")}
           </p>
           <ul className="space-y-1 text-sm text-gray-600">
             <li>
-              <span className="font-medium">Bookings:</span> Reserved, checkout
-              reminder, check-in reminder, overdue, completed, extended,
-              cancelled, updated, deleted
+              <span className="font-medium">
+                {t("emailSettings.bookingsLabel")}
+              </span>{" "}
+              {t("emailSettings.bookingsText")}
             </li>
             <li>
-              <span className="font-medium">Asset reminders:</span> Reminder
-              notifications
+              <span className="font-medium">
+                {t("emailSettings.remindersLabel")}
+              </span>{" "}
+              {t("emailSettings.remindersText")}
             </li>
             <li>
-              <span className="font-medium">Invitations:</span> Workspace invite
-              emails
+              <span className="font-medium">
+                {t("emailSettings.invitationsLabel")}
+              </span>{" "}
+              {t("emailSettings.invitationsText")}
             </li>
             <li>
-              <span className="font-medium">Access:</span> Access revocation
-              notices
+              <span className="font-medium">
+                {t("emailSettings.accessLabel")}
+              </span>{" "}
+              {t("emailSettings.accessText")}
             </li>
             <li>
-              <span className="font-medium">Audits:</span> Assignment,
-              cancelled, completed, reminder, overdue notifications
+              <span className="font-medium">
+                {t("emailSettings.auditsLabel")}
+              </span>{" "}
+              {t("emailSettings.auditsText")}
             </li>
             <li>
-              <span className="font-medium">Role changes:</span> Role change
-              notifications
+              <span className="font-medium">
+                {t("emailSettings.roleChangesLabel")}
+              </span>{" "}
+              {t("emailSettings.roleChangesText")}
             </li>
           </ul>
         </div>
@@ -206,7 +233,7 @@ export default function EmailSettingsPage() {
               htmlFor={zo.fields.customEmailFooter()}
               className="mb-1.5 block text-sm font-medium text-gray-700"
             >
-              Footer message
+              {t("emailSettings.footerMessage")}
             </label>
             <textarea
               id={zo.fields.customEmailFooter()}
@@ -216,7 +243,7 @@ export default function EmailSettingsPage() {
               maxLength={EMAIL_FOOTER_MAX_LENGTH}
               rows={10}
               className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm text-gray-900 placeholder:text-gray-500 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-25 disabled:opacity-50"
-              placeholder="e.g., ACME Corp - support@acme.com - (555) 123-4567"
+              placeholder={t("emailSettings.footerPlaceholder")}
               onChange={(e) => {
                 setCharCount(e.target.value.length);
                 setFooterPreview(e.target.value);
@@ -231,23 +258,24 @@ export default function EmailSettingsPage() {
             )}
             <div className="mt-1 flex items-center justify-between">
               <p className="text-xs text-gray-500">
-                Links are not allowed. Email addresses and phone numbers are
-                permitted.
+                {t("emailSettings.linksNotAllowed")}
               </p>
               <span className="text-xs text-gray-500">
-                {charCount} / {EMAIL_FOOTER_MAX_LENGTH} characters
+                {t("emailSettings.charactersCount", {
+                  count: charCount,
+                  max: EMAIL_FOOTER_MAX_LENGTH,
+                })}
               </span>
             </div>
           </div>
 
           <p className="text-xs text-gray-500">
-            Note: Custom footers with certain content may affect email
-            deliverability and spam scores.
+            {t("emailSettings.deliverabilityNote")}
           </p>
 
           <div>
             <Button type="submit" disabled={disabled}>
-              {disabled ? "Saving..." : "Save"}
+              {disabled ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </Form>
@@ -256,11 +284,13 @@ export default function EmailSettingsPage() {
       {/* Right column: Email preview */}
       <div className="flex-1">
         <div className="mb-2 flex items-center justify-between">
-          <p className="text-sm font-medium text-gray-700">Preview</p>
+          <p className="text-sm font-medium text-gray-700">
+            {t("emailSettings.preview")}
+          </p>
           <ViewButtonGroup
             views={[
-              { label: "Desktop", value: "desktop" },
-              { label: "Mobile", value: "mobile" },
+              { label: t("emailSettings.desktop"), value: "desktop" },
+              { label: t("emailSettings.mobile"), value: "mobile" },
             ]}
             currentView={previewMode}
             onViewChange={(v) => setPreviewMode(v as "desktop" | "mobile")}
@@ -325,7 +355,7 @@ function EmailPreview({
         <p>
           <span className="text-gray-400">From:</span>{" "}
           <span className="text-gray-700">
-            Shelf &lt;notifications@shelf.nu&gt;
+            {organizationName} &lt;no-reply@epda.gov.sa&gt;
           </span>
         </p>
         <p>
@@ -335,7 +365,7 @@ function EmailPreview({
         <p>
           <span className="text-gray-400">Subject:</span>{" "}
           <span className="text-gray-700">
-            ✅ Booking reserved (Office Equipment Booking) - shelf.nu
+            ✅ Booking reserved (Office Equipment Booking)
           </span>
         </p>
       </div>
@@ -369,8 +399,8 @@ function EmailPreview({
               }}
             >
               <img
-                src="/static/images/logo-full-color(x2).png"
-                alt="Shelf logo"
+                src="/static/images/epda-logo-full.png"
+                alt="logo"
                 style={{ height: "32px", width: "auto" }}
               />
             </div>
@@ -460,7 +490,7 @@ function EmailPreview({
                 marginBottom: "32px",
               }}
             >
-              &copy; 2026 Shelf.nu
+              &copy; 2026
             </p>
           </div>
         </div>

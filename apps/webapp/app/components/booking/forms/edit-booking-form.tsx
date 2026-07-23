@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { BookingStatus, Tag } from "@prisma/client";
 import { useAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useActionData, useLoaderData, useNavigation } from "react-router";
 import { useZorm } from "react-zorm";
 import { updateDynamicTitleAtom } from "~/atoms/dynamic-title-atom";
@@ -74,6 +75,7 @@ type BookingFormData = {
 
 // react-doctor:no-giant-component — deferred for follow-up refactor
 export function EditBookingForm({ booking, action }: BookingFormData) {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const {
     id,
@@ -134,7 +136,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
         bookingStatus?.isOngoing ||
         bookingStatus?.isCompleted ||
         bookingStatus?.isOverdue ||
-        bookingStatus?.isCancelled
+        bookingStatus?.isCancelled,
     );
   const bookingSettings = useBookingSettings();
 
@@ -157,7 +159,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
       workingHours: workingHours,
       bookingSettings,
       isAdminOrOwner: isAdministratorOrOwner,
-    })
+    }),
   );
 
   /** Track the form DOM element via state so portalContainer is always
@@ -169,13 +171,13 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
       zo.ref(node);
       setFormElement(node);
     },
-    [zo]
+    [zo],
   );
 
   const actionData = useActionData<BookingPageActionData>();
   /** This handles server side errors in case client side validation fails */
   const validationErrors = getValidationErrors<BookingFormSchemaType>(
-    actionData?.error
+    actionData?.error,
   );
 
   const canCheckInBooking = userHasPermission({
@@ -193,7 +195,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
   // Use teamMembersForForm for BASE/SELF_SERVICE users to ensure their team member is always available
   const teamMembersToUse = teamMembersForForm || teamMembers;
   const defaultTeamMember = teamMembersToUse?.find(
-    (m) => m.userId === custodianRef || m.id === custodianRef
+    (m) => m.userId === custodianRef || m.id === custodianRef,
   );
 
   const userCanSeeCustodian = userCanViewSpecificCustody({
@@ -293,7 +295,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
                   className="grow"
                   size="sm"
                 >
-                  Save
+                  {t("bookingForm.save")}
                 </Button>
               </>
             ) : null}
@@ -448,11 +450,11 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
           {id ? (
             <input type="hidden" name="id" defaultValue={id} key={id} />
           ) : null}
-          <h3>Booking details</h3>
+          <h3>{t("bookingForm.bookingDetails")}</h3>
           <div
             className={tw(
               "flex flex-col gap-3 lg:flex-row",
-              "[&_.form-row-children-wrapper]:w-full"
+              "[&_.form-row-children-wrapper]:w-full",
             )}
           >
             <div className="w-full lg:w-2/5">
@@ -518,7 +520,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
               <div
                 className={tw(
                   "m-0 flex h-full flex-col",
-                  "[&_.input-wrapper]:h-full [&_label]:h-full [&_textarea]:size-full"
+                  "[&_.input-wrapper]:h-full [&_label]:h-full [&_textarea]:size-full",
                 )}
               >
                 <TagField

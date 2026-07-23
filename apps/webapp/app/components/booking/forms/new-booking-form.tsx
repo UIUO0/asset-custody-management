@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { updateDynamicTitleAtom } from "~/atoms/dynamic-title-atom";
@@ -49,6 +50,7 @@ type NewBookingFormData = {
 };
 
 export function NewBookingForm({ booking, action }: NewBookingFormData) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<NewBookingActionReturnType>();
   const { custodianRef, assetIds, kitId } = booking;
 
@@ -75,7 +77,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
     getBookingDefaultStartEndTimes(
       workingHours,
       bookingSettings.bufferStartTime,
-      isAdministratorOrOwner
+      isAdministratorOrOwner,
     );
 
   const [startDate, setStartDate] = useState(defaultStartDate);
@@ -89,7 +91,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
       workingHours: workingHours,
       bookingSettings,
       isAdminOrOwner: isAdministratorOrOwner,
-    })
+    }),
   );
 
   /** Use teamMembersForForm when available (from dialog contexts), otherwise fall back to teamMembers */
@@ -97,7 +99,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
 
   /** This is used when we have selfSErvice or Base as we are setting the default */
   const defaultTeamMember = teamMembersToUse?.find(
-    (m) => m.userId === custodianRef || m.id === custodianRef
+    (m) => m.userId === custodianRef || m.id === custodianRef,
   );
 
   const userCanSeeCustodian = userCanViewSpecificCustody({
@@ -118,7 +120,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
 
   /** This handles server side errors in case client side validation fails */
   const validationErrors = getValidationErrors<BookingFormSchemaType>(
-    fetcher.data?.error
+    fetcher.data?.error,
   );
 
   return (
@@ -196,7 +198,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
                 <NotificationRecipientsField
                   disabled={disabled}
                   isAdminOrOwner={isAdministratorOrOwner}
-                  creatorName="You"
+                  creatorName={t("bookingForm.you")}
                 />
               </Card>
             </div>
@@ -226,7 +228,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
                 name="intent"
                 width={"full"}
               >
-                Scan QR codes
+                {t("bookingForm.scanQrCodes")}
               </Button>
             ) : null}
             <Button
@@ -238,7 +240,9 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
               disabled={disabled}
               width={"full"}
             >
-              {assetIds ? "Create Booking" : "View assets list"}
+              {assetIds
+                ? t("bookingForm.createBooking")
+                : t("bookingForm.viewAssetsList")}
             </Button>
             <hr />
             <Button
@@ -248,7 +252,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
               disabled={disabled}
               className="cancellation-button whitespace-nowrap"
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
           <div className="h-3" />

@@ -9,11 +9,14 @@
  * @see {@link file://./settings.asset-models.new.tsx} Create route
  * @see {@link file://./settings.asset-models.$assetModelId_.edit.tsx} Edit route
  */
+import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, Link, Outlet } from "react-router";
 import { z } from "zod";
 import { BulkDeleteAssetModelSchema } from "~/components/asset-model/bulk-delete-dialog";
 import { ErrorContent } from "~/components/errors";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   bulkDeleteAssetModels,
   deleteAssetModel,
@@ -28,9 +31,22 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [
-  { title: appendToMetaTitle("Asset models settings") },
-];
+export const meta = ({
+  matches,
+}: {
+  matches: Array<{ id: string; data?: unknown }>;
+}) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [
+    {
+      title: appendToMetaTitle(resources.settings.assetModelsSettingsTitle),
+    },
+  ];
+};
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -72,7 +88,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         BulkDeleteAssetModelSchema.extend({
           currentSearchParams: z.string().optional(),
         }),
-        { additionalData: { userId } }
+        { additionalData: { userId } },
       );
 
       await bulkDeleteAssetModels({
@@ -99,7 +115,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       }),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     await deleteAssetModel({ id, organizationId });
@@ -118,8 +134,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb for asset models (component so it can use the hook). */
+function AssetModelsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/settings/asset-models">{t("settings.assetModels")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/settings/asset-models">Asset Models</Link>,
+  breadcrumb: () => <AssetModelsBreadcrumb />,
 };
 
 export default function AssetModelsLayout() {

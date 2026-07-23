@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { parseFormData } from "@remix-run/form-data-parser";
+import { Trans, useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, useFetcher } from "react-router";
 import Input from "~/components/forms/input";
@@ -17,6 +18,8 @@ import {
   AlertDialogTrigger,
 } from "~/components/shared/modal";
 import { WarningBox } from "~/components/shared/warning-box";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import type { CreateAssetFromContentImportPayload } from "~/modules/asset/types";
 import { createTeamMemberIfNotExists } from "~/modules/team-member/service.server";
 import styles from "~/styles/layout/custom-modal.css?url";
@@ -31,7 +34,18 @@ import {
 import { requirePermission } from "~/utils/roles.server";
 import { assertUserCanImportNRM } from "~/utils/subscription.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Import team members") }];
+export const meta = ({
+  matches,
+}: {
+  matches: Array<{ id: string; data?: unknown }>;
+}) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.team.importMembers) }];
+};
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -85,7 +99,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         title: "", // Required by type but unused
         tags: [], // Required by type but unused
         custodian: name,
-      })
+      }),
     );
 
     await createTeamMemberIfNotExists({
@@ -105,6 +119,7 @@ export function links() {
 }
 
 export default function ImportNRMs() {
+  const { t } = useTranslation();
   return (
     <>
       <div className="modal-content-wrapper">
@@ -112,19 +127,16 @@ export default function ImportNRMs() {
           <UserIcon />
         </div>
         <div className="mb-5">
-          <h4>Import team members</h4>
+          <h4>{t("team.importMembers")}</h4>
           <p>
-            Team members just have 1 field and that is a name field. Importing
-            team members just requires you to upload a txt file with member
-            names separated by comas.
+            {t("team.importMembersDesc")}
             <br />
             <ul className="list-inside list-disc ps-4">
-              <li>Names which are already in the system will be ignored.</li>
-              <li>Duplicates will be skipped.</li>
+              <li>{t("team.importIgnoreExisting")}</li>
+              <li>{t("team.importSkipDuplicates")}</li>
             </ul>
             <WarningBox className="my-2">
-              Import is final and cannot be reverted. If you want to later edit
-              team members, you can do so from the Team settings page.
+              {t("team.importFinalWarning")}
             </WarningBox>
           </p>
         </div>
@@ -135,6 +147,7 @@ export default function ImportNRMs() {
 }
 
 function ImportForm() {
+  const { t } = useTranslation();
   const [agreed, setAgreed] = useState<"I AGREE" | "">("");
   const formRef = useRef<HTMLFormElement>(null);
   const fetcher = useFetcher<typeof action>();
@@ -163,7 +176,7 @@ function ImportForm() {
       <Input
         type="file"
         name="file"
-        label="Select a txt file"
+        label={t("team.selectTxtFile")}
         required
         onChange={handleFileSelect}
         accept=".txt"
@@ -173,29 +186,27 @@ function ImportForm() {
         <AlertDialogTrigger asChild>
           <Button
             type="button"
-            title={"Confirm NRM import"}
+            title={t("team.confirmNrmImport")}
             disabled={!selectedFile}
             className="mt-4 w-full"
           >
-            Confirm Non-registered members import
+            {t("team.confirmNrmImport")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Confirm Non-registered members import
-            </AlertDialogTitle>
+            <AlertDialogTitle>{t("team.confirmNrmImport")}</AlertDialogTitle>
             {!isSuccessful ? (
               <>
                 <AlertDialogDescription>
-                  You need to type: <b>"I AGREE"</b> in the field below to
-                  accept the import. By doing this you agree that you have read
-                  the requirements and you understand the limitations and
-                  consequences of using this feature.
+                  <Trans
+                    i18nKey="team.importAgreeText"
+                    components={{ 1: <b /> }}
+                  />
                 </AlertDialogDescription>
                 <Input
                   type="text"
-                  label={"Confirmation"}
+                  label={t("team.confirmation")}
                   name="agree"
                   value={agreed}
                   onChange={(e) => setAgreed(e.target.value as any)}
@@ -209,30 +220,27 @@ function ImportForm() {
           {data?.error ? (
             <div>
               <b className="text-red-500">{data.error.message}</b>
-              <p>
-                Please fix your txt file and try again. If the issue persists,
-                don't hesitate to get in touch with us.
-              </p>
+              <p>{t("team.importFixTxt")}</p>
             </div>
           ) : null}
 
           {isSuccessful ? (
             <div>
-              <b className="text-green-500">Success!</b>
-              <p>Your Non-registered members have been imported.</p>
+              <b className="text-green-500">{t("team.success")}</b>
+              <p>{t("team.importSuccessText")}</p>
             </div>
           ) : null}
 
           <AlertDialogFooter>
             {isSuccessful ? (
               <Button to="/settings/team/nrm" variant="secondary">
-                Close
+                {t("common.close")}
               </Button>
             ) : (
               <>
                 <AlertDialogCancel asChild>
                   <Button type="button" variant="secondary">
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </AlertDialogCancel>
                 <Button
@@ -243,7 +251,9 @@ function ImportForm() {
                   }}
                   disabled={disabled}
                 >
-                  {isFormProcessing(fetcher.state) ? "Importing..." : "Import"}
+                  {isFormProcessing(fetcher.state)
+                    ? t("team.importing")
+                    : t("common.import")}
                 </Button>
               </>
             )}

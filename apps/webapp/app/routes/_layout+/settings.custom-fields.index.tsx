@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, Link, useLoaderData } from "react-router";
 import { CategoryBadge } from "~/components/assets/category-badge";
@@ -12,6 +13,8 @@ import { Button } from "~/components/shared/button";
 import { GrayBadge } from "~/components/shared/gray-badge";
 import { Td, Th } from "~/components/table";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   countActiveCustomFields,
   getFilteredAndPaginatedCustomFields,
@@ -35,9 +38,14 @@ import {
 import { requirePermission } from "~/utils/roles.server";
 import { canCreateMoreCustomFields } from "~/utils/subscription.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.settings.customFieldsHeader) }];
+};
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -96,7 +104,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -105,13 +113,16 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 }
 
 export default function CustomFieldsIndexPage() {
+  const { t } = useTranslation();
   const { canCreateMoreCustomFields } = useLoaderData<typeof loader>();
   const { isBaseOrSelfService } = useUserRoleHelper();
 
   return (
     <>
       <div className="mb-2.5 flex items-center justify-between bg-white md:rounded md:border md:border-gray-200 md:px-6 md:py-5">
-        <h2 className=" text-lg text-gray-900">Custom Fields</h2>
+        <h2 className=" text-lg text-gray-900">
+          {t("settings.customFieldsHeader")}
+        </h2>
         <Button
           to="new"
           role="link"
@@ -121,13 +132,12 @@ export default function CustomFieldsIndexPage() {
           disabled={
             !canCreateMoreCustomFields
               ? {
-                  reason:
-                    "You are not able to create more active custom fields within your current plan.",
+                  reason: t("settings.cannotCreateMoreCustomFields"),
                 }
               : false
           }
         >
-          New custom field
+          {t("settings.newCustomField")}
         </Button>
       </div>
       <List
@@ -135,11 +145,11 @@ export default function CustomFieldsIndexPage() {
         ItemComponent={CustomFieldRow}
         headerChildren={
           <>
-            <Th>Categories</Th>
-            <Th>Required</Th>
-            <Th>Status</Th>
-            <Th>Used on</Th>
-            <Th>Actions</Th>
+            <Th>{t("customFields.categories")}</Th>
+            <Th>{t("customFields.required")}</Th>
+            <Th>{t("customFields.status")}</Th>
+            <Th>{t("customFields.usedOn")}</Th>
+            <Th>{t("customFields.actions")}</Th>
           </>
         }
       />
@@ -153,6 +163,7 @@ function CustomFieldRow({
     usageCount: number;
   };
 }) {
+  const { t } = useTranslation();
   return (
     <>
       <Td className="w-full">
@@ -173,7 +184,7 @@ function CustomFieldRow({
       <Td>
         <ItemsWithViewMore
           items={item.categories}
-          emptyMessage={<GrayBadge>All</GrayBadge>}
+          emptyMessage={<GrayBadge>{t("common.all")}</GrayBadge>}
           renderItem={(category) => (
             <CategoryBadge
               category={category}
@@ -185,23 +196,23 @@ function CustomFieldRow({
       </Td>
       <Td>
         <span className="text-text-sm font-medium capitalize text-gray-600">
-          {item.required ? "Yes" : "No"}
+          {item.required ? t("common.yes") : t("common.no")}
         </span>
       </Td>
       <Td>
         {!item.active ? (
           <Badge color="#dc2626" withDot={false}>
-            Inactive
+            {t("customFields.inactive")}
           </Badge>
         ) : (
           <Badge color="#059669" withDot={false}>
-            Active
+            {t("customFields.active")}
           </Badge>
         )}
       </Td>
       <Td>
         <span className="text-text-sm font-medium text-gray-600">
-          {item.usageCount === 1 ? "1 asset" : `${item.usageCount} assets`}
+          {t("models.asset", { count: item.usageCount })}
         </span>
       </Td>
       <Td>

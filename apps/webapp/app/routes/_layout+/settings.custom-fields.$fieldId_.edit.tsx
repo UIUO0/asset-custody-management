@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   MetaFunction,
@@ -13,6 +14,8 @@ import {
 } from "~/components/custom-fields/form";
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getCategoriesForCreateAndEdit } from "~/modules/asset/service.server";
 import {
   getCustomField,
@@ -30,12 +33,31 @@ import {
 import { requirePermission } from "~/utils/roles.server";
 import { assertUserCanCreateMoreCustomFields } from "~/utils/subscription.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ data, matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [
+    {
+      title: data
+        ? appendToMetaTitle(
+            `${resources.common.edit} | ${data.customField.name}`,
+          )
+        : "",
+    },
+  ];
+};
+
+/** Breadcrumb for the edit custom field page (component so it can use the hook). */
+function EditCustomFieldBreadcrumb() {
+  const { t } = useTranslation();
+  return <span>{t("common.edit")}</span>;
+}
 
 export const handle = {
-  breadcrumb: () => <span>Edit</span>,
+  breadcrumb: () => <EditCustomFieldBreadcrumb />,
 };
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
@@ -66,7 +88,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         organizationId,
         request,
         defaultCategory: customField.categories.map((c) => c.id),
-      }
+      },
     );
 
     const header: HeaderData = {
@@ -103,7 +125,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     const parsedData = parseData(
       await request.formData(),
-      NewCustomFieldFormSchema
+      NewCustomFieldFormSchema,
     );
 
     const { name, helpText, active, required, options, categories } =

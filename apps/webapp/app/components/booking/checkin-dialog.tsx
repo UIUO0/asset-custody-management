@@ -1,5 +1,6 @@
 import type { Booking } from "@prisma/client";
 import { Zap } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { isBookingEarlyCheckin } from "~/modules/booking/helpers";
 import { tw } from "~/utils/tw";
 import { Button, type ButtonProps } from "../shared/button";
@@ -45,11 +46,13 @@ export default function CheckinDialog({
   booking,
   portalContainer,
   formId,
-  label = "Check-in",
+  label,
   variant = "default",
   specificAssetIds,
   fullWidth = false,
 }: CheckinDialogProps) {
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t("bookings.checkIn");
   const isEarlyCheckin = isBookingEarlyCheckin(booking.to);
   if (!isEarlyCheckin) {
     return (
@@ -63,17 +66,17 @@ export default function CheckinDialog({
           "whitespace-nowrap",
           variant === "dropdown"
             ? "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700"
-            : ""
+            : "",
         )}
         variant={variant === "dropdown" ? "link" : "primary"}
         width={variant === "dropdown" || fullWidth ? "full" : undefined}
       >
         {variant === "dropdown" ? (
           <span className="flex items-center gap-2">
-            <Zap className="size-4" /> {label}
+            <Zap className="size-4" /> {resolvedLabel}
           </span>
         ) : (
-          label
+          resolvedLabel
         )}
       </Button>
     );
@@ -94,52 +97,46 @@ export default function CheckinDialog({
             "whitespace-nowrap",
             variant === "dropdown"
               ? "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700"
-              : ""
+              : "",
           )}
           variant={variant === "dropdown" ? "link" : "primary"}
           width={variant === "dropdown" || fullWidth ? "full" : undefined}
         >
           {variant === "dropdown" ? (
             <span className="flex items-center gap-2">
-              <Zap className="size-4" /> {label}
+              <Zap className="size-4" /> {resolvedLabel}
             </span>
           ) : (
-            label
+            resolvedLabel
           )}
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent portalProps={{ container: portalContainer }}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Early Check-in Warning</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("bookings.earlyCheckinWarning")}
+          </AlertDialogTitle>
         </AlertDialogHeader>
         <AlertDialogDescription>
           {currentTimeIsBeforeFrom ? (
-            <>
-              You are checking in the booking more than 15 minutes before the
-              end date, however you are not allowed to adjust the end date
-              because the current time(
-              <span className="font-bold text-gray-700">
-                <DateS date={new Date()} includeTime />
-              </span>
-              ) is before the start date(
-              <span className="font-bold text-gray-700">
-                <DateS date={booking.from} includeTime />
-              </span>
-              ) of the booking.
-            </>
+            <Trans
+              i18nKey="bookings.checkinBeforeStartWarning"
+              components={{
+                bold: <span className="font-bold text-gray-700" />,
+                now: <DateS date={new Date()} includeTime />,
+                start: <DateS date={booking.from} includeTime />,
+              }}
+            />
           ) : (
-            <>
-              You are checking in the booking more than 15 minutes before the
-              end date. If you proceed, the end date will be adjusted to now:{" "}
-              <span className="font-bold text-gray-700">
-                <DateS date={new Date()} includeTime />
-              </span>
-              .
-              <br />
-              <br />
-              Do you want to adjust the end date or keep the original date?
-            </>
+            <Trans
+              i18nKey="bookings.checkinAdjustWarning"
+              components={{
+                bold: <span className="font-bold text-gray-700" />,
+                now: <DateS date={new Date()} includeTime />,
+                br: <br />,
+              }}
+            />
           )}
         </AlertDialogDescription>
 
@@ -151,7 +148,7 @@ export default function CheckinDialog({
               type="button"
               className={currentTimeIsBeforeFrom ? "flex-1" : ""}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
 
@@ -177,7 +174,9 @@ export default function CheckinDialog({
             name="checkinIntentChoice"
             value={CheckinIntentEnum["without-adjusted-date"]}
           >
-            {currentTimeIsBeforeFrom ? "Check In" : "Don't Adjust Date"}
+            {currentTimeIsBeforeFrom
+              ? t("bookings.checkInAction")
+              : t("bookings.dontAdjustDate")}
           </Button>
           {!currentTimeIsBeforeFrom && (
             <Button
@@ -189,7 +188,7 @@ export default function CheckinDialog({
               name="checkinIntentChoice"
               value={CheckinIntentEnum["with-adjusted-date"]}
             >
-              Adjust Date
+              {t("bookings.adjustDate")}
             </Button>
           )}
         </AlertDialogFooter>

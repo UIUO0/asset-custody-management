@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CalendarIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { useBookingSettings } from "~/hooks/use-booking-settings";
@@ -31,6 +32,7 @@ export default function ExtendBookingDialog({
   className,
   currentEndDate,
 }: ExtendBookingDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const fetcher = useFetcherWithReset<DataOrErrorResponse>();
   const disabled = useDisabled(fetcher);
@@ -49,7 +51,7 @@ export default function ExtendBookingDialog({
       workingHours: workingHoursData.workingHours,
       bookingSettings,
       isAdminOrOwner: isAdministratorOrOwner,
-    })
+    }),
   );
 
   function handleOpen() {
@@ -68,13 +70,13 @@ export default function ExtendBookingDialog({
         handleClose();
       }
     },
-    [fetcher?.data, handleClose]
+    [fetcher?.data, handleClose],
   );
 
   /** This handles server side errors in case client side validation fails */
 
   const validationErrors = getValidationErrors<ExtendBookingSchemaType>(
-    fetcher?.data?.error
+    fetcher?.data?.error,
   );
   return (
     <>
@@ -85,7 +87,7 @@ export default function ExtendBookingDialog({
         width="full"
         onClick={handleOpen}
       >
-        Extend booking
+        {t("bookings.extendBooking")}
       </Button>
 
       <DialogPortal>
@@ -102,20 +104,18 @@ export default function ExtendBookingDialog({
           }
         >
           <div className="px-6 pb-4">
-            <h3 className="mb-1">Extend booking</h3>
-            <p className="mb-4">
-              Change the end date of your booking to a date in the future.
-            </p>
+            <h3 className="mb-1">{t("bookings.extendBooking")}</h3>
+            <p className="mb-4">{t("bookings.extendBookingDescription")}</p>
 
             <fetcher.Form ref={zo.ref} method="POST">
               <div className="required-input-label mb-1 text-text-sm font-medium text-gray-700">
-                New end date
+                {t("bookings.newEndDate")}
               </div>
 
               <Input
                 key={currentEndDate}
                 defaultValue={currentEndDate}
-                label="End Date"
+                label={t("bookingForm.endDate")}
                 type="datetime-local"
                 hideLabel
                 name={zo.fields.endDate()}
@@ -125,7 +125,7 @@ export default function ExtendBookingDialog({
                   zo.errors.endDate()?.message
                 }
                 className="mb-4 w-full"
-                placeholder="Booking"
+                placeholder={t("bookingForm.namePlaceholder")}
               />
 
               <When truthy={!!fetcher?.data?.error}>
@@ -162,7 +162,7 @@ export default function ExtendBookingDialog({
               />
               {error && (
                 <p className="mt-1 text-sm text-orange-600">
-                  Working hours validation unavailable: {error}
+                  {t("bookingForm.workingHoursUnavailable", { error })}
                 </p>
               )}
               <input type="hidden" name="intent" value="extend-booking" />
@@ -180,10 +180,10 @@ export default function ExtendBookingDialog({
                   className="flex-1"
                   onClick={handleClose}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button type="submit" className="flex-1" disabled={disabled}>
-                  Submit
+                  {t("bookings.submit")}
                 </Button>
               </div>
             </fetcher.Form>

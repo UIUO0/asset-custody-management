@@ -1,4 +1,5 @@
 import type { CustomField } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { VerticalDotsIcon } from "~/components/icons/library";
 import {
   DropdownMenu,
@@ -11,11 +12,12 @@ import { DeleteCustomFieldDialog } from "./delete-dialog";
 import { Button } from "../shared/button";
 
 export function ActionsDropdown({ customField }: { customField: CustomField }) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         className="outline-none focus-visible:border-0"
-        aria-label="Actions Trigger"
+        aria-label={t("customFields.actionsTrigger")}
       >
         <i className="inline-block px-3 py-0 text-gray-400 ">
           <VerticalDotsIcon />
@@ -35,7 +37,7 @@ export function ActionsDropdown({ customField }: { customField: CustomField }) {
             className="justify-start text-gray-700 hover:text-gray-700"
             width="full"
           >
-            Edit
+            {t("customFields.edit")}
           </Button>
         </DropdownMenuItem>
         <DropdownMenuSeparator className="bg-gray-100" />

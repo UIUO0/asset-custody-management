@@ -12,6 +12,7 @@
  * @see {@link file://./settings.team.users.$userId.note.tsx} for the create/delete action route
  * @see {@link file://./../../components/user/notes/index.tsx} for the UserNotes container component
  */
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { z } from "zod";
@@ -106,6 +107,7 @@ export const handle = {
  * the current admin can perform, then renders the UserNotes container.
  */
 export default function UserNotesPage() {
+  const { t } = useTranslation();
   const { notes } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
   const canReadNotes = userHasPermission({
@@ -128,7 +130,7 @@ export default function UserNotesPage() {
     <div className="mt-4 w-full">
       {canReadNotes ? (
         <>
-          <TextualDivider text="Notes" className="mb-8 lg:hidden" />
+          <TextualDivider text={t("team.notes")} className="mb-8 lg:hidden" />
           <UserNotes
             notes={notes}
             canCreate={canCreateNotes}
@@ -141,8 +143,8 @@ export default function UserNotesPage() {
             <div className="mb-4 inline-flex size-8 items-center justify-center rounded-full bg-primary-100 p-2 text-primary-600">
               <NoPermissionsIcon />
             </div>
-            <h5>Insufficient permissions</h5>
-            <p>You are not allowed to view user notes</p>
+            <h5>{t("team.insufficientPermissions")}</h5>
+            <p>{t("team.cannotViewNotes")}</p>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { InviteStatuses } from "@prisma/client";
 import { MailIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -126,12 +127,19 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb for team settings (component so it can use the hook). */
+function TeamBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/settings/team">{t("team.title")}</Link>;
+}
+
 export const handle = {
   name: "settings.team.users",
-  breadcrumb: () => <Link to="/settings/team">Team</Link>,
+  breadcrumb: () => <TeamBreadcrumb />,
 };
 
 export default function UserInvitesSetting() {
+  const { t } = useTranslation();
   /**
    * We have 4 cases when we should render index:
    * 1. When we are on the index route
@@ -153,14 +161,13 @@ export default function UserInvitesSetting() {
       <ContextualModal />
 
       <p className="mb-6 text-xs text-gray-600">
-        Users by default have a mail registered in shelf and can get reminders,
-        log in or perform other actions. Read more about our{" "}
+        {t("team.usersIntro")}{" "}
         <Link
           to="https://www.shelf.nu/knowledge-base/user-roles-and-their-permissions"
           target="_blank"
           className="underline"
         >
-          permissions here
+          {t("team.permissionsHere")}
         </Link>
         .
       </p>
@@ -174,7 +181,9 @@ export default function UserInvitesSetting() {
                 variant="primary"
                 className="mt-2 w-full md:mt-0 md:w-max"
               >
-                <span className=" whitespace-nowrap">Invite a user</span>
+                <span className=" whitespace-nowrap">
+                  {t("team.inviteUser")}
+                </span>
               </Button>
             }
           />
@@ -187,14 +196,14 @@ export default function UserInvitesSetting() {
             <>
               <Th>
                 <div className="flex items-center gap-1 [&_svg]:size-[15px]">
-                  Custodies{" "}
-                  <InfoTooltip content="Custodies count includes only direct asset custodies and doesn't count any assets assigned via bookings." />
+                  {t("team.custodies")}{" "}
+                  <InfoTooltip content={t("team.custodiesTooltip")} />
                 </div>
               </Th>
-              <Th>Role</Th>
-              <Th>Message</Th>
-              <Th>Status</Th>
-              <Th>Actions</Th>
+              <Th>{t("team.role")}</Th>
+              <Th>{t("team.message")}</Th>
+              <Th>{t("team.status")}</Th>
+              <Th>{t("team.actions")}</Th>
             </>
           }
         />
@@ -237,6 +246,7 @@ function UserRow({ item }: { item: TeamMembersWithUserOrInvite }) {
 }
 
 function InviteMessageCell({ message }: { message?: string | null }) {
+  const { t } = useTranslation();
   if (!message) {
     return <span className="text-gray-400">-</span>;
   }
@@ -248,7 +258,7 @@ function InviteMessageCell({ message }: { message?: string | null }) {
           <MailIcon className="size-4" />
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-[300px]">
-          <h5 className="mb-1">Invite message</h5>
+          <h5 className="mb-1">{t("team.inviteMessage")}</h5>
           <p className="whitespace-pre-wrap text-sm text-gray-600">{message}</p>
         </TooltipContent>
       </Tooltip>
@@ -274,7 +284,7 @@ const InviteStatusBadge = ({ status }: { status: InviteStatuses }) => {
     <span
       className={tw(
         "inline-flex justify-center rounded-2xl bg-gray-100 px-2 py-[2px] text-center text-[12px] font-medium text-gray-700",
-        colorClasses
+        colorClasses,
       )}
     >
       <span>{status}</span>

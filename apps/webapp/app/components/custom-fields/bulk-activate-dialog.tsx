@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -13,6 +14,7 @@ export const BulkActivateCustomFieldSchema = z.object({
 });
 
 export default function BulkActivateDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<typeof loader>();
 
   const zo = useZorm("BulkActivateCustomFields", BulkActivateCustomFieldSchema);
@@ -29,8 +31,8 @@ export default function BulkActivateDialog() {
       type="activate"
       arrayFieldId="customFieldIds"
       actionUrl="/api/custom-fields/bulk-actions"
-      title={`Activate (${totalSelected}) custom fields.`}
-      description={`All selected (${totalSelected}) custom fields be activated on confirm.`}
+      title={t("customFields.activateTitle", { count: totalSelected })}
+      description={t("customFields.activateDesc", { count: totalSelected })}
     >
       {({ disabled, handleCloseDialog, fetcherError }) => (
         <>
@@ -48,7 +50,7 @@ export default function BulkActivateDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -56,7 +58,7 @@ export default function BulkActivateDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

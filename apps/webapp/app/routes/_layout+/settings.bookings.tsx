@@ -1,4 +1,5 @@
 import { OrganizationRoles, OrganizationType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -33,6 +34,8 @@ import type { HeaderData } from "~/components/layout/header/types";
 import { Overrides } from "~/components/working-hours/overrides/overrides";
 import { EnableWorkingHoursForm } from "~/components/working-hours/toggle-working-hours-form";
 import { WeeklyScheduleForm } from "~/components/working-hours/weekly-schedule-form";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { scheduleExpiryArchiveForExistingReservations } from "~/modules/booking/service.server";
 import {
   getBookingSettingsForOrganization,
@@ -112,13 +115,26 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
+/** Breadcrumb for bookings settings (component so it can use the hook). */
+function BookingsBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("settings.bookings")}</>;
+}
+
 export const handle = {
-  breadcrumb: () => "Bookings",
+  breadcrumb: () => <BookingsBreadcrumb />,
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [
+    { title: appendToMetaTitle(resources.settings.bookingsSettingsTitle) },
+  ];
+};
 
 export const ErrorBoundary = () => <ErrorContent />;
 
@@ -206,7 +222,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               organizationId,
               formData: Object.fromEntries(formData),
             },
-          }
+          },
         );
 
         await updateBookingSettings({
@@ -233,7 +249,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               organizationId,
               formData: Object.fromEntries(formData),
             },
-          }
+          },
         );
 
         await updateBookingSettings({
@@ -260,7 +276,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               organizationId,
               formData: Object.fromEntries(formData),
             },
-          }
+          },
         );
 
         await updateBookingSettings({
@@ -292,7 +308,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
                 additionalData: { organizationId },
                 label: "Booking Settings",
                 shouldBeCaptured: false,
-              })
+              }),
             );
           }
         }
@@ -333,7 +349,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         // Only use parseData for simple fields without numeric keys
         const { enableWorkingHours } = parseData(
           formData,
-          WorkingHoursToggleSchema
+          WorkingHoursToggleSchema,
         );
 
         await toggleWorkingHours({
@@ -373,7 +389,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
                   acc[field] = error.message;
                   return acc;
                 },
-                {} as Record<string, string>
+                {} as Record<string, string>,
               ),
             },
             label: "Working hours",
@@ -491,7 +507,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       // The IDs arrive as a comma-separated string from the MultiSelect component.
       case "updateAlwaysNotifyTeamMembers": {
         const teamMemberIdsString = formData.get(
-          "alwaysNotifyTeamMemberIds"
+          "alwaysNotifyTeamMemberIds",
         ) as string;
         const teamMemberIds = teamMemberIdsString
           ? teamMemberIdsString.split(",").filter(Boolean)
@@ -561,7 +577,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               organizationId,
               formData: Object.fromEntries(formData),
             },
-          }
+          },
         );
 
         await updateBookingSettings({
@@ -595,6 +611,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 export default function GeneralPage() {
+  const { t } = useTranslation();
   const { workingHours, bookingSettings } = useLoaderData<typeof loader>();
 
   return (
@@ -605,9 +622,8 @@ export default function GeneralPage() {
       {/* Explicit check-in settings form */}
       <ExplicitCheckinSettings
         header={{
-          title: "Explicit check-in requirement",
-          subHeading:
-            "Control whether specific roles must use the scanner-based explicit check-in flow instead of the one-click quick check-in. Only workspace owners can change this setting.",
+          title: t("bookingSettings.explicitCheckinTitle"),
+          subHeading: t("bookingSettings.explicitCheckinSubHeading"),
         }}
         defaultValues={{
           requireExplicitCheckinForAdmin:
@@ -621,9 +637,8 @@ export default function GeneralPage() {
       <div>
         <ProgressiveCheckinSettings
           header={{
-            title: "Counting options",
-            subHeading:
-              "Choose how kits are counted when visualising booking check-in/out progress.",
+            title: t("bookingSettings.countingOptionsTitle"),
+            subHeading: t("bookingSettings.countingOptionsSubHeading"),
           }}
           defaultValue={bookingSettings.countKitsAsSingleUnit}
         />
@@ -632,9 +647,8 @@ export default function GeneralPage() {
       {/* Tags required settings form */}
       <TagsRequiredSettings
         header={{
-          title: "Tags requirement",
-          subHeading:
-            "Control whether users must add tags to their bookings. This helps with categorization and organization of bookings.",
+          title: t("bookingSettings.tagsRequirementTitle"),
+          subHeading: t("bookingSettings.tagsRequirementSubHeading"),
         }}
         defaultValue={bookingSettings.tagsRequired}
       />
@@ -642,9 +656,8 @@ export default function GeneralPage() {
       {/* Auto-archive settings form */}
       <AutoArchiveSettings
         header={{
-          title: "Automation",
-          subHeading:
-            "Configure automatic actions for completed bookings to keep your workspace clean.",
+          title: t("bookingSettings.automationTitle"),
+          subHeading: t("bookingSettings.automationSubHeading"),
         }}
         defaultAutoArchiveBookings={bookingSettings.autoArchiveBookings}
         defaultAutoArchiveExpiredReservations={
@@ -656,9 +669,8 @@ export default function GeneralPage() {
       {/* Time settings form */}
       <TimeSettings
         header={{
-          title: "Booking time restrictions",
-          subHeading:
-            "Control booking timing constraints including minimum advance notice and maximum booking duration.",
+          title: t("bookingSettings.timeRestrictionsTitle"),
+          subHeading: t("bookingSettings.timeRestrictionsSubHeading"),
         }}
         defaultBufferValue={bookingSettings.bufferStartTime}
         defaultMaxLengthValue={bookingSettings.maxBookingLength}
@@ -671,9 +683,8 @@ export default function GeneralPage() {
       <EnableWorkingHoursForm
         enabled={workingHours.enabled}
         header={{
-          title: "Working hours",
-          subHeading:
-            "Manage your workspace's working hours. This will allow you to limit when bookings' start and end times and dates.",
+          title: t("bookingSettings.workingHoursTitle"),
+          subHeading: t("bookingSettings.workingHoursSubHeading"),
         }}
       />
       {/* New weekly schedule form - only show if working hours are enabled */}

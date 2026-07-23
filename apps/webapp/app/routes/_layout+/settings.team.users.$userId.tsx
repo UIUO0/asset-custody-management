@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -51,7 +52,7 @@ export const loader = async ({
       z.object({ userId: z.string() }),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     const user = await getUserFromOrg({
@@ -125,6 +126,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function UserPage() {
+  const { t } = useTranslation();
   const { user, organizationId } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
 
@@ -138,9 +140,9 @@ export default function UserPage() {
   });
 
   const TABS: Item[] = [
-    { to: "assets", content: "Assets" },
-    { to: "bookings", content: "Bookings" },
-    ...(canReadUserNotes ? [{ to: "notes", content: "Notes" }] : []),
+    { to: "assets", content: t("team.assetsTab") },
+    { to: "bookings", content: t("team.bookingsTab") },
+    ...(canReadUserNotes ? [{ to: "notes", content: t("team.notesTab") }] : []),
   ];
   /**
    * We find the user's role in the current organization
@@ -148,7 +150,7 @@ export default function UserPage() {
    * the first organization is the correct one
    */
   const currentOrgMembership = user.userOrganizations.find(
-    (uo) => uo.organizationId === organizationId
+    (uo) => uo.organizationId === organizationId,
   );
   const userOrgRole =
     organizationRolesMap[
@@ -194,7 +196,7 @@ export default function UserPage() {
                 width="full"
                 disabled={disabled}
               >
-                Actions
+                {t("team.actions")}
               </Button>
             )}
             role={userOrgRole}

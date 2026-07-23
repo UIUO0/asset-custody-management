@@ -1,5 +1,6 @@
 import type { Booking } from "@prisma/client";
 import { Zap } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 import { isBookingEarlyCheckout } from "~/modules/booking/helpers";
 import { tw } from "~/utils/tw";
 import type { ButtonProps } from "../shared/button";
@@ -73,11 +74,13 @@ export default function CheckoutDialog({
   formId,
   triggerClassName,
   intent = "checkOut",
-  label = "Check Out",
+  label,
   variant = "default",
   suppressEarlyCheckoutPrompt = false,
   fullWidth = false,
 }: CheckoutDialogProps) {
+  const { t } = useTranslation();
+  const resolvedLabel = label ?? t("bookings.checkOut");
   const isEarlyCheckout =
     !suppressEarlyCheckoutPrompt && isBookingEarlyCheckout(booking.from);
 
@@ -92,16 +95,16 @@ export default function CheckoutDialog({
     "whitespace-nowrap",
     isDropdown
       ? "w-full justify-start px-4 py-3 text-gray-700 hover:text-gray-700"
-      : "grow"
+      : "grow",
   );
   const resolvedTriggerClassName = triggerClassName ?? computedTriggerClassName;
   /** Dropdown rows pair the label with an icon; the default trigger is text-only */
   const triggerContent = isDropdown ? (
     <span className="flex items-center gap-2">
-      <Zap className="size-4" /> {label}
+      <Zap className="size-4" /> {resolvedLabel}
     </span>
   ) : (
-    label
+    resolvedLabel
   );
 
   if (!isEarlyCheckout) {
@@ -139,24 +142,25 @@ export default function CheckoutDialog({
 
       <AlertDialogContent portalProps={{ container: portalContainer }}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Early Check-Out Warning</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("bookings.earlyCheckoutWarning")}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            You are checking out the booking more than 15 minutes before the
-            start date. If you proceed, the start date will be adjusted to now:{" "}
-            <span className="font-bold text-gray-700">
-              <DateS date={new Date()} includeTime />
-            </span>
-            .
-            <br />
-            <br />
-            Do you want to adjust the start date or keep the original date?
+            <Trans
+              i18nKey="bookings.checkoutAdjustWarning"
+              components={{
+                bold: <span className="font-bold text-gray-700" />,
+                now: <DateS date={new Date()} includeTime />,
+                br: <br />,
+              }}
+            />
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
             <Button type="button" disabled={disabled} variant="secondary">
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
 
@@ -170,7 +174,7 @@ export default function CheckoutDialog({
             value={CheckoutIntentEnum["without-adjusted-date"]}
             form={formId}
           >
-            Don't Adjust Date
+            {t("bookings.dontAdjustDate")}
           </Button>
 
           <Button
@@ -181,7 +185,7 @@ export default function CheckoutDialog({
             value={CheckoutIntentEnum["with-adjusted-date"]}
             form={formId}
           >
-            Adjust Date
+            {t("bookings.adjustDate")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

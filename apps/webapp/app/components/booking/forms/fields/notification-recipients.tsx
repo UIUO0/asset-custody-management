@@ -16,6 +16,7 @@
  */
 import { useCallback, useMemo, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import FormRow from "~/components/forms/form-row";
 import { useBookingSettings } from "~/hooks/use-booking-settings";
@@ -70,20 +71,21 @@ export function NotificationRecipientsField({
   creatorName,
   adminCount,
 }: NotificationRecipientsFieldProps) {
+  const { t } = useTranslation();
   const bookingSettings = useBookingSettings();
 
   // Track selected IDs and a name map for the preview
   const [selectedIds, setSelectedIds] = useState<string[]>(
-    defaultSelected?.map((tm) => tm.id) ?? []
+    defaultSelected?.map((tm) => tm.id) ?? [],
   );
   const [selectedNameMap, setSelectedNameMap] = useState<Map<string, string>>(
     () => {
       const map = new Map<string, string>();
       defaultSelected?.forEach((tm) =>
-        map.set(tm.id, resolveTeamMemberName(tm))
+        map.set(tm.id, resolveTeamMemberName(tm)),
       );
       return map;
-    }
+    },
   );
 
   /** When DynamicDropdown selection changes, update IDs and resolve names */
@@ -124,7 +126,7 @@ export function NotificationRecipientsField({
       }
       return name;
     },
-    [selectedNameMap]
+    [selectedNameMap],
   );
 
   // Build the notification preview
@@ -186,7 +188,7 @@ export function NotificationRecipientsField({
 
   return (
     <FormRow
-      rowLabel="Notifications"
+      rowLabel={t("bookingForm.notifications")}
       className="mobile-styling-only border-b-0 p-0"
     >
       <div className="w-full">
@@ -201,11 +203,11 @@ export function NotificationRecipientsField({
               <span className="truncate text-gray-500">
                 {(() => {
                   const count = previewRecipients.filter(
-                    (r) => r.reason === "booking_recipient"
+                    (r) => r.reason === "booking_recipient",
                   ).length;
                   return count > 0
-                    ? `${count} user${count !== 1 ? "s" : ""} selected`
-                    : "Add notification recipients...";
+                    ? t("bookingForm.usersSelected", { count })
+                    : t("bookingForm.addNotificationRecipients");
                 })()}
               </span>
               <ChevronDownIcon className="size-4 shrink-0 text-gray-400" />
@@ -228,11 +230,11 @@ export function NotificationRecipientsField({
           defaultValues={selectedIds}
           onSelectionChange={handleSelectionChange}
           renderItem={renderItem}
-          label="Notification recipients"
-          placeholder="Search team members..."
+          label={t("bookingForm.notificationRecipients")}
+          placeholder={t("bookingForm.searchTeamMembers")}
         />
         <p className="mt-1.5 text-[13px] text-gray-500">
-          Only administrators can be added.
+          {t("bookingForm.onlyAdmins")}
         </p>
 
         {/* Hidden input for form submission — comma-separated team member IDs */}
@@ -243,7 +245,7 @@ export function NotificationRecipientsField({
         />
 
         <p className="mt-2 text-[14px] text-gray-600">
-          These users will receive all email notifications for this booking.
+          {t("bookingForm.recipientsHint")}
         </p>
         <NotificationPreview
           recipients={previewRecipients}

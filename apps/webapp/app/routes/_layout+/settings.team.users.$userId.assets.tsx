@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { data } from "react-router";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
@@ -31,7 +32,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
       z.object({ userId: z.string() }),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     const { headers, ...loaderData } = await getUserAssetsTabLoaderData({
@@ -48,13 +49,14 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
 }
 
 export default function UserAssetsPage() {
+  const { t } = useTranslation();
   return (
     <AssetsList
       disableTeamMemberFilter
       disableBulkActions
       customEmptyStateContent={{
-        title: "No assets in custody",
-        text: "This user currently has no assets in their custody.",
+        title: t("team.noAssetsTitle"),
+        text: t("team.noAssetsText"),
       }}
     />
   );

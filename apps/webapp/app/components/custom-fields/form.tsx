@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CustomFieldType, type CustomField } from "@prisma/client";
 import { useAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { Link, useActionData, useNavigation } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -73,18 +74,6 @@ interface Props {
  */
 const EMPTY_CATEGORIES: string[] = [];
 
-const FIELD_TYPE_DESCRIPTION: { [key in CustomFieldType]: string } = {
-  TEXT: "A place to store short information for your asset. For instance: Serial numbers, notes or anything you wish. No input validation. Any text is acceptable.",
-  OPTION: "A dropdown list of predefined options.",
-  BOOLEAN: "A true/false or yes/no value.",
-  DATE: "A date picker for selecting a date.",
-  MULTILINE_TEXT:
-    "A place to store longer, multiline information for your asset. For instance: Descriptions, comments, or detailed notes.",
-  AMOUNT:
-    "Enter numerical values to be formatted in your workspace's currency. Supports decimals.",
-  NUMBER: "Enter numerical values. Supports decimals.",
-};
-
 export const CustomFieldForm = ({
   options: opts,
   name,
@@ -95,13 +84,14 @@ export const CustomFieldForm = ({
   isEdit = false,
   categories = EMPTY_CATEGORIES,
 }: Props) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const zo = useZorm("NewQuestionWizardScreen", NewCustomFieldFormSchema);
   const disabled = isFormProcessing(navigation.state);
 
   const [options, setOptions] = useState<Array<string>>(opts || []);
   const [selectedType, setSelectedType] = useState<CustomFieldType>(
-    type || "TEXT"
+    type || "TEXT",
   );
   const [useCategories, setUseCategories] = useState(categories.length > 0);
 
@@ -117,7 +107,7 @@ export const CustomFieldForm = ({
     typeof newCustomFieldsAction | typeof editCustomFieldsAction
   >();
   const validationErrors = getValidationErrors<typeof NewCustomFieldFormSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   return (
@@ -129,13 +119,13 @@ export const CustomFieldForm = ({
         encType="multipart/form-data"
       >
         <FormRow
-          rowLabel={"Name"}
+          rowLabel={t("customFields.name")}
           className="border-b-0 pb-[10px] pt-0"
           required={zodFieldIsRequired(NewCustomFieldFormSchema.shape.name)}
         >
           <Input
             ref={nameInputRef}
-            label="Name"
+            label={t("customFields.name")}
             hideLabel
             name={zo.fields.name()}
             disabled={disabled}
@@ -143,17 +133,17 @@ export const CustomFieldForm = ({
             onChange={updateTitle}
             className="w-full"
             defaultValue={name || ""}
-            placeholder="Choose a field name"
+            placeholder={t("customFields.chooseName")}
             required={zodFieldIsRequired(NewCustomFieldFormSchema.shape.name)}
           />
         </FormRow>
 
         <div>
           <label className="lg:hidden" htmlFor="custom-field-type">
-            Type
+            {t("customFields.type")}
           </label>
           <FormRow
-            rowLabel={"Type"}
+            rowLabel={t("customFields.type")}
             className="border-b-0 pb-[10px] pt-[6px]"
             required={zodFieldIsRequired(NewCustomFieldFormSchema.shape.type)}
           >
@@ -168,7 +158,7 @@ export const CustomFieldForm = ({
                 className="px-3.5 py-3"
                 id="custom-field-type"
               >
-                <SelectValue placeholder="Choose a field type" />
+                <SelectValue placeholder={t("customFields.chooseType")} />
               </SelectTrigger>
               <SelectContent
                 position="popper"
@@ -187,7 +177,7 @@ export const CustomFieldForm = ({
               </SelectContent>
             </Select>
             <div className="mt-2 flex-1 grow rounded border px-6 py-4 text-[14px] text-gray-600 ">
-              <p>{FIELD_TYPE_DESCRIPTION[selectedType]}</p>
+              <p>{t(`customFields.typeDesc.${selectedType}`)}</p>
             </div>
           </FormRow>
           {selectedType === "OPTION" ? (
@@ -228,7 +218,7 @@ export const CustomFieldForm = ({
               htmlFor="custom-field-required"
               className="text-base font-medium text-gray-700"
             >
-              Required
+              {t("customFields.required")}
             </label>
           </div>
         </FormRow>
@@ -242,10 +232,11 @@ export const CustomFieldForm = ({
               defaultChecked={active === undefined || active}
             />
             <label htmlFor="custom-field-active">
-              <div className="text-base font-medium text-gray-700">Active</div>
+              <div className="text-base font-medium text-gray-700">
+                {t("customFields.active")}
+              </div>
               <p className="text-[14px] text-gray-600">
-                Deactivating a field will no longer show it on the asset form
-                and page
+                {t("customFields.activeDesc")}
               </p>
             </label>
           </div>
@@ -258,16 +249,15 @@ export const CustomFieldForm = ({
 
         <div>
           <FormRow
-            rowLabel="Category"
+            rowLabel={t("customFields.category")}
             subHeading={
               <p>
-                Select asset categories for which you want to use this custom
-                field.{" "}
+                {t("customFields.categorySubheading")}{" "}
                 <Link
                   to="https://www.shelf.nu/knowledge-base/linking-custom-fields-to-categories"
                   target="_blank"
                 >
-                  Read more
+                  {t("customFields.readMore")}
                 </Link>
               </p>
             }
@@ -281,11 +271,10 @@ export const CustomFieldForm = ({
               />
               <label htmlFor="custom-field-use-categories">
                 <div className="text-base font-medium text-gray-700">
-                  Use for select categories
+                  {t("customFields.useForSelectCategories")}
                 </div>
                 <p className="text-[14px] text-gray-600">
-                  In case you only want to use this custom field for asset with
-                  certain categories.
+                  {t("customFields.useForSelectCategoriesDesc")}
                 </p>
               </label>
             </div>
@@ -302,29 +291,24 @@ export const CustomFieldForm = ({
 
         <div>
           <FormRow
-            rowLabel="Help Text"
-            subHeading={
-              <p>
-                This text will function as a help text that is visible when
-                filling the field
-              </p>
-            }
+            rowLabel={t("customFields.helpText")}
+            subHeading={<p>{t("customFields.helpTextSubheading")}</p>}
             required={zodFieldIsRequired(
-              NewCustomFieldFormSchema.shape.helpText
+              NewCustomFieldFormSchema.shape.helpText,
             )}
           >
             <Input
               inputType="textarea"
-              label="Help Text"
+              label={t("customFields.helpText")}
               name={zo.fields.helpText()}
               defaultValue={helpText || ""}
-              placeholder="Add a help text for your custom field."
+              placeholder={t("customFields.helpTextPlaceholder")}
               disabled={disabled}
               data-test-id="fieldHelpText"
               className="w-full"
               hideLabel
               required={zodFieldIsRequired(
-                NewCustomFieldFormSchema.shape.helpText
+                NewCustomFieldFormSchema.shape.helpText,
               )}
             />
           </FormRow>
@@ -344,10 +328,10 @@ export const CustomFieldForm = ({
             disabled={disabled}
             className={"me-2"}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={disabled}>
-            {disabled ? <Spinner /> : "Save"}
+            {disabled ? <Spinner /> : t("common.save")}
           </Button>
         </div>
       </Form>

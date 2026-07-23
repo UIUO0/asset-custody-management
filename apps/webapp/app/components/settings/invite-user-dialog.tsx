@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { cloneElement, useCallback, useEffect, useState } from "react";
 import { OrganizationRoles } from "@prisma/client";
 import { UserIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
@@ -50,8 +51,8 @@ export const InviteUserFormSchema = z.object({
         OrganizationRoles.BASE,
         OrganizationRoles.SELF_SERVICE,
       ],
-      { message: "Please select a role" }
-    )
+      { message: "Please select a role" },
+    ),
   ),
   inviteMessage: z.string().max(1000).optional(),
 });
@@ -69,6 +70,7 @@ export default function InviteUserDialog({
   open = false,
   onClose,
 }: InviteUserDialogProps) {
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [messageCharCount, setMessageCharCount] = useState(0);
   const organization = useCurrentOrganization();
@@ -82,7 +84,7 @@ export default function InviteUserDialog({
 
   /** Handle server-side validation errors as fallback */
   const validationErrors = getValidationErrors<typeof InviteUserFormSchema>(
-    fetcher.data?.error
+    fetcher.data?.error,
   );
 
   function openDialog() {
@@ -104,7 +106,7 @@ export default function InviteUserDialog({
         fetcher.reset();
       }
     },
-    [closeDialog, fetcher]
+    [closeDialog, fetcher],
   );
 
   if (!organization) {
@@ -128,11 +130,8 @@ export default function InviteUserDialog({
         >
           <div className="px-6 py-4">
             <div className="mb-5">
-              <h4>Invite team members</h4>
-              <p>
-                Invite a user to this workspace. Make sure to give them the
-                proper role.
-              </p>
+              <h4>{t("team.inviteTeamMembers")}</h4>
+              <p>{t("team.inviteTeamMembersDesc")}</p>
             </div>
 
             <fetcher.Form
@@ -150,7 +149,9 @@ export default function InviteUserDialog({
               </When>
 
               <SelectGroup>
-                <SelectLabel className="ps-0">Workspace</SelectLabel>
+                <SelectLabel className="ps-0">
+                  {t("team.workspace")}
+                </SelectLabel>
                 <Select name="organizationId" defaultValue={organization.id}>
                   <div className="flex h-10 w-full items-center justify-between truncate rounded-md border border-gray-300 bg-transparent px-3.5 py-3 text-[16px] text-gray-500 placeholder:text-gray-500 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-25 focus:ring-offset-2 disabled:opacity-50  [&_span]:max-w-full [&_span]:truncate">
                     <SelectValue />
@@ -184,10 +185,10 @@ export default function InviteUserDialog({
               </SelectGroup>
 
               <SelectGroup>
-                <SelectLabel className="ps-0">Role</SelectLabel>
+                <SelectLabel className="ps-0">{t("team.role")}</SelectLabel>
                 <Select name="role">
                   <SelectTrigger>
-                    <SelectValue placeholder="Select user role" />
+                    <SelectValue placeholder={t("team.selectUserRole")} />
                   </SelectTrigger>
                   <SelectContent
                     position="popper"
@@ -232,8 +233,8 @@ export default function InviteUserDialog({
                     zo.errors.email()?.message
                   }
                   icon="mail"
-                  label={"Email address"}
-                  placeholder="zaans@huisje.com"
+                  label={t("team.emailAddress")}
+                  placeholder="employee@epda.gov.sa"
                   required
                 />
               </div>
@@ -243,7 +244,7 @@ export default function InviteUserDialog({
                   htmlFor="inviteMessage"
                   className="mb-2 block text-sm font-medium text-gray-700"
                 >
-                  Personal Message (Optional)
+                  {t("team.personalMessage")}
                 </label>
                 <textarea
                   id="inviteMessage"
@@ -253,12 +254,12 @@ export default function InviteUserDialog({
                   disabled={disabled}
                   aria-describedby="inviteMessage-helper"
                   className="block w-full rounded-md border border-gray-300 px-3.5 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-25 focus:ring-offset-2 disabled:opacity-50"
-                  placeholder="Add a personal note to help them understand why you're inviting them to this workspace..."
+                  placeholder={t("team.personalMessagePlaceholder")}
                   onChange={(e) => setMessageCharCount(e.target.value.length)}
                 />
                 <div id="inviteMessage-helper" className="mt-1">
                   <span className="text-xs text-gray-500">
-                    {messageCharCount} / 1000 characters
+                    {t("team.charactersCount", { count: messageCharCount })}
                   </span>
                   <When
                     truthy={
@@ -291,7 +292,7 @@ export default function InviteUserDialog({
                   disabled={disabled}
                   onClick={closeDialog}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -299,7 +300,7 @@ export default function InviteUserDialog({
                   width="full"
                   disabled={disabled}
                 >
-                  Send Invite
+                  {t("team.sendInvite")}
                 </Button>
               </div>
             </fetcher.Form>

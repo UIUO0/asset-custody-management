@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -13,11 +14,12 @@ export const BulkDeactivateCustomFieldSchema = z.object({
 });
 
 export default function BulkDeactivateDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<typeof loader>();
 
   const zo = useZorm(
     "BulkDeactivateCustomFields",
-    BulkDeactivateCustomFieldSchema
+    BulkDeactivateCustomFieldSchema,
   );
 
   const selectedCustomFields = useAtomValue(selectedBulkItemsAtom);
@@ -32,8 +34,8 @@ export default function BulkDeactivateDialog() {
       type="deactivate"
       arrayFieldId="customFieldIds"
       actionUrl="/api/custom-fields/bulk-actions"
-      title={`Deactivate (${totalSelected}) custom fields.`}
-      description={`All selected (${totalSelected}) custom fields be deactivated on confirm.`}
+      title={t("customFields.deactivateTitle", { count: totalSelected })}
+      description={t("customFields.deactivateDesc", { count: totalSelected })}
     >
       {({ disabled, handleCloseDialog, fetcherError }) => (
         <>
@@ -51,7 +53,7 @@ export default function BulkDeactivateDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -59,7 +61,7 @@ export default function BulkDeactivateDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

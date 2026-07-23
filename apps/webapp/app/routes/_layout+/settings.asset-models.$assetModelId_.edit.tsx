@@ -13,6 +13,8 @@ import { z } from "zod";
 import AssetModelForm, {
   AssetModelFormSchema,
 } from "~/components/asset-model/form";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getCategoriesForCreateAndEdit } from "~/modules/asset/service.server";
 import {
   getAssetModel,
@@ -37,7 +39,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const { assetModelId: id } = getParams(
     params,
     z.object({ assetModelId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -72,9 +74,16 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [
+    { title: appendToMetaTitle(resources.assetModels.editAssetModelTitle) },
+  ];
+};
 
 export async function action({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -82,7 +91,7 @@ export async function action({ context, request, params }: LoaderFunctionArgs) {
   const { assetModelId: id } = getParams(
     params,
     z.object({ assetModelId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -96,7 +105,7 @@ export async function action({ context, request, params }: LoaderFunctionArgs) {
     const parsedPayload = parseData(
       await request.formData(),
       AssetModelFormSchema,
-      { additionalData: { userId, id, organizationId } }
+      { additionalData: { userId, id, organizationId } },
     );
 
     await updateAssetModel({

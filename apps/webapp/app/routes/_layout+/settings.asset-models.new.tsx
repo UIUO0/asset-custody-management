@@ -11,6 +11,8 @@ import { data, redirect } from "react-router";
 import AssetModelForm, {
   AssetModelFormSchema,
 } from "~/components/asset-model/form";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getCategoriesForCreateAndEdit } from "~/modules/asset/service.server";
 import { createAssetModel } from "~/modules/asset-model/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -41,7 +43,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       {
         organizationId,
         request,
-      }
+      },
     );
 
     const header = { title };
@@ -58,9 +60,16 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [
+    { title: appendToMetaTitle(resources.assetModels.newAssetModelTitle) },
+  ];
+};
 
 export async function action({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -79,7 +88,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
       AssetModelFormSchema,
       {
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     const assetModel = await createAssetModel({

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { InviteStatuses } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -121,12 +122,19 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb for team settings (component so it can use the hook). */
+function TeamBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/settings/team">{t("team.title")}</Link>;
+}
+
 export const handle = {
   name: "settings.team.users",
-  breadcrumb: () => <Link to="/settings/team">Team</Link>,
+  breadcrumb: () => <TeamBreadcrumb />,
 };
 
 export default function UserTeamSetting() {
+  const { t } = useTranslation();
   /**
    * We have 4 cases when we should render index:
    * 1. When we are on the index route
@@ -148,14 +156,13 @@ export default function UserTeamSetting() {
       <ContextualModal />
 
       <p className="mb-6 text-xs text-gray-600">
-        Users by default have a mail registered in shelf and can get reminders,
-        log in or perform other actions. Read more about our{" "}
+        {t("team.usersIntro")}{" "}
         <Link
           to="https://www.shelf.nu/knowledge-base/user-roles-and-their-permissions"
           target="_blank"
           className="underline"
         >
-          permissions here
+          {t("team.permissionsHere")}
         </Link>
         .
       </p>
@@ -171,7 +178,9 @@ export default function UserTeamSetting() {
                   className="mt-2 w-full md:mt-0 md:w-max"
                   variant="primary"
                 >
-                  <span className="whitespace-nowrap">Invite a user</span>
+                  <span className="whitespace-nowrap">
+                    {t("team.inviteUser")}
+                  </span>
                 </Button>
               }
             />
@@ -181,21 +190,21 @@ export default function UserTeamSetting() {
         <List
           className="overflow-x-visible md:overflow-x-auto"
           customEmptyStateContent={{
-            title: "No team members yet",
-            text: "Invite team members to collaborate on asset management within your workspace.",
+            title: t("team.noTeamMembersYet"),
+            text: t("team.noTeamMembersYetText"),
           }}
           ItemComponent={UserRow}
           headerChildren={
             <>
               <Th>
                 <div className="flex items-center gap-1 [&_svg]:size-[15px]">
-                  Custodies{" "}
-                  <InfoTooltip content="Custodies count includes only direct asset custodies and doesn't count any assets assigned via bookings." />
+                  {t("team.custodies")}{" "}
+                  <InfoTooltip content={t("team.custodiesTooltip")} />
                 </div>
               </Th>
-              <Th>Role</Th>
-              <Th>Status</Th>
-              <Th>Actions</Th>
+              <Th>{t("team.role")}</Th>
+              <Th>{t("team.status")}</Th>
+              <Th>{t("team.actions")}</Th>
             </>
           }
         />
@@ -258,7 +267,7 @@ const InviteStatusBadge = ({ status }: { status: InviteStatuses }) => {
     <span
       className={tw(
         "inline-flex justify-center rounded-2xl bg-gray-100 px-2 py-[2px] text-center text-[12px] font-medium text-gray-700",
-        colorClasses
+        colorClasses,
       )}
     >
       <span>{status}</span>

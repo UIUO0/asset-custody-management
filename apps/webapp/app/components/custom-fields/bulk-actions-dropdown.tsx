@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -19,13 +20,15 @@ import {
 import { MobileDropdownStyles } from "../shared/mobile-dropdown-styles";
 
 export default function BulkActionsDropdown() {
+  const { t } = useTranslation();
   const isHydrated = useHydrated();
 
   if (!isHydrated) {
     return (
       <Button variant="secondary" to="#">
         <span className="flex items-center gap-2">
-          Actions <ChevronRight className="chev rotate-90" />
+          {t("customFields.actions")}{" "}
+          <ChevronRight className="chev rotate-90" />
         </span>
       </Button>
     );
@@ -39,6 +42,7 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const isLoading = isFormProcessing(navigation.state);
 
@@ -66,7 +70,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -89,7 +93,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("customFields.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -101,7 +107,9 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">
+            {t("customFields.actions")}
+          </span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -121,13 +129,12 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="activate"
-                label="Activate"
+                label={t("customFields.activate")}
                 onClick={closeMenu}
                 disabled={
                   someFieldsActivated
                     ? {
-                        reason:
-                          "Some of the selected fields are already activated. Please make sure you are selecting deactivated fields only.",
+                        reason: t("customFields.someAlreadyActivated"),
                       }
                     : isLoading
                 }
@@ -141,13 +148,12 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="deactivate"
-                label="Deactivate"
+                label={t("customFields.deactivate")}
                 onClick={closeMenu}
                 disabled={
                   someFieldsDeactivated
                     ? {
-                        reason:
-                          "Some of the selected fields are already deactivated. Please make sure you are selecting activated fields only.",
+                        reason: t("customFields.someAlreadyDeactivated"),
                       }
                     : isLoading
                 }

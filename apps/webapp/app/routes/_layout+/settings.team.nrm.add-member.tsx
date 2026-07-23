@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect, useActionData, useNavigation } from "react-router";
 import { useZorm } from "react-zorm";
@@ -8,6 +9,8 @@ import { UserIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import styles from "~/styles/layout/custom-modal.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 
@@ -20,7 +23,18 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-export const meta = () => [{ title: appendToMetaTitle("Add team member") }];
+export const meta = ({
+  matches,
+}: {
+  matches: Array<{ id: string; data?: unknown }>;
+}) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.team.addMember) }];
+};
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -89,6 +103,7 @@ export function links() {
 }
 
 export default function AddMember() {
+  const { t } = useTranslation();
   const zo = useZorm("NewMember", NewOrEditMemberSchema);
 
   const actionData = useActionData<typeof action>();
@@ -105,20 +120,17 @@ export default function AddMember() {
           <UserIcon />
         </div>
         <div className="mb-5">
-          <h4>Add team member</h4>
-          <p>
-            Team members are added to your environment but do not have an
-            account to log in with.
-          </p>
+          <h4>{t("team.addMember")}</h4>
+          <p>{t("team.addMemberDesc")}</p>
         </div>
         <Form method="post" ref={zo.ref}>
           <Input
             ref={nameInputRef}
             name={zo.fields.name()}
             type="text"
-            label="Name"
+            label={t("team.name")}
             className="mb-8"
-            placeholder="Enter team member’s name"
+            placeholder={t("team.enterMemberName")}
             required
             error={zo.errors.name()?.message}
             disabled={disabled}
@@ -129,7 +141,7 @@ export default function AddMember() {
             type="submit"
             disabled={disabled}
           >
-            Add team member
+            {t("team.addMember")}
           </Button>
         </Form>
         {actionData?.error && (

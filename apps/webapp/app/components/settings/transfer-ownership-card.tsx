@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Roles } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { Form, useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -70,7 +71,7 @@ export const TransferOwnershipSchema = z.object({
     .pipe(
       z.boolean().refine((value) => value, {
         message: "You must agree to changing the owner of the workspace",
-      })
+      }),
     ),
   transferSubscription: z
     .string()
@@ -88,6 +89,7 @@ export default function TransferOwnershipCard({
   ownerOtherTeamWorkspacesCount,
   premiumIsEnabled,
 }: TransferOwnershipCardProps) {
+  const { t } = useTranslation();
   const { isOwner } = useUserRoleHelper();
   const user = useUserData();
   const [confirmationInput, setConfirmationInput] = useState("");
@@ -104,7 +106,7 @@ export default function TransferOwnershipCard({
 
   /** This handles server side errors in case client side validation fails */
   const validationErrors = getValidationErrors<typeof TransferOwnershipSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   const isShelfAdmin = user?.roles?.some((role) => role.name === Roles.ADMIN);
@@ -128,11 +130,10 @@ export default function TransferOwnershipCard({
   return (
     <Card className={tw(className)}>
       <h4 className="mb-1 text-text-lg font-semibold">
-        Transfer workspace ownership
+        {t("transferOwnership.title")}
       </h4>
       <p className="mb-2 text-sm text-gray-600">
-        Transfer workspace to another user. To transfer the workspace, the new
-        owner must be already be part of the workspace as an admin.
+        {t("transferOwnership.desc")}
       </p>
 
       <When
@@ -141,28 +142,27 @@ export default function TransferOwnershipCard({
           <Button
             type="button"
             disabled={{
-              reason:
-                "No admins found in this workspace. Please add an admin before transferring ownership.",
+              reason: t("transferOwnership.noAdmins"),
             }}
           >
-            Transfer Ownership
+            {t("transferOwnership.transferButton")}
           </Button>
         }
       >
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button type="button" variant="secondary">
-              Transfer Ownership
+              {t("transferOwnership.transferButton")}
             </Button>
           </AlertDialogTrigger>
 
           <AlertDialogContent aria-describedby="Transfer ownership">
             <AlertDialogHeader>
-              <AlertDialogTitle>Transfer Workspace Ownership</AlertDialogTitle>
+              <AlertDialogTitle>
+                {t("transferOwnership.dialogTitle")}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Transfer workspace to another user. To transfer the workspace,
-                the new owner must be already be part of the workspace as an
-                admin.
+                {t("transferOwnership.desc")}
               </AlertDialogDescription>
             </AlertDialogHeader>
 
@@ -179,7 +179,7 @@ export default function TransferOwnershipCard({
                 <p className="mb-4 text-sm text-error-500">{serverError}</p>
               </When>
 
-              <InnerLabel>New owner</InnerLabel>
+              <InnerLabel>{t("transferOwnership.newOwner")}</InnerLabel>
               <Select
                 name={zo.fields.newOwner()}
                 onValueChange={(value) => {
@@ -190,7 +190,9 @@ export default function TransferOwnershipCard({
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select new owner" />
+                  <SelectValue
+                    placeholder={t("transferOwnership.selectNewOwner")}
+                  />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -222,14 +224,12 @@ export default function TransferOwnershipCard({
                   <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-4">
                     <div className="flex items-center gap-2 font-medium">
                       <Icon icon="coins" />
-                      <span>Subscription Information</span>
+                      <span>{t("transferOwnership.subscriptionInfo")}</span>
                     </div>
                     <p className="mt-2 text-sm text-gray-600">
-                      You have the following active{" "}
                       {subscriptionCount === 1
-                        ? "subscription"
-                        : "subscriptions"}
-                      :
+                        ? t("transferOwnership.activeSubscription")
+                        : t("transferOwnership.activeSubscriptions")}
                     </p>
                     <ul className="mt-1 list-inside list-disc text-sm text-gray-600">
                       {ownerSubscriptionInfo.subscriptions.map((sub) => (
@@ -237,7 +237,9 @@ export default function TransferOwnershipCard({
                           <span className="font-semibold">
                             {sub.subscriptionName}
                           </span>
-                          {sub.type === "addon" ? " (add-on)" : ""}
+                          {sub.type === "addon"
+                            ? t("transferOwnership.addon")
+                            : ""}
                         </li>
                       ))}
                     </ul>
@@ -260,20 +262,19 @@ export default function TransferOwnershipCard({
                             htmlFor="transferSubscription"
                             className="font-medium"
                           >
-                            Transfer my{" "}
                             {subscriptionCount === 1
-                              ? "subscription"
-                              : "subscriptions"}{" "}
-                            to the new owner
+                              ? t("transferOwnership.transferSubscription")
+                              : t("transferOwnership.transferSubscriptions")}
                           </label>
                           <p
                             id="transferSubscription-description"
                             className="mt-1 text-gray-500"
                           >
-                            The new owner will continue with the current billing{" "}
-                            {subscriptionCount === 1 ? "cycle" : "cycles"}. They
-                            will need to add their own payment method before the
-                            next billing date.
+                            {subscriptionCount === 1
+                              ? t("transferOwnership.transferSubscriptionDesc")
+                              : t(
+                                  "transferOwnership.transferSubscriptionsDesc",
+                                )}
                           </p>
                         </div>
                       </div>
@@ -288,65 +289,65 @@ export default function TransferOwnershipCard({
                   >
                     <WarningBox className="mt-3">
                       <span className="font-semibold">
-                        Multiple workspaces affected
+                        {t("transferOwnership.multipleWorkspacesAffected")}
                       </span>
                       <p className="mt-1 text-sm">
-                        You own {ownerOtherTeamWorkspacesCount} other team{" "}
-                        {ownerOtherTeamWorkspacesCount === 1
-                          ? "workspace"
-                          : "workspaces"}
-                        . If you transfer your subscription, those workspaces
-                        will lose premium features until you subscribe again.
+                        {t("transferOwnership.multipleWorkspacesWarning", {
+                          count: ownerOtherTeamWorkspacesCount,
+                        })}
                       </p>
                     </WarningBox>
                   </When>
                 </When>
 
                 <p className="mb-2 mt-4">
-                  You are about to transfer ownership of this workspace to
+                  {t("transferOwnership.aboutToTransfer")}
                   <span className="ms-1 font-semibold">
                     {resolveTeamMemberName(
                       { name: "", user: selectedOwner },
-                      true
+                      true,
                     )}
                   </span>
-                  . This action cannot be undone.
+                  {t("transferOwnership.cannotBeUndone")}
                 </p>
-                <p>Warning - You will:</p>
+                <p>{t("transferOwnership.warningYouWill")}</p>
                 <ul className="mb-2 list-inside list-disc">
-                  <li>Lose owner control of this workspace</li>
-                  <li>No longer be able to manage billing</li>
-                  <li>Become an admin member</li>
+                  <li>{t("transferOwnership.loseOwnerControl")}</li>
+                  <li>{t("transferOwnership.noLongerBilling")}</li>
+                  <li>{t("transferOwnership.becomeAdmin")}</li>
                   <When truthy={transferSubscription}>
                     <li>
-                      Transfer your{" "}
                       {subscriptionCount === 1
-                        ? "subscription"
-                        : "subscriptions"}{" "}
-                      to{" "}
-                      {resolveTeamMemberName(
-                        { name: "", user: selectedOwner },
-                        true
-                      )}
+                        ? t("transferOwnership.transferYourSubscription", {
+                            name: resolveTeamMemberName(
+                              { name: "", user: selectedOwner },
+                              true,
+                            ),
+                          })
+                        : t("transferOwnership.transferYourSubscriptions", {
+                            name: resolveTeamMemberName(
+                              { name: "", user: selectedOwner },
+                              true,
+                            ),
+                          })}
                     </li>
                   </When>
                 </ul>
 
                 <div className="mb-2">
-                  <p>
-                    To confirm this transfer, type the workspace name exactly as
-                    shown:
-                  </p>
+                  <p>{t("transferOwnership.confirmTypeName")}</p>
                   <Input
                     label=""
-                    placeholder="Enter workspace name to confirm"
+                    placeholder={t("transferOwnership.enterWorkspaceName")}
                     value={confirmationInput}
                     onChange={(event) => {
                       setConfirmationInput(event.target.value);
                     }}
                   />
                   <p className="text-sm text-gray-500">
-                    Expected input: {confirmationOrgName}
+                    {t("transferOwnership.expectedInput", {
+                      name: confirmationOrgName,
+                    })}
                   </p>
                 </div>
 
@@ -354,7 +355,7 @@ export default function TransferOwnershipCard({
                   <label
                     htmlFor={zo.fields.agreeConditions()}
                     className={tw(
-                      "flex cursor-pointer select-none items-center gap-2 py-2 text-sm"
+                      "flex cursor-pointer select-none items-center gap-2 py-2 text-sm",
                     )}
                   >
                     <input
@@ -364,7 +365,7 @@ export default function TransferOwnershipCard({
                       className="rounded-sm checked:bg-primary focus-within:ring-primary checked:hover:bg-primary checked:focus:bg-primary"
                     />
 
-                    <span>I understand this action cannot be undone.</span>
+                    <span>{t("transferOwnership.iUnderstand")}</span>
                   </label>
                   <When
                     truthy={
@@ -390,7 +391,7 @@ export default function TransferOwnershipCard({
                     variant="secondary"
                     type="button"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </AlertDialogCancel>
 
@@ -399,15 +400,15 @@ export default function TransferOwnershipCard({
                   className="flex-1"
                   disabled={
                     !selectedOwner
-                      ? { reason: "Please select a new owner." }
+                      ? { reason: t("transferOwnership.selectOwnerReason") }
                       : confirmationInput !== confirmationOrgName
                       ? {
-                          reason: "Please type the workspace name to confirm.",
+                          reason: t("transferOwnership.typeNameReason"),
                         }
                       : disabled
                   }
                 >
-                  Transfer ownership
+                  {t("transferOwnership.transferButton")}
                 </Button>
               </AlertDialogFooter>
             </Form>

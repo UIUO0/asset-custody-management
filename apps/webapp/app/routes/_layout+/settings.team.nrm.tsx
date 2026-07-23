@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -114,7 +115,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         additionalData: {
           organizationId,
         },
-      }
+      },
     );
 
     switch (intent) {
@@ -129,7 +130,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               organizationId,
               intent,
             },
-          }
+          },
         );
 
         await db.teamMember
@@ -169,15 +170,13 @@ export async function action({ context, request }: ActionFunctionArgs) {
 }
 
 export default function NrmSettings() {
+  const { t } = useTranslation();
   const { canImportNRM } = useLoaderData<typeof loader>();
   const { isBaseOrSelfService } = useUserRoleHelper();
 
   return (
     <div>
-      <p className="mb-6 text-xs text-gray-600">
-        Non-registered members can be given custody of an asset. If you want
-        them to get reminders, invite them via email.
-      </p>
+      <p className="mb-6 text-xs text-gray-600">{t("team.nrmIntro")}</p>
 
       <ListContentWrapper>
         <Filters>
@@ -190,7 +189,7 @@ export default function NrmSettings() {
               to="add-member"
               className="mt-2 w-full md:mt-0 md:w-max"
             >
-              <span className=" whitespace-nowrap">Add NRM</span>
+              <span className=" whitespace-nowrap">{t("team.addNrm")}</span>
             </Button>
           </div>
         </Filters>
@@ -202,18 +201,18 @@ export default function NrmSettings() {
           className="overflow-x-visible md:overflow-x-auto"
           ItemComponent={TeamMemberRow}
           customEmptyStateContent={{
-            title: "No team members on database",
-            text: "What are you waiting for? Add your first team member now!",
+            title: t("team.noMembersTitle"),
+            text: t("team.noMembersText"),
             newButtonRoute: "add-member",
-            newButtonContent: "Add NRM",
+            newButtonContent: t("team.addNrm"),
           }}
           hideFirstHeaderColumn
           headerChildren={
             <>
-              <Th>ID</Th>
-              <Th>Name</Th>
-              <Th>Custodies</Th>
-              <Th>Actions</Th>
+              <Th>{t("team.id")}</Th>
+              <Th>{t("team.name")}</Th>
+              <Th>{t("team.custodies")}</Th>
+              <Th>{t("team.actions")}</Th>
             </>
           }
         />

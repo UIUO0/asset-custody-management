@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CustomField } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { TrashIcon } from "~/components/icons/library";
@@ -23,6 +24,7 @@ export function DeleteCustomFieldDialog({
 }: {
   customField: CustomField;
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<typeof deleteAction>();
   const [open, setOpen] = useState(false);
   const [confirmation, setConfirmation] = useState("");
@@ -69,7 +71,7 @@ export function DeleteCustomFieldDialog({
           }}
         >
           <span className="flex items-center gap-2">
-            <TrashIcon /> Delete
+            <TrashIcon /> {t("customFields.delete")}
           </span>
         </DropdownMenuItem>
       </AlertDialogTrigger>
@@ -82,26 +84,30 @@ export function DeleteCustomFieldDialog({
               <TrashIcon />
             </div>
             <AlertDialogTitle>
-              Delete "{customField.name}" custom field
+              {t("customFields.deleteTitle", { name: customField.name })}
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
               <p>
-                <strong>This field will be deleted.</strong> The field and all
-                its values will be removed from your assets.
+                <Trans
+                  i18nKey="customFields.deleteWarning"
+                  components={{ 1: <strong /> }}
+                />
               </p>
               <p>
-                <strong>Note:</strong> The field name will be available for
-                reuse after deleting.
+                <Trans
+                  i18nKey="customFields.deleteNote"
+                  components={{ 1: <strong /> }}
+                />
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="mt-4 space-y-2">
             <p className="text-sm text-gray-600">
-              To confirm, type the custom field name below.
+              {t("customFields.confirmType")}
             </p>
             <Input
-              label="Confirmation"
+              label={t("customFields.confirmation")}
               name="confirmation"
               value={confirmation}
               onChange={(event) => {
@@ -111,7 +117,7 @@ export function DeleteCustomFieldDialog({
               required
             />
             <p className="text-sm text-gray-500">
-              Expected input: {expectedName}
+              {t("customFields.expectedInput", { name: expectedName })}
             </p>
             {formError ? (
               <p className="text-sm text-error-500">{formError}</p>
@@ -121,7 +127,7 @@ export function DeleteCustomFieldDialog({
           <AlertDialogFooter className="mt-6 flex ">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
             <Button
@@ -131,7 +137,7 @@ export function DeleteCustomFieldDialog({
               name="intent"
               value="delete"
             >
-              {disabled ? "Deleting..." : "Delete"}
+              {disabled ? t("customFields.deleting") : t("customFields.delete")}
             </Button>
           </AlertDialogFooter>
         </fetcher.Form>

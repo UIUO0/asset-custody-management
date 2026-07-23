@@ -3,6 +3,7 @@ import {
   MaxFileSizeExceededError,
   parseFormData,
 } from "@remix-run/form-data-parser";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -27,6 +28,8 @@ import {
   WorkspaceEditForms,
 } from "~/components/workspace/edit-form";
 import { db } from "~/database/db.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   getOrganizationAdmins,
   transferOwnership,
@@ -166,13 +169,24 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
+/** Breadcrumb for general settings (component so it can use the hook). */
+function GeneralBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("settings.general")}</>;
+}
+
 export const handle = {
-  breadcrumb: () => "General",
+  breadcrumb: () => <GeneralBreadcrumb />,
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.settings.general) }];
+};
 
 export const ErrorBoundary = () => <ErrorContent />;
 
@@ -221,13 +235,13 @@ export async function action({ context, request }: ActionFunctionArgs) {
         additionalData: {
           organizationId,
         },
-      }
+      },
     );
 
     switch (intent) {
       case "general": {
         const schema = EditGeneralWorkspaceSettingsFormSchema(
-          currentOrganization.type === "PERSONAL"
+          currentOrganization.type === "PERSONAL",
         );
 
         const payload = parseData(formData, schema, {
@@ -249,7 +263,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
         let nextShowShelfBranding = resolveShowShelfBranding(
           showShelfBranding,
-          currentOrganization.showShelfBranding
+          currentOrganization.showShelfBranding,
         );
 
         if (!canHideBrandingForThisWorkspace) {
@@ -363,7 +377,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           });
         }
         const schema = EditWorkspaceSSOSettingsFormSchema(
-          currentOrganization.enabledSso
+          currentOrganization.enabledSso,
         );
 
         const payload = parseData(formData, schema, {
@@ -442,6 +456,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 }
 
 export default function GeneralPage() {
+  const { t } = useTranslation();
   const {
     organization,
     canExportAssets,
@@ -459,16 +474,15 @@ export default function GeneralPage() {
       />
 
       <Card className={tw("mb-0")}>
-        <h4 className="text-text-lg font-semibold">Asset backup</h4>
+        <h4 className="text-text-lg font-semibold">
+          {t("settings.assetBackup")}
+        </h4>
         <p className=" text-sm text-gray-600">
-          Download a backup of your assets. If you want to restore a backup,
-          please get in touch with support.
+          {t("settings.assetBackupDesc")}
         </p>
         <p className=" font-italic mb-2 text-sm text-gray-600">
-          IMPORTANT NOTE: QR codes will not be included in the export. Due to
-          the nature of how Shelf's QR codes work, they currently cannot be
-          exported with assets because they have unique ids. <br />
-          Importing a backup will just create a new QR code for each asset.
+          {t("settings.assetBackupNote")} <br />
+          {t("settings.assetBackupNote2")}
         </p>
         <ExportBackupButton canExportAssets={canExportAssets} />
       </Card>

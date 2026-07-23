@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import { Button } from "~/components/shared/button";
@@ -24,13 +25,14 @@ type CancelBookingDialogProps = {
 };
 
 export function CancelBookingDialog({ bookingName }: CancelBookingDialogProps) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const zo = useZorm("CancelBooking", CancelBookingSchema);
   const actionData = useActionData<DataOrErrorResponse>();
 
   /** This handles server side errors in case client side validation fails */
   const validationErrors = getValidationErrors<typeof CancelBookingSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   return (
@@ -42,7 +44,7 @@ export function CancelBookingDialog({ bookingName }: CancelBookingDialogProps) {
           className="justify-start rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none hover:bg-slate-100 hover:text-gray-700"
           width="full"
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
       </AlertDialogTrigger>
 
@@ -53,10 +55,11 @@ export function CancelBookingDialog({ bookingName }: CancelBookingDialogProps) {
               <AlertIcon />
             </span>
           </div>
-          <AlertDialogTitle>Cancel {bookingName}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("bookings.cancelBookingTitle", { name: bookingName })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to cancel this booking? This action cannot be
-            undone.
+            {t("bookings.cancelBookingConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <Form method="post" ref={zo.ref}>
@@ -66,8 +69,10 @@ export function CancelBookingDialog({ bookingName }: CancelBookingDialogProps) {
               htmlFor="cancellationReason"
               className="mb-1 block text-start text-[14px] font-medium text-gray-700"
             >
-              Cancellation reason{" "}
-              <span className="font-normal text-gray-500">(optional)</span>
+              {t("bookings.cancellationReason")}{" "}
+              <span className="font-normal text-gray-500">
+                ({t("common.optional")})
+              </span>
             </label>
             <textarea
               id="cancellationReason"
@@ -75,7 +80,7 @@ export function CancelBookingDialog({ bookingName }: CancelBookingDialogProps) {
               rows={3}
               maxLength={500}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:border-primary-500 focus:ring-primary-500"
-              placeholder="Let the custodian know why this booking was cancelled..."
+              placeholder={t("bookings.cancellationReasonPlaceholder")}
               disabled={disabled}
               aria-describedby="cancellationReason-description"
             />
@@ -90,25 +95,24 @@ export function CancelBookingDialog({ bookingName }: CancelBookingDialogProps) {
               id="cancellationReason-description"
               className="-mt-1 text-text-sm text-gray-500"
             >
-              If the custodian has an associated user account with an email
-              address, they will be notified of the cancellation reason.
+              {t("bookings.cancellationReasonHint")}
             </p>
           </div>
           <AlertDialogFooter>
             <div className="flex justify-center gap-2">
               <AlertDialogCancel asChild>
                 <Button type="button" variant="secondary" disabled={disabled}>
-                  Go back
+                  {t("bookings.goBack")}
                 </Button>
               </AlertDialogCancel>
               <Button
                 type="submit"
                 className={tw(
-                  "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
+                  "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800",
                 )}
                 disabled={disabled}
               >
-                Cancel booking
+                {t("bookings.cancelBooking")}
               </Button>
             </div>
           </AlertDialogFooter>

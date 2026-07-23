@@ -1,7 +1,10 @@
+import { useTranslation } from "react-i18next";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, Link, Outlet } from "react-router";
 import { z } from "zod";
 import { ErrorContent } from "~/components/errors";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   softDeleteCustomField,
   getCustomField,
@@ -17,9 +20,22 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [
-  { title: appendToMetaTitle("Custom fields settings") },
-];
+export const meta = ({
+  matches,
+}: {
+  matches: Array<{ id: string; data?: unknown }>;
+}) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [
+    {
+      title: appendToMetaTitle(resources.settings.customFieldsSettingsTitle),
+    },
+  ];
+};
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -61,7 +77,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           .min(1, "Confirmation is required")
           .transform((value) => value.trim()),
       }),
-      { additionalData: { userId } }
+      { additionalData: { userId } },
     );
 
     const customField = await getCustomField({ id, organizationId });
@@ -100,8 +116,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb for custom fields (component so it can use the hook). */
+function CustomFieldsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/settings/custom-fields">{t("settings.customFields")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/settings/custom-fields">Custom Fields</Link>,
+  breadcrumb: () => <CustomFieldsBreadcrumb />,
 };
 
 // export const shouldRevalidate = () => false;

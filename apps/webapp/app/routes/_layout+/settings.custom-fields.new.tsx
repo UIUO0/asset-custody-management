@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, redirect } from "react-router";
 
@@ -8,6 +9,8 @@ import {
   NewCustomFieldFormSchema,
 } from "~/components/custom-fields/form";
 import Header from "~/components/layout/header";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getCategoriesForCreateAndEdit } from "~/modules/asset/service.server";
 
 import { createCustomField } from "~/modules/custom-field/service.server";
@@ -66,12 +69,23 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.settings.newCustomFieldTitle) }];
+};
+
+/** Breadcrumb for the new custom field page (component so it can use the hook). */
+function NewCustomFieldBreadcrumb() {
+  const { t } = useTranslation();
+  return <span>{t("settings.newCustomFieldTitle")}</span>;
+}
 
 export const handle = {
-  breadcrumb: () => <span>{title}</span>,
+  breadcrumb: () => <NewCustomFieldBreadcrumb />,
 };
 
 export async function action({ context, request }: LoaderFunctionArgs) {
@@ -93,7 +107,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
 
     const payload = parseData(
       await request.formData(),
-      NewCustomFieldFormSchema
+      NewCustomFieldFormSchema,
     );
 
     const { name, helpText, required, type, active, options, categories } =
@@ -126,13 +140,14 @@ export async function action({ context, request }: LoaderFunctionArgs) {
 }
 
 export default function NewCustomFieldPage() {
+  const { t } = useTranslation();
   const title = useAtomValue(dynamicTitleAtom);
 
   return (
     <>
       <Header
         hideBreadcrumbs
-        title={title ? title : "Untitled custom field"}
+        title={title ? title : t("settings.untitledCustomField")}
         classNames="-mt-5"
       />
       <div>
