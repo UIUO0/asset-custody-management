@@ -13,6 +13,7 @@
  */
 import { useEffect } from "react";
 import type { AssetModel } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useActionData, useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -69,6 +70,7 @@ export default function AssetModelForm({
   onCancel,
   onSuccess,
 }: AssetModelFormProps) {
+  const { t } = useTranslation();
   const zo = useZorm("AssetModelForm", AssetModelFormSchema);
   const fetcher = useFetcherWithReset<typeof action>();
   // Replaces `autoFocus` on the Name input. Mounts inside a layout Dialog
@@ -121,7 +123,7 @@ export default function AssetModelForm({
           <Input
             ref={nameInputRef}
             label="Name"
-            placeholder="Asset model name"
+            placeholder={t("assetModelForm.name")}
             className="mb-4 lg:mb-0 lg:max-w-[180px]"
             name={zo.fields.name()}
             disabled={disabled}
@@ -132,7 +134,7 @@ export default function AssetModelForm({
           />
           <Input
             label="Description"
-            placeholder="Description (optional)"
+            placeholder={t("assetModelForm.descriptionOptional")}
             name={zo.fields.description()}
             disabled={disabled}
             className="mb-4 lg:mb-0"
@@ -194,6 +196,7 @@ function FullPageForm({
 }: {
   assetModel?: AssetModelFormProps["assetModel"];
 }) {
+  const { t } = useTranslation();
   const zo = useZorm("AssetModelForm", AssetModelFormSchema);
   // Page form submits via navigation, so the disabled state must watch the
   // router's navigation state — not a fetcher.
@@ -210,7 +213,7 @@ function FullPageForm({
   /** Server-side validation errors from the page action. */
   const actionData = useActionData<DataOrErrorResponse>();
   const validationErrors = getValidationErrors<typeof AssetModelFormSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   return (
@@ -222,8 +225,8 @@ function FullPageForm({
             <h2 className="mb-1 text-[18px] font-semibold">Asset model</h2>
             <p>
               {assetModel
-                ? "Edit the details of your asset model."
-                : "Define a reusable template for your assets."}
+                ? t("assetModelForm.editSubheading")
+                : t("assetModelForm.newSubheading")}
             </p>
           </div>
           <div className="hidden flex-1 justify-end gap-2 md:flex">
@@ -245,7 +248,7 @@ function FullPageForm({
             disabled={disabled}
             error={validationErrors?.name?.message || zo.errors.name()?.message}
             className="w-full"
-            placeholder="e.g. MacBook Pro 16-inch"
+            placeholder={t("assetModelForm.namePlaceholder")}
             defaultValue={assetModel?.name || ""}
             required={true}
           />
@@ -254,7 +257,7 @@ function FullPageForm({
         {/* -- Description -- */}
         <FormRow
           rowLabel="Description"
-          subHeading="A short description of this asset model. Maximum 1000 characters."
+          subHeading={t("assetModelForm.descriptionHint")}
           className="border-b-0 pb-[10px]"
         >
           <Input
@@ -265,15 +268,15 @@ function FullPageForm({
             name={zo.fields.description()}
             disabled={disabled}
             className="w-full"
-            placeholder="Add a description for this asset model."
+            placeholder={t("assetModelForm.descriptionPlaceholder")}
             defaultValue={assetModel?.description || ""}
           />
         </FormRow>
 
         {/* -- Default Category -- */}
         <FormRow
-          rowLabel="Default category"
-          subHeading="Assets created from this model will inherit this category."
+          rowLabel={t("assetModelForm.defaultCategory")}
+          subHeading={t("assetModelForm.defaultCategoryHint")}
           className="border-b-0 pb-[10px]"
         >
           <DynamicSelect
@@ -295,14 +298,14 @@ function FullPageForm({
 
         {/* -- Default Valuation -- */}
         <FormRow
-          rowLabel="Default valuation"
-          subHeading="Assets created from this model will inherit this value."
+          rowLabel={t("assetModelForm.defaultValuation")}
+          subHeading={t("assetModelForm.defaultValuationHint")}
           className="border-b-0 py-[10px]"
         >
           <div className="relative w-full">
             <Input
               type="number"
-              label="Default valuation"
+              label={t("assetModelForm.defaultValuation")}
               inputClassName="ps-[70px] valuation-input"
               hideLabel
               name={zo.fields.defaultValuation()}

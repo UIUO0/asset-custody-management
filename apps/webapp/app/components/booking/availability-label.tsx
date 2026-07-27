@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Booking } from "@prisma/client";
 import { BookingStatus, KitStatus } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { isQuantityTracked } from "~/modules/asset/utils";
 import { hasAssetBookingConflicts } from "~/modules/booking/helpers";
@@ -38,6 +39,7 @@ export function AvailabilityLabel({
   isAddedThroughKit?: boolean;
   isAlreadyAdded?: boolean;
 }) {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<{ booking: Booking }>();
   const isPartOfKit = (asset.assetKits ?? []).length > 0;
 
@@ -45,9 +47,9 @@ export function AvailabilityLabel({
   if (isAlreadyAdded) {
     return (
       <AvailabilityBadge
-        badgeText="Already added to this booking"
-        tooltipTitle="Asset is part of booking"
-        tooltipContent="This asset is already added to the current booking."
+        badgeText={t("availability.alreadyAddedBadge")}
+        tooltipTitle={t("availability.alreadyAddedTitle")}
+        tooltipContent={t("availability.alreadyAddedContent")}
       />
     );
   }
@@ -59,11 +61,9 @@ export function AvailabilityLabel({
   if (!asset.availableToBook) {
     return (
       <AvailabilityBadge
-        badgeText={"Unavailable"}
-        tooltipTitle={"Asset is unavailable for bookings"}
-        tooltipContent={
-          "This asset is marked as unavailable for bookings by an administrator."
-        }
+        badgeText={t("availability.unavailableBadge")}
+        tooltipTitle={t("availability.unavailableTitle")}
+        tooltipContent={t("availability.unavailableContent")}
       />
     );
   }
@@ -74,9 +74,9 @@ export function AvailabilityLabel({
   if (isPartOfKit && showKitStatus) {
     return (
       <AvailabilityBadge
-        badgeText="Part of kit"
-        tooltipTitle="Asset is part of a kit"
-        tooltipContent="Remove the asset from the kit to add it individually."
+        badgeText={t("availability.partOfKitBadge")}
+        tooltipTitle={t("availability.partOfKitTitle")}
+        tooltipContent={t("availability.removeFromKitContent")}
       />
     );
   }
@@ -92,11 +92,9 @@ export function AvailabilityLabel({
   ) {
     return (
       <AvailabilityBadge
-        badgeText={"In custody"}
-        tooltipTitle={"Asset is in custody"}
-        tooltipContent={
-          "This asset is in custody of a team member making it currently unavailable for bookings."
-        }
+        badgeText={t("availability.inCustodyBadge")}
+        tooltipTitle={t("availability.assetInCustodyTitle")}
+        tooltipContent={t("availability.assetInCustodyContent")}
       />
     );
   }
@@ -115,7 +113,7 @@ export function AvailabilityLabel({
           b.id !== booking.id &&
           (b.status === BookingStatus.ONGOING ||
             b.status === BookingStatus.OVERDUE ||
-            b.status === BookingStatus.RESERVED)
+            b.status === BookingStatus.RESERVED),
       )
       .sort((a, b) => {
         // Sort by 'from' date descending to get the newest booking first
@@ -125,24 +123,28 @@ export function AvailabilityLabel({
       })[0];
     return (
       <AvailabilityBadge
-        badgeText={"Already booked"}
-        tooltipTitle={"Asset is already part of a booking"}
+        badgeText={t("availability.alreadyBookedBadge")}
+        tooltipTitle={t("availability.assetAlreadyBookedTitle")}
         tooltipContent={
           conflictingBooking ? (
             <span>
-              This asset is added to a booking (
-              <Button
-                to={`/bookings/${conflictingBooking.id}`}
-                target="_blank"
-                variant={"inherit"}
-                className={"!underline"}
-              >
-                {conflictingBooking?.name}
-              </Button>
-              ) that is overlapping the selected time period.
+              <Trans
+                i18nKey="availability.assetAlreadyBookedContentWithLink"
+                values={{ name: conflictingBooking.name }}
+                components={{
+                  1: (
+                    <Button
+                      to={`/bookings/${conflictingBooking.id}`}
+                      target="_blank"
+                      variant={"inherit"}
+                      className={"!underline"}
+                    />
+                  ),
+                }}
+              />
             </span>
           ) : (
-            "This asset is added to a booking that is overlapping the selected time period."
+            t("availability.assetAlreadyBookedContent")
           )
         }
       />
@@ -172,7 +174,7 @@ export function AvailabilityLabel({
         (b) =>
           b.id !== booking.id &&
           (b.status === BookingStatus.ONGOING ||
-            b.status === BookingStatus.OVERDUE)
+            b.status === BookingStatus.OVERDUE),
       )
       .sort((a, b) => {
         // Sort by 'from' date descending to get the newest booking first
@@ -183,23 +185,26 @@ export function AvailabilityLabel({
 
     return (
       <AvailabilityBadge
-        badgeText={"Checked out"}
-        tooltipTitle={"Asset is currently checked out"}
+        badgeText={t("availability.checkedOutBadge")}
+        tooltipTitle={t("availability.assetCheckedOutTitle")}
         tooltipContent={
           conflictingBooking ? (
             <span>
-              This asset is currently checked out as part of another booking (
-              <Link
-                to={`${SERVER_URL}/bookings/
-                ${conflictingBooking.id}`}
-                target="_blank"
-              >
-                {conflictingBooking?.name}
-              </Link>
-              ) and should be available for your selected date range period
+              <Trans
+                i18nKey="availability.assetCheckedOutContentWithLink"
+                values={{ name: conflictingBooking.name }}
+                components={{
+                  1: (
+                    <Link
+                      to={`${SERVER_URL}/bookings/${conflictingBooking.id}`}
+                      target="_blank"
+                    />
+                  ),
+                }}
+              />
             </span>
           ) : (
-            "This asset is currently checked out as part of another booking and should be available for your selected date range period"
+            t("availability.assetCheckedOutContent")
           )
         }
       />
@@ -212,9 +217,9 @@ export function AvailabilityLabel({
   if (isAddedThroughKit) {
     return (
       <AvailabilityBadge
-        badgeText="Added through kit"
-        tooltipTitle="Asset was added through a kit"
-        tooltipContent="Remove the asset from the kit to add it individually."
+        badgeText={t("availability.addedThroughKitBadge")}
+        tooltipTitle={t("availability.addedThroughKitTitle")}
+        tooltipContent={t("availability.removeFromKitContent")}
       />
     );
   }
@@ -273,7 +278,7 @@ export function AvailabilityBadge({
               "text-xs",
               "availability-badge",
               variantClasses,
-              className
+              className,
             )}
           >
             {badgeText}
@@ -319,12 +324,17 @@ export function InsufficientStockBadge({
   bookedQuantity: number;
   availableUnits: number;
 }) {
+  const { t } = useTranslation();
+
   return (
     <AvailabilityBadge
       variant="error"
-      badgeText="Insufficient stock"
-      tooltipTitle="Not enough units available"
-      tooltipContent={`This booking reserves ${bookedQuantity} units, but only ${availableUnits} are available across the workspace (after subtracting custody, other reservations, and active checkouts). Reduce the booked quantity or free up units before checking out.`}
+      badgeText={t("availability.insufficientStockBadge")}
+      tooltipTitle={t("availability.insufficientStockTitle")}
+      tooltipContent={t("availability.insufficientStockContent", {
+        booked: bookedQuantity,
+        available: availableUnits,
+      })}
     />
   );
 }
@@ -339,7 +349,7 @@ export function InsufficientStockBadge({
  */
 export function getKitAvailabilityStatus(
   kit: KitForBooking,
-  currentBookingId: string
+  currentBookingId: string,
 ) {
   // Phase 3a renamed the implicit M2M `Asset.bookings` to the explicit
   // `BookingAsset` pivot, so we walk `bookingAssets` and pluck the
@@ -347,7 +357,7 @@ export function getKitAvailabilityStatus(
   // shape no longer exists in this branch's schema.
   const kitAssets = kit.assetKits.map((ak) => ak.asset);
   const bookings = kitAssets.flatMap(
-    (asset) => asset?.bookingAssets.map((ba) => ba.booking) ?? []
+    (asset) => asset?.bookingAssets.map((ba) => ba.booking) ?? [],
   );
 
   /** Checks whether this is checked out in another not overlapping booking */
@@ -370,7 +380,7 @@ export function getKitAvailabilityStatus(
 
   // Apply same booking conflict logic as isCheckedOut
   const someAssetHasUnavailableBooking = kitAssets.some((asset) =>
-    hasAssetBookingConflicts(asset, currentBookingId)
+    hasAssetBookingConflicts(asset, currentBookingId),
   );
 
   return {
@@ -385,6 +395,7 @@ export function getKitAvailabilityStatus(
 }
 
 export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<{ booking: Booking }>();
 
   const {
@@ -403,8 +414,8 @@ export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
       ak.asset.bookingAssets.some(
         (ba) =>
           ba.booking.id === booking.id &&
-          ["ONGOING", "OVERDUE"].includes(ba.booking.status)
-      )
+          ["ONGOING", "OVERDUE"].includes(ba.booking.status),
+      ),
     );
 
   // Case 1: Kit is checked out in current booking - don't show availability label
@@ -416,9 +427,9 @@ export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
   if (isInCustody) {
     return (
       <AvailabilityBadge
-        badgeText="In custody"
-        tooltipTitle="Kit is in custody"
-        tooltipContent="This kit is in custody or it contains some assets that are in custody."
+        badgeText={t("availability.inCustodyBadge")}
+        tooltipTitle={t("availability.kitInCustodyTitle")}
+        tooltipContent={t("availability.kitInCustodyContent")}
       />
     );
   }
@@ -426,12 +437,12 @@ export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
   if (isCheckedOut) {
     return (
       <AvailabilityBadge
-        badgeText="Checked out"
-        tooltipTitle="Kit is checked out"
+        badgeText={t("availability.checkedOutBadge")}
+        tooltipTitle={t("availability.kitCheckedOutTitle")}
         tooltipContent={
           isCheckedOutInANonConflictingBooking
-            ? "This kit is currently checked out as part of another booking and should be available for your selected date range period"
-            : "This kit is currently checked out and is not available for your selected date range period"
+            ? t("availability.kitCheckedOutOtherBookingContent")
+            : t("availability.kitCheckedOutContent")
         }
       />
     );
@@ -440,9 +451,9 @@ export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
   if (isKitWithoutAssets) {
     return (
       <AvailabilityBadge
-        badgeText="No assets"
-        tooltipTitle="No assets in kit"
-        tooltipContent="There are no assets added to this kit yet."
+        badgeText={t("availability.noAssetsBadge")}
+        tooltipTitle={t("availability.noAssetsTitle")}
+        tooltipContent={t("availability.noAssetsContent")}
       />
     );
   }
@@ -450,9 +461,9 @@ export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
   if (someAssetMarkedUnavailable) {
     return (
       <AvailabilityBadge
-        badgeText="Contains non-bookable assets"
-        tooltipTitle="Kit is unavailable for check-out"
-        tooltipContent="Some assets in this kit are marked as non-bookable. You can still add the kit to your booking, but you must remove the non-bookable assets to proceed with check-out."
+        badgeText={t("availability.nonBookableBadge")}
+        tooltipTitle={t("availability.nonBookableTitle")}
+        tooltipContent={t("availability.nonBookableContent")}
       />
     );
   }
@@ -460,9 +471,9 @@ export function KitAvailabilityLabel({ kit }: { kit: KitForBooking }) {
   if (someAssetHasUnavailableBooking) {
     return (
       <AvailabilityBadge
-        badgeText="Already booked"
-        tooltipTitle="Kit is already part of a booking"
-        tooltipContent="This kit is already added to another booking."
+        badgeText={t("availability.alreadyBookedBadge")}
+        tooltipTitle={t("availability.kitAlreadyBookedInAnotherTitle")}
+        tooltipContent={t("availability.kitAlreadyBookedInAnotherContent")}
       />
     );
   }

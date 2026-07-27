@@ -90,8 +90,8 @@ export async function createTeamMemberIfNotExists({
       new Set(
         data
           .map((asset) => asset.custodian?.trim())
-          .filter((custodian): custodian is string => !!custodian)
-      )
+          .filter((custodian): custodian is string => !!custodian),
+      ),
     );
 
     // Handle the case where there are no teamMembers
@@ -364,7 +364,7 @@ export async function getTeamMemberForCustodianFilter({
 export async function getTeamMemberForForm({
   organizationId,
   userId,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
   getAll,
   custodianUserId,
   custodianTeamMemberId,
@@ -373,7 +373,7 @@ export async function getTeamMemberForForm({
 }: {
   organizationId: Organization["id"];
   userId: string;
-  isSelfServiceOrBase: boolean;
+  isScopedToOwnRecords: boolean;
   getAll?: boolean;
   custodianUserId?: string;
   custodianTeamMemberId?: string;
@@ -385,7 +385,7 @@ export async function getTeamMemberForForm({
 }) {
   try {
     // BASE/SELF_SERVICE users can only see their own bookings, so always return only their team member
-    if (isSelfServiceOrBase) {
+    if (isScopedToOwnRecords) {
       const teamMember = await db.teamMember.findFirst({
         where: {
           organizationId,
@@ -468,7 +468,7 @@ export async function getTeamMemberForForm({
         : null;
 
       await fixTeamMembersNames(
-        custodianTeamMember ? [custodianTeamMember] : []
+        custodianTeamMember ? [custodianTeamMember] : [],
       );
 
       return {
@@ -512,7 +512,7 @@ export async function getTeamMemberForForm({
     throw new ShelfError({
       cause,
       message: "Failed to fetch team member for form",
-      additionalData: { organizationId, userId, isSelfServiceOrBase },
+      additionalData: { organizationId, userId, isScopedToOwnRecords },
       label,
     });
   }
@@ -540,7 +540,7 @@ type GetTeamMemberArgsBase = {
  * ```
  */
 export async function getTeamMember(
-  args: GetTeamMemberArgsBase
+  args: GetTeamMemberArgsBase,
 ): Promise<TeamMember>;
 
 /**
@@ -560,7 +560,7 @@ export async function getTeamMember(
  * ```
  */
 export async function getTeamMember<T extends Prisma.TeamMemberSelect>(
-  args: GetTeamMemberArgsBase & { select: T; include?: never }
+  args: GetTeamMemberArgsBase & { select: T; include?: never },
 ): Promise<TeamMemberWithSelect<T>>;
 
 /**
@@ -580,7 +580,7 @@ export async function getTeamMember<T extends Prisma.TeamMemberSelect>(
  * ```
  */
 export async function getTeamMember<T extends Prisma.TeamMemberInclude>(
-  args: GetTeamMemberArgsBase & { include: T; select?: never }
+  args: GetTeamMemberArgsBase & { include: T; select?: never },
 ): Promise<TeamMemberWithInclude<T>>;
 export async function getTeamMember({
   id,
@@ -660,7 +660,7 @@ export async function bulkDeleteNRMs({
 
     /** If some team members have custody, then delete is not allowed */
     const someTeamMemberHasCustodies = teamMembers.some(
-      (tm) => tm._count.custodies > 0
+      (tm) => tm._count.custodies > 0,
     );
 
     if (someTeamMemberHasCustodies) {
@@ -711,7 +711,7 @@ function validateTeamMemberName(teamMember: TeamMemberWithUserData) {
 async function fixTeamMembersNames(teamMembers: TeamMemberWithUserData[]) {
   try {
     const teamMembersWithEmptyNames = teamMembers.filter(
-      validateTeamMemberName
+      validateTeamMemberName,
     );
 
     /** If there are none, just return */
@@ -752,7 +752,7 @@ async function fixTeamMembersNames(teamMembers: TeamMemberWithUserData[]) {
             },
             data: { name },
           });
-        })
+        }),
     );
 
     /** Log auto-fixed empty names as a warning (not error) since the fix is
@@ -764,7 +764,7 @@ async function fixTeamMembersNames(teamMembers: TeamMemberWithUserData[]) {
         additionalData: { teamMembersWithEmptyNames },
         label,
         shouldBeCaptured: false,
-      })
+      }),
     );
   } catch (cause) {
     throw new ShelfError({

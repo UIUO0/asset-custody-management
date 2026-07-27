@@ -92,8 +92,19 @@ function ConditionalDropdown() {
 
   const archiveDisabled = !allBookingsArchivable || !canArchiveBooking;
 
-  /** Base users dont have permissions to delete bookings unless they are draft */
-  const deleteDisabled = (isBase && !someBookingInDraft) || isBase || isLoading;
+  /**
+   * Base users dont have permissions to delete bookings unless they are draft.
+   * The permission check is what stops the read-only operational roles
+   * (FINANCE, INVENTORY) from being offered a delete the server would refuse —
+   * the `isBase` clause alone let every non-BASE role through.
+   */
+  const canDeleteBooking = userHasPermission({
+    roles,
+    entity: PermissionEntity.booking,
+    action: PermissionAction.delete,
+  });
+  const deleteDisabled =
+    !canDeleteBooking || (isBase && !someBookingInDraft) || isBase || isLoading;
 
   const {
     ref: dropdownRef,

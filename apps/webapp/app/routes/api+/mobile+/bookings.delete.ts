@@ -17,6 +17,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { enforceUserRateLimit } from "~/utils/rate-limit.server";
 
 /**
@@ -78,16 +79,14 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!booking) {
       return data(
         { error: { message: "Booking not found in this workspace." } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Mirror the web delete guards (overview.tsx:783-809) exactly.
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
-    if (isSelfServiceOrBase) {
+    if (isScopedToOwnRecords) {
       validateBookingOwnership({
         booking,
         userId: user.id,
@@ -114,7 +113,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await deleteBooking(
       { id: bookingId, organizationId },
       getClientHint(request),
-      user.id
+      user.id,
     );
 
     return data({ success: true });
@@ -122,7 +121,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause, { userId });
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

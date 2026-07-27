@@ -145,12 +145,12 @@ export function useInitialFilters(columns: Column[]) {
 // Function to get default value based on field type
 export function getDefaultValueForFieldType(
   column: Column,
-  customFields: CustomField[] | null // Update the type to allow null
+  customFields: CustomField[] | null, // Update the type to allow null
 ): any {
   if (column.name.startsWith("cf_")) {
     // Find the matching custom field, handle potential null customFields
     const customField = customFields?.find(
-      (cf) => `cf_${cf.name}` === column.name
+      (cf) => `cf_${cf.name}` === column.name,
     );
 
     switch (column.cfType) {
@@ -196,7 +196,7 @@ export const COLUMNS_WITHOUT_FILTER: ColumnLabelKey[] = [
 export function getAvailableColumns(
   columns: Column[],
   usedColumns: Array<Filter | Sort>,
-  operation: "filter" | "sort"
+  operation: "filter" | "sort",
 ) {
   // Get columns that are visible and not already used
   const availableColumns = columns.filter(
@@ -207,7 +207,7 @@ export function getAvailableColumns(
           return f.name === column.name && !f.isNew;
         }
         return f.name === column.name;
-      })
+      }),
   );
 
   // Apply operation-specific filtering
@@ -253,7 +253,7 @@ export function getAvailableColumns(
  *
  * For Shelf QR codes, extracts the ID:
  * - localhost:3000/qr/abc123?hello=world -> abc123
- * - https://shelf.nu/qr/abc123 -> abc123
+ * - https://assets.example.gov/qr/abc123 -> abc123
  * - https://eam.sh/abc123 -> abc123
  * - abc123 -> abc123
  *

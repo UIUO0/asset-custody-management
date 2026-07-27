@@ -13,7 +13,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const userId = authSession.userId;
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.booking,
@@ -30,7 +30,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       // bookings too (added assets stay AVAILABLE — progressive checkout), not
       // just DRAFT/RESERVED ones.
       statuses: ["DRAFT", "RESERVED", "ONGOING", "OVERDUE"],
-      ...(isSelfServiceOrBase && { custodianUserId: userId }),
+      ...(isScopedToOwnRecords && { custodianUserId: userId }),
     });
 
     return data(payload({ bookings }));

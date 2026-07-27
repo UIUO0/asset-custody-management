@@ -2,6 +2,7 @@ import type React from "react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useAtom } from "jotai";
 import { Plus, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { fileErrorAtom } from "~/atoms/file";
 import ImageWithPreview from "~/components/image-with-preview/image-with-preview";
 import { Spinner } from "~/components/shared/spinner";
@@ -39,7 +40,7 @@ type AuditImageUploadBoxProps = {
   disabled?: boolean;
   /** Ref to expose file picker trigger function */
   onExposeFilePicker?: (
-    trigger: (currentSelectedCount?: number) => void
+    trigger: (currentSelectedCount?: number) => void,
   ) => void;
   /** Total count from parent (includes dialog selections) */
   totalCountFromParent?: number;
@@ -87,6 +88,7 @@ export function AuditImageUploadBox({
   onExposeFilePicker,
   totalCountFromParent,
 }: AuditImageUploadBoxProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [, setFileError] = useAtom(fileErrorAtom);
 
@@ -141,7 +143,7 @@ export function AuditImageUploadBox({
       setFileError(
         `You can only upload ${remainingSlots} more image${
           remainingSlots === 1 ? "" : "s"
-        }`
+        }`,
       );
       e.target.value = "";
       return;
@@ -152,17 +154,17 @@ export function AuditImageUploadBox({
       // Validate file type
       const allowedType = verifyAccept(
         file.type,
-        "image/png,image/jpeg,image/jpg"
+        "image/png,image/jpeg,image/jpg",
       );
       if (!allowedType) {
-        setFileError("Allowed file types are: PNG, JPG or JPEG");
+        setFileError(t("audits.allowedFileTypes"));
         return;
       }
 
       // Validate file size (4MB limit)
       const allowedSize = file.size < DEFAULT_MAX_IMAGE_UPLOAD_SIZE;
       if (!allowedSize) {
-        setFileError("Max file size is 4MB");
+        setFileError(t("audits.maxFileSize"));
         return;
       }
 
@@ -190,7 +192,7 @@ export function AuditImageUploadBox({
         "flex size-24 shrink-0 items-center justify-center rounded-lg border-2 border-dashed transition-colors",
         canAddMore && !disabled
           ? "border-gray-300 bg-gray-50 text-gray-400 hover:border-gray-400 hover:bg-gray-100 hover:text-gray-500"
-          : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300"
+          : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300",
       )}
     >
       <input
@@ -229,7 +231,7 @@ type AuditImageUploadSectionProps = {
   clearTrigger?: number;
   /** Ref to expose file picker trigger function */
   onExposeFilePicker?: (
-    trigger: (currentSelectedCount?: number) => void
+    trigger: (currentSelectedCount?: number) => void,
   ) => void;
   /** Current count of images selected in dialog (overrides local count for trigger) */
   currentSelectedInDialog?: number;
@@ -253,6 +255,7 @@ export function AuditImageUploadSection({
   currentSelectedInDialog,
   onExposeImageRemoval,
 }: AuditImageUploadSectionProps) {
+  const { t } = useTranslation();
   const [images, setImages] = useState<
     Array<{ file: File; previewUrl: string; id: string }>
   >([]);
@@ -350,7 +353,7 @@ export function AuditImageUploadSection({
         fileInputsRef.current.set(id, el);
       }
     },
-    []
+    [],
   );
 
   // Cleanup preview URLs on unmount
@@ -360,7 +363,7 @@ export function AuditImageUploadSection({
         URL.revokeObjectURL(image.previewUrl);
       });
     },
-    [images]
+    [images],
   );
 
   return (
@@ -393,7 +396,7 @@ export function AuditImageUploadSection({
             <ImageWithPreview
               imageUrl={image.imageUrl}
               thumbnailUrl={image.thumbnailUrl || image.imageUrl}
-              alt="Audit image"
+              alt={t("audits.auditImage")}
               withPreview
               disablePortal
               className="size-24 rounded-lg border-2 border-gray-200"
@@ -401,7 +404,7 @@ export function AuditImageUploadSection({
                 id: img.id,
                 imageUrl: img.imageUrl,
                 thumbnailUrl: img.thumbnailUrl || img.imageUrl,
-                alt: "Audit image",
+                alt: t("audits.auditImage"),
               }))}
               currentImageId={image.id}
             />

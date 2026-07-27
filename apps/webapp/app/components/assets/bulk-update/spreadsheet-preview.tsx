@@ -8,6 +8,7 @@
 import type React from "react";
 import { useCallback, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import type { AssetChangePreview } from "~/utils/import-update.server";
 import { AlertIcon } from "../../icons/library";
 
@@ -31,6 +32,7 @@ export function SpreadsheetPreview({
   displayLimit: number;
   totalChanges: number;
 }) {
+  const { t } = useTranslation();
   const [hoveredCell, setHoveredCell] = useState<{
     assetIdx: number;
     col: string;
@@ -53,7 +55,7 @@ export function SpreadsheetPreview({
       });
       setHoveredCell({ assetIdx, col });
     },
-    []
+    [],
   );
 
   const totalAssets = assets.length;
@@ -69,12 +71,12 @@ export function SpreadsheetPreview({
       <div className="max-h-[600px] overflow-auto rounded-md border">
         <table
           className="w-full border-collapse text-sm"
-          aria-label="Asset changes preview"
+          aria-label={t("assetUpdate.changesPreviewAria")}
         >
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-100">
               <th className="sticky left-0 z-20 border-b border-r bg-gray-100 px-3 py-2 text-start font-semibold text-gray-700">
-                Asset
+                {t("assetUpdate.colAsset")}
               </th>
               {columns.map((col) => (
                 <th
@@ -90,7 +92,7 @@ export function SpreadsheetPreview({
             {displayAssets.map((asset, assetIdx) => {
               // Build a map for O(1) change lookups
               const changesByField = new Map(
-                asset.changes.map((c) => [c.field, c])
+                asset.changes.map((c) => [c.field, c]),
               );
 
               return (
@@ -213,7 +215,7 @@ export function SpreadsheetPreview({
                                 </p>
                               )}
                             </div>,
-                            document.body
+                            document.body,
                           )}
                       </td>
                     );
@@ -237,7 +239,7 @@ export function SpreadsheetPreview({
         </span>
         <span className="flex items-center gap-1.5">
           <span className="text-gray-300">—</span>
-          No change
+          {t("assetUpdate.noChange")}
         </span>
       </div>
     </div>

@@ -17,6 +17,7 @@
  */
 
 import { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import type { AreaChartProps } from "./area-chart";
 import type { BarChartProps } from "./bar-chart";
 
@@ -34,11 +35,11 @@ function ChartLoadingFallback() {
 
 // Lazy load the chart components
 const LazyAreaChartInner = lazy(() =>
-  import("./area-chart").then((module) => ({ default: module.AreaChart }))
+  import("./area-chart").then((module) => ({ default: module.AreaChart })),
 );
 
 const LazyBarChartInner = lazy(() =>
-  import("./bar-chart").then((module) => ({ default: module.BarChart }))
+  import("./bar-chart").then((module) => ({ default: module.BarChart })),
 );
 
 /**

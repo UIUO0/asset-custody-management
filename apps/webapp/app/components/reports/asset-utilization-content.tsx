@@ -19,6 +19,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { ReportEmptyState } from "~/components/reports/report-empty-state";
 import {
   AssetCell,
@@ -35,7 +36,7 @@ import type { AssetUtilizationRow, ReportKpi } from "~/modules/reports/types";
 const ASSET_UTILIZATION_COLUMNS: ColumnDef<AssetUtilizationRow>[] = [
   {
     accessorKey: "assetName",
-    header: "Asset",
+    header: "reports.colAsset",
     cell: ({ row }) => (
       <AssetCell
         name={row.original.assetName}
@@ -46,7 +47,7 @@ const ASSET_UTILIZATION_COLUMNS: ColumnDef<AssetUtilizationRow>[] = [
   },
   {
     accessorKey: "utilizationRate",
-    header: "Usage Rate",
+    header: "reports.usageRate",
     cell: ({ row }) => {
       const rate = row.original.utilizationRate;
       return (
@@ -66,7 +67,7 @@ const ASSET_UTILIZATION_COLUMNS: ColumnDef<AssetUtilizationRow>[] = [
   },
   {
     accessorKey: "daysInUse",
-    header: "Days Booked",
+    header: "reports.daysBooked",
     cell: ({ row }) => (
       <span>
         {row.original.daysInUse} / {row.original.totalDays}
@@ -75,18 +76,18 @@ const ASSET_UTILIZATION_COLUMNS: ColumnDef<AssetUtilizationRow>[] = [
   },
   {
     accessorKey: "bookingCount",
-    header: "Bookings",
+    header: "reports.colBookings",
     cell: ({ row }) => <NumberCell value={row.original.bookingCount} />,
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: "reports.colCategory",
     cell: ({ row }) =>
       row.original.category || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "valuation",
-    header: "Value",
+    header: "reports.colValue",
     // Asset-aware: shows TOTAL (valuation × quantity) for QT assets, with
     // a "<unit price> × N <unit>" subtext. See {@link CurrencyCell}.
     cell: ({ row }) => <CurrencyCell asset={row.original} treatZeroAsEmpty />,
@@ -119,6 +120,7 @@ export function AssetUtilizationContent({
   totalRows,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   // Stable reference is guaranteed by `ASSET_UTILIZATION_COLUMNS` living at
   // module scope (see its JSDoc for why that matters).
   const columns = ASSET_UTILIZATION_COLUMNS;
@@ -155,13 +157,17 @@ export function AssetUtilizationContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Total Assets</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.totalAssets")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {totalRows}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Total Booking Days</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.totalBookingDays")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {kpis.find((k) => k.id === "total_booking_days")?.value || "0"}
               </span>
@@ -199,8 +205,8 @@ export function AssetUtilizationContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No usage data"
-              description="No booking activity to calculate usage rates."
+              title={t("reports.noUsageData")}
+              description={t("reports.noBookingActivityForRates")}
             />
           }
         />

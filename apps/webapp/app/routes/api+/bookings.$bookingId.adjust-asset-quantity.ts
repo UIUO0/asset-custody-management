@@ -54,7 +54,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   try {
     assertIsPost(request);
 
-    const { organizationId, role, isSelfServiceOrBase } =
+    const { organizationId, role, isScopedToOwnRecords } =
       await requirePermission({
         request,
         userId,
@@ -65,7 +65,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const formData = await request.formData();
     const { assetId, quantity } = parseData(
       formData,
-      AdjustBookingAssetQuantitySchema
+      AdjustBookingAssetQuantitySchema,
     );
 
     /**
@@ -117,7 +117,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
      * `bookingId` in the org and inflate or shrink the booked quantity
      * of another user's reservation (cross-user IDOR within the org).
      */
-    if (isSelfServiceOrBase) {
+    if (isScopedToOwnRecords) {
       validateBookingOwnership({
         booking: {
           creatorId: bookingAsset.booking.creatorId,
@@ -175,7 +175,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
       const availability = await computeBookingAvailableQuantity(
         assetId,
-        bookingId
+        bookingId,
       );
 
       if (quantity > availability.available) {
@@ -228,7 +228,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         });
         const bookingLink = wrapLinkForNote(
           `/bookings/${bookingAsset.booking.id}`,
-          bookingAsset.booking.name
+          bookingAsset.booking.name,
         );
 
         await Promise.all([
@@ -252,7 +252,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             bookingId,
             assetId,
             context: "adjust-asset-quantity note creation",
-          })
+          }),
         );
       }
     }

@@ -6,6 +6,7 @@ import { NoPermissionsIcon } from "~/components/icons/library";
 import type { HeaderData } from "~/components/layout/header/types";
 import TextualDivider from "~/components/shared/textual-divider";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getAsset } from "~/modules/asset/service.server";
 import { getPaginatedAndFilterableAssetNotes } from "~/modules/note/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -28,6 +29,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, userOrganizations } = await requirePermission({
       userId,
       request,
@@ -89,12 +94,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         totalPages,
         hasNotes,
         modelName,
-        searchFieldLabel: "Search notes",
+        searchFieldLabel: t("search.notesLabel"),
       }),
       {
         // Persist the per-page preference the service resolved for this request.
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause);

@@ -29,6 +29,7 @@
 
 import type { Organization } from "@prisma/client";
 import { OrganizationRoles } from "@prisma/client";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * Computes whether a member may see ALL custody records in the organization.
@@ -52,12 +53,11 @@ export function computeCanSeeAllCustody({
     "selfServiceCanSeeCustody" | "baseUserCanSeeCustody"
   >;
 }): boolean {
-  const isSelfServiceOrBase =
-    role === OrganizationRoles.SELF_SERVICE || role === OrganizationRoles.BASE;
+  const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
   return (
     // Admin/Owner always can see all
-    !isSelfServiceOrBase ||
+    !isScopedToOwnRecords ||
     // SELF_SERVICE can see all if org setting allows
     (role === OrganizationRoles.SELF_SERVICE &&
       organization.selfServiceCanSeeCustody) ||
@@ -106,11 +106,11 @@ export function filterMobileCustodyListForViewer<
   const ownCustodianIds = new Set(
     custodyRows
       .filter((row) => row.custodian.userId === viewerUserId)
-      .map((row) => row.custodian.id)
+      .map((row) => row.custodian.id),
   );
 
   const visible = custodyList.filter((entry) =>
-    ownCustodianIds.has(entry.custodian.id)
+    ownCustodianIds.has(entry.custodian.id),
   );
 
   return {

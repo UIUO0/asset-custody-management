@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/database/db.server";
@@ -17,6 +16,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { enforceUserRateLimit } from "~/utils/rate-limit.server";
 
 /**
@@ -68,7 +68,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await assertMobileCanUseBookings(organizationId);
 
     const { bookingId, assetIds, kitIds } = BodySchema.parse(
-      await request.json()
+      await request.json(),
     );
 
     // Org-scoped booking lookup — a foreign-org booking id 404s here.
@@ -86,7 +86,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!booking) {
       return data(
         { error: { message: "Booking not found in this workspace." } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -95,12 +95,10 @@ export async function action({ request }: ActionFunctionArgs) {
     // bookings only, DRAFT only via canUserManageBookingAssets). Keying only on
     // SELF_SERVICE let a BASE user with `booking:update` add assets to anyone's
     // non-draft booking via this endpoint.
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
     // Self-service / BASE users may only modify their own bookings.
-    if (isSelfServiceOrBase && booking.custodianUserId !== user.id) {
+    if (isScopedToOwnRecords && booking.custodianUserId !== user.id) {
       throw new ShelfError({
         cause: null,
         message: "You can only modify your own bookings.",
@@ -110,7 +108,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    if (!canUserManageBookingAssets(booking, isSelfServiceOrBase)) {
+    if (!canUserManageBookingAssets(booking, isScopedToOwnRecords)) {
       throw new ShelfError({
         cause: null,
         title: "Action not allowed",
@@ -164,7 +162,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause, { userId });
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

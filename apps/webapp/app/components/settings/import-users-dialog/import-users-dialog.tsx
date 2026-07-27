@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import type { z } from "zod";
 import useFetcherWithReset from "~/hooks/use-fetcher-with-reset";
 import { isFormProcessing } from "~/utils/form";
+import { ASSIGNABLE_ORGANIZATION_ROLES } from "~/utils/roles";
 import { tw } from "~/utils/tw";
 import ImportUsersSuccessContent from "./import-users-success-content";
 import Input from "../../forms/input";
@@ -88,7 +89,7 @@ export default function ImportUsersDialog({
           className={tw(
             "h-[calc(100vh_-_50px)] overflow-auto",
             !fetcher.data?.success && "md:w-[calc(100vw_-_200px)]",
-            className
+            className,
           )}
           open={isDialogOpen}
           onClose={closeDialog}
@@ -112,7 +113,7 @@ export default function ImportUsersDialog({
                 file. To get started,{" "}
                 <Button
                   variant="link"
-                  to="/static/shelf.nu-example-import-users-from-content.csv"
+                  to="/static/epda-example-import-users-from-content.csv"
                   target="_blank"
                   download
                 >
@@ -132,8 +133,19 @@ export default function ImportUsersDialog({
                   You must use <b>, (comma)</b> as a delimiter in your CSV file.
                 </li>
                 <li>
-                  Only valid roles are <b>ADMIN</b>, <b>BASE</b> and{" "}
-                  <b>SELF_SERVICE</b>. Role column is case-sensitive.
+                  {/* Driven by the shared assignable-role list so this can
+                      never drift from what the server actually accepts. */}
+                  Valid roles are{" "}
+                  {ASSIGNABLE_ORGANIZATION_ROLES.map((role, index) => (
+                    <span key={role}>
+                      {index > 0 &&
+                        (index === ASSIGNABLE_ORGANIZATION_ROLES.length - 1
+                          ? " and "
+                          : ", ")}
+                      <b>{role}</b>
+                    </span>
+                  ))}
+                  . Role column is case-sensitive.
                 </li>
                 <li>
                   Each row represents a new user to be invited. Ensure the email

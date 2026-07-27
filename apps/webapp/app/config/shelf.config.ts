@@ -24,6 +24,8 @@ export const config: Config = {
   },
   faviconPath: "/static/favicon.ico",
   emailPrimaryColor: "#044E8B",
+  appName: "EPDA Assets",
+  appIdentifier: "EPDA",
   showHowDidYouFindUs: SHOW_HOW_DID_YOU_FIND_US || false,
   collectBusinessIntel:
     COLLECT_BUSINESS_INTEL || SHOW_HOW_DID_YOU_FIND_US || false,

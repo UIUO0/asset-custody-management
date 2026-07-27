@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import type { AuditStatus } from "@prisma/client";
 import { AlertTriangleIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Form } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -57,6 +58,7 @@ export function EditAuditDialog({
   onClose,
   actionData,
 }: EditAuditDialogProps) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const zo = useZorm("EditAudit", EditAuditSchema);
 
@@ -118,8 +120,8 @@ export function EditAuditDialog({
             <div className="py-4 pe-6">
               <Input
                 name={nameField}
-                label="Audit name"
-                placeholder="Quarterly warehouse audit"
+                label={t("audits.auditName")}
+                placeholder={t("audits.auditNamePlaceholder")}
                 defaultValue={audit.name}
                 error={nameError || actionData?.error}
                 required
@@ -131,7 +133,7 @@ export function EditAuditDialog({
               <Input
                 name={descriptionField}
                 label="Description"
-                placeholder="Add context that will help auditors (optional)."
+                placeholder={t("audits.descriptionHint")}
                 inputType="textarea"
                 rows={5}
                 defaultValue={audit.description || ""}
@@ -192,7 +194,7 @@ export function EditAuditDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={disabled}>
-              {disabled ? "Saving..." : "Save changes"}
+              {disabled ? "Saving..." : t("common.save")}
             </Button>
           </div>
         </Form>

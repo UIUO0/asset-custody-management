@@ -17,6 +17,7 @@
 import type React from "react";
 import type { ConsumptionType } from "@prisma/client";
 import { TriangleAlertIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { Card } from "~/components/shared/card";
 import {
@@ -126,6 +127,8 @@ function OverviewRow({
   value: React.ReactNode;
   warning?: boolean;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 last:border-b-0">
       <span className="text-[14px] text-gray-600">{label}</span>
@@ -137,9 +140,7 @@ function OverviewRow({
                 <TriangleAlertIcon className="size-4 text-amber-500" />
               </TooltipTrigger>
               <TooltipContent side="left">
-                <p className="text-xs">
-                  Low stock — the workspace owner will be notified.
-                </p>
+                <p className="text-xs">{t("quantity.lowStockTooltip")}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -177,6 +178,7 @@ export function QuantityOverviewCard({
   canUpdate = false,
   className,
 }: QuantityOverviewCardProps) {
+  const { t } = useTranslation();
   const qty = quantity ?? 0;
   const unit = unitOfMeasure || null;
   const reserved = reservedQuantity ?? 0;
@@ -197,17 +199,17 @@ export function QuantityOverviewCard({
   /** Human-readable behavior label */
   const behaviorLabel =
     consumptionType === "ONE_WAY"
-      ? "Used up (one-way)"
+      ? t("quantity.usedUpOneWay")
       : consumptionType === "TWO_WAY"
-      ? "Returnable (two-way)"
-      : "—";
+      ? t("quantity.returnableTwoWay")
+      : t("quantity.notApplicable");
 
   return (
     <Card className={tw("my-3 p-0", className)}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
         <h3 className="text-[14px] font-semibold text-gray-900">
-          Quantity Overview
+          {t("quantity.overviewTitle")}
         </h3>
         {canUpdate ? (
           <QuickAdjustDialog
@@ -224,9 +226,12 @@ export function QuantityOverviewCard({
       </div>
 
       {/* Detail rows */}
-      <OverviewRow label="Total quantity" value={formatWithUnit(qty, unit)} />
       <OverviewRow
-        label="Available"
+        label={t("quantity.totalQuantity")}
+        value={formatWithUnit(qty, unit)}
+      />
+      <OverviewRow
+        label={t("quantity.available")}
         value={formatWithUnit(available, unit)}
         warning={isLowStock}
       />
@@ -236,7 +241,10 @@ export function QuantityOverviewCard({
           to any kit. The detailed per-kit breakdown lives in the dedicated
           "Included in kits" card. */}
       {inKits > 0 ? (
-        <OverviewRow label="In kits" value={formatWithUnit(inKits, unit)} />
+        <OverviewRow
+          label={t("quantity.inKits")}
+          value={formatWithUnit(inKits, unit)}
+        />
       ) : null}
       {/* "In locations" mirrors "In kits": only renders when > 0 so
           assets with no placements stay uncluttered. Always sits next
@@ -245,34 +253,43 @@ export function QuantityOverviewCard({
           "Placed at locations" card. */}
       {inLocations > 0 ? (
         <OverviewRow
-          label="In locations"
+          label={t("quantity.inLocations")}
           value={formatWithUnit(inLocations, unit)}
         />
       ) : null}
       {inLocations > 0 && unplaced > 0 ? (
-        <OverviewRow label="Unplaced" value={formatWithUnit(unplaced, unit)} />
+        <OverviewRow
+          label={t("quantity.unplaced")}
+          value={formatWithUnit(unplaced, unit)}
+        />
       ) : null}
-      <OverviewRow label="In custody" value={formatWithUnit(inCustody, unit)} />
+      <OverviewRow
+        label={t("quantity.inCustody")}
+        value={formatWithUnit(inCustody, unit)}
+      />
       {reserved > 0 ? (
         <OverviewRow
-          label="Reserved (bookings)"
+          label={t("quantity.reservedBookings")}
           value={formatWithUnit(reserved, unit)}
         />
       ) : null}
       {checkedOut > 0 ? (
         <OverviewRow
-          label="Checked out (bookings)"
+          label={t("quantity.checkedOutBookings")}
           value={formatWithUnit(checkedOut, unit)}
         />
       ) : null}
-      <OverviewRow label="Unit of measure" value={unit ?? "—"} />
+      <OverviewRow
+        label={t("quantity.unitOfMeasure")}
+        value={unit ?? t("quantity.notApplicable")}
+      />
       {minQuantity != null ? (
         <OverviewRow
-          label="Min quantity (alert)"
+          label={t("quantity.minQuantityAlert")}
           value={formatWithUnit(minQuantity, unit)}
         />
       ) : null}
-      <OverviewRow label="Behavior" value={behaviorLabel} />
+      <OverviewRow label={t("quantity.behavior")} value={behaviorLabel} />
     </Card>
   );
 }

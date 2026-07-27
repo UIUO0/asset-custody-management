@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Prisma } from "@prisma/client";
 import { MapPinIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { StartAuditFromContextDialog } from "~/components/audit/start-audit-from-context-dialog";
@@ -53,6 +54,7 @@ export default function ActionsDropdown({
 }
 
 function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
+  const { t } = useTranslation();
   const { kit } = useLoaderData<typeof loader>();
   const kitCanBeReleased = kit.custody;
   const kitIsCheckedOut = kit.status === "CHECKED_OUT";
@@ -70,7 +72,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
   // they still don't block.
   const someAssetIsNotAvailable = kit.assetKits.some(
     (ak) =>
-      ak.asset.type !== "QUANTITY_TRACKED" && ak.asset.status !== "AVAILABLE"
+      ak.asset.type !== "QUANTITY_TRACKED" && ak.asset.status !== "AVAILABLE",
   );
 
   const { roles, isSelfService } = useUserRoleHelper();
@@ -95,7 +97,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -111,7 +113,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
         <DropdownMenuTrigger
           className={tw(
             "actions-dropdown hidden sm:flex",
-            fullWidth ? "w-full" : ""
+            fullWidth ? "w-full" : "",
           )}
           onClick={() => setOpen(!open)}
           asChild
@@ -119,7 +121,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
           <Button
             type="button"
             variant="secondary"
-            aria-label="Actions Trigger"
+            aria-label={t("kitActions.actionsTrigger")}
           >
             <span className="flex items-center gap-2">
               Actions <ChevronRight className="chev" />
@@ -134,7 +136,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
           className="actions-dropdown sm:hidden"
           width="full"
           onClick={() => setOpen(true)}
-          aria-label="Actions Trigger"
+          aria-label={t("kitActions.actionsTrigger")}
         >
           <span className="flex items-center gap-2">
             Actions <ChevronRight className="chev" />
@@ -166,7 +168,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
                     width="full"
                     onClick={() => setOpen(false)}
                     disabled={disableReleaseForSelfService}
-                    aria-label="Release Custody"
+                    aria-label={t("kitActions.releaseCustody")}
                   >
                     <span className="flex items-center gap-1">
                       <Icon icon="release-custody" /> Release custody
@@ -181,7 +183,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
                     width="full"
                     onClick={() => setOpen(false)}
                     disabled={someAssetIsNotAvailable}
-                    aria-label="Assign/Take Custody"
+                    aria-label={t("kitActions.assignOrTakeCustody")}
                   >
                     <span className="flex items-center gap-2">
                       <Icon icon="assign-custody" />{" "}

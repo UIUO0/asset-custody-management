@@ -10,10 +10,12 @@ import type {
 } from "@prisma/client";
 import { AssetStatus, BookingStatus } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LinksFunction,
   LoaderFunctionArgs,
+  MetaFunction,
 } from "react-router";
 import {
   data,
@@ -67,6 +69,9 @@ import UnsavedChangesAlert from "~/components/unsaved-changes-alert";
 import { db } from "~/database/db.server";
 import { useSearchParams } from "~/hooks/search-params";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
 import { getPaginatedAndFilterableAssets } from "~/modules/asset/service.server";
 import type { AssetsFromViewItem } from "~/modules/asset/types";
@@ -166,7 +171,14 @@ export type AssetWithBooking = Asset & {
   barcodes: { id: string; type: BarcodeType; value: string }[];
 };
 
-export const meta = () => [{ title: appendToMetaTitle("Manage assets") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.bookings.manageAssetsTitle) }];
+};
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -178,11 +190,11 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ bookingId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
-    const { organizationId, userOrganizations, isSelfServiceOrBase } =
+    const { organizationId, userOrganizations, isScopedToOwnRecords } =
       await requirePermission({
         userId: authSession?.userId,
         request,
@@ -295,13 +307,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         : [[], [], []];
 
     const inKitsByAsset = new Map(
-      assetKitSums.map((k) => [k.assetId, k._sum.quantity ?? 0])
+      assetKitSums.map((k) => [k.assetId, k._sum.quantity ?? 0]),
     );
     const custodyByAsset = new Map(
-      custodySums.map((c) => [c.assetId, c._sum.quantity ?? 0])
+      custodySums.map((c) => [c.assetId, c._sum.quantity ?? 0]),
     );
     const reservedByAsset = new Map(
-      bookingSums.map((b) => [b.assetId, b._sum.quantity ?? 0])
+      bookingSums.map((b) => [b.assetId, b._sum.quantity ?? 0]),
     );
 
     /** Attach availableQuantity and filter out fully-allocated qty assets */
@@ -327,7 +339,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     /** Self service can only manage assets for bookings that are DRAFT */
     const cantManageAssetsAsBaseOrSelfService =
-      isSelfServiceOrBase && booking.status !== BookingStatus.DRAFT;
+      isScopedToOwnRecords && booking.status !== BookingStatus.DRAFT;
 
     /** Changing assets is not allowed at this stage */
     const isNotAllowedStatus = (
@@ -344,7 +356,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         label: "Booking",
         message: isNotAllowedStatus
           ? "Changing of assets is not allowed for current status of booking."
-          : isSelfServiceOrBase
+          : isScopedToOwnRecords
           ? "You are unable to add assets at this point because the booking is already reserved. Cancel this booking and create another one if you need to make changes."
           : "Changing of assets is not allowed for current status of booking.",
         shouldBeCaptured: false,
@@ -352,13 +364,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           booking,
           userId,
           organizationId,
-          isSelfServiceOrBase,
+          isScopedToOwnRecords,
         },
       });
     }
 
     const bookingKitIds = getKitIdsByAssets(
-      booking.bookingAssets.map((ba) => ba.asset)
+      booking.bookingAssets.map((ba) => ba.asset),
     );
 
     /**
@@ -371,7 +383,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
      * is unaffected by this filter.
      */
     booking.bookingAssets = booking.bookingAssets.filter(
-      (ba) => ba.assetKitId === null
+      (ba) => ba.assetKitId === null,
     );
 
     /**
@@ -385,15 +397,19 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       booking,
     });
 
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     return payload({
       header: {
-        title: `Add assets for '${booking?.name}'`,
-        subHeading: "Fill up the booking with the assets of your choice",
+        title: t("bookings.addAssetsForTitle", { name: booking?.name }),
+        subHeading: t("bookings.addAssetsSubHeading"),
       },
-      searchFieldLabel: "Search assets",
+      searchFieldLabel: t("search.assetsLabel"),
       searchFieldTooltip: {
-        title: "Search your asset database",
-        text: "Search assets based on asset name or description, category, tag, location, custodian name. Simply separate your keywords by a space: 'Laptop lenovo 2020'.",
+        title: t("search.assetsTitle"),
+        text: t("search.assetsText"),
       },
       showSidebar: true,
       noScroll: true,
@@ -435,7 +451,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
  */
 const quantitiesSchema = z.record(
   z.string(),
-  z.number().int().positive().max(1_000_000)
+  z.number().int().positive().max(1_000_000),
 );
 
 export async function action({ context, request, params }: ActionFunctionArgs) {
@@ -446,7 +462,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   });
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId: authSession?.userId,
       request,
       entity: PermissionEntity.booking,
@@ -469,7 +485,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       }),
       {
         additionalData: { userId, bookingId },
-      }
+      },
     );
 
     /**
@@ -605,7 +621,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     /** Self service can only manage assets for bookings that are DRAFT */
     const cantManageAssetsAsBase =
-      isSelfServiceOrBase && booking.status !== BookingStatus.DRAFT;
+      isScopedToOwnRecords && booking.status !== BookingStatus.DRAFT;
 
     /** Changing assets is not allowed at this stage */
     const notAllowedStatus: BookingStatus[] = [
@@ -618,7 +634,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       throw new ShelfError({
         cause: null,
         label: "Booking",
-        message: isSelfServiceOrBase
+        message: isScopedToOwnRecords
           ? "You are unable to manage assets at this point because the booking is already reserved. Cancel this booking and create another one if you need to make changes."
           : "Changing of assets is not allowed for current status of booking.",
         shouldBeCaptured: false,
@@ -629,7 +645,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     // Filter out existing assets to get only newly added ones
     const newAssetIds = assetIds.filter(
-      (assetId) => !existingAssetIds.includes(assetId)
+      (assetId) => !existingAssetIds.includes(assetId),
     );
 
     // Get partial check-in details to determine actual availability using context-aware status
@@ -650,7 +666,11 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     // These are effectively available for other bookings
     const checkedOutAssets = potentiallyCheckedOutAssets.filter(
       (asset) =>
-        !isAssetPartiallyCheckedIn(asset, partialCheckinDetails, booking.status)
+        !isAssetPartiallyCheckedIn(
+          asset,
+          partialCheckinDetails,
+          booking.status,
+        ),
     );
 
     if (
@@ -679,13 +699,13 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
      * activity notes without re-querying the asset table.
      */
     const existingBookingAssetMap = new Map(
-      booking.bookingAssets.map((ba) => [ba.assetId, ba])
+      booking.bookingAssets.map((ba) => [ba.assetId, ba]),
     );
 
     const actor = wrapUserLinkForNote(user!);
     const bookingLink = wrapLinkForNote(
       `/bookings/${booking.id}`,
-      booking.name
+      booking.name,
     );
 
     /** We only update the booking if there are NEW assets to add */
@@ -765,7 +785,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
               assetIds: [assetId],
               organizationId,
             });
-          })
+          }),
         );
 
         const assetListContent = wrapAssetsWithDataForNote(newAssets, "added");
@@ -790,7 +810,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             newAssetIds,
             newQuantities,
             context: "manage-assets add-note creation",
-          })
+          }),
         );
       }
     }
@@ -833,7 +853,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         _sum: { quantity: true },
       });
       const loggedByAsset = new Map<string, number>(
-        loggedSums.map((row) => [row.assetId, row._sum.quantity ?? 0])
+        loggedSums.map((row) => [row.assetId, row._sum.quantity ?? 0]),
       );
       for (const assetId of changedAssetIds) {
         const logged = loggedByAsset.get(assetId) ?? 0;
@@ -888,7 +908,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             };
           })
           .filter(
-            (a): a is NonNullable<typeof a> => a !== null && a.asset !== null
+            (a): a is NonNullable<typeof a> => a !== null && a.asset !== null,
           );
 
         await Promise.all(
@@ -899,8 +919,8 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
               userId: authSession.userId,
               assetIds: [adj.assetId],
               organizationId,
-            })
-          )
+            }),
+          ),
         );
 
         const bookingAdjustSummary = adjustments
@@ -910,7 +930,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
                 adj.asset!.id
               }" text="${adj.asset!.title.replace(/"/g, "&quot;")}" /%} (**${
                 adj.from
-              }** → **${adj.to}**)`
+              }** → **${adj.to}**)`,
           )
           .join(", ");
         await createSystemBookingNote({
@@ -926,7 +946,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             changedAssetIds,
             changedQuantities,
             context: "manage-assets adjust-note creation",
-          })
+          }),
         );
       }
     }
@@ -994,6 +1014,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
  * specifying how many units to reserve for QUANTITY_TRACKED assets.
  */
 export default function AddAssetsToNewBooking() {
+  const { t } = useTranslation();
   const {
     booking,
     bookingKitIds,
@@ -1049,7 +1070,7 @@ export default function AddAssetsToNewBooking() {
     (assetId: string, quantity: number) => {
       setQuantities((prev) => ({ ...prev, [assetId]: quantity }));
     },
-    []
+    [],
   );
 
   /** Removes a quantity entry when an asset is deselected */
@@ -1082,7 +1103,7 @@ export default function AddAssetsToNewBooking() {
    */
   const bookingAssets = useMemo(
     () => booking.bookingAssets.map((ba) => ba.asset),
-    [booking.bookingAssets]
+    [booking.bookingAssets],
   );
 
   const removedAssets = useMemo(
@@ -1090,10 +1111,10 @@ export default function AddAssetsToNewBooking() {
       bookingAssets.filter(
         (asset) =>
           !selectedBulkItems.some(
-            (selectedItem) => selectedItem.id === asset.id
-          )
+            (selectedItem) => selectedItem.id === asset.id,
+          ),
       ),
-    [bookingAssets, selectedBulkItems]
+    [bookingAssets, selectedBulkItems],
   );
 
   /**
@@ -1182,7 +1203,7 @@ export default function AddAssetsToNewBooking() {
    */
   const totalModelRequestUnits = useMemo(
     () => modelRequests.reduce((acc, req) => acc + req.quantity, 0),
-    [modelRequests]
+    [modelRequests],
   );
 
   return (
@@ -1212,15 +1233,17 @@ export default function AddAssetsToNewBooking() {
           <TabsTrigger
             className="flex-1 gap-x-2"
             value="assets"
-            aria-label={`Assets tab${
+            aria-label={
               selectedBulkItemsCount > 0
-                ? ` (${
-                    hasSelectedAllItems ? totalItems : selectedBulkItemsCount
-                  } selected)`
-                : ""
-            }`}
+                ? t("bookings.assetsTabAriaSelected", {
+                    count: hasSelectedAllItems
+                      ? totalItems
+                      : selectedBulkItemsCount,
+                  })
+                : t("bookings.assetsTabAria")
+            }
           >
-            Assets{" "}
+            {t("nav.assets")}{" "}
             {selectedBulkItemsCount > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {hasSelectedAllItems ? totalItems : selectedBulkItemsCount}
@@ -1230,13 +1253,15 @@ export default function AddAssetsToNewBooking() {
           <TabsTrigger
             className="flex-1 gap-x-2"
             value="kits"
-            aria-label={`Kits tab${
+            aria-label={
               bookingKitIds.length > 0
-                ? ` (${bookingKitIds.length} selected)`
-                : ""
-            }`}
+                ? t("bookings.kitsTabAriaSelected", {
+                    count: bookingKitIds.length,
+                  })
+                : t("bookings.kitsTabAria")
+            }
           >
-            Kits
+            {t("nav.kits")}
             {bookingKitIds.length > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {bookingKitIds.length}
@@ -1247,13 +1272,15 @@ export default function AddAssetsToNewBooking() {
             <TabsTrigger
               className="flex-1 gap-x-2"
               value="models"
-              aria-label={`Models tab${
+              aria-label={
                 totalModelRequestUnits > 0
-                  ? ` (${totalModelRequestUnits} reserved)`
-                  : ""
-              }`}
+                  ? t("bookings.modelsTabAriaReserved", {
+                      count: totalModelRequestUnits,
+                    })
+                  : t("bookings.modelsTabAria")
+              }
             >
-              Models
+              {t("bookings.tabModels")}
               {totalModelRequestUnits > 0 ? (
                 <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                   {totalModelRequestUnits}
@@ -1282,36 +1309,37 @@ export default function AddAssetsToNewBooking() {
             <DynamicDropdown
               trigger={
                 <div className="flex h-6 cursor-pointer items-center gap-2">
-                  Categories{" "}
+                  {t("nav.categories")}{" "}
                   <ChevronRight className="hidden rotate-90 md:inline" />
                 </div>
               }
               model={{ name: "category", queryKey: "name" }}
-              label="Filter by category"
-              placeholder="Search categories"
+              label={t("list.filterByCategory")}
+              placeholder={t("list.searchCategories")}
               initialDataKey="categories"
               countKey="totalCategories"
             />
             <DynamicDropdown
               trigger={
                 <div className="flex h-6 cursor-pointer items-center gap-2">
-                  Tags <ChevronRight className="hidden rotate-90 md:inline" />
+                  {t("nav.tags")}{" "}
+                  <ChevronRight className="hidden rotate-90 md:inline" />
                 </div>
               }
               model={{ name: "tag", queryKey: "name" }}
-              label="Filter by tag"
+              label={t("list.filterByTag")}
               initialDataKey="tags"
               countKey="totalTags"
             />
             <DynamicDropdown
               trigger={
                 <div className="flex h-6 cursor-pointer items-center gap-2">
-                  Locations{" "}
+                  {t("nav.locations")}{" "}
                   <ChevronRight className="hidden rotate-90 md:inline" />
                 </div>
               }
               model={{ name: "location", queryKey: "name" }}
-              label="Filter by location"
+              label={t("list.filterByLocation")}
               initialDataKey="locations"
               countKey="totalLocations"
               renderItem={({ metadata }) => (
@@ -1345,7 +1373,7 @@ export default function AddAssetsToNewBooking() {
              * whether we are adding or removing it.
              */
             const isCurrentlySelected = selectedBulkItems.some(
-              (item) => item.id === asset.id
+              (item) => item.id === asset.id,
             );
 
             if (isCurrentlySelected) {
@@ -1360,10 +1388,10 @@ export default function AddAssetsToNewBooking() {
           }}
           emptyStateClassName="py-10"
           customEmptyStateContent={{
-            title: "You haven't added any assets yet.",
-            text: "What are you waiting for? Create your first asset now!",
+            title: t("assets.pickerEmptyTitle"),
+            text: t("assets.pickerEmptyText"),
             newButtonRoute: "/assets/new",
-            newButtonContent: "New asset",
+            newButtonContent: t("assets.newAsset"),
           }}
           extraItemComponentProps={{
             quantities,
@@ -1373,9 +1401,9 @@ export default function AddAssetsToNewBooking() {
           disableSelectAllItems
           headerChildren={
             <>
-              <Th>Category</Th>
-              <Th>Tags</Th>
-              <Th>Location</Th>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("assets.tags")}</Th>
+              <Th>{t("assets.location")}</Th>
             </>
           }
         />
@@ -1411,19 +1439,20 @@ export default function AddAssetsToNewBooking() {
       <footer
         className={tw(
           "mt-auto flex shrink-0 items-center border-t px-6 py-3",
-          activeTab === "assets" ? "justify-between" : "justify-end"
+          activeTab === "assets" ? "justify-between" : "justify-end",
         )}
       >
         {activeTab === "assets" ? (
           <p>
-            {hasSelectedAllItems ? totalItems : selectedBulkItemsCount} assets
-            selected
+            {t("bookings.assetsSelectedCount", {
+              count: hasSelectedAllItems ? totalItems : selectedBulkItemsCount,
+            })}
           </p>
         ) : null}
 
         <div className="flex gap-3">
           <Button variant="secondary" to={".."}>
-            Close
+            {t("common.close")}
           </Button>
           <Form method="post" ref={formRef}>
             {/* We create inputs for both the removed and selected assets, so we can compare and easily add/remove */}
@@ -1461,7 +1490,7 @@ export default function AddAssetsToNewBooking() {
                 value="addAssets"
                 disabled={isSearching}
               >
-                Confirm
+                {t("common.confirm")}
               </Button>
             ) : null}
           </Form>
@@ -1478,8 +1507,7 @@ export default function AddAssetsToNewBooking() {
           void submit(formRef.current);
         }}
       >
-        You have added some assets to the booking but haven't saved it yet. Do
-        you want to confirm adding those assets?
+        {t("bookings.unsavedAssetsAlert")}
       </UnsavedChangesAlert>
     </Tabs>
   );
@@ -1502,6 +1530,7 @@ const RowComponent = ({
     onQuantityChange?: (assetId: string, quantity: number) => void;
   };
 }) => {
+  const { t } = useTranslation();
   const selectedBulkItems = useAtomValue(selectedBulkItemsAtom);
   const currentOrganization = useCurrentOrganization();
   const checked = selectedBulkItems.some((asset) => asset.id === item.id);
@@ -1526,7 +1555,7 @@ const RowComponent = ({
                   thumbnailImage: item.thumbnailImage,
                   mainImageExpiration: item.mainImageExpiration,
                 }}
-                alt={`Image of ${item.title}`}
+                alt={t("bookings.assetImageAlt", { name: item.title })}
                 className="size-full rounded-[4px] border object-cover"
               />
             </div>
@@ -1551,8 +1580,9 @@ const RowComponent = ({
                       textColor={BADGE_COLORS.blue.text}
                       withDot={false}
                     >
-                      Qty tracked · {item.availableQuantity ?? item.quantity}{" "}
-                      available
+                      {t("bookings.qtyTrackedAvailable", {
+                        count: item.availableQuantity ?? item.quantity ?? 0,
+                      })}
                     </Badge>
                     <ConsumptionTypeBadge
                       consumptionType={item.consumptionType ?? null}
@@ -1597,7 +1627,7 @@ const RowComponent = ({
                 htmlFor={`qty-${item.id}`}
                 className="text-xs text-gray-500"
               >
-                Qty:
+                {t("bookings.qtyShort")}
               </label>
               <input
                 id={`qty-${item.id}`}
@@ -1610,12 +1640,14 @@ const RowComponent = ({
                     item.availableQuantity ?? item.quantity ?? Infinity;
                   const val = Math.max(
                     1,
-                    Math.min(Number(e.target.value) || 1, maxQty)
+                    Math.min(Number(e.target.value) || 1, maxQty),
                   );
                   extraProps?.onQuantityChange?.(item.id, val);
                 }}
                 className="h-8 w-16 rounded-md border border-gray-300 px-2 text-center text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                aria-label={`Quantity for ${item.title}`}
+                aria-label={t("bookings.quantityForAsset", {
+                  name: item.title,
+                })}
               />
               {(item.availableQuantity ?? item.quantity) != null ? (
                 <span className="text-xs text-gray-400">

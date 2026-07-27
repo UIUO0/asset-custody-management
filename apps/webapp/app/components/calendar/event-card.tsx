@@ -3,6 +3,7 @@ import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
 import { ArrowRightIcon, Boxes } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import { type CalendarExtendedProps } from "~/routes/_layout+/calendar";
 import { bookingStatusColorMap } from "~/utils/bookings";
 import { isOneDayEvent } from "~/utils/calendar";
@@ -137,7 +138,7 @@ export default function renderEventCard({ event }: EventCardProps) {
         // Clamp translateX to stay within parent bounds
         translateX = Math.max(
           maxTranslateLeft,
-          Math.min(maxTranslateRight, translateX)
+          Math.min(maxTranslateRight, translateX),
         );
       }
 
@@ -204,7 +205,7 @@ export default function renderEventCard({ event }: EventCardProps) {
         <div
           className={tw(
             "!hover:bg-purple-100 flex items-center gap-1 whitespace-normal bg-transparent lg:truncate",
-            event.extendedProps?.className
+            event.extendedProps?.className,
           )}
           style={{ color: colors.text }}
         >

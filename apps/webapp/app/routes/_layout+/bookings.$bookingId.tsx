@@ -1,5 +1,6 @@
 import { BookingStatus } from "@prisma/client";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
   redirect,
@@ -118,19 +119,20 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export const shouldRevalidate = skipRevalidationOnClientViewChange;
 
 export default function AssetDetailsPage() {
+  const { t } = useTranslation();
   const name = useAtomValue(dynamicTitleAtom);
   const hasName = name !== "";
   const { booking } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
 
   const items = [
-    { to: "overview", content: "Overview" },
+    { to: "overview", content: t("bookings.tabOverview") },
     ...(userHasPermission({
       roles,
       entity: PermissionEntity.bookingNote,
       action: PermissionAction.read,
     })
-      ? [{ to: "activity", content: "Activity" }]
+      ? [{ to: "activity", content: t("bookings.tabActivity") }]
       : []),
   ];
   const matches = useMatches();
@@ -185,6 +187,7 @@ const AddToCalendar = ({
   /** Only the booking status is needed to decide if the action is allowed. */
   booking: { status: BookingStatus };
 }) => {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const isArchived = booking.status === BookingStatus.ARCHIVED;
   return (
@@ -201,16 +204,16 @@ const AddToCalendar = ({
               icon="calendar"
               className={"whitespace-nowrap"}
             >
-              Add to calendar
+              {t("bookings.addToCalendar")}
             </Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">
             <p className="text-xs">
               {isArchived
-                ? "Archived bookings can't be added to a calendar"
+                ? t("bookings.addToCalendarArchived")
                 : disabled
-                ? "Not possible to add to calendar due to booking status"
-                : "Download this booking as a calendar event"}
+                ? t("bookings.addToCalendarDisabled")
+                : t("bookings.addToCalendarHint")}
             </p>
           </TooltipContent>
         </Tooltip>

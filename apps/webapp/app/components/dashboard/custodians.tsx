@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
@@ -29,6 +30,7 @@ const PLACEHOLDER_ROW_KEYS = [
 ] as const;
 
 export default function CustodiansList() {
+  const { t } = useTranslation();
   const { custodiansData } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
   const currentOrganization = useCurrentOrganization();
@@ -60,9 +62,9 @@ export default function CustodiansList() {
       {isPersonal ? (
         <div className="flex flex-1 items-center justify-center p-4">
           <PremiumFeatureTeaser
-            headline="Track who has what"
+            headline={t("dashboard.trackWhoHasWhat")}
             description="Add non-registered members to assign asset custody, or create a Team workspace to invite users with full access."
-            ctaLabel="Add a member"
+            ctaLabel={t("dashboard.addMember")}
             ctaTo="/settings/team/nrm"
             secondaryLabel="Or create a Team workspace →"
             secondaryTo="/account-details/workspace"
@@ -99,17 +101,17 @@ export default function CustodiansList() {
                   <Tr key={placeholderKey} className="h-[72px]">
                     {""}
                   </Tr>
-                )
+                ),
               )}
           </tbody>
         </Table>
       ) : (
         <div className="flex flex-1 items-center justify-center p-4">
           <DashboardEmptyState
-            text="No assets in custody"
-            subText="Assign custody of assets to team members to track who has what."
+            text={t("dashboard.noAssetsInCustody")}
+            subText={t("dashboard.assignCustodyHint")}
             ctaTo="/assets"
-            ctaText="Go to assets"
+            ctaText={t("dashboard.goToAssets")}
           />
         </div>
       )}

@@ -55,7 +55,7 @@ export const sendAuditTrialWelcomeEmail = async ({
           "Something went wrong while sending the audit trial welcome email",
         additionalData: { email },
         label: "User",
-      })
+      }),
     );
   }
 };
@@ -84,7 +84,7 @@ ${
 If you have any questions, feel free to reach out to us at ${SUPPORT_EMAIL}. We're happy to help!
 
 Happy auditing,
-The Shelf Team
+The ${config.appName} Team
 `;
 
 function AuditTrialWelcomeEmailTemplate({
@@ -170,7 +170,7 @@ function AuditTrialWelcomeEmailTemplate({
 
           <Text style={{ marginTop: "24px", ...styles.p }}>
             Happy auditing, <br />
-            The Shelf Team
+            The {config.appName} Team
           </Text>
         </div>
       </Container>
@@ -189,5 +189,5 @@ export const auditTrialWelcomeEmailHtml = ({
     <AuditTrialWelcomeEmailTemplate
       firstName={firstName}
       hasPaymentMethod={hasPaymentMethod}
-    />
+    />,
   );

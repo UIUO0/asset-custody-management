@@ -161,7 +161,7 @@ describe("manage-assets route validation", () => {
     // Setup default mocks
     vi.mocked(rolesServer.requirePermission).mockResolvedValue({
       organizationId: "org123",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       organizations: [],
       currentOrganization: {} as any,
       role: {} as any,
@@ -226,7 +226,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Should return error response for checked out assets
@@ -240,12 +240,12 @@ describe("manage-assets route validation", () => {
       expect(bookingAssets.isAssetPartiallyCheckedIn).toHaveBeenCalledWith(
         mockAssets[0],
         {},
-        "ONGOING"
+        "ONGOING",
       );
       expect(bookingAssets.isAssetPartiallyCheckedIn).toHaveBeenCalledWith(
         mockAssets[1],
         {},
-        "ONGOING"
+        "ONGOING",
       );
     });
 
@@ -269,8 +269,8 @@ describe("manage-assets route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
 
       // Should not call validation helper since no newly added assets
@@ -314,7 +314,7 @@ describe("manage-assets route validation", () => {
         {
           checkedInAssetIds: ["asset3"],
           partialCheckinDetails: mockPartialCheckinDetails,
-        }
+        },
       );
 
       // Mock that asset is partially checked in (available for other bookings)
@@ -331,14 +331,14 @@ describe("manage-assets route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
 
       expect(bookingAssets.isAssetPartiallyCheckedIn).toHaveBeenCalledWith(
         mockAssets[0],
         mockPartialCheckinDetails,
-        "ONGOING"
+        "ONGOING",
       );
     });
 
@@ -375,7 +375,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       assertIsDataWithResponseInit(response);
@@ -402,8 +402,8 @@ describe("manage-assets route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
 
       // Should not call validation helper since asset is available
@@ -448,8 +448,8 @@ describe("manage-assets route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
     });
 
@@ -488,7 +488,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       assertIsDataWithResponseInit(response);
@@ -530,7 +530,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       assertIsDataWithResponseInit(response);
@@ -574,7 +574,7 @@ describe("manage-assets route validation", () => {
         {
           checkedInAssetIds: ["asset3"],
           partialCheckinDetails: mockPartialCheckinDetails,
-        }
+        },
       );
       vi.mocked(bookingAssets.isAssetPartiallyCheckedIn).mockReturnValue(true);
 
@@ -587,14 +587,14 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Verify helper is called with correct parameters
       expect(bookingAssets.isAssetPartiallyCheckedIn).toHaveBeenCalledWith(
         mockAssets[0],
         mockPartialCheckinDetails,
-        "ONGOING"
+        "ONGOING",
       );
     });
   });
@@ -630,7 +630,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Verify updateBookingAssets is called with new assets only.
@@ -676,7 +676,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Verify removeAssets is called. `assets` is the post-Phase-3c array
@@ -710,7 +710,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Should not call updateBookingAssets when no new assets
@@ -754,7 +754,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       assertIsDataWithResponseInit(response);
@@ -828,7 +828,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // The guardrail throws ShelfError(status: 400); the outer try/catch in
@@ -868,7 +868,7 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(bookingService.updateBookingAssets).toHaveBeenCalledWith(
@@ -877,7 +877,7 @@ describe("manage-assets route validation", () => {
           organizationId: "org123",
           assetIds: ["asset-pens"],
           quantities: { "asset-pens": 6 },
-        })
+        }),
       );
 
       // Reset between sub-cases so the second assertion isn't polluted by
@@ -897,13 +897,13 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(bookingService.updateBookingAssets).toHaveBeenCalledWith(
         expect.objectContaining({
           quantities: { "asset-pens": 12 },
-        })
+        }),
       );
     });
   });
@@ -937,13 +937,13 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(response).toBeInstanceOf(Response);
       expect((response as Response).status).toBe(302);
       expect((response as Response).headers.get("Location")).toBe(
-        manageKitsUrl
+        manageKitsUrl,
       );
     });
 
@@ -961,13 +961,13 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(response).toBeInstanceOf(Response);
       expect((response as Response).status).toBe(302);
       expect((response as Response).headers.get("Location")).toBe(
-        "/bookings/booking123"
+        "/bookings/booking123",
       );
     });
 
@@ -989,13 +989,13 @@ describe("manage-assets route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(response).toBeInstanceOf(Response);
       expect((response as Response).status).toBe(302);
       expect((response as Response).headers.get("Location")).toBe(
-        "/bookings/booking123"
+        "/bookings/booking123",
       );
     });
   });
@@ -1096,7 +1096,7 @@ describe("manage-assets loader — Models tab payload", () => {
     vi.mocked(rolesServer.requirePermission).mockResolvedValue({
       organizationId: "org123",
       userOrganizations: [],
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       organizations: [],
       currentOrganization: {} as any,
       role: {} as any,
@@ -1111,18 +1111,18 @@ describe("manage-assets loader — Models tab payload", () => {
     });
 
     vi.mocked(assetService.getPaginatedAndFilterableAssets).mockResolvedValue(
-      mockPaginatedAssets as any
+      mockPaginatedAssets as any,
     );
     vi.mocked(bookingService.getBooking).mockResolvedValue(mockLoaderBooking);
     vi.mocked(bookingService.getKitIdsByAssets).mockReturnValue([]);
     vi.mocked(modelRequestService.getBookingModelTabData).mockResolvedValue(
-      mockModelTabData as any
+      mockModelTabData as any,
     );
   });
 
   it("wires the helper's output through to the loader payload, unchanged", async () => {
     const result = await loader(
-      createLoaderArgs({ context: mockContext, params: mockParams })
+      createLoaderArgs({ context: mockContext, params: mockParams }),
     );
 
     expect(modelRequestService.getBookingModelTabData).toHaveBeenCalledWith({
@@ -1151,7 +1151,7 @@ describe("manage-assets loader — Models tab payload", () => {
     });
 
     const result = await loader(
-      createLoaderArgs({ context: mockContext, params: mockParams })
+      createLoaderArgs({ context: mockContext, params: mockParams }),
     );
 
     expect(result).toMatchObject({

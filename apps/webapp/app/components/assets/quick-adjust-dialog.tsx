@@ -14,6 +14,7 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
@@ -70,6 +71,7 @@ export function QuickAdjustDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: QuickAdjustDialogProps) {
+  const { t } = useTranslation();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -81,7 +83,7 @@ export function QuickAdjustDialog({
         setInternalOpen(v);
       }
     },
-    [isControlled, controlledOnOpenChange]
+    [isControlled, controlledOnOpenChange],
   );
   /** Client-side validation error for the quantity field */
   const [quantityError, setQuantityError] = useState<string | null>(null);
@@ -95,7 +97,7 @@ export function QuickAdjustDialog({
   // hook-driven ref is the source of truth here.
   const quantityInputRef = useAutoFocus<HTMLInputElement>({ when: open });
 
-  const unitLabel = unitOfMeasure || "units";
+  const unitLabel = unitOfMeasure || t("quantity.units");
   const isSubmitting = isFormProcessing(fetcher.state);
 
   /** Server-side error message from the action response */
@@ -135,7 +137,11 @@ export function QuickAdjustDialog({
       qty > availableQuantity
     ) {
       setQuantityError(
-        `Cannot remove ${qty} ${unitLabel}. Only ${availableQuantity} available (the rest is in custody).`
+        t("quantity.cannotRemoveMoreThanAvailable", {
+          requested: qty,
+          unit: unitLabel,
+          available: availableQuantity,
+        }),
       );
       return;
     }
@@ -158,10 +164,9 @@ export function QuickAdjustDialog({
 
       <AlertDialogContent onEscapeKeyDown={() => setOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Adjust Quantity</AlertDialogTitle>
+          <AlertDialogTitle>{t("quantity.adjustQuantity")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Add or remove stock for this asset. Enter the number of {unitLabel}{" "}
-            to adjust.
+            {t("quantity.adjustDescription", { unit: unitLabel })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -177,8 +182,8 @@ export function QuickAdjustDialog({
               ref={quantityInputRef}
               name="quantity"
               type="number"
-              label={`Quantity (${unitLabel})`}
-              placeholder="Enter quantity"
+              label={t("quantity.quantityWithUnit", { unit: unitLabel })}
+              placeholder={t("quantity.enterQuantity")}
               min={1}
               step={1}
               required
@@ -190,8 +195,8 @@ export function QuickAdjustDialog({
             <Input
               name="note"
               inputType="textarea"
-              label="Note (optional)"
-              placeholder="Reason for adjustment..."
+              label={t("quantity.noteOptional")}
+              placeholder={t("quantity.adjustReasonPlaceholder")}
               rows={3}
             />
           </div>
@@ -200,7 +205,7 @@ export function QuickAdjustDialog({
         <AlertDialogFooter className="mt-4 ">
           <AlertDialogCancel asChild>
             <Button type="button" variant="secondary" disabled={isSubmitting}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
 
@@ -210,7 +215,7 @@ export function QuickAdjustDialog({
             onClick={() => handleSubmit("subtract")}
             disabled={disabled}
           >
-            {isSubmitting ? "Removing..." : "Remove"}
+            {isSubmitting ? t("quantity.removing") : t("common.remove")}
           </Button>
 
           <Button
@@ -219,7 +224,7 @@ export function QuickAdjustDialog({
             onClick={() => handleSubmit("add")}
             disabled={disabled}
           >
-            {isSubmitting ? "Adding..." : "Add"}
+            {isSubmitting ? t("quantity.adding") : t("common.add")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

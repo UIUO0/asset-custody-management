@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { z } from "zod";
 import {
@@ -77,7 +78,7 @@ type AuditDrawerProps = {
   portalContainer?: HTMLElement;
   onScanRemoved?: (assetId: string) => void;
   getAdditionalBlockers?: (
-    args: AdditionalBlockerFactoryArgs
+    args: AdditionalBlockerFactoryArgs,
   ) => BlockerConfig[];
   emptyStateContent?: (args: {
     expanded: boolean;
@@ -113,7 +114,7 @@ function AuditDrawerFooter({
     <div
       className={tw(
         "flex w-full gap-2 border-t border-gray-200 bg-white p-3",
-        expanded && "sticky bottom-0"
+        expanded && "sticky bottom-0",
       )}
     >
       {/* Close button */}
@@ -147,6 +148,7 @@ export function AuditDrawer({
   getAdditionalBlockers,
   emptyStateContent,
 }: AuditDrawerProps) {
+  const { t } = useTranslation();
   const items = useAtomValue(scannedItemsAtom);
   const auditSession = useAtomValue(auditSessionAtom);
   const duplicateScan = useAtomValue(lastDuplicateScanAtom);
@@ -196,12 +198,12 @@ export function AuditDrawer({
 
   const expectedAssetIds = useMemo(
     () => new Set(expectedAssets.map((asset) => asset.id)),
-    [expectedAssets]
+    [expectedAssets],
   );
   const assetTypeBadgeClass = tw(
     "inline-block bg-gray-50 px-[6px] py-[2px]",
     "rounded-md border border-gray-200",
-    "text-xs text-gray-700"
+    "text-xs text-gray-700",
   );
 
   const scannedAssets = useMemo(
@@ -219,7 +221,7 @@ export function AuditDrawer({
               : ("unexpected" as const),
           } satisfies AuditScannedItem;
         }),
-    [items, expectedAssetIds]
+    [items, expectedAssetIds],
   );
 
   // Get IDs of scanned assets for quick lookup
@@ -228,19 +230,19 @@ export function AuditDrawer({
       new Set(
         Object.values(items)
           .filter((item) => !!item && item.data && item.type === "asset")
-          .map((item) => (item!.data as AssetFromQr).id)
+          .map((item) => (item!.data as AssetFromQr).id),
       ),
-    [items]
+    [items],
   );
 
   const foundAssets = scannedAssets.filter(
-    (asset) => asset.auditStatus === "found"
+    (asset) => asset.auditStatus === "found",
   );
   const unexpectedAssets = scannedAssets.filter(
-    (asset) => asset.auditStatus === "unexpected"
+    (asset) => asset.auditStatus === "unexpected",
   );
   const missingAssets = expectedAssets.filter(
-    (asset) => !foundAssets.some((found) => found.id === asset.id)
+    (asset) => !foundAssets.some((found) => found.id === asset.id),
   );
 
   const stats: AuditDrawerStats = useMemo(
@@ -255,7 +257,7 @@ export function AuditDrawer({
       foundAssets.length,
       missingAssets.length,
       unexpectedAssets.length,
-    ]
+    ],
   );
 
   const formData = useMemo(() => {
@@ -367,7 +369,7 @@ export function AuditDrawer({
 
       removeItem(qrId);
     },
-    [auditSession, items, onScanRemoved, removeItem, removeScanFetcher]
+    [auditSession, items, onScanRemoved, removeItem, removeScanFetcher],
   );
 
   const renderItem = (qrId: string, item: any) => (
@@ -412,19 +414,17 @@ export function AuditDrawer({
         const availabilityConfigs = [
           {
             condition: isExpected,
-            badgeText: "Expected",
-            tooltipTitle: "Expected asset",
-            tooltipContent:
-              "This asset belongs to this audit according to records.",
+            badgeText: t("scanAvailability.expected"),
+            tooltipTitle: t("scanAvailability.expectedTitle"),
+            tooltipContent: t("scanAvailability.expectedContent"),
             priority: 100,
             className: "border-green-200 bg-green-50 text-green-700",
           },
           {
             condition: isUnexpected,
-            badgeText: "Unexpected",
-            tooltipTitle: "Unexpected asset",
-            tooltipContent:
-              "This asset was not expected in this audit context.",
+            badgeText: t("scanAvailability.unexpected"),
+            tooltipTitle: t("scanAvailability.unexpectedTitle"),
+            tooltipContent: t("scanAvailability.unexpectedContent"),
             priority: 90,
             className: "border-red-200 bg-red-50 text-red-700",
           },
@@ -560,7 +560,7 @@ export function AuditDrawer({
   const customRenderAllItems = (): ReactNode => {
     // Get pending (expected but not scanned) assets
     const pendingAssets = expectedAssets.filter(
-      (asset) => !scannedAssetIds.has(asset.id)
+      (asset) => !scannedAssetIds.has(asset.id),
     );
 
     // Render scanned items first, then pending assets at the bottom

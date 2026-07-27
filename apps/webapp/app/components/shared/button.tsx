@@ -6,6 +6,7 @@ import type {
   MouseEvent,
 } from "react";
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
+import { useTranslation } from "react-i18next";
 import { Link, type LinkProps } from "react-router";
 import { tw } from "~/utils/tw";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card";
@@ -123,38 +124,38 @@ const variants: Record<ButtonVariant, string> = {
   primary: tw(
     `border-primary-400 bg-primary-500 text-static-white focus:ring-2`,
     "disabled:border-primary-300 disabled:bg-primary-300",
-    "enabled:hover:bg-primary-400"
+    "enabled:hover:bg-primary-400",
   ),
   secondary: tw(
     `border-gray-300 bg-white text-gray-700`,
     "disabled:text-gray-500",
     "[&:is(button:enabled)]:hover:bg-gray-50",
-    "[&:is(a)]:hover:bg-gray-50"
+    "[&:is(a)]:hover:bg-gray-50",
   ),
   tertiary: tw(
     `border-b border-primary/10 pb-1 leading-none`,
-    "disabled:text-gray-300"
+    "disabled:text-gray-300",
   ),
   link: tw(
-    `border-none p-0 text-text-sm font-semibold text-primary-700 hover:text-primary-800`
+    `border-none p-0 text-text-sm font-semibold text-primary-700 hover:text-primary-800`,
   ),
   "link-gray": tw(
-    "text-gray border-none p-0 text-text-sm font-normal underline hover:text-gray-500 "
+    "text-gray border-none p-0 text-text-sm font-normal underline hover:text-gray-500 ",
   ),
   "block-link": tw(
-    "-mt-1 border-none px-2 py-1 text-[14px] font-normal hover:bg-primary-50 hover:text-primary-600"
+    "-mt-1 border-none px-2 py-1 text-[14px] font-normal hover:bg-primary-50 hover:text-primary-600",
   ),
   "block-link-gray": tw(
-    "-mt-1 border-none px-2 py-1 text-[14px] font-normal hover:bg-gray-50 hover:text-gray-600"
+    "-mt-1 border-none px-2 py-1 text-[14px] font-normal hover:bg-gray-50 hover:text-gray-600",
   ),
   danger: tw(
     `border-error-600 bg-error-600 text-static-white focus:ring-2`,
     "disabled:border-error-300 disabled:bg-error-300",
-    "enabled:hover:bg-error-800"
+    "enabled:hover:bg-error-800",
   ),
   info: "bg-blue-500 text-static-white hover:bg-blue-400 focus:ring-2 disabled:bg-blue-300",
   inherit: tw(
-    "font-inherit m-0 inline border-none bg-transparent p-0 text-inherit hover:underline"
+    "font-inherit m-0 inline border-none bg-transparent p-0 text-inherit hover:underline",
   ),
 };
 
@@ -205,8 +206,9 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
       label,
       ...props
     },
-    ref
+    ref,
   ) {
+    const { t } = useTranslation();
     const Component = isLinkProps(props) ? Link : as;
 
     // Default to type="button" for native button elements to prevent
@@ -251,7 +253,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
       // eslint-disable-next-line no-console
       console.warn(
         "Button: Icon-only button detected without accessible name. " +
-          "Please provide either an aria-label, label prop, or tooltip for accessibility."
+          "Please provide either an aria-label, label prop, or tooltip for accessibility.",
       );
     }
 
@@ -268,7 +270,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
             className={tw(
               newTab ? "inline-flex items-center gap-[2px]" : "",
               onlyIconOnMobile ? "hidden lg:inline-block" : "",
-              newTab && onlyNewTabIconOnHover ? "hover-parent " : ""
+              newTab && onlyNewTabIconOnHover ? "hover-parent " : "",
             )}
           >
             <style>{`
@@ -282,7 +284,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
               <ExternalLinkIcon
                 className={tw(
                   "external-link-icon mt-px",
-                  onlyNewTabIconOnHover ? "hidden" : "inline-flex"
+                  onlyNewTabIconOnHover ? "hidden" : "inline-flex",
                 )}
               />
             )}
@@ -299,7 +301,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
       isDisabled && "cursor-not-allowed opacity-50",
       attachToInput && "rounded-l-none border-l-0",
       error && "border-error-300 focus:border-error-300 focus:ring-error-100",
-      className
+      className,
     );
 
     // Render disabled button with hover card
@@ -319,7 +321,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
           </HoverCardTrigger>
           <HoverCardContent side="left">
             <h5 className="text-start text-[14px]">
-              {disabledTitle || "Action disabled"}
+              {disabledTitle || t("bulkActions.actionDisabled")}
             </h5>
             <p className="text-start text-[14px]">{disabledReason}</p>
           </HoverCardContent>
@@ -381,7 +383,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
         )}
       </>
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

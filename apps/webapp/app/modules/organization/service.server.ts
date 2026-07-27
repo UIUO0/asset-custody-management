@@ -7,6 +7,7 @@ import {
 import type { Organization, Prisma, TierId, User } from "@prisma/client";
 import type Stripe from "stripe";
 
+import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import { sendEmail } from "~/emails/mail.server";
 import { DEFAULT_MAX_IMAGE_UPLOAD_SIZE } from "~/utils/constants";
@@ -33,7 +34,7 @@ const label: ErrorLabel = "Organization";
 
 export async function getOrganizationById<T extends Prisma.OrganizationInclude>(
   id: Organization["id"],
-  extraIncludes?: T
+  extraIncludes?: T,
 ) {
   try {
     return (await db.organization.findUniqueOrThrow({
@@ -129,7 +130,7 @@ export async function getOrganizationsBySsoDomain(emailDomain: string) {
     return organizations.filter((org) =>
       org.ssoDetails?.domain
         ? emailMatchesDomains(emailDomain, org.ssoDetails.domain)
-        : false
+        : false,
     );
   } catch (cause) {
     throw new ShelfError({
@@ -376,7 +377,7 @@ export async function updateOrganization({
             fromValue: previousQrIdDisplayPreference,
             toValue: qrIdDisplayPreference,
           },
-          tx
+          tx,
         );
       }
 
@@ -664,7 +665,7 @@ export function parseDomains(domainsString: string): string[] {
  */
 export function emailMatchesDomains(
   emailDomain: string,
-  domainsString: string | null
+  domainsString: string | null,
 ): boolean {
   if (!emailDomain || !domainsString) return false;
   const domains = parseDomains(domainsString);
@@ -789,7 +790,7 @@ export async function transferOwnership({
       });
 
     const isCurrentUserShelfAdmin = user.roles.some(
-      (role) => role.name === Roles.ADMIN
+      (role) => role.name === Roles.ADMIN,
     );
 
     /**
@@ -826,7 +827,7 @@ export async function transferOwnership({
     });
 
     const currentOwnerUserOrg = userOrganization.find((userOrg) =>
-      userOrg.roles.includes(OrganizationRoles.OWNER)
+      userOrg.roles.includes(OrganizationRoles.OWNER),
     );
     /** Validate if the current user is a member of the organization */
     if (!currentOwnerUserOrg) {
@@ -853,7 +854,7 @@ export async function transferOwnership({
     }
 
     const newOwnerUserOrg = userOrganization.find(
-      (userOrg) => userOrg.user.id === newOwnerId
+      (userOrg) => userOrg.user.id === newOwnerId,
     );
     if (!newOwnerUserOrg) {
       throw new ShelfError({
@@ -922,7 +923,7 @@ export async function transferOwnership({
     if (premiumIsEnabled && transferSubscription) {
       try {
         const activeSubscriptions = await getUserActiveSubscriptions(
-          currentOwnerUserOrg.user.id
+          currentOwnerUserOrg.user.id,
         );
 
         // Filter to subscriptions relevant to this workspace:
@@ -930,7 +931,7 @@ export async function transferOwnership({
         // - Addon subscriptions linked to THIS workspace
         const relevantSubscriptions = filterRelevantSubscriptions(
           activeSubscriptions,
-          currentOrganization.id
+          currentOrganization.id,
         );
 
         if (relevantSubscriptions.length > 0) {
@@ -956,7 +957,7 @@ export async function transferOwnership({
 
             // Update tier if a tier subscription was transferred
             const hasTierSubscription = relevantSubscriptions.some((sub) =>
-              isTierSubscription(sub)
+              isTierSubscription(sub),
             );
             if (hasTierSubscription) {
               await updateUserTierId(newOwnerId, currentOwnerTierId);
@@ -996,7 +997,7 @@ export async function transferOwnership({
 
     /** Send email to new owner */
     sendEmail({
-      subject: `🎉 You're now the Owner of ${currentOrganization.name} - Shelf`,
+      subject: `🎉 You're now the Owner of ${currentOrganization.name} - ${config.appName}`,
       to: newOwnerUserOrg.user.email,
       text: newOwnerEmailText({
         newOwnerName: resolveUserDisplayName(newOwnerUserOrg.user),
@@ -1118,7 +1119,7 @@ function isTierSubscription(sub: Stripe.Subscription): boolean {
  */
 function isAddonForOrganization(
   sub: Stripe.Subscription,
-  organizationId: string
+  organizationId: string,
 ): boolean {
   const subOrgId = sub.metadata?.organizationId;
   if (subOrgId !== organizationId) return false;
@@ -1139,10 +1140,10 @@ function isAddonForOrganization(
  */
 function filterRelevantSubscriptions(
   subscriptions: Stripe.Subscription[],
-  organizationId: string
+  organizationId: string,
 ): Stripe.Subscription[] {
   return subscriptions.filter(
     (sub) =>
-      isTierSubscription(sub) || isAddonForOrganization(sub, organizationId)
+      isTierSubscription(sub) || isAddonForOrganization(sub, organizationId),
   );
 }

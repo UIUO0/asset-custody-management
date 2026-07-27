@@ -1,3 +1,4 @@
+import { OrganizationRoles } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
@@ -28,8 +29,11 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import {
+  ORGANIZATION_ROLE_LABEL_KEYS,
+  organizationRolesMap,
+} from "~/utils/roles";
 import { requirePermission } from "~/utils/roles.server";
-import { organizationRolesMap } from "./settings.team";
 
 export const loader = async ({
   request,
@@ -152,10 +156,15 @@ export default function UserPage() {
   const currentOrgMembership = user.userOrganizations.find(
     (uo) => uo.organizationId === organizationId,
   );
-  const userOrgRole =
-    organizationRolesMap[
-      currentOrgMembership?.roles[0] ?? user.userOrganizations[0].roles[0]
-    ];
+  /**
+   * `userOrgRoleEnum` is the source of truth for comparisons and for the label.
+   * `userOrgRole` stays the canonical English name because it is submitted back
+   * as the `userFriendlyRole` form field that `resolveUserAction` reverse-looks
+   * up — translating it there would break the round trip.
+   */
+  const userOrgRoleEnum =
+    currentOrgMembership?.roles[0] ?? user.userOrganizations[0].roles[0];
+  const userOrgRole = organizationRolesMap[userOrgRoleEnum];
   return (
     <>
       <Header
@@ -174,14 +183,14 @@ export default function UserPage() {
           ),
           "append-to-title": (
             <Badge color={"#808080"} withDot={false}>
-              {userOrgRole}
+              {t(ORGANIZATION_ROLE_LABEL_KEYS[userOrgRoleEnum])}
             </Badge>
           ),
         }}
         subHeading={<UserSubheading user={user} />}
       />
 
-      <When truthy={userOrgRole !== "Owner"}>
+      <When truthy={userOrgRoleEnum !== OrganizationRoles.OWNER}>
         <AbsolutePositionedHeaderActions className="hidden w-full md:flex">
           <TeamUsersActionsDropdown
             userId={user.id}

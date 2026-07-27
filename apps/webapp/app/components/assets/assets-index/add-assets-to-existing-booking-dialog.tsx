@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { useAtomValue } from "jotai";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -68,6 +69,7 @@ function BookingSelect({
   /** Zorm/server validation message for the `id` field. */
   errorMessage?: string;
 }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
@@ -80,7 +82,7 @@ function BookingSelect({
     const query = searchQuery.trim().toLowerCase();
     if (!query) return bookings;
     return bookings.filter((booking) =>
-      booking.name.toLowerCase().includes(query)
+      booking.name.toLowerCase().includes(query),
     );
   }, [bookings, searchQuery]);
 
@@ -89,8 +91,8 @@ function BookingSelect({
   const triggerLabel = selectedBooking
     ? selectedBooking.name
     : isLoading
-    ? "Fetching bookings..."
-    : "Select a booking";
+    ? t("addToBooking.fetchingBookings")
+    : t("addToBooking.selectABooking");
 
   return (
     <div className="relative z-50 mb-2">
@@ -111,7 +113,7 @@ function BookingSelect({
             type="button"
             className={tw(
               "w-full",
-              (isLoading || disabled) && "cursor-not-allowed opacity-60"
+              (isLoading || disabled) && "cursor-not-allowed opacity-60",
             )}
           >
             <div
@@ -121,7 +123,7 @@ function BookingSelect({
               <span
                 className={tw(
                   "truncate whitespace-nowrap pe-2",
-                  !selectedBooking && "text-gray-500"
+                  !selectedBooking && "text-gray-500",
                 )}
               >
                 {triggerLabel}
@@ -139,7 +141,7 @@ function BookingSelect({
           >
             <div className="flex items-center justify-between p-3">
               <div className="text-xs font-semibold text-gray-700">
-                Existing bookings
+                {t("addToBooking.existingBookings")}
               </div>
               <When truthy={Boolean(selectedBooking)}>
                 <Button
@@ -158,8 +160,8 @@ function BookingSelect({
               <Input
                 ref={searchInputRef}
                 type="text"
-                label="Search bookings"
-                placeholder="Search bookings"
+                label={t("addToBooking.searchBookings")}
+                placeholder={t("addToBooking.searchBookings")}
                 hideLabel
                 className="text-gray-500"
                 icon="search"
@@ -171,15 +173,15 @@ function BookingSelect({
             <div
               className="max-h-[320px] divide-y overflow-y-auto"
               role="listbox"
-              aria-label="Existing bookings"
+              aria-label={t("addToBooking.existingBookings")}
             >
               {filteredBookings.length === 0 ? (
                 <div className="p-4 text-center text-sm text-gray-500">
                   {isLoading
-                    ? "Fetching bookings..."
+                    ? t("addToBooking.fetchingBookings")
                     : searchQuery
-                    ? "No bookings found"
-                    : "No open bookings available"}
+                    ? t("addToBooking.noBookingsFound")
+                    : t("addToBooking.noOpenBookings")}
                 </div>
               ) : (
                 filteredBookings.map((booking) => (
@@ -187,7 +189,7 @@ function BookingSelect({
                     key={booking.id}
                     className={tw(
                       "flex cursor-pointer touch-manipulation select-none items-center justify-between gap-4 px-4 py-3 outline-none hover:bg-gray-100 focus:bg-gray-100",
-                      booking.id === selectedId && "bg-gray-100"
+                      booking.id === selectedId && "bg-gray-100",
                     )}
                     role="option"
                     aria-selected={booking.id === selectedId}
@@ -231,11 +233,12 @@ function BookingSelect({
 }
 
 export default function AddAssetsToExistingBookingDialog() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const zo = useZorm(
     "AddAssetsToExistingBooking",
-    addAssetsToExistingBookingSchema
+    addAssetsToExistingBookingSchema,
   );
 
   const selectedAssets = useAtomValue(selectedBulkItemsAtom);
@@ -259,8 +262,10 @@ export default function AddAssetsToExistingBookingDialog() {
       ref={zo.ref}
       type="booking-exist"
       arrayFieldId="assetsIds"
-      title="Add to existing booking"
-      description={`Add selected(${selectedAssets.length}) assets to existing booking.`}
+      title={t("addToBooking.title")}
+      description={t("addToBooking.description", {
+        count: selectedAssets.length,
+      })}
       actionUrl="/api/assets/add-to-booking"
       className="lg:w-[600px]"
       skipCloseOnSuccess
@@ -286,19 +291,21 @@ export default function AddAssetsToExistingBookingDialog() {
                 errorMessage={zo.errors.id()?.message}
               />
               <div className="mb-4 mt-2 text-gray-500">
-                <span className="font-medium text-gray-600">Draft</span>,{" "}
-                <span className="font-medium text-gray-600">Reserved</span>,{" "}
-                <span className="font-medium text-gray-600">Ongoing</span> and{" "}
-                <span className="font-medium text-gray-600">Overdue</span>{" "}
-                bookings are shown. Assets added to an ongoing booking stay
-                available until you check them out.
+                <Trans
+                  i18nKey="addToBooking.statusHint"
+                  components={{
+                    1: <span className="font-medium text-gray-600" />,
+                    3: <span className="font-medium text-gray-600" />,
+                    5: <span className="font-medium text-gray-600" />,
+                    7: <span className="font-medium text-gray-600" />,
+                  }}
+                />
               </div>
 
               <When truthy={!isFetchingBookings && bookings.length === 0}>
                 <div className="mb-4 rounded-md border border-gray-300 bg-gray-25 p-2">
                   <p className="text-sm text-gray-600">
-                    No open bookings found. Create a new booking first to add
-                    assets to it.
+                    {t("addToBooking.noOpenBookingsHint")}
                   </p>
                 </div>
               </When>
@@ -315,12 +322,12 @@ export default function AddAssetsToExistingBookingDialog() {
                     }
                   >
                     <div className="mt-4">
-                      <p>Already added assets are : </p>
+                      <p>{t("addToBooking.alreadyAddedAssets")}</p>
                       <ul className="mb-2 list-inside list-disc">
                         {fetcherErrorAdditionalData?.alreadyAddedAssets?.map(
                           (asset: Pick<Asset, "id" | "title">) => (
                             <li key={asset.id}>{asset.title}</li>
-                          )
+                          ),
                         )}
                       </ul>
 
@@ -372,11 +379,10 @@ export default function AddAssetsToExistingBookingDialog() {
           <When truthy={!!fetcherData?.success}>
             <div>
               <div className="mb-4 rounded-md border border-success-500 p-2 text-success-500">
-                <h5 className="text-success-500">Booking updated</h5>
-                <p>
-                  The assets you selected have been added to the booking. Do you
-                  want to add more or view the booking?
-                </p>
+                <h5 className="text-success-500">
+                  {t("addToBooking.bookingUpdated")}
+                </h5>
+                <p>{t("addToBooking.bookingUpdatedBody")}</p>
               </div>
 
               <div className="flex items-center gap-3">
@@ -387,7 +393,7 @@ export default function AddAssetsToExistingBookingDialog() {
                   disabled={disabled}
                   onClick={handleCloseDialog}
                 >
-                  Add more
+                  {t("addToBooking.addMore")}
                 </Button>
                 <Button
                   type="button"
@@ -398,7 +404,7 @@ export default function AddAssetsToExistingBookingDialog() {
                     void navigate(`/bookings/${fetcherData?.bookingId}`);
                   }}
                 >
-                  View booking
+                  {t("addToBooking.viewBooking")}
                 </Button>
               </div>
             </div>

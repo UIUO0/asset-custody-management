@@ -7,6 +7,7 @@ import { data, Link } from "react-router";
 import { z } from "zod";
 import { ImportContent } from "~/components/assets/import-content";
 import Header from "~/components/layout/header";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { createAssetsFromContentImport } from "~/modules/asset/service.server";
 import { ASSET_CSV_HEADERS } from "~/modules/asset/utils.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -40,7 +41,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
       await request.clone().formData(),
       z.object({
         intent: z.enum(["content"]),
-      })
+      }),
     );
 
     const csvData = await csvDataFromRequest({ request });
@@ -56,7 +57,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
 
     const contentData = extractCSVDataFromContentImport(
       csvData,
-      ASSET_CSV_HEADERS
+      ASSET_CSV_HEADERS,
     );
 
     await createAssetsFromContentImport({
@@ -77,6 +78,10 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
   const { userId } = authSession;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, organizations } = await requirePermission({
       userId,
       request,
@@ -88,7 +93,7 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
 
     return payload({
       header: {
-        title: "Import assets",
+        title: t("assets.importTitle"),
       },
     });
   } catch (cause) {

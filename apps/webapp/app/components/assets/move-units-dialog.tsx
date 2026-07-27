@@ -35,6 +35,8 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { useActionData, useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -141,51 +143,73 @@ function resolveMaxQuantity({
  * axis. Keeping all axis-specific strings in one place avoids inline ternaries
  * scattered across the JSX.
  */
+/**
+ * Resolves the dialog copy for the given axis.
+ *
+ * Takes `t` as a parameter rather than calling `useTranslation` itself: this is
+ * a plain helper, not a component, so the hook must stay at the call site.
+ *
+ * @param args.t - Translator from the calling component
+ */
 function resolveCopy({
   axis,
   fromLocation,
   fromKit,
   unplacedQuantity,
   unitLabel,
+  t,
 }: Pick<
   MoveUnitsDialogProps,
   "axis" | "fromLocation" | "fromKit" | "unplacedQuantity"
 > & {
   unitLabel: string;
+  t: TFunction;
 }) {
   switch (axis) {
     case "location":
       return {
-        title: `Move ${unitLabel} from ${fromLocation?.name ?? ""}`.trim(),
-        description: `Move units between manual location rows. Up to ${
-          fromLocation?.quantity ?? 0
-        } ${unitLabel} available at the source.`,
-        destinationLabel: "Destination location",
-        destinationPlaceholder: "Select a location",
-        submitIdle: "Move",
-        submitBusy: "Moving...",
+        title: t("moveUnits.titleFromLocation", {
+          unit: unitLabel,
+          name: fromLocation?.name ?? "",
+        }).trim(),
+        description: t("moveUnits.descriptionLocation", {
+          count: fromLocation?.quantity ?? 0,
+          unit: unitLabel,
+        }),
+        destinationLabel: t("moveUnits.destinationLocation"),
+        destinationPlaceholder: t("moveUnits.selectALocation"),
+        submitIdle: t("moveUnits.move"),
+        submitBusy: t("moveUnits.moving"),
       };
     case "kit":
       return {
-        title: `Move ${unitLabel} from ${fromKit?.name ?? ""}`.trim(),
-        description: `Move units between kit allocations. Up to ${
-          fromKit?.quantity ?? 0
-        } ${unitLabel} available at the source kit.`,
-        destinationLabel: "Destination kit",
-        destinationPlaceholder: "Select a kit",
-        submitIdle: "Move",
-        submitBusy: "Moving...",
+        title: t("moveUnits.titleFromKit", {
+          unit: unitLabel,
+          name: fromKit?.name ?? "",
+        }).trim(),
+        description: t("moveUnits.descriptionKit", {
+          count: fromKit?.quantity ?? 0,
+          unit: unitLabel,
+        }),
+        destinationLabel: t("moveUnits.destinationKit"),
+        destinationPlaceholder: t("moveUnits.selectAKit"),
+        submitIdle: t("moveUnits.move"),
+        submitBusy: t("moveUnits.moving"),
       };
     case "place-unplaced":
       return {
-        title: `Place ${unplacedQuantity ?? 0} unplaced ${unitLabel}`,
-        description: `Place currently-unplaced units at a destination location. Up to ${
-          unplacedQuantity ?? 0
-        } ${unitLabel} available.`,
-        destinationLabel: "Destination location",
-        destinationPlaceholder: "Select a location",
-        submitIdle: "Place",
-        submitBusy: "Placing...",
+        title: t("moveUnits.titlePlaceUnplaced", {
+          count: unplacedQuantity ?? 0,
+          unit: unitLabel,
+        }),
+        description: t("moveUnits.descriptionPlaceUnplaced", {
+          count: unplacedQuantity ?? 0,
+          unit: unitLabel,
+        }),
+        destinationLabel: t("moveUnits.destinationLocation"),
+        destinationPlaceholder: t("moveUnits.selectALocation"),
+        submitIdle: t("moveUnits.place"),
+        submitBusy: t("moveUnits.placing"),
       };
   }
 }
@@ -226,7 +250,7 @@ export function MoveUnitsDialog({
         setInternalOpen(v);
       }
     },
-    [isControlled, controlledOnOpenChange]
+    [isControlled, controlledOnOpenChange],
   );
 
   /** The currently-selected destination id (drives the hidden `toId` input). */
@@ -247,9 +271,10 @@ export function MoveUnitsDialog({
   });
   const disabled = useDisabled(fetcher);
   const isSubmitting = isFormProcessing(fetcher.state);
+  const { t } = useTranslation();
   const formRef = useRef<HTMLFormElement>(null);
 
-  const unitLabel = unitOfMeasure || "units";
+  const unitLabel = unitOfMeasure || t("quantity.units");
   const maxQuantity = resolveMaxQuantity({
     axis,
     fromLocation,
@@ -262,6 +287,7 @@ export function MoveUnitsDialog({
     fromKit,
     unplacedQuantity,
     unitLabel,
+    t,
   });
 
   /**
@@ -284,7 +310,7 @@ export function MoveUnitsDialog({
           .positive("Quantity must be greater than zero.")
           .max(maxQuantity, `Maximum ${maxQuantity} ${unitLabel} available.`),
       }),
-    [maxQuantity, unitLabel]
+    [maxQuantity, unitLabel],
   );
 
   const zo = useZorm("MoveUnits", moveUnitsClientSchema);
@@ -297,7 +323,7 @@ export function MoveUnitsDialog({
    */
   const actionData = useActionData<DataOrErrorResponse>();
   const validationErrors = getValidationErrors<typeof moveUnitsClientSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   /**
@@ -413,18 +439,18 @@ export function MoveUnitsDialog({
                     null
                   : null;
                 const triggerError = Boolean(
-                  validationErrors?.toId?.message || zo.errors.toId()?.message
+                  validationErrors?.toId?.message || zo.errors.toId()?.message,
                 );
                 const triggerDisabled = disabled || noDestinations;
 
                 const handleKeyDown = (
-                  event: KeyboardEvent<HTMLDivElement>
+                  event: KeyboardEvent<HTMLDivElement>,
                 ) => {
                   switch (event.key) {
                     case "ArrowDown":
                       event.preventDefault();
                       setHighlightedIndex((prev) =>
-                        Math.min(prev + 1, destinations.length - 1)
+                        Math.min(prev + 1, destinations.length - 1),
                       );
                       break;
                     case "ArrowUp":
@@ -457,7 +483,7 @@ export function MoveUnitsDialog({
                         // sensible.
                         const idx = selectedDestinationId
                           ? destinations.findIndex(
-                              (d) => d.id === selectedDestinationId
+                              (d) => d.id === selectedDestinationId,
                             )
                           : 0;
                         setHighlightedIndex(idx >= 0 ? idx : 0);
@@ -480,25 +506,25 @@ export function MoveUnitsDialog({
                         disabled={triggerDisabled}
                         className={tw(
                           "w-full",
-                          triggerDisabled && "cursor-not-allowed opacity-60"
+                          triggerDisabled && "cursor-not-allowed opacity-60",
                         )}
                       >
                         <div
                           className={tw(
                             "flex w-full items-center justify-between whitespace-nowrap rounded border border-gray-300 px-[14px] py-2 text-sm hover:cursor-pointer",
-                            triggerError && "border-error-300"
+                            triggerError && "border-error-300",
                           )}
                         >
                           <span
                             className={tw(
                               "truncate whitespace-nowrap pe-2",
-                              !selectedDestination && "text-gray-500"
+                              !selectedDestination && "text-gray-500",
                             )}
                           >
                             {selectedDestination
                               ? selectedDestination.name
                               : noDestinations
-                              ? "No destinations available"
+                              ? t("moveUnits.noDestinations")
                               : copy.destinationPlaceholder}
                           </span>
                           <ChevronDownIcon className="text-gray-500" />
@@ -510,7 +536,7 @@ export function MoveUnitsDialog({
                         align="start"
                         sideOffset={4}
                         className={tw(
-                          "z-[999999] max-h-[280px] w-[var(--radix-popover-trigger-width)] overflow-auto rounded-md border border-gray-200 bg-white shadow-md"
+                          "z-[999999] max-h-[280px] w-[var(--radix-popover-trigger-width)] overflow-auto rounded-md border border-gray-200 bg-white shadow-md",
                         )}
                         onKeyDown={handleKeyDown}
                       >
@@ -528,7 +554,7 @@ export function MoveUnitsDialog({
                                 className={tw(
                                   "cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-50",
                                   isHighlighted && "bg-gray-50",
-                                  isSelected && "font-medium"
+                                  isSelected && "font-medium",
                                 )}
                                 onClick={() => {
                                   setSelectedDestinationId(destination.id);

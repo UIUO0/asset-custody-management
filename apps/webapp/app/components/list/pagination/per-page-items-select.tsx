@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import {
   Select,
@@ -11,6 +12,7 @@ import { useSearchParams } from "~/hooks/search-params";
 import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
 
 export default function PerPageItemsSelect() {
+  const { t } = useTranslation();
   const perPageValues = ["20", "50", "100"];
   const [_, setSearchParams] = useSearchParams();
   const { perPage } = useLoaderData<AssetIndexLoaderData>();
@@ -34,7 +36,7 @@ export default function PerPageItemsSelect() {
         onValueChange={onValueChange}
       >
         <SelectTrigger
-          aria-label="Select per page"
+          aria-label={t("list.selectPerPage")}
           className="h-[34px] px-3 py-[5.5px] text-[14px]"
         >
           <SelectValue />

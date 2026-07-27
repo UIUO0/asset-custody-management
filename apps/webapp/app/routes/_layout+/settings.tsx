@@ -17,6 +17,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { requirePermission } from "~/utils/roles.server";
 
 /** Breadcrumb for settings (component so it can use the translation hook). */
@@ -85,21 +86,34 @@ export default function SettingsPage() {
     { to: "team", content: t("settings.team") },
   ];
 
-  const { isBaseOrSelfService } = useUserRoleHelper();
-  /** If user is self service, remove the extra items */
-  if (isBaseOrSelfService) {
-    items = items.filter(
-      (item) =>
-        ![
-          "custom-fields",
-          "team",
-          "general",
-          "bookings",
-          "emails",
-          "asset-models",
-        ].includes(item.to),
-    );
-  }
+  const { roles } = useUserRoleHelper();
+
+  /**
+   * Keep only the tabs this role can actually open.
+   *
+   * Previously the whole set was stripped for anyone matching
+   * `isBaseOrSelfService`, which meant a new role saw every tab and hit a 403 on
+   * the ones it lacked. Gating each tab on the permission its own loader
+   * enforces keeps the nav honest — INVENTORY, for instance, sees only
+   * "Custom fields".
+   */
+  const can = (entity: PermissionEntity, action: PermissionAction) =>
+    userHasPermission({ roles, entity, action });
+
+  const canReadGeneralSettings = can(
+    PermissionEntity.generalSettings,
+    PermissionAction.read,
+  );
+  const tabPermissions: Record<string, boolean> = {
+    general: canReadGeneralSettings,
+    bookings: canReadGeneralSettings,
+    emails: can(PermissionEntity.emailSettings, PermissionAction.read),
+    "custom-fields": can(PermissionEntity.customField, PermissionAction.read),
+    "asset-models": can(PermissionEntity.assetModel, PermissionAction.update),
+    team: can(PermissionEntity.teamMember, PermissionAction.read),
+  };
+
+  items = items.filter((item) => tabPermissions[item.to] ?? true);
 
   const matches = useMatches();
   const currentRoute: RouteHandleWithName = matches[matches.length - 1];

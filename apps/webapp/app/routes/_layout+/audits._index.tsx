@@ -2,7 +2,7 @@ import type { AuditStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { data, useLoaderData } from "react-router";
+import { data } from "react-router";
 import { DescriptionColumn } from "~/components/assets/assets-index/advanced-asset-columns";
 import AuditIndexBulkActionsDropdown from "~/components/audit/audit-index-bulk-actions-dropdown";
 import { AuditStatusBadgeWithOverdue } from "~/components/audit/audit-status-badge-with-overdue";
@@ -20,6 +20,8 @@ import { DateS } from "~/components/shared/date";
 import { EmptyTableValue } from "~/components/shared/empty-table-value";
 import { UserBadge } from "~/components/shared/user-badge";
 import { Td, Th } from "~/components/table";
+import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import type { AUDIT_LIST_INCLUDE } from "~/modules/audit/service.server";
@@ -37,6 +39,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { requirePermission } from "~/utils/roles.server";
 import { resolveUserDisplayName } from "~/utils/user";
 
@@ -45,7 +48,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId: authSession.userId,
       request,
       entity: PermissionEntity.audit,
@@ -72,7 +79,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const { audits, totalAudits } = await getAuditsForOrganization({
       organizationId,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       page,
       perPage,
       search,
@@ -102,10 +109,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         totalPages,
         perPage,
         modelName,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         searchFieldTooltip: {
-          title: "Search audits",
-          text: "Search audits by name or description.",
+          title: t("search.auditsTitle"),
+          text: t("search.auditsText"),
         },
       }),
       {
@@ -133,7 +140,23 @@ export type AuditsIndexLoaderData = typeof loader;
 
 export default function AuditsIndexPage() {
   const { t } = useTranslation();
-  const { isSelfServiceOrBase } = useLoaderData<typeof loader>();
+  const { roles } = useUserRoleHelper();
+
+  /**
+   * Creating and bulk-managing audits are separate capabilities, so ask about
+   * each one rather than reusing a single "is this an admin?" flag. FINANCE and
+   * INVENTORY read audits without being able to start or archive them.
+   */
+  const canCreateAudits = userHasPermission({
+    roles,
+    entity: PermissionEntity.audit,
+    action: PermissionAction.create,
+  });
+  const canBulkManageAudits = userHasPermission({
+    roles,
+    entity: PermissionEntity.audit,
+    action: PermissionAction.delete,
+  });
 
   /** Sorting labels follow the active locale; keys stay the DB columns. */
   const sortingOptions = {
@@ -144,7 +167,7 @@ export default function AuditsIndexPage() {
   return (
     <>
       <Header title={t("nav.audits")}>
-        {!isSelfServiceOrBase && <NewAuditInfoDialog />}
+        {canCreateAudits && <NewAuditInfoDialog />}
       </Header>
       <ListContentWrapper>
         <Filters
@@ -171,7 +194,7 @@ export default function AuditsIndexPage() {
         />
         <List
           bulkActions={
-            isSelfServiceOrBase ? undefined : <AuditIndexBulkActionsDropdown />
+            canBulkManageAudits ? <AuditIndexBulkActionsDropdown /> : undefined
           }
           ItemComponent={ListItemContent}
           headerChildren={

@@ -30,6 +30,25 @@ export interface Config {
   emailPrimaryColor: string;
 
   /**
+   * Product name shown in outgoing email subjects and footers.
+   *
+   * Deliberately a single source: email subjects used to hardcode the upstream
+   * `shelf.nu` suffix in 16 places, which violates the EPDA identity rule and
+   * drifts the moment one is edited. Kept Latin-script for now because email
+   * bodies are not localized yet — Arabic subjects land with phase 6.
+   *
+   * @see {@link file://./../../../docs/epda-i18n-and-theming.md}
+   */
+  appName: string;
+
+  /**
+   * ASCII-safe short identifier for machine-facing strings: calendar `PRODID`,
+   * generated download file names, and anything a client may not render in
+   * UTF-8. Never contains spaces or non-ASCII characters.
+   */
+  appIdentifier: string;
+
+  /**
    * Path to favicon
    */
   faviconPath: string;

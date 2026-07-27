@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useSetAtom } from "jotai";
 import { MessageSquare, Paperclip } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   LoaderFunctionArgs,
   ActionFunctionArgs,
@@ -58,7 +59,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ auditId: z.string(), auditAssetId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -69,7 +70,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const { organizationId, isSelfServiceOrBase } = permissionResult;
+    const { organizationId, isScopedToOwnRecords } = permissionResult;
 
     // Fetch audit asset with notes and images
     const auditAsset = await db.auditAsset.findFirst({
@@ -109,7 +110,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     requireAuditAssigneeForBaseSelfService({
       audit: auditAsset.auditSession,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       auditId,
     });
 
@@ -182,7 +183,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ auditId: z.string(), auditAssetId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -287,12 +288,12 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
       // Get all files from the form data (already parsed above via clone)
       const fileEntries = formData.getAll(
-        intent === "upload-images" ? "images" : "auditImage"
+        intent === "upload-images" ? "images" : "auditImage",
       );
 
       // Filter to only actual File objects
       const files = fileEntries.filter(
-        (entry): entry is File => entry instanceof File
+        (entry): entry is File => entry instanceof File,
       );
 
       if (files.length === 0) {
@@ -401,7 +402,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
       // Filter to only actual File objects
       const files = fileEntries.filter(
-        (entry): entry is File => entry instanceof File
+        (entry): entry is File => entry instanceof File,
       );
 
       if (files.length === 0) {
@@ -471,7 +472,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         // append the fresh trusted tag.
         const strippedTags = existingNote.content.replace(
           /{%\s*audit_images[^%]*%}/g,
-          ""
+          "",
         );
         // stripMarkdocDelimiters trims and removes `{%`/`%}` from user text only;
         // the trusted tag is appended after, so it is never touched.
@@ -530,7 +531,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
  * re-seeding whenever the loader returns a fresh `initialNotes` array.
  */
 function notesFromLoader(
-  initialNotes: ReturnType<typeof useLoaderData<typeof loader>>["notes"]
+  initialNotes: ReturnType<typeof useLoaderData<typeof loader>>["notes"],
 ): NoteData[] {
   return initialNotes.map((note) => ({
     id: note.id,
@@ -565,7 +566,7 @@ type AuditDetailsAction =
 
 function auditDetailsReducer(
   state: AuditDetailsState,
-  action: AuditDetailsAction
+  action: AuditDetailsAction,
 ): AuditDetailsState {
   switch (action.type) {
     case "SET_UPLOAD_IN_PROGRESS":
@@ -603,6 +604,7 @@ const INITIAL_AUDIT_DETAILS_STATE: AuditDetailsState = {
 
 // react-doctor:no-giant-component — deferred for follow-up refactor
 export default function AuditAssetDetails() {
+  const { t } = useTranslation();
   const {
     notes: initialNotes,
     images,
@@ -615,7 +617,7 @@ export default function AuditAssetDetails() {
 
   const [state, dispatch] = useReducer(
     auditDetailsReducer,
-    INITIAL_AUDIT_DETAILS_STATE
+    INITIAL_AUDIT_DETAILS_STATE,
   );
   const {
     isUploadInProgress,
@@ -649,7 +651,7 @@ export default function AuditAssetDetails() {
    * never shows a stale frame after the loader revalidates.
    */
   const [localNotes, setLocalNotes] = useState<NoteData[]>(() =>
-    notesFromLoader(initialNotes)
+    notesFromLoader(initialNotes),
   );
   const lastInitialNotesRef = useRef(initialNotes);
   if (lastInitialNotesRef.current !== initialNotes) {
@@ -679,7 +681,7 @@ export default function AuditAssetDetails() {
         setLocalImages((prev) => {
           const existingIds = new Set(prev.map((img) => img.id));
           const newImages = data.images.filter(
-            (img: any) => !existingIds.has(img.id)
+            (img: any) => !existingIds.has(img.id),
           );
           return [...newImages, ...prev];
         });
@@ -766,8 +768,8 @@ export default function AuditAssetDetails() {
         // Replace temp note with real note
         note.needsServerSync && note.content === realNote.content
           ? realNote
-          : note
-      )
+          : note,
+      ),
     );
   }, []);
 
@@ -787,7 +789,7 @@ export default function AuditAssetDetails() {
         filePickerTriggerRef.current(localImages.length);
       }
     },
-    [localImages.length]
+    [localImages.length],
   );
 
   /**
@@ -803,7 +805,7 @@ export default function AuditAssetDetails() {
    * This triggers the delete-image action which will revalidate.
    */
   const handleImageDeleteWithConfirm = (imageId: string) => {
-    if (!confirm("Are you sure you want to delete this image?")) {
+    if (!confirm(t("auditNotes.confirmDeleteImage"))) {
       return;
     }
     // Optimistic removal
@@ -827,13 +829,15 @@ export default function AuditAssetDetails() {
           <div className="space-y-2">
             <textarea
               name="content"
-              placeholder="Add a note..."
+              placeholder={t("auditNotes.notePlaceholder")}
               rows={3}
               className="w-full resize-none rounded-md border border-gray-300 p-2 text-sm focus:border-gray-500 focus:outline-none"
             />
             <div className="flex justify-end">
               <Button type="submit" size="sm" disabled={disabled}>
-                {disabled ? "Adding Note..." : "Add Note"}
+                {disabled
+                  ? t("auditNotes.addingNote")
+                  : t("auditNotes.addNote")}
               </Button>
             </div>
           </div>

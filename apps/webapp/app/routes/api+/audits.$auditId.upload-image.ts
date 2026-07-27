@@ -19,7 +19,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.audit,
@@ -57,7 +57,7 @@ export async function action({ request, params, context }: ActionFunctionArgs) {
     requireAuditAssigneeForBaseSelfService({
       audit,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       auditId,
     });
 

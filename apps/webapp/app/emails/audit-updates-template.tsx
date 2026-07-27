@@ -6,6 +6,7 @@ import {
   Container,
   Heading,
 } from "@react-email/components";
+import { config } from "~/config/shelf.config";
 import type { ClientHint } from "~/utils/client-hints";
 import { getDateTimeFormatFromHints } from "~/utils/client-hints";
 import { SERVER_URL } from "~/utils/env";
@@ -83,7 +84,7 @@ export function AuditUpdatesEmailTemplate({
   return (
     <Html>
       <Head>
-        <title>Audit update from Shelf.nu</title>
+        <title>{`Audit update from ${config.appName}`}</title>
       </Head>
 
       <Container
@@ -218,7 +219,7 @@ export function AuditUpdatesEmailTemplate({
             >
               Thanks,
               <br />
-              The Shelf Team
+              The {config.appName} Team
             </p>
           )}
           <p
@@ -229,7 +230,7 @@ export function AuditUpdatesEmailTemplate({
               color: "#344054",
             }}
           >
-            © {new Date().getFullYear()} Shelf.nu
+            © {new Date().getFullYear()} {config.appName}
           </p>
         </div>
       </Container>
@@ -262,5 +263,5 @@ export const auditUpdatesTemplateString = ({
       isAdminEmail={isAdminEmail}
       completedAt={completedAt}
       wasOverdue={wasOverdue}
-    />
+    />,
   );

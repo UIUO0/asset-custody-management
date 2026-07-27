@@ -39,7 +39,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const { organizationId, isSelfServiceOrBase } = permissionResult;
+    const { organizationId, isScopedToOwnRecords } = permissionResult;
 
     await requirePermission({
       userId,
@@ -61,7 +61,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     requireAuditAssigneeForBaseSelfService({
       audit,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       auditId,
     });
 
@@ -76,7 +76,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       headers: {
         "content-type": "text/csv",
         "content-disposition": `attachment; filename="${buildFilename(
-          audit.name
+          audit.name,
         )}"`,
       },
     });

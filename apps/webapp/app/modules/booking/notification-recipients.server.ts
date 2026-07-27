@@ -102,7 +102,7 @@ export async function getBookingNotificationRecipients({
   organizationId,
   editorUserId,
   isScheduledJob,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
 }: {
   booking: BookingForEmail;
   eventType: BookingEventType;
@@ -113,7 +113,7 @@ export async function getBookingNotificationRecipients({
    *  Admin broadcast only fires for reservations made by these roles
    *  (preserving current behavior where admins are alerted to "pickup"
    *  requests from lower-role users). */
-  isSelfServiceOrBase?: boolean;
+  isScopedToOwnRecords?: boolean;
 }): Promise<NotificationRecipient[]> {
   try {
     const recipients = new Map<string, NotificationRecipient>();
@@ -153,7 +153,7 @@ export async function getBookingNotificationRecipients({
     if (
       settings.notifyAdminsOnNewBooking &&
       eventType === "RESERVATION" &&
-      isSelfServiceOrBase
+      isScopedToOwnRecords
     ) {
       const admins = await getOrganizationAdminsForNotification({
         organizationId,
@@ -221,7 +221,7 @@ export async function getBookingNotificationRecipients({
 
     // 8. Return only entries with valid emails
     return Array.from(recipients.values()).filter(
-      (r) => r.email && r.email.length > 0
+      (r) => r.email && r.email.length > 0,
     );
   } catch (cause) {
     Logger.error(
@@ -231,7 +231,7 @@ export async function getBookingNotificationRecipients({
           "Failed to resolve booking notification recipients. Returning empty list to avoid blocking the booking flow.",
         additionalData: { organizationId, eventType },
         label: "Booking",
-      })
+      }),
     );
     return [];
   }

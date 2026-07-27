@@ -1,6 +1,11 @@
 import type { Prisma } from "@prisma/client";
 import { CalendarCheck } from "lucide-react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useTranslation } from "react-i18next";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import {
   data,
   redirect,
@@ -16,6 +21,8 @@ import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { db } from "~/database/db.server";
 
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { isQuantityTracked } from "~/modules/asset/utils";
 import {
   loadBookingsData,
@@ -48,7 +55,14 @@ const updateBookingSchema = z.object({
   quantity: z.coerce.number().int().positive().optional(),
 });
 
-export const meta = () => [{ title: appendToMetaTitle("Add to booking") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.addToBooking.addToBooking) }];
+};
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -58,7 +72,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId: authSession?.userId,
       request,
       entity: PermissionEntity.booking,
@@ -73,7 +87,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         request,
         organizationId,
         userId: authSession?.userId,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         ids: assetId ? [assetId] : undefined,
       }),
       db.asset.findFirst({
@@ -130,14 +144,14 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         additionalData: { userId },
         message: "Please select a Booking",
         shouldBeCaptured: false,
-      }
+      },
     );
 
     const { finalAssetIds, bookingInfo } = await processBooking(
       bookingId,
       assetIds,
       organizationId,
-      { userId, role }
+      { userId, role },
     );
 
     /**
@@ -156,7 +170,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       if (asset && isQuantityTracked(asset)) {
         const availability = await computeBookingAvailableQuantity(
           assetId,
-          bookingId
+          bookingId,
         );
         if (quantity > availability.available) {
           throw new ShelfError({
@@ -211,7 +225,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     });
     const bookingLink = wrapLinkForNote(
       `/bookings/${booking.id}`,
-      booking.name
+      booking.name,
     );
     await createNotes({
       content: `${actor} added asset to ${bookingLink}.`,
@@ -240,6 +254,7 @@ export function links() {
 }
 
 export default function ExistingBooking() {
+  const { t } = useTranslation();
   const { ids, asset, assetAvailability } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const transition = useNavigation();
@@ -250,7 +265,7 @@ export default function ExistingBooking() {
   const maxQuantity = assetAvailability?.available ?? undefined;
 
   function isValidBooking(
-    booking: { status?: string | null } | null | undefined
+    booking: { status?: string | null } | null | undefined,
   ) {
     // DRAFT/RESERVED (not yet started) + ONGOING/OVERDUE (active). Adding to an
     // active booking keeps the asset AVAILABLE until it is purposefully checked
@@ -293,10 +308,10 @@ export default function ExistingBooking() {
               // status: ['DRAFT', 'RESERVED']
             }}
             fieldName="bookingId"
-            contentLabel="Existing Bookings"
+            contentLabel={t("addToBooking.existingBookingsLabel")}
             initialDataKey="bookings"
             countKey="bookingCount"
-            placeholder="Select a Booking"
+            placeholder={t("addToBooking.selectABookingLabel")}
             allowClear
             closeOnSelect
             required={true}

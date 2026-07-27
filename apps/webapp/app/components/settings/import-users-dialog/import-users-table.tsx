@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import type { z } from "zod";
-import { organizationRolesMap } from "~/routes/_layout+/settings.team";
+import { ORGANIZATION_ROLE_LABEL_KEYS } from "~/utils/roles";
 import { tw } from "~/utils/tw";
 import type { InviteUserFormSchema } from "../invite-user-dialog";
 
@@ -17,11 +18,13 @@ export default function ImportUsersTable({
   title,
   users,
 }: ImportUsersTableProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       className={tw(
         "relative w-full overflow-x-auto rounded-md border",
-        className
+        className,
       )}
       style={style}
     >
@@ -31,10 +34,10 @@ export default function ImportUsersTable({
         <thead className="bg-gray-50 text-xs uppercase">
           <tr>
             <th scope="col" className="px-6 py-3">
-              Email
+              {t("team.emailAddress")}
             </th>
             <th scope="col" className="px-6 py-3">
-              Role
+              {t("team.role")}
             </th>
           </tr>
         </thead>
@@ -42,7 +45,9 @@ export default function ImportUsersTable({
           {users.map((user) => (
             <tr key={user.email}>
               <td className="px-6 py-4">{user.email}</td>
-              <td className="px-6 py-4">{organizationRolesMap[user.role]}</td>
+              <td className="px-6 py-4">
+                {t(ORGANIZATION_ROLE_LABEL_KEYS[user.role])}
+              </td>
             </tr>
           ))}
         </tbody>

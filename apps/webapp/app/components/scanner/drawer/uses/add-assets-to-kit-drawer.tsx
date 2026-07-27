@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { AssetStatus } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { z } from "zod";
 import {
@@ -69,6 +70,7 @@ export default function AddAssetsToKitDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   const { kit } = useLoaderData<typeof loader>();
   const kitAssets = kit.assetKits?.map((ak) => ak.asset) ?? [];
   const kitAssetsIds = kitAssets.map((a) => a.id);
@@ -99,9 +101,9 @@ export default function AddAssetsToKitDrawer({
   const assetQuantitiesJson = JSON.stringify(
     Object.fromEntries(
       Object.entries(assetQuantities).filter(([assetId]) =>
-        assetIdsForKit.includes(assetId)
-      )
-    )
+        assetIdsForKit.includes(assetId),
+      ),
+    ),
   );
 
   // Setup blockers
@@ -119,7 +121,7 @@ export default function AddAssetsToKitDrawer({
       (asset) =>
         !!asset &&
         hasCustody(asset.custody) &&
-        asset.assetKits[0]?.kitId !== kit.id
+        asset.assetKits[0]?.kitId !== kit.id,
     )
     .map((asset) => asset.id);
 
@@ -155,8 +157,7 @@ export default function AddAssetsToKitDrawer({
           unavailable for kit assignment.
         </>
       ),
-      description:
-        "Assets with custody cannot be added to kits. Please release custody first.",
+      description: t("scanner.blockerCustodyNotToKits"),
       onResolve: () => removeAssetsFromList(assetsWithCustodyIds),
     },
     {
@@ -168,8 +169,7 @@ export default function AddAssetsToKitDrawer({
           checked out.
         </>
       ),
-      description:
-        "Checked out assets cannot be added to kits. Please check them in first.",
+      description: t("scanner.blockerCheckedOutNotToKits"),
       onResolve: () => removeAssetsFromList(assetsCheckedOutIds),
     },
     {
@@ -181,7 +181,7 @@ export default function AddAssetsToKitDrawer({
           Kits cannot be added to other kits.
         </>
       ),
-      description: "Note: Only individual assets can be added to kits.",
+      description: t("scanner.noteOnlyIndividualToKits"),
       onResolve: () => removeItemsFromList(kitQrIds),
     },
     {
@@ -262,7 +262,7 @@ export default function AddAssetsToKitDrawer({
       }}
       items={items}
       onClearItems={clearList}
-      title="Items scanned"
+      title={t("scanner.itemsScanned")}
       isLoading={isLoading}
       renderItem={renderItemRow}
       Blockers={Blockers}
@@ -283,38 +283,38 @@ export function AssetRow({
   asset: AssetFromQrWithKit;
   kit: { id: string; assetKits: Array<{ asset: { id: string } }> };
 }) {
+  const { t } = useTranslation();
   const assetKitLink = asset.assetKits[0];
   const assetKitId = assetKitLink?.kitId;
   const assetKit = assetKitLink?.kit;
 
   // Use a combination of standard presets and custom configurations
   const availabilityConfigs = [
-    assetLabelPresets.inCustody(asset.status === AssetStatus.IN_CUSTODY),
-    assetLabelPresets.checkedOut(asset.status === AssetStatus.CHECKED_OUT),
+    assetLabelPresets.inCustody(t, asset.status === AssetStatus.IN_CUSTODY),
+    assetLabelPresets.checkedOut(t, asset.status === AssetStatus.CHECKED_OUT),
     // Custom preset for assets with custody (unavailable for kits)
     {
       condition: hasCustody(asset.custody) && assetKitId !== kit.id,
-      badgeText: "Has custody",
-      tooltipTitle: "Asset has custody",
-      tooltipContent:
-        "Assets with custody cannot be added to kits. Please release custody first.",
+      badgeText: t("scanAvailability.hasCustody"),
+      tooltipTitle: t("scanAvailability.hasCustodyTitle"),
+      tooltipContent: t("scanAvailability.hasCustodyContent"),
       priority: 80,
     },
     // Custom preset for "already in this kit"
     {
       condition: kit.assetKits.some((ak) => ak.asset.id === asset.id),
-      badgeText: "Already added to this kit",
-      tooltipTitle: "Asset is part of kit",
-      tooltipContent: "This asset is already added to the current kit.",
+      badgeText: t("scanAvailability.alreadyAddedToKit"),
+      tooltipTitle: t("scanAvailability.assetPartOfKitTitle"),
+      tooltipContent: t("scanAvailability.alreadyAddedToKitContent"),
       priority: 70,
     },
     {
       condition: !!assetKitId && assetKitId !== kit.id,
-      badgeText: "Part of another kit",
-      tooltipTitle: "Asset is part of another kit",
+      badgeText: t("scanAvailability.partOfAnotherKit"),
+      tooltipTitle: t("scanAvailability.partOfAnotherKitTitle"),
       tooltipContent: (
         <>
-          This asset is currently part of another kit
+          {t("scanAvailability.partOfAnotherKitPrefix")}
           {assetKit ? (
             <>
               :{" "}
@@ -329,7 +329,7 @@ export function AssetRow({
               <br />
             </>
           ) : undefined}
-          You will still be able to add this asset to replace its current kit.
+          {t("scanAvailability.stillCanReplaceKit")}
         </>
       ),
       priority: 70,
@@ -339,7 +339,7 @@ export function AssetRow({
   // Create the availability labels component
   const [, AssetAvailabilityLabels] = createAvailabilityLabels(
     availabilityConfigs,
-    { maxLabels: 5 }
+    { maxLabels: 5 },
   );
 
   const qtyTracked = isQuantityTracked(asset) && asset.quantity != null;
@@ -378,7 +378,7 @@ export function AssetRow({
             className={tw(
               "inline-block bg-gray-50 px-[6px] py-[2px]",
               "rounded-md border border-gray-200",
-              "text-xs text-gray-700"
+              "text-xs text-gray-700",
             )}
           >
             asset
@@ -399,17 +399,18 @@ export function AssetRow({
 }
 
 export function KitRow({ kit }: { kit: KitFromQr }) {
+  const { t } = useTranslation();
   // Use preset configurations to define the availability labels
   const availabilityConfigs = [
     {
       condition: true, // Always show this label for kits
-      badgeText: "Cannot add to kit",
-      tooltipTitle: "Kits cannot be added to other kits",
-      tooltipContent: "Only individual assets can be added to kits.",
+      badgeText: t("scanAvailability.cannotAddToKit"),
+      tooltipTitle: t("scanAvailability.cannotAddToKitTitle"),
+      tooltipContent: t("scanAvailability.cannotAddToKitContent"),
       priority: 100,
     },
-    kitLabelPresets.inCustody(kit.status === AssetStatus.IN_CUSTODY),
-    kitLabelPresets.checkedOut(kit.status === AssetStatus.CHECKED_OUT),
+    kitLabelPresets.inCustody(t, kit.status === AssetStatus.IN_CUSTODY),
+    kitLabelPresets.checkedOut(t, kit.status === AssetStatus.CHECKED_OUT),
   ];
 
   // Create the availability labels component with default options
@@ -430,7 +431,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit

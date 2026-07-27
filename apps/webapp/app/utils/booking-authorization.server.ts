@@ -1,5 +1,6 @@
 import { OrganizationRoles } from "@prisma/client";
 import { ShelfError } from "./error";
+import { rolesAreScopedToOwnRecords } from "./permissions/role-scope";
 
 /**
  * The minimal booking projection needed to decide whether a requester is the
@@ -84,12 +85,21 @@ interface ValidateBookingOwnershipParams {
 }
 
 /**
- * Validates that a user has permission to perform an action on a booking based on their role and ownership.
+ * Validates that a user has permission to perform an action on a booking based
+ * on their role and ownership.
  *
  * Authorization rules:
  * - BASE users: Blocked for write operations, ownership-checked for read operations
- * - SELF_SERVICE users: Only allowed on bookings they own (creator OR custodian)
- * - ADMIN/OWNER users: Allowed on all bookings
+ * - Any role scoped to its own records: only allowed on bookings they own
+ *   (creator OR custodian)
+ * - Roles with organization-wide visibility (OWNER, ADMIN, WAREHOUSE, FINANCE,
+ *   INVENTORY): allowed on all bookings
+ *
+ * The ownership branch is keyed on {@link rolesAreScopedToOwnRecords} rather
+ * than an explicit `role === SELF_SERVICE || role === BASE` list. That list was
+ * a deny-list: any role added to the enum afterwards fell through to the
+ * "implicitly allowed" path below and could act on **every** booking in the
+ * workspace without an ownership check. The allow-list inverts the default.
  *
  * @throws {ShelfError} 403 if user is not authorized
  */
@@ -111,10 +121,7 @@ export function validateBookingOwnership({
     });
   }
 
-  if (
-    role === OrganizationRoles.SELF_SERVICE ||
-    role === OrganizationRoles.BASE
-  ) {
+  if (rolesAreScopedToOwnRecords(role)) {
     const isBookingOwner = checkCustodianOnly
       ? booking.custodianUserId === userId
       : booking.creatorId === userId || booking.custodianUserId === userId;
@@ -130,5 +137,5 @@ export function validateBookingOwnership({
     }
   }
 
-  // ADMIN and OWNER roles are implicitly allowed - no check needed
+  // Roles with organization-wide visibility are implicitly allowed.
 }

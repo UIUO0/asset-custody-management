@@ -102,7 +102,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
     // The attacker's session org (Org A)
     vi.mocked(rolesServer.requirePermission).mockResolvedValue({
       organizationId: "org-attacker",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       organizations: [],
       currentOrganization: {} as any,
       role: {} as any,
@@ -129,7 +129,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "victim-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     // Response shape: the route `makeShelfError`s and returns data(error(...), { status })
@@ -161,7 +161,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("DELETE"),
         params: { bookingId: "victim-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect((response as any).init?.status).toBe(404);
@@ -186,7 +186,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "own-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(bookingNoteService.createBookingNote).toHaveBeenCalledWith({
@@ -214,14 +214,14 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "own-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(rolesServer.requirePermission).toHaveBeenCalledWith(
       expect.objectContaining({
         entity: PermissionEntity.bookingNote,
         action: PermissionAction.create,
-      })
+      }),
     );
   });
 
@@ -245,14 +245,14 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("DELETE"),
         params: { bookingId: "own-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(rolesServer.requirePermission).toHaveBeenCalledWith(
       expect.objectContaining({
         entity: PermissionEntity.bookingNote,
         action: PermissionAction.delete,
-      })
+      }),
     );
   });
 
@@ -273,7 +273,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("DELETE"),
         params: { bookingId: "own-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(bookingNoteService.deleteBookingNote).toHaveBeenCalledWith({
@@ -305,7 +305,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "someone-elses-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect((response as any).init?.status).toBe(403);
@@ -334,7 +334,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "legacy-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(bookingNoteService.createBookingNote).toHaveBeenCalled();
@@ -356,7 +356,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "someone-elses-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect((response as any).init?.status).toBe(403);
@@ -366,7 +366,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
   it("allows a POST on another user's booking when the requester can see all bookings", async () => {
     vi.mocked(rolesServer.requirePermission).mockResolvedValue({
       organizationId: "org-attacker",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       organizations: [],
       currentOrganization: {} as any,
       role: {} as any,
@@ -390,7 +390,7 @@ describe("bookings.$bookingId.activity action — organization scoping", () => {
         request: makeRequest("POST"),
         params: { bookingId: "someone-elses-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(bookingNoteService.createBookingNote).toHaveBeenCalled();
@@ -437,8 +437,8 @@ describe("bookings.$bookingId.activity loader — custody scoping", () => {
           request: makeLoaderRequest(),
           params: { bookingId: "victim-booking" },
           context: mockContext,
-        })
-      )
+        }),
+      ),
     ).rejects.toMatchObject({ init: { status: 403 } });
 
     // The gate is a precondition: an unauthorized request must never read the
@@ -463,7 +463,7 @@ describe("bookings.$bookingId.activity loader — custody scoping", () => {
         request: makeLoaderRequest(),
         params: { bookingId: "own-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect((response as any).booking?.id).toBe("own-booking");
@@ -490,7 +490,7 @@ describe("bookings.$bookingId.activity loader — custody scoping", () => {
         request: makeLoaderRequest(),
         params: { bookingId: "legacy-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect((response as any).booking?.id).toBe("legacy-booking");
@@ -513,7 +513,7 @@ describe("bookings.$bookingId.activity loader — custody scoping", () => {
         request: makeLoaderRequest(),
         params: { bookingId: "victim-booking" },
         context: mockContext,
-      })
+      }),
     );
 
     expect((response as any).booking?.id).toBe("victim-booking");

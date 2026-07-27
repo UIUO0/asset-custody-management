@@ -15,6 +15,7 @@ import { data, Link } from "react-router";
 import { z } from "zod";
 import { ImportUpdateContent } from "~/components/assets/bulk-update";
 import Header from "~/components/layout/header";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { checkExhaustiveSwitch } from "~/utils/check-exhaustive-switch";
 import { csvDataFromRequest } from "~/utils/csv.server";
@@ -55,7 +56,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
       clonedFormData,
       z.object({
         intent: z.enum(["preview-update", "apply-update"]),
-      })
+      }),
     );
 
     // Validate file presence before parsing
@@ -130,6 +131,10 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
   const { userId } = authSession;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, organizations } = await requirePermission({
       userId,
       request,
@@ -141,7 +146,7 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
 
     return payload({
       header: {
-        title: "Update existing assets",
+        title: t("assets.importUpdateTitle"),
       },
     });
   } catch (cause) {

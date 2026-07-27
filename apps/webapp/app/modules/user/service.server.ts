@@ -65,13 +65,13 @@ const label: ErrorLabel = "User";
 
 export function getUserByID<TSelect extends Prisma.UserSelect>(
   id: User["id"],
-  options: { select: TSelect; include?: never }
+  options: { select: TSelect; include?: never },
 ): Promise<Prisma.UserGetPayload<{ select: TSelect }>>;
 
 // Overload 2: With include
 export function getUserByID<TInclude extends Prisma.UserInclude>(
   id: User["id"],
-  options: { include: TInclude; select?: never }
+  options: { include: TInclude; select?: never },
 ): Promise<Prisma.UserGetPayload<{ include: TInclude }>>;
 
 // Overload 3: Without options (default)
@@ -80,7 +80,7 @@ export function getUserByID(id: User["id"]): Promise<Pick<User, "id">>;
 // Implementation
 export async function getUserByID(
   id: User["id"],
-  options?: { select?: Prisma.UserSelect; include?: Prisma.UserInclude }
+  options?: { select?: Prisma.UserSelect; include?: Prisma.UserInclude },
 ): Promise<any> {
   try {
     const select = options?.select;
@@ -119,7 +119,7 @@ export async function getUserByID(
 
 export async function getUserWithContact<T extends Prisma.UserInclude>(
   id: string,
-  include?: T
+  include?: T,
 ) {
   type ReturnType = Prisma.UserGetPayload<{
     include: T & { contact: true };
@@ -183,7 +183,7 @@ async function createUserOrgAssociation(
     roles: OrganizationRoles[];
     organizationIds: Organization["id"][];
     userId: User["id"];
-  }
+  },
 ) {
   const { organizationIds, userId, roles } = payload;
 
@@ -207,8 +207,8 @@ async function createUserOrgAssociation(
               push: roles,
             },
           },
-        })
-      )
+        }),
+      ),
     );
   } catch (cause) {
     throw new ShelfError({
@@ -248,12 +248,12 @@ export async function createUserOrAttachOrg({
     // user's email) serves as proof of email ownership.
     if (!shelfUser?.id) {
       let authAccount = await createEmailAuthAccount(email, password).catch(
-        () => null
+        () => null,
       );
 
       if (!authAccount) {
         authAccount = await confirmExistingAuthAccount(email, password).catch(
-          () => null
+          () => null,
         );
       }
 
@@ -347,7 +347,7 @@ export async function createUserFromSSO(
       zipPostalCode?: string;
       countryRegion?: string;
     };
-  }
+  },
 ) {
   try {
     const { email, userId } = authSession;
@@ -437,7 +437,7 @@ async function handleSCIMTransition(
   userId: string,
   organization: Organization,
   currentRoles: OrganizationRoles[],
-  desiredRole: OrganizationRoles | null
+  desiredRole: OrganizationRoles | null,
 ): Promise<UserOrgTransition> {
   const transition: UserOrgTransition = {
     userId,
@@ -536,7 +536,7 @@ export async function updateUserFromSSO(
       zipPostalCode?: string;
       countryRegion?: string;
     };
-  }
+  },
 ): Promise<{
   user: Prisma.UserGetPayload<{ select: typeof USER_WITH_SSO_DETAILS_SELECT }>;
   org: Organization | null;
@@ -583,7 +583,7 @@ export async function updateUserFromSSO(
       if (hasGroupMappings) {
         const desiredRole = getRoleFromGroupId(ssoDetails, groups);
         const existingOrgAccess = existingUserOrganizations.find(
-          (uo) => uo.organization.id === org.id
+          (uo) => uo.organization.id === org.id,
         );
 
         if (desiredRole) {
@@ -595,7 +595,7 @@ export async function updateUserFromSSO(
             userId,
             org,
             existingOrgAccess.roles,
-            desiredRole
+            desiredRole,
           );
           transitions.push(transition);
         } else if (desiredRole) {
@@ -657,7 +657,7 @@ export async function createUser(
     lastName?: User["lastName"];
     isSSO?: boolean;
     createdWithInvite?: boolean;
-  }
+  },
 ) {
   const {
     email,
@@ -773,7 +773,7 @@ export async function createUser(
 
         return user;
       },
-      { maxWait: 6000, timeout: 10000 }
+      { maxWait: 6000, timeout: 10000 },
     );
 
     /**
@@ -810,7 +810,7 @@ export async function createUser(
 
 export async function updateUser<T extends Prisma.UserInclude>(
   updateUserPayload: UpdateUserPayload,
-  extraIncludes?: T
+  extraIncludes?: T,
 ) {
   /**
    * Remove password from object so we can pass it to prisma user update
@@ -818,7 +818,7 @@ export async function updateUser<T extends Prisma.UserInclude>(
    * */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const cleanClone = (({ password, confirmPassword, email, ...o }) => o)(
-    updateUserPayload
+    updateUserPayload,
   );
 
   try {
@@ -850,7 +850,7 @@ export async function updateUser<T extends Prisma.UserInclude>(
     ) {
       await updateAccountPassword(
         updateUserPayload.id,
-        updateUserPayload.password
+        updateUserPayload.password,
       );
     }
 
@@ -901,7 +901,7 @@ export async function updateUserEmail({
       userId,
       {
         email: newEmail,
-      }
+      },
     );
 
     if (error) {
@@ -1125,7 +1125,7 @@ export async function updateProfilePicture({
  * To comply with regulations, we will destroy all personal data related to the user
  *
  * To soft delete the user we do the following:
- * 1. Update the user email to: deleted+{randomId}@deleted.shelf.nu
+ * 1. Update the user email to: deleted+{randomId}@deleted.epda.local
  * 2. Update the user username to: deleted+{randomId}
  * 3. Update the user firstName to: Deleted
  * 4. Update the user lastName to: User
@@ -1156,7 +1156,7 @@ export async function softDeleteUser(id: User["id"]) {
     });
 
     const organizationsTheUserDoesNotOwn = user.userOrganizations.filter(
-      (uo) => !uo.roles.includes(OrganizationRoles.OWNER)
+      (uo) => !uo.roles.includes(OrganizationRoles.OWNER),
     );
 
     await db.$transaction(async (tx) => {
@@ -1227,14 +1227,14 @@ export async function softDeleteUser(id: User["id"]) {
     /** Delete the auth user. This should also destroy all their current sessions */
     const { error } = await getSupabaseAdmin().auth.admin.deleteUser(
       user.id,
-      true // Soft delete
+      true, // Soft delete
     );
 
     /** Send an email to the user that their request has been completed */
     void sendEmail({
       to: user.email,
       subject: "Your account has been deleted",
-      text: `Your shelf account has been deleted. \n\n Kind regards, \n Shelf Team\n\n`,
+      text: `Your ${config.appName} account has been deleted. \n\n Kind regards, \n The ${config.appName} Team\n\n`,
     });
 
     if (error) {
@@ -1277,10 +1277,10 @@ export { defaultUserCategories };
 export async function createUserAccountForTesting(
   email: string,
   password: string,
-  username: string
+  username: string,
 ): Promise<AuthSession | null> {
   const authAccount = await createEmailAuthAccount(email, password).catch(
-    () => null
+    () => null,
   );
 
   if (!authAccount) {
@@ -1363,7 +1363,7 @@ export async function revokeAccessToOrganization({
         "Failed to clear lastSelectedOrganizationId during access revocation",
         userId,
         organizationId,
-        cleanupError
+        cleanupError,
       );
     }
 
@@ -1764,7 +1764,7 @@ export async function getUserFromOrg<T extends Prisma.UserInclude | undefined>({
 }) {
   try {
     const otherOrganizationIds = userOrganizations?.map(
-      (org) => org.organizationId
+      (org) => org.organizationId,
     );
 
     const mergedInclude = {
@@ -1793,15 +1793,15 @@ export async function getUserFromOrg<T extends Prisma.UserInclude | undefined>({
 
     /* User is accessing the User in the wrong organization */
     const isUserInCurrentOrg = !!user.userOrganizations.find(
-      (userOrg) => userOrg.organizationId === organizationId
+      (userOrg) => userOrg.organizationId === organizationId,
     );
 
     const otherOrgsForUser =
       userOrganizations?.filter(
         (org) =>
           !!user.userOrganizations.find(
-            (userOrg) => userOrg.organizationId === org.organizationId
-          )
+            (userOrg) => userOrg.organizationId === org.organizationId,
+          ),
       ) ?? [];
 
     if (

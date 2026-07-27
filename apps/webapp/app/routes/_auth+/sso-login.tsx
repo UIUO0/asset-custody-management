@@ -108,7 +108,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const { domain, platform } = parseData(
           await request.formData(),
           SSOLoginFormSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
         const url = await signInWithSSO(domain, { platform });
 
@@ -174,16 +174,11 @@ export default function SSOLogin() {
         {data?.error?.message && (
           <div className="text-sm text-error-500">{data.error.message}</div>
         )}
-        <div>
-          Want to enable SSO for your organization?{" "}
-          <Button
-            as="a"
-            href="mailto:hello@shelf.nu?subject=SSO request"
-            variant="link"
-          >
-            Contact us
-          </Button>
-        </div>
+        {/* why: upstream pointed this at its own sales inbox. SSO for this
+            deployment is an internal Azure AD (Entra ID) configuration, so the
+            only correct recipient is the authority's own IT department.
+            @see apps/docs/epda-azure-entra-sso.md */}
+        <div>Need SSO access? Contact the IT department.</div>
       </div>
     </>
   );

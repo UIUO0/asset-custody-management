@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
 import { Button } from "../shared/button";
@@ -7,6 +8,7 @@ export const ExportBackupButton = ({
 }: {
   canExportAssets: boolean;
 }) => {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<AssetIndexLoaderData>();
   return (
     <Button
@@ -21,14 +23,18 @@ export const ExportBackupButton = ({
           ? {
               reason:
                 totalItems === 0
-                  ? "You don't have any assets to export"
-                  : "Exporting is not available on the free tier of shelf.",
+                  ? t("assets.noAssetsToExportBody")
+                  : t("assets.exportNotOnFreeTier"),
             }
           : false
       }
-      title={totalItems === 0 ? "No assets to export" : "Export assets"}
+      title={
+        totalItems === 0
+          ? t("assets.noAssetsToExport")
+          : t("assets.exportAssets")
+      }
     >
-      Download CSV
+      {t("assets.exportDownloadCsv")}
     </Button>
   );
 };

@@ -8,6 +8,7 @@
  * @see {@link file://./../../../utils/import-update.server.ts} Server-side preview logic
  */
 import type React from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import type useFetcherWithReset from "~/hooks/use-fetcher-with-reset";
 import type { action } from "~/routes/_layout+/assets.import-update";
@@ -63,6 +64,7 @@ export function PreviewDisplay({
   isReanalyzing: boolean;
   onReset: () => void;
 }) {
+  const { t } = useTranslation();
   const totalChanges = preview.totalFieldChanges;
   const totalAssets = preview.assetsToUpdate.length;
   const hasNewEntities =
@@ -80,7 +82,7 @@ export function PreviewDisplay({
         field: c.field,
         value: c.newValue,
         warning: c.warning!,
-      }))
+      })),
   );
   const hasWarnings = allWarnings.length > 0;
 
@@ -99,21 +101,23 @@ export function PreviewDisplay({
     <div className="mt-4 w-full">
       {/* Summary section — always first */}
       <div className="mb-4 rounded-md border bg-gray-50 p-4">
-        <h4 className="mb-3 text-base font-semibold">Analysis Summary</h4>
+        <h4 className="mb-3 text-base font-semibold">
+          {t("assetUpdate.analysisSummary")}
+        </h4>
         <div className="flex flex-wrap gap-3">
           <SummaryPill
             count={preview.assetsToUpdate.length}
-            label="to update"
+            label={t("assetUpdate.pillToUpdate")}
             color="blue"
           />
           <SummaryPill
             count={preview.skippedAssets.length}
-            label="unchanged"
+            label={t("assetUpdate.pillUnchanged")}
             color="gray"
           />
           <SummaryPill
             count={preview.failedRows.length}
-            label="failed"
+            label={t("assetUpdate.pillFailed")}
             color="red"
           />
         </div>
@@ -121,13 +125,11 @@ export function PreviewDisplay({
         {/* Reassurance message */}
         {preview.totalUnchangedFields > 0 && (
           <p className="mt-3 text-sm text-gray-500">
-            {preview.totalUnchangedFields} field
-            {preview.totalUnchangedFields !== 1 ? "s" : ""} across{" "}
-            {preview.assetsToUpdate.length + preview.skippedAssets.length} asset
-            {preview.assetsToUpdate.length + preview.skippedAssets.length !== 1
-              ? "s"
-              : ""}{" "}
-            will remain unchanged.
+            {t("assetUpdate.unchangedNotice", {
+              fields: preview.totalUnchangedFields,
+              assets:
+                preview.assetsToUpdate.length + preview.skippedAssets.length,
+            })}
           </p>
         )}
       </div>
@@ -136,17 +138,15 @@ export function PreviewDisplay({
       {hasWarnings && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 p-4">
           <p className="mb-2 font-medium text-red-800">
-            {allWarnings.length} value
-            {allWarnings.length !== 1 ? "s" : ""} need
-            {allWarnings.length === 1 ? "s" : ""} fixing before you apply
+            {t("assetUpdate.warningsNeedFixing", { count: allWarnings.length })}
           </p>
           <div className="max-h-[200px] overflow-y-auto">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-red-50">
                 <Tr>
-                  <Th>Asset</Th>
-                  <Th>Field</Th>
-                  <Th>Problem</Th>
+                  <Th>{t("assetUpdate.colAsset")}</Th>
+                  <Th>{t("assetUpdate.colField")}</Th>
+                  <Th>{t("assetUpdate.colProblem")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -175,11 +175,9 @@ export function PreviewDisplay({
       {preview.unrecognizedColumns.length > 0 && (
         <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-4">
           <p className="mb-1 font-medium text-blue-800">
-            We skipped{" "}
-            {preview.unrecognizedColumns.length === 1
-              ? "a column"
-              : `${preview.unrecognizedColumns.length} columns`}{" "}
-            we don't recognize
+            {t("assetUpdate.skippedColumns", {
+              count: preview.unrecognizedColumns.length,
+            })}
           </p>
           <div className="mb-2 flex flex-wrap gap-1.5">
             {preview.unrecognizedColumns.map((col) => (
@@ -192,11 +190,18 @@ export function PreviewDisplay({
             ))}
           </div>
           <p className="text-sm text-blue-700">
-            To import data for these columns, first create them as{" "}
-            <Button variant="link" to="/settings/custom-fields" target="_blank">
-              Custom Fields
-            </Button>{" "}
-            in your workspace, then come back and re-analyze.
+            <Trans
+              i18nKey="assetUpdate.createCustomFieldsHint"
+              components={{
+                1: (
+                  <Button
+                    variant="link"
+                    to="/settings/custom-fields"
+                    target="_blank"
+                  />
+                ),
+              }}
+            />
           </p>
           <Button
             type="button"
@@ -205,7 +210,9 @@ export function PreviewDisplay({
             onClick={onReanalyze}
             disabled={isReanalyzing}
           >
-            {isReanalyzing ? "Re-analyzing..." : "Re-analyze file"}
+            {isReanalyzing
+              ? t("assetUpdate.reanalyzing")
+              : t("assetUpdate.reanalyzeFile")}
           </Button>
         </div>
       )}
@@ -214,14 +221,14 @@ export function PreviewDisplay({
       {preview.ignoredColumns.length > 0 && (
         <details className="mb-4">
           <summary className="cursor-pointer text-sm text-gray-500">
-            Your file has {preview.ignoredColumns.length} column
-            {preview.ignoredColumns.length !== 1 ? "s" : ""} that can't be
-            bulk-updated (click to see which)
+            {t("assetUpdate.readOnlyColumns", {
+              count: preview.ignoredColumns.length,
+            })}
           </summary>
           <p className="mt-1 text-xs text-gray-500">
-            {preview.ignoredColumns.join(", ")} — these columns are present in
-            your file but are read-only in this tool. Any edits you made to them
-            won't be applied.
+            {t("assetUpdate.readOnlyColumnsBody", {
+              columns: preview.ignoredColumns.join(", "),
+            })}
           </p>
         </details>
       )}
@@ -230,17 +237,16 @@ export function PreviewDisplay({
       {hasNewEntities && (
         <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-4">
           <p className="mb-2 font-medium text-amber-800">
-            <AlertIcon className="inline-block size-4" /> New items will be
-            created
+            <AlertIcon className="inline-block size-4" />{" "}
+            {t("assetUpdate.newItemsWillBeCreated")}
           </p>
           <p className="mb-2 text-sm text-amber-700">
-            The following items don't exist yet and will be created
-            automatically. Please check for typos:
+            {t("assetUpdate.newItemsBody")}
           </p>
           <div className="space-y-1 text-sm text-amber-800">
             {preview.newEntities.categories.length > 0 && (
               <p>
-                <strong>New categories:</strong>{" "}
+                <strong>{t("assetUpdate.newCategories")}</strong>{" "}
                 {preview.newEntities.categories.map((name, i) => (
                   // The entity name is unique within its own list (dedup'd on
                   // the server), so it's a stable key here.
@@ -255,7 +261,7 @@ export function PreviewDisplay({
             )}
             {preview.newEntities.locations.length > 0 && (
               <p>
-                <strong>New locations:</strong>{" "}
+                <strong>{t("assetUpdate.newLocations")}</strong>{" "}
                 {preview.newEntities.locations.map((name, i) => (
                   <span key={name}>
                     {i > 0 && ", "}
@@ -268,7 +274,7 @@ export function PreviewDisplay({
             )}
             {preview.newEntities.tags.length > 0 && (
               <p>
-                <strong>New tags:</strong>{" "}
+                <strong>{t("assetUpdate.newTags")}</strong>{" "}
                 {preview.newEntities.tags.map((name, i) => (
                   <span key={name}>
                     {i > 0 && ", "}
@@ -287,15 +293,15 @@ export function PreviewDisplay({
       {preview.failedRows.length > 0 && (
         <div className="mb-4">
           <h4 className="mb-2 text-red-600">
-            Failed rows ({preview.failedRows.length})
+            {t("assetUpdate.failedRows", { count: preview.failedRows.length })}
           </h4>
           <div className="max-h-[200px] overflow-y-auto rounded-md border border-red-200">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-red-50">
                 <Tr>
-                  <Th>Row</Th>
-                  <Th>ID</Th>
-                  <Th>Reason</Th>
+                  <Th>{t("assetUpdate.colRow")}</Th>
+                  <Th>{t("assetUpdate.colId")}</Th>
+                  <Th>{t("assetUpdate.colReason")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -304,7 +310,9 @@ export function PreviewDisplay({
                   // per row in the uploaded file.
                   <Tr key={row.rowNumber}>
                     <Td>{row.rowNumber}</Td>
-                    <Td className="font-mono text-xs">{row.id || "(empty)"}</Td>
+                    <Td className="font-mono text-xs">
+                      {row.id || t("assetUpdate.empty")}
+                    </Td>
                     <Td className="text-red-600">{row.reason}</Td>
                   </Tr>
                 ))}
@@ -330,16 +338,16 @@ export function PreviewDisplay({
       {preview.skippedAssets.length > 0 && (
         <details className="mb-4">
           <summary className="cursor-pointer text-sm text-gray-500">
-            {preview.skippedAssets.length} asset
-            {preview.skippedAssets.length !== 1 ? "s" : ""} with no changes
-            (click to expand)
+            {t("assetUpdate.noChangeAssets", {
+              count: preview.skippedAssets.length,
+            })}
           </summary>
           <div className="mt-2 max-h-[200px] overflow-y-auto rounded-md border">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-gray-50">
                 <Tr>
-                  <Th>Asset</Th>
-                  <Th>Reason</Th>
+                  <Th>{t("assetUpdate.colAsset")}</Th>
+                  <Th>{t("assetUpdate.colReason")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -369,64 +377,59 @@ export function PreviewDisplay({
           >
             <AlertDialogTrigger asChild>
               <Button type="button">
-                Apply {totalChanges} change
-                {totalChanges !== 1 ? "s" : ""} to {totalAssets} asset
-                {totalAssets !== 1 ? "s" : ""}
+                {t("assetUpdate.applyChangesButton", {
+                  changes: totalChanges,
+                  assets: totalAssets,
+                })}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="max-w-[600px]">
               <AlertDialogHeader>
-                <AlertDialogTitle>Confirm bulk update</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {t("assetUpdate.confirmTitle")}
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  You are about to apply{" "}
-                  <strong>
-                    {totalChanges} change
-                    {totalChanges !== 1 ? "s" : ""}
-                  </strong>{" "}
-                  across <strong>{totalAssets}</strong> asset
-                  {totalAssets !== 1 ? "s" : ""}. This action cannot be undone.
-                  Empty cells will clear existing values where applicable.
+                  <Trans
+                    i18nKey="assetUpdate.confirmBody"
+                    values={{ changes: totalChanges, assets: totalAssets }}
+                    components={{ 1: <strong />, 3: <strong /> }}
+                  />
                 </AlertDialogDescription>
                 {hasNewEntities && (
                   <AlertDialogDescription>
                     <span className="text-amber-600">
-                      This will also create{" "}
-                      {[
-                        preview.newEntities.categories.length > 0 &&
-                          `${
-                            preview.newEntities.categories.length
-                          } new categor${
-                            preview.newEntities.categories.length !== 1
-                              ? "ies"
-                              : "y"
-                          }`,
-                        preview.newEntities.locations.length > 0 &&
-                          `${
-                            preview.newEntities.locations.length
-                          } new location${
-                            preview.newEntities.locations.length !== 1
-                              ? "s"
-                              : ""
-                          }`,
-                        preview.newEntities.tags.length > 0 &&
-                          `${preview.newEntities.tags.length} new tag${
-                            preview.newEntities.tags.length !== 1 ? "s" : ""
-                          }`,
-                      ]
-                        .filter(Boolean)
-                        .join(", ")}
-                      .
+                      {t("assetUpdate.willAlsoCreate", {
+                        summary: [
+                          preview.newEntities.categories.length > 0 &&
+                            t("assetUpdate.newCategoriesCount", {
+                              count: preview.newEntities.categories.length,
+                            }),
+                          preview.newEntities.locations.length > 0 &&
+                            t("assetUpdate.newLocationsCount", {
+                              count: preview.newEntities.locations.length,
+                            }),
+                          preview.newEntities.tags.length > 0 &&
+                            t("assetUpdate.newTagsCount", {
+                              count: preview.newEntities.tags.length,
+                            }),
+                        ]
+                          .filter(Boolean)
+                          .join(", "),
+                      })}
                     </span>
                   </AlertDialogDescription>
                 )}
                 <AlertDialogDescription>
-                  Type <b>"I AGREE"</b> below to confirm.
+                  <Trans
+                    i18nKey="assetUpdate.typeToConfirm"
+                    components={{ 1: <b /> }}
+                  />
                 </AlertDialogDescription>
                 {/* Server-side apply error shown inside the dialog */}
                 {applyFetcher.data?.error && (
                   <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                     {applyFetcher.data.error.message ||
-                      "An error occurred while applying changes."}
+                      t("assetUpdate.applyError")}
                   </div>
                 )}
                 <ConfirmationInput
@@ -439,7 +442,7 @@ export function PreviewDisplay({
               <AlertDialogFooter>
                 <AlertDialogCancel asChild>
                   <Button type="button" variant="secondary">
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </AlertDialogCancel>
                 <Button
@@ -448,24 +451,21 @@ export function PreviewDisplay({
                   onClick={submitApply}
                 >
                   {isApplyLoading
-                    ? "Applying..."
-                    : `Apply ${totalChanges} change${
-                        totalChanges !== 1 ? "s" : ""
-                      }`}
+                    ? t("assetUpdate.applying")
+                    : t("assetUpdate.applyChanges", { count: totalChanges })}
                 </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
           <Button type="button" variant="secondary" onClick={onReset}>
-            Start over
+            {t("assetUpdate.startOver")}
           </Button>
         </div>
       )}
 
       {preview.assetsToUpdate.length === 0 && (
         <p className="mt-4 text-gray-500">
-          No changes detected. All assets are already up to date, or all rows
-          failed validation.
+          {t("assetUpdate.noChangesDetected")}
         </p>
       )}
     </div>
@@ -492,6 +492,7 @@ function ConfirmationInput({
   isApplyLoading: boolean;
   submitApply: () => void;
 }) {
+  const { t } = useTranslation();
   // Focus once when the dialog opens so the user can start typing "I AGREE"
   // immediately. Safe because this component only mounts inside the open
   // AlertDialog, never ambiently.
@@ -501,7 +502,7 @@ function ConfirmationInput({
     <Input
       ref={inputRef}
       type="text"
-      label="Confirmation"
+      label={t("assetUpdate.confirmationLabel")}
       name="agree"
       value={agreed}
       onChange={(e) => setAgreed(e.target.value.toUpperCase())}

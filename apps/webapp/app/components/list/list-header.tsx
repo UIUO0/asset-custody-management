@@ -102,6 +102,7 @@ export const ListHeader = ({
 };
 
 function AdvancedModeDropdown() {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const freezeFetcher = useFetcher({
     key: "asset-index-settings-freeze-column",
@@ -120,7 +121,7 @@ function AdvancedModeDropdown() {
 
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-      <PopoverTrigger aria-label="Adjust name column options">
+      <PopoverTrigger aria-label={t("list.adjustNameColumn")}>
         <ChevronRight className="rotate-90" />
       </PopoverTrigger>
       <PopoverPortal>
@@ -149,7 +150,7 @@ function AdvancedModeDropdown() {
               name="intent"
               value="changeFreeze"
             >
-              {freezeColumn ? "Unfreeze column" : "Freeze column"}
+              {freezeColumn ? t("list.unfreezeColumn") : t("list.freezeColumn")}
             </Button>
           </freezeFetcher.Form>
 
@@ -172,7 +173,9 @@ function AdvancedModeDropdown() {
               name="intent"
               value="changeShowImage"
             >
-              {showAssetImage ? "Hide asset image" : "Show asset image"}
+              {showAssetImage
+                ? t("list.hideAssetImage")
+                : t("list.showAssetImage")}
             </Button>
           </showImageFetcher.Form>
         </PopoverContent>

@@ -18,6 +18,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { ReportEmptyState } from "~/components/reports/report-empty-state";
 import {
   AssetCell,
@@ -39,7 +40,7 @@ import { tw } from "~/utils/tw";
 const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
   {
     accessorKey: "assetName",
-    header: "Asset",
+    header: "reports.colAsset",
     cell: ({ row }) => (
       <AssetCell
         name={row.original.assetName}
@@ -50,7 +51,7 @@ const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
   },
   {
     accessorKey: "daysSinceLastUse",
-    header: "Unused For",
+    header: "reports.unusedFor",
     cell: ({ row }) => {
       const days = row.original.daysSinceLastUse;
       return (
@@ -61,7 +62,7 @@ const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
               ? "bg-red-100 text-red-700"
               : days > 60
               ? "bg-orange-100 text-orange-700"
-              : "bg-yellow-100 text-yellow-700"
+              : "bg-yellow-100 text-yellow-700",
           )}
         >
           {days} days
@@ -71,7 +72,7 @@ const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
   },
   {
     accessorKey: "lastBookedAt",
-    header: "Last Used",
+    header: "reports.lastUsed",
     cell: ({ row }) =>
       row.original.lastBookedAt ? (
         <DateCell date={row.original.lastBookedAt} />
@@ -81,19 +82,19 @@ const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: "reports.colCategory",
     cell: ({ row }) =>
       row.original.category || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "location",
-    header: "Location",
+    header: "reports.colLocation",
     cell: ({ row }) =>
       row.original.location || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "valuation",
-    header: "Value",
+    header: "reports.colValue",
     // Asset-aware: shows TOTAL (valuation × quantity) for QT assets, with
     // a "<unit price> × N <unit>" subtext. A real $0 valuation renders as
     // "$0" (or workspace equivalent), not "—". See {@link CurrencyCell}.
@@ -129,6 +130,7 @@ export function IdleAssetsContent({
   timeframeLabel,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   const currentOrganization = useCurrentOrganization();
   const { locale } = useHints();
 
@@ -162,7 +164,7 @@ export function IdleAssetsContent({
                     ? "text-orange-600"
                     : totalIdle > 0
                     ? "text-yellow-600"
-                    : "text-green-600"
+                    : "text-green-600",
                 )}
               >
                 {totalIdle}
@@ -170,7 +172,7 @@ export function IdleAssetsContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Unused Assets
+                {t("reports.unusedAssets")}
               </span>
               <span className="text-xs text-gray-500">
                 {idlePercentage}% of inventory
@@ -181,7 +183,9 @@ export function IdleAssetsContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Total Value</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.totalValue")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {totalIdleValue > 0
                   ? formatCurrency({
@@ -199,7 +203,9 @@ export function IdleAssetsContent({
       {/* Data table */}
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
-          <h3 className="text-sm font-semibold text-gray-900">Unused Assets</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            {t("reports.unusedAssets")}
+          </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}
           </span>
@@ -211,7 +217,7 @@ export function IdleAssetsContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No idle assets"
+              title={t("reports.noIdleAssets")}
               description={`All your assets have been used within the selected threshold${
                 timeframeLabel ? ` (${timeframeLabel.toLowerCase()})` : ""
               }.`}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Form, useActionData, useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -14,7 +15,7 @@ import { Button } from "../shared/button";
 // Email change validation schema with current email check
 export const createChangeEmailSchema = (
   currentEmail: string,
-  ssoDomains?: string[]
+  ssoDomains?: string[],
 ) =>
   z
     .object({
@@ -29,7 +30,7 @@ export const createChangeEmailSchema = (
           {
             message:
               "The email's domain is not allowed for security reasons. For more information, please get in touch with support.",
-          }
+          },
         )
         .refine((email) => email.toLowerCase() !== currentEmail.toLowerCase(), {
           message: "New email must be different from your current email",
@@ -61,6 +62,7 @@ interface FormState {
 }
 
 export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [formState, setFormState] = useState<FormState>({
     isAwaitingOtp: false,
@@ -69,7 +71,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
 
   const emailZo = useZorm(
     "ChangeEmailForm",
-    createChangeEmailSchema(currentEmail)
+    createChangeEmailSchema(currentEmail),
   );
   const otpZo = useZorm("OTPVerificationForm", OTPVerificationSchema);
   const disabled = useDisabled();
@@ -151,8 +153,8 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
             <div>
               <h4 className="font-medium">
                 {formState.isAwaitingOtp
-                  ? "Verify Email Change"
-                  : "Change Email Address"}
+                  ? t("changeEmail.verifyTitle")
+                  : t("changeEmail.title")}
               </h4>
               <p className="text-sm text-gray-500">
                 {formState.isAwaitingOtp
@@ -172,7 +174,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                   name={emailZo.fields.email()}
                   type="email"
                   autoComplete="email"
-                  placeholder="zaans@huisje.com"
+                  placeholder={t("auth.emailSample")}
                   disabled={disabled}
                   className="w-full"
                   label="New email address"
@@ -183,10 +185,10 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                   name={emailZo.fields.confirmEmail()}
                   type="email"
                   autoComplete="email"
-                  placeholder="zaans@huisje.com"
+                  placeholder={t("auth.emailSample")}
                   disabled={disabled}
                   className="w-full"
-                  label="Confirm new email"
+                  label={t("changeEmail.confirmNewEmail")}
                   error={emailZo.errors.confirmEmail()?.message}
                 />
 
@@ -195,7 +197,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                 typeof actionData?.error?.additionalData?.validationErrors ===
                   "object" ? (
                   Object.values(
-                    actionData?.error?.additionalData?.validationErrors
+                    actionData?.error?.additionalData?.validationErrors,
                   ).map((error) => (
                     <div key={error.message} className="text-error-500">
                       {error.message}
@@ -220,7 +222,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                     name="intent"
                     value="initiateEmailChange"
                   >
-                    {disabled ? "Updating..." : "Update email"}
+                    {disabled ? "Updating..." : t("changeEmail.updateEmail")}
                   </Button>
                 </div>
               </div>
@@ -239,10 +241,10 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                   ref={otpInputRef}
                   name={otpZo.fields.otp()}
                   type="text"
-                  placeholder="Enter 6-digit code"
+                  placeholder={t("changeEmail.enterSixDigits")}
                   disabled={disabled}
                   className="w-full"
-                  label="Verification code"
+                  label={t("changeEmail.verificationCode")}
                   maxLength={6}
                   defaultValue=""
                   error={
@@ -285,6 +287,7 @@ function ResendCodeForm({
   disabled: boolean;
   formState: FormState;
 }) {
+  const { t } = useTranslation();
   /** We need to use fetcher because this is placed within the other form. This just makes it easier to send the data */
   const fetcher = useFetcher<typeof action>({ key: "resendOtp" });
   const localDisabled = useDisabled(fetcher);
@@ -311,7 +314,7 @@ function ResendCodeForm({
           });
         }}
       >
-        {localDisabled ? "Sending code..." : "Resend code"}
+        {localDisabled ? t("auth.sendingCode") : t("changeEmail.resendCode")}
       </Button>
     </div>
   ) : null;

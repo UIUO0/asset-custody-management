@@ -22,6 +22,10 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { hasPermission } from "~/utils/permissions/permission.validator.server";
+import {
+  hasOrgWideNonOwnerRole,
+  rolesAreScopedToOwnRecords,
+} from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/bookings/:bookingId
@@ -38,24 +42,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // details, assets, tags and action flags via mobile.
     await assertMobileCanUseBookings(organizationId);
 
-    // Self-service / base users may only read their OWN bookings. Scope the
-    // lookup by custodian like the list endpoint (bookings.ts) does, so a
-    // booking they don't own 404s instead of leaking across the workspace.
+    // Roles without organization-wide visibility may only read their OWN
+    // bookings. Scope the lookup by custodian like the list endpoint
+    // (bookings.ts) does, so a booking they don't own 404s instead of leaking
+    // across the workspace.
     const { role } = await getMobileUserContext(user.id, organizationId);
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
     const { bookingId } = getParams(
       params,
-      z.object({ bookingId: z.string().min(1) })
+      z.object({ bookingId: z.string().min(1) }),
     );
 
     const booking = await db.booking.findFirst({
       where: {
         id: bookingId,
         organizationId,
-        ...(isSelfServiceOrBase && { custodianUserId: user.id }),
+        ...(isScopedToOwnRecords && { custodianUserId: user.id }),
       },
       select: {
         id: true,
@@ -230,13 +233,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             computeBookingAssetRemainingToCheckOut(db, booking.id, a.id),
           ]);
           return { assetId: a.id, remainingToCheckIn, remainingToCheckOut };
-        })
+        }),
     );
     const remainingByAsset = new Map(qtRemaining.map((r) => [r.assetId, r]));
 
     // Compute booking capability flags
     const checkedOutCount = assets.filter(
-      (a) => a.status === AssetStatus.CHECKED_OUT
+      (a) => a.status === AssetStatus.CHECKED_OUT,
     ).length;
     const totalAssets = assets.length;
 
@@ -249,7 +252,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // guides the operator to assign the reserved units first (see the
     // booking-detail "Assign to check out" CTA).
     const hasOutstandingModelRequests = booking.modelRequests.some(
-      (mr) => mr.fulfilledAt === null
+      (mr) => mr.fulfilledAt === null,
     );
 
     const canCheckout =
@@ -279,8 +282,11 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // workspace settings forbid.
     const bookingSettings =
       await getBookingSettingsForOrganization(organizationId);
+    // why: the "for admin" flag covers every organization-wide role except the
+    // owner, not literally ADMIN — see bookings.checkin.ts, which enforces the
+    // same rule server-side. This is only the UI mirror of it.
     const canQuickCheckin = !(
-      (role === OrganizationRoles.ADMIN &&
+      (hasOrgWideNonOwnerRole(role) &&
         bookingSettings.requireExplicitCheckinForAdmin) ||
       (role === OrganizationRoles.SELF_SERVICE &&
         bookingSettings.requireExplicitCheckinForSelfService)
@@ -292,9 +298,9 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // role / status forbids. Passing `roles:[role]` keeps `hasPermission` a
     // pure static-map lookup (no extra query). Server endpoints enforce these
     // same gates regardless; this is the UI mirror.
-    const isBaseOrSelfService =
-      role === OrganizationRoles.BASE ||
-      role === OrganizationRoles.SELF_SERVICE;
+    // Reuses `isScopedToOwnRecords` from the top of the loader: roles limited to
+    // their own records may only delete DRAFT bookings, while organization-wide
+    // roles are bounded by `canDeletePerm` instead.
     const [canCancelPerm, canArchivePerm, canCreatePerm, canDeletePerm] =
       await Promise.all([
         hasPermission({
@@ -343,8 +349,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       // self-service/base only on DRAFT). Mirrors the web client gate; the
       // server endpoint enforces ownership + the same BASE-only-DRAFT rule.
       canDelete:
-        ((isBaseOrSelfService && booking.status === "DRAFT") ||
-          !isBaseOrSelfService) &&
+        ((isScopedToOwnRecords && booking.status === "DRAFT") ||
+          !isScopedToOwnRecords) &&
         canDeletePerm,
     };
 
@@ -368,7 +374,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const modelRequestCount = modelRequests.length;
     const outstandingModelUnitCount = modelRequests.reduce(
       (sum, mr) => sum + mr.outstandingQuantity,
-      0
+      0,
     );
 
     // Attach the per-asset remaining (computed up-front, above) to each QT
@@ -459,7 +465,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

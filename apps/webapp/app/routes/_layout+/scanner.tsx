@@ -53,7 +53,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { organizationId, role, isSelfServiceOrBase } =
+    const { organizationId, role, isScopedToOwnRecords } =
       await requirePermission({
         userId,
         request,
@@ -82,10 +82,10 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
     /** Get locations  */
     let locationsData;
-    if (!isSelfServiceOrBase) {
+    if (!isScopedToOwnRecords) {
       const locationSelected = searchParams.get("location") ?? "";
       const getAllEntries = searchParams.getAll(
-        "getAll"
+        "getAll",
       ) as AllowedModelNames[];
       const [locationExcludedSelected, selectedLocation, totalLocations] =
         await Promise.all([
@@ -129,7 +129,7 @@ const QRScanner = () => {
   const navigate = useNavigate();
   const [paused, setPaused] = useState<boolean>(false);
   const [scanMessage, setScanMessage] = useState<string>(
-    "Processing QR code..."
+    "Processing QR code...",
   );
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
   const [errorTitle, setErrorTitle] = useState<string | undefined>(undefined);
@@ -176,7 +176,7 @@ const QRScanner = () => {
         }
       }
     },
-    [] // No dependencies needed since we use the ref
+    [], // No dependencies needed since we use the ref
   );
 
   // Define the handler using useCallback to prevent recreating it on every render
@@ -212,7 +212,7 @@ const QRScanner = () => {
             triggerError();
             setErrorTitle("Barcode scanning disabled");
             setErrorMessage(
-              "Your workspace does not support scanning barcodes. Contact your workspace owner to activate this feature or try scanning a Shelf QR code."
+              "Your workspace does not support scanning barcodes. Contact your workspace owner to activate this feature or try scanning a QR code.",
             );
             setScanMessage("");
             isNavigating.current = false;
@@ -242,7 +242,7 @@ const QRScanner = () => {
               const reason = makeShelfError(
                 samError,
                 { samId: value, source: "scanner-samId" },
-                false
+                false,
               );
 
               triggerError();
@@ -259,7 +259,7 @@ const QRScanner = () => {
         void navigate(`/qr/${value}`);
       } else if (
         ["Assign custody", "Release custody", "Update location"].includes(
-          currentAction
+          currentAction,
         )
       ) {
         if (error) {
@@ -277,7 +277,7 @@ const QRScanner = () => {
       canUseBarcodes,
       triggerSuccess,
       triggerError,
-    ]
+    ],
   );
 
   return (

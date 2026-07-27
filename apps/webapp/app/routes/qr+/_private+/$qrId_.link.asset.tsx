@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Asset } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -39,6 +40,7 @@ import {
   useSearchParamHasValue,
 } from "~/hooks/search-params";
 import { useViewportHeight } from "~/hooks/use-viewport-height";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   getPaginatedAndFilterableAssets,
   updateAssetQrCode,
@@ -74,6 +76,10 @@ export const loader = async ({
   const { qrId } = getParams(params, z.object({ qrId: z.string() }));
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const qr = await getQr({ id: qrId });
     if (qr?.assetId || qr?.kitId) {
       throw new ShelfError({
@@ -134,8 +140,8 @@ export const loader = async ({
     return data(
       payload({
         header: {
-          title: "Link with existing asset",
-          subHeading: "Choose an asset to link with this QR tag.",
+          title: t("qr.linkExistingAssetTitle"),
+          subHeading: t("qr.linkExistingAssetSubHeading"),
         },
         qrId,
         items: assets,
@@ -149,17 +155,17 @@ export const loader = async ({
         perPage,
         totalPages,
         modelName,
-        searchFieldLabel: "Search assets",
+        searchFieldLabel: t("search.assetsLabel"),
         searchFieldTooltip: {
-          title: "Search your asset database",
-          text: "Search assets based on asset name or description, category, tag, location, custodian name. Simply separate your keywords by a space: 'Laptop lenovo 2020'.",
+          title: t("search.assetsTitle"),
+          text: t("search.assetsText"),
         },
         totalCategories,
         totalTags,
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, qrId });
@@ -187,7 +193,7 @@ export const action = async ({
     });
     const { assetId } = parseData(
       await request.formData(),
-      z.object({ assetId: z.string() })
+      z.object({ assetId: z.string() }),
     );
 
     await updateAssetQrCode({
@@ -210,6 +216,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: css }];
 
 export default function QrLinkExisting() {
+  const { t } = useTranslation();
   const { header } = useLoaderData<typeof loader>();
   const { qrId } = useParams();
   const hasFiltersToClear = useSearchParamHasValue("category", "tag");
@@ -258,7 +265,7 @@ export default function QrLinkExisting() {
                 </div>
               }
               model={{ name: "category", queryKey: "name" }}
-              label="Filter by category"
+              label={t("list.filterByCategory")}
               initialDataKey="categories"
               countKey="totalCategories"
             />
@@ -269,7 +276,7 @@ export default function QrLinkExisting() {
                 </div>
               }
               model={{ name: "tag", queryKey: "name" }}
-              label="Filter by tags"
+              label={t("list.filterByTags")}
               initialDataKey="tags"
               countKey="totalTags"
             />
@@ -281,7 +288,7 @@ export default function QrLinkExisting() {
                 </div>
               }
               model={{ name: "location", queryKey: "name" }}
-              label="Filter by Location"
+              label={t("list.filterByLocationTitle")}
               initialDataKey="locations"
               countKey="totalLocations"
               renderItem={({ metadata }) => (
@@ -307,10 +314,10 @@ export default function QrLinkExisting() {
           /** Clicking on the row will add the current asset to the atom of selected assets */
           navigate={handleSelectAsset}
           customEmptyStateContent={{
-            title: "You haven't added any assets yet.",
-            text: "What are you waiting for? Create your first asset now!",
+            title: t("assets.pickerEmptyTitle"),
+            text: t("assets.pickerEmptyText"),
             newButtonRoute: `/assets/new?qrId=${qrId}`,
-            newButtonContent: "Create new asset and link",
+            newButtonContent: t("qr.createNewAssetAndLink"),
           }}
           className="h-full border-t-0"
         />

@@ -1,18 +1,22 @@
 import { useEffect, useReducer } from "react";
-import type { User } from "@prisma/client";
-import { OrganizationRoles } from "@prisma/client";
+import type { OrganizationRoles, User } from "@prisma/client";
 import {
   Popover,
   PopoverContent,
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { ChevronRight, SuccessIcon } from "~/components/icons/library";
-import type { UserFriendlyRoles } from "~/routes/_layout+/settings.team";
 import { isFormProcessing } from "~/utils/form";
 import { handleActivationKeyPress } from "~/utils/keyboard";
-import { isDemotion } from "~/utils/roles";
+import {
+  ASSIGNABLE_ORGANIZATION_ROLES,
+  isDemotion,
+  ORGANIZATION_ROLE_DESCRIPTION_KEYS,
+  ORGANIZATION_ROLE_LABEL_KEYS,
+} from "~/utils/roles";
 import { tw } from "~/utils/tw";
 import { Button } from "../shared/button";
 import {
@@ -23,12 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../shared/modal";
-
-const roleOptions: Record<string, UserFriendlyRoles> = {
-  [OrganizationRoles.ADMIN]: "Administrator",
-  [OrganizationRoles.BASE]: "Base",
-  [OrganizationRoles.SELF_SERVICE]: "Self service",
-};
 
 interface EntityCounts {
   assets: number;
@@ -125,6 +123,7 @@ export function ChangeRoleDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<{ error?: { message: string } }>();
   const countsFetcher = useFetcher<EntityCounts>();
   const recipientsFetcher = useFetcher<TransferRecipient[]>();
@@ -155,7 +154,7 @@ export function ChangeRoleDialog({
     if (open && showDemotion) {
       void countsFetcher.load(`/api/user/entity-counts?userId=${userId}`);
       void recipientsFetcher.load(
-        `/api/user/transfer-recipients?excludeUserId=${userId}`
+        `/api/user/transfer-recipients?excludeUserId=${userId}`,
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,7 +262,13 @@ export function ChangeRoleDialog({
                     >
                       <ChevronRight className="ms-[2px] inline-block rotate-90" />
                       <span className="ms-2">
-                        {roleOptions[selectedRole] || "Select role"}
+                        {selectedRole
+                          ? t(
+                              ORGANIZATION_ROLE_LABEL_KEYS[
+                                selectedRole as OrganizationRoles
+                              ],
+                            )
+                          : t("team.selectUserRole")}
                       </span>
                     </Button>
                   </PopoverTrigger>
@@ -271,27 +276,28 @@ export function ChangeRoleDialog({
                     <PopoverContent
                       align="start"
                       className={tw(
-                        "z-[999999] mt-2 w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-md border border-gray-200 bg-white"
+                        "z-[999999] mt-2 w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-md border border-gray-200 bg-white",
                       )}
                     >
-                      {Object.entries(roleOptions).map(([k, v]) => (
+                      {ASSIGNABLE_ORGANIZATION_ROLES.map((role) => (
                         <div
-                          key={k}
+                          key={role}
                           role="option"
-                          aria-selected={selectedRole === k}
+                          aria-selected={selectedRole === role}
                           tabIndex={0}
                           className={tw(
                             "px-4 py-2 text-[14px] text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                            selectedRole === k && "bg-gray-50 font-medium"
+                            selectedRole === role && "bg-gray-50 font-medium",
                           )}
-                          onClick={() =>
-                            dispatch({ type: "selectRole", role: k })
-                          }
+                          onClick={() => dispatch({ type: "selectRole", role })}
                           onKeyDown={handleActivationKeyPress(() =>
-                            dispatch({ type: "selectRole", role: k })
+                            dispatch({ type: "selectRole", role }),
                           )}
                         >
-                          {v}
+                          <div>{t(ORGANIZATION_ROLE_LABEL_KEYS[role])}</div>
+                          <div className="text-xs text-gray-500">
+                            {t(ORGANIZATION_ROLE_DESCRIPTION_KEYS[role])}
+                          </div>
                         </div>
                       ))}
                     </PopoverContent>
@@ -389,7 +395,7 @@ export function ChangeRoleDialog({
                                 <PopoverContent
                                   align="start"
                                   className={tw(
-                                    "z-[999999] mt-2 max-h-[200px] w-[var(--radix-popover-trigger-width)] overflow-auto rounded-md border border-gray-200 bg-white"
+                                    "z-[999999] mt-2 max-h-[200px] w-[var(--radix-popover-trigger-width)] overflow-auto rounded-md border border-gray-200 bg-white",
                                   )}
                                 >
                                   {recipients.map((r) => (
@@ -401,7 +407,7 @@ export function ChangeRoleDialog({
                                       className={tw(
                                         "px-4 py-2 text-[14px] text-gray-600 hover:cursor-pointer hover:bg-gray-50",
                                         transferToUserId === r.id &&
-                                          "bg-gray-50 font-medium"
+                                          "bg-gray-50 font-medium",
                                       )}
                                       onClick={() =>
                                         dispatch({
@@ -413,7 +419,7 @@ export function ChangeRoleDialog({
                                         dispatch({
                                           type: "selectRecipient",
                                           userId: r.id,
-                                        })
+                                        }),
                                       )}
                                     >
                                       {r.name}

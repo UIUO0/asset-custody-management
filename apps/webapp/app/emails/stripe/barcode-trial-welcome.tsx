@@ -49,7 +49,7 @@ export const sendBarcodeTrialWelcomeEmail = async ({
           "Something went wrong while sending the barcode trial welcome email",
         additionalData: { email },
         label: "User",
-      })
+      }),
     );
   }
 };
@@ -78,7 +78,7 @@ ${
 If you have any questions, feel free to reach out to us at ${SUPPORT_EMAIL}. We're happy to help!
 
 Happy labeling,
-The Shelf Team
+The ${config.appName} Team
 `;
 
 function BarcodeTrialWelcomeEmailTemplate({
@@ -164,7 +164,7 @@ function BarcodeTrialWelcomeEmailTemplate({
 
           <Text style={{ marginTop: "24px", ...styles.p }}>
             Happy labeling, <br />
-            The Shelf Team
+            The {config.appName} Team
           </Text>
         </div>
       </Container>
@@ -183,5 +183,5 @@ export const barcodeTrialWelcomeEmailHtml = ({
     <BarcodeTrialWelcomeEmailTemplate
       firstName={firstName}
       hasPaymentMethod={hasPaymentMethod}
-    />
+    />,
   );

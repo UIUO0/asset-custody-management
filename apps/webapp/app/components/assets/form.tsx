@@ -8,7 +8,7 @@ import {
   PopoverContent,
 } from "@radix-ui/react-popover";
 import { useAtom, useAtomValue } from "jotai";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
   useActionData,
   useLoaderData,
@@ -395,7 +395,7 @@ export const AssetForm = ({
     count: number;
     startNumber: number;
   }>({
-    nameTemplate: bulkMode ? "Asset {i}" : "",
+    nameTemplate: bulkMode ? t("assetForm.defaultNameTemplate") : "",
     count: 5,
     startNumber: 1,
   });
@@ -590,7 +590,7 @@ export const AssetForm = ({
             </h2>
             <p>
               {bulkMode
-                ? "Create multiple assets from a model in one go. Common fields below apply to every asset created."
+                ? t("assetForm.bulkCreateIntro")
                 : t("assetForm.basicInfo")}
             </p>
           </div>
@@ -638,11 +638,14 @@ export const AssetForm = ({
             className="border-b-0 pb-[10px]"
             subHeading={
               <p>
-                Each asset will be named using the template below. Use{" "}
-                <code className="rounded bg-gray-100 px-1 py-0.5 text-xs">
-                  {"{i}"}
-                </code>{" "}
-                to substitute the asset number; otherwise it&apos;s appended.
+                <Trans
+                  i18nKey="assetForm.batchHint"
+                  components={{
+                    1: (
+                      <code className="rounded bg-gray-100 px-1 py-0.5 text-xs" />
+                    ),
+                  }}
+                />
               </p>
             }
             required={true}
@@ -651,12 +654,12 @@ export const AssetForm = ({
               <div className="flex flex-col gap-3 md:flex-row md:items-end">
                 <div className="flex-1">
                   <Input
-                    label="Name template"
+                    label={t("assetForm.nameTemplate")}
                     name="nameTemplate"
                     disabled={disabled}
                     value={bulkNameTemplate}
                     onChange={(e) => setBulkNameTemplate(e.target.value)}
-                    placeholder="Dell Latitude {i}"
+                    placeholder={t("assetForm.nameTemplatePlaceholder")}
                     error={
                       validationErrors?.nameTemplate?.message ||
                       zo.errors.nameTemplate()?.message ||
@@ -671,7 +674,7 @@ export const AssetForm = ({
                 <div className="w-full md:w-32">
                   <Input
                     type="number"
-                    label="Count"
+                    label={t("assetForm.count")}
                     name="count"
                     disabled={disabled}
                     value={bulkCount}
@@ -698,7 +701,7 @@ export const AssetForm = ({
                 <div className="w-full md:w-32">
                   <Input
                     type="number"
-                    label="Start at"
+                    label={t("assetForm.startAt")}
                     name="startNumber"
                     disabled={disabled}
                     value={bulkStartNumber}
@@ -750,12 +753,12 @@ export const AssetForm = ({
             <FormRow
               rowLabel={t("assetForm.quantity")}
               className="border-b-0 pb-[10px]"
-              subHeading="Total number of items in this pool."
+              subHeading={t("assetForm.quantityHint")}
               required={true}
             >
               <Input
                 type="number"
-                label="Quantity"
+                label={t("assetForm.quantity")}
                 hideLabel
                 name="quantity"
                 disabled={disabled}
@@ -774,10 +777,10 @@ export const AssetForm = ({
             <FormRow
               rowLabel={t("assetForm.unitOfMeasure")}
               className="border-b-0 pb-[10px]"
-              subHeading="Label for the unit (e.g. pcs, boxes, liters)."
+              subHeading={t("assetForm.unitOfMeasureHint")}
             >
               <Input
-                label="Unit of measure"
+                label={t("assetForm.unitOfMeasure")}
                 hideLabel
                 name="unitOfMeasure"
                 disabled={disabled}
@@ -790,11 +793,11 @@ export const AssetForm = ({
             <FormRow
               rowLabel={t("assetForm.minQuantity")}
               className="border-b-0 pb-[10px]"
-              subHeading="Low-stock alert threshold. You will be notified when available quantity falls to or below this number."
+              subHeading={t("assetForm.minQuantityHint")}
             >
               <Input
                 type="number"
-                label="Min quantity"
+                label={t("assetForm.minQuantity")}
                 hideLabel
                 name="minQuantity"
                 disabled={disabled}
@@ -808,9 +811,7 @@ export const AssetForm = ({
             <FormRow
               rowLabel={t("assetForm.consumptionType")}
               className="border-b-0 pb-[10px]"
-              subHeading={
-                'Choose "Used up (one-way)" for items that are consumed and not returned, or "Returnable (two-way)" for items that are checked out and returned.'
-              }
+              subHeading={t("assetForm.consumptionTypeHint")}
               required={true}
             >
               <ConsumptionTypeSelect
@@ -833,14 +834,14 @@ export const AssetForm = ({
             className="border-b-0 pb-[10px]"
             subHeading={
               id
-                ? "This is the unique identifier for this asset"
+                ? t("assetForm.assetIdExistingHint")
                 : t("assetForm.assetIdHint")
             }
           >
             <div className="flex items-center gap-2">
               <div className="shrink-0">
                 <Input
-                  label="Prefix"
+                  label={t("assetForm.prefix")}
                   hideLabel
                   name="sequentialIdPrefix"
                   disabled={true}
@@ -852,7 +853,7 @@ export const AssetForm = ({
               <span className="font-medium text-gray-400">-</span>
               <div className="grow">
                 <Input
-                  label="Number"
+                  label={t("assetForm.number")}
                   hideLabel
                   name="sequentialIdNumber"
                   disabled={true}
@@ -978,9 +979,9 @@ export const AssetForm = ({
             allowClear={true}
             extraContent={({ onItemCreated, closePopover }) => (
               <InlineEntityCreationDialog
-                title="Create new category"
+                title={t("common.createNewCategory")}
                 type="category"
-                buttonLabel="Create new category"
+                buttonLabel={t("common.createNewCategory")}
                 onCreated={(created) => {
                   if (created?.type !== "category") return;
                   const category = created.entity;
@@ -1054,8 +1055,8 @@ export const AssetForm = ({
                   triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
                   defaultValue={locationId || undefined}
                   model={{ name: "location", queryKey: "name" }}
-                  contentLabel="Locations"
-                  label="Location"
+                  contentLabel={t("nav.locations")}
+                  label={t("assets.location")}
                   hideLabel
                   initialDataKey="locations"
                   countKey="totalLocations"
@@ -1064,11 +1065,15 @@ export const AssetForm = ({
                 />
               </HoverCardTrigger>
               <HoverCardContent side="left">
-                <h5 className="text-start text-[14px]">Action disabled</h5>
+                <h5 className="text-start text-[14px]">
+                  {t("bulkActions.actionDisabled")}
+                </h5>
                 <p className="text-start text-[14px]">
-                  This asset's location is managed by its parent kit{" "}
-                  <strong>"{kitMembership?.name}"</strong>. Update the kit's
-                  location instead.
+                  <Trans
+                    i18nKey="assetForm.locationManagedByKit"
+                    values={{ name: kitMembership?.name }}
+                    components={{ 1: <strong /> }}
+                  />
                 </p>
               </HoverCardContent>
             </HoverCard>
@@ -1090,8 +1095,8 @@ export const AssetForm = ({
               extraContent={({ onItemCreated, closePopover }) => (
                 <InlineEntityCreationDialog
                   type="location"
-                  title="Create new location"
-                  buttonLabel="Create new location"
+                  title={t("assetForm.createNewLocation")}
+                  buttonLabel={t("assetForm.createNewLocation")}
                   onCreated={(created) => {
                     if (created?.type !== "location") return;
                     const location = created.entity;
@@ -1128,7 +1133,7 @@ export const AssetForm = ({
           <div className="relative w-full">
             <Input
               type="number"
-              label="Value"
+              label={t("assets.value")}
               inputClassName="ps-[70px] valuation-input"
               hideLabel
               name="valuation"
@@ -1156,7 +1161,7 @@ export const AssetForm = ({
               <FormRow
                 rowLabel={t("assetForm.barcodes")}
                 className="border-b-0"
-                subHeading="Add additional barcodes to this asset (Code 128, Code 39, or Data Matrix). Note: Each asset automatically gets a default Shelf QR code for tracking."
+                subHeading={t("assetForm.assetBarcodesHint")}
               >
                 <BarcodesInput
                   ref={barcodesInputRef}
@@ -1274,6 +1279,8 @@ const AddAnother = ({ disabled }: { disabled: boolean }) => {
  * more" tail for larger batches. Empty array → nothing rendered.
  */
 function BulkCreatePreview({ titles }: { titles: string[] }) {
+  const { t } = useTranslation();
+
   if (titles.length === 0) return null;
   const PREVIEW_LIMIT = 5;
   const head = titles.slice(0, PREVIEW_LIMIT);
@@ -1287,10 +1294,15 @@ function BulkCreatePreview({ titles }: { titles: string[] }) {
       className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700"
       data-test-id="bulkCreatePreview"
     >
-      <span className="font-medium text-gray-900">Preview:</span>{" "}
+      <span className="font-medium text-gray-900">
+        {t("assetForm.previewLabel")}
+      </span>{" "}
       <span className="font-mono">{head.join(", ")}</span>
       {remaining > 0 ? (
-        <span className="text-gray-500"> …and {remaining} more</span>
+        <span className="text-gray-500">
+          {" "}
+          {t("assetForm.previewAndMore", { count: remaining })}
+        </span>
       ) : null}
     </div>
   );
@@ -1399,15 +1411,21 @@ function TrackingMethodCards({
   return cards;
 }
 
-/** Label + description pairs for consumption type options. */
+/**
+ * Label keys for the consumption-type options.
+ *
+ * Stores i18n keys rather than literal copy because this list lives at module
+ * scope, outside any component — the label is resolved with `t()` at render
+ * time inside {@link ConsumptionTypeSelect}.
+ */
 const CONSUMPTION_OPTIONS = [
   {
     value: ConsumptionType.ONE_WAY,
-    label: "Used up (one-way) — consumed and not returned",
+    labelKey: "assetForm.consumptionOneWayLabel",
   },
   {
     value: ConsumptionType.TWO_WAY,
-    label: "Returnable (two-way) — checked out and returned",
+    labelKey: "assetForm.consumptionTwoWayLabel",
   },
 ] as const;
 
@@ -1436,14 +1454,16 @@ function ConsumptionTypeSelect({
   /** Called when a value is selected — used to clear external error state. */
   onSelect?: () => void;
 }) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<ConsumptionType | undefined>(
     initialValue,
   );
   const [open, setOpen] = useState(false);
 
-  const selectedLabel =
-    CONSUMPTION_OPTIONS.find((o) => o.value === selected)?.label ??
-    "Select consumption type";
+  const selectedOption = CONSUMPTION_OPTIONS.find((o) => o.value === selected);
+  const selectedLabel = selectedOption
+    ? t(selectedOption.labelKey)
+    : t("assetForm.selectConsumptionType");
 
   return (
     <div className="w-full">
@@ -1509,7 +1529,7 @@ function ConsumptionTypeSelect({
                   }
                 }}
               >
-                {option.label}
+                {t(option.labelKey)}
               </div>
             ))}
           </PopoverContent>

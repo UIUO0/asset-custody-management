@@ -26,6 +26,7 @@ import type { HeaderData } from "~/components/layout/header/types";
 import type { SortingDirection } from "~/components/list/filters/sort-by";
 import { partialCheckinAssetsSchema } from "~/components/scanner/drawer/uses/partial-checkin-drawer";
 import { partialCheckoutAssetsSchema } from "~/components/scanner/drawer/uses/partial-checkout-drawer";
+import { config } from "~/config/shelf.config";
 import { db, type ExtendedPrismaClient } from "~/database/db.server";
 import { bookingUpdatesTemplateString } from "~/emails/bookings-updates-template";
 import { sendEmail } from "~/emails/mail.server";
@@ -201,12 +202,12 @@ async function sendBookingEmailToAllRecipients({
 }
 
 async function cancelScheduler(
-  booking: Pick<Booking, "id" | "activeSchedulerReference">
+  booking: Pick<Booking, "id" | "activeSchedulerReference">,
 ) {
   try {
     if (!booking.activeSchedulerReference) {
       Logger.error(
-        `Skipping scheduler cancellation for booking ${booking.id} because no activeSchedulerReference was found.`
+        `Skipping scheduler cancellation for booking ${booking.id} because no activeSchedulerReference was found.`,
       );
       return;
     }
@@ -219,7 +220,7 @@ async function cancelScheduler(
         message: "Failed to cancel the scheduler for booking",
         additionalData: { booking },
         label,
-      })
+      }),
     );
   }
 }
@@ -309,7 +310,7 @@ export async function createStatusTransitionNote({
         message: "Failed to record BOOKING_STATUS_CHANGED event",
         additionalData: { bookingId, fromStatus, toStatus },
         label,
-      })
+      }),
     );
   }
 }
@@ -319,7 +320,7 @@ export async function createStatusTransitionNote({
  */
 export function getActionTextFromTransition(
   from: BookingStatus,
-  to: BookingStatus
+  to: BookingStatus,
 ): string {
   const transition = `${from}->${to}`;
 
@@ -350,7 +351,7 @@ export function getActionTextFromTransition(
  */
 export function getSystemActionText(
   from: BookingStatus,
-  to: BookingStatus
+  to: BookingStatus,
 ): string {
   const transition = `${from}->${to}`;
 
@@ -378,7 +379,7 @@ export async function scheduleNextBookingJob({
       QueueNames.bookingQueue,
       data,
       {},
-      when
+      when,
     );
     await db.booking.update({
       // eslint-disable-next-line local-rules/require-org-scope-on-id-queries -- idor-safe: internal scheduler bookkeeping; data.id always comes from a booking already org-validated by every caller (e.g. checkoutBooking L1265, reserveBooking L1020) and SchedulerData carries no organizationId; this only writes activeSchedulerReference, not a data read
@@ -451,7 +452,7 @@ export async function scheduleExpiryArchiveJob({
     // fires). The handler's self-reschedule opts out via `dedupe: false` —
     // it can't key against its own still-active job (see `dedupe` above).
     dedupe ? { singletonKey: `booking-auto-archive-expired:${bookingId}` } : {},
-    when
+    when,
   );
 }
 
@@ -481,8 +482,8 @@ export async function scheduleExpiryArchiveForExistingReservations({
         to: b.to,
         autoArchiveDays,
         hints,
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -752,7 +753,7 @@ export async function createBooking({
     // we only pay for a type lookup when there is an actual overlap.
     const kitSliceAssetIds = new Set(slices.map((s) => s.assetId));
     const overlapAssetIds = dedupedAssetIds.filter((id) =>
-      kitSliceAssetIds.has(id)
+      kitSliceAssetIds.has(id),
     );
     let individualOverlapAssetIds = new Set<string>();
     if (overlapAssetIds.length > 0) {
@@ -766,11 +767,11 @@ export async function createBooking({
       individualOverlapAssetIds = new Set(
         overlapTypes
           .filter((a) => a.type === AssetType.INDIVIDUAL)
-          .map((a) => a.id)
+          .map((a) => a.id),
       );
     }
     const standaloneCreateAssetIds = dedupedAssetIds.filter(
-      (id) => !individualOverlapAssetIds.has(id)
+      (id) => !individualOverlapAssetIds.has(id),
     );
 
     /**
@@ -823,7 +824,7 @@ export async function createBooking({
       if (dedupedAssetIds.length > 0) {
         await assertAssetsBelongToOrg(
           { assetIds: dedupedAssetIds, organizationId: booking.organizationId },
-          tx
+          tx,
         );
       }
 
@@ -839,14 +840,14 @@ export async function createBooking({
             assetIds: slices.map((s) => s.assetId),
             organizationId: booking.organizationId,
           },
-          tx
+          tx,
         );
         await assertAssetKitsBelongToOrg(
           {
             assetKitIds: slices.map((s) => s.assetKitId),
             organizationId: booking.organizationId,
           },
-          tx
+          tx,
         );
       }
 
@@ -856,7 +857,7 @@ export async function createBooking({
             tagIds: booking.tags.map((t) => t.id),
             organizationId: booking.organizationId,
           },
-          tx
+          tx,
         );
       }
 
@@ -865,7 +866,7 @@ export async function createBooking({
           teamMemberId: booking.custodianTeamMemberId,
           organizationId: booking.organizationId,
         },
-        tx
+        tx,
       );
 
       // SECURITY (cross-org IDOR): custodianUserId is also request input and a
@@ -876,7 +877,7 @@ export async function createBooking({
             userId: booking.custodianUserId,
             organizationId: booking.organizationId,
           },
-          tx
+          tx,
         );
       }
 
@@ -899,7 +900,7 @@ export async function createBooking({
           // `duplicateBooking`, which counts its create payload.
           meta: { assetCount: bookingAssetRows.length },
         },
-        tx
+        tx,
       );
 
       // One BOOKING_ASSETS_ADDED event per asset attached at creation —
@@ -932,7 +933,7 @@ export async function createBooking({
         for (const slice of slices) {
           addedQtyByAssetId.set(
             slice.assetId,
-            (addedQtyByAssetId.get(slice.assetId) ?? 0) + slice.quantity
+            (addedQtyByAssetId.get(slice.assetId) ?? 0) + slice.quantity,
           );
         }
 
@@ -952,7 +953,7 @@ export async function createBooking({
                 : {},
             };
           }),
-          tx
+          tx,
         );
       }
 
@@ -1239,13 +1240,13 @@ export async function updateBasicBooking({
         bookingId: booking.id,
         organizationId,
         content: `${userLink} changed booking start date from ${wrapDateForNote(
-          booking.from!
+          booking.from!,
         )} to ${wrapDateForNote(from!)}.`,
       });
       changes.push(
         `Start date changed from ${formatDateForEmail(
-          booking.from!
-        )} to ${formatDateForEmail(from!)}`
+          booking.from!,
+        )} to ${formatDateForEmail(from!)}`,
       );
     }
 
@@ -1257,13 +1258,13 @@ export async function updateBasicBooking({
         bookingId: booking.id,
         organizationId,
         content: `${userLink} changed booking end date from ${wrapDateForNote(
-          booking.to!
+          booking.to!,
         )} to ${wrapDateForNote(to!)}.`,
       });
       changes.push(
         `End date changed from ${formatDateForEmail(
-          booking.to!
-        )} to ${formatDateForEmail(to!)}`
+          booking.to!,
+        )} to ${formatDateForEmail(to!)}`,
       );
     }
 
@@ -1308,7 +1309,7 @@ export async function updateBasicBooking({
           message: "Failed to record updateBasicBooking date events",
           additionalData: { bookingId: booking.id },
           label,
-        })
+        }),
       );
     }
 
@@ -1370,7 +1371,7 @@ export async function updateBasicBooking({
             ? resolveUserDisplayName(newCustodian.user)
             : newCustodian.name;
           changes.push(
-            `Custodian changed from ${oldCustodianName} to ${newCustodianName}`
+            `Custodian changed from ${oldCustodianName} to ${newCustodianName}`,
           );
         }
       } catch (_error) {
@@ -1452,7 +1453,7 @@ export async function reserveBooking({
   description,
   organizationId,
   hints,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
   tags,
   userId,
 }: Partial<
@@ -1470,7 +1471,7 @@ export async function reserveBooking({
 > &
   Pick<Booking, "id" | "organizationId"> & {
     hints: ClientHint;
-    isSelfServiceOrBase: boolean;
+    isScopedToOwnRecords: boolean;
     tags: { id: string }[];
     userId?: User["id"];
   }) {
@@ -1725,20 +1726,20 @@ export async function reserveBooking({
             additionalData: { bookingId: bookingFound.id, organizationId },
             label,
             shouldBeCaptured: false,
-          })
+          }),
         );
       }
     }
 
     // Resolve notification recipients and send emails.
-    // Pass isSelfServiceOrBase so admin broadcast only fires for
+    // Pass isScopedToOwnRecords so admin broadcast only fires for
     // reservations made by base/self-service users (pickup requests).
     const recipients = await getBookingNotificationRecipients({
       booking: bookingFound,
       eventType: "RESERVATION",
       organizationId,
       editorUserId: userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
     });
 
     if (recipients.length > 0) {
@@ -1773,7 +1774,7 @@ export async function reserveBooking({
       await sendBookingEmailToAllRecipients({
         recipients,
         booking: bookingFound,
-        subject: `✅ Booking reserved (${bookingFound.name}) - shelf.nu`,
+        subject: `✅ Booking reserved (${bookingFound.name}) - ${config.appName}`,
         textContent: text,
         heading: `Booking reservation for ${custodian}`,
         hints,
@@ -1835,7 +1836,7 @@ export async function reserveBooking({
 async function scheduleCheckinReminderForBooking(
   booking: { id: string; to: Date | null },
   hints: ClientHint,
-  organizationId: string
+  organizationId: string,
 ) {
   const effectiveTo = booking.to;
   if (!effectiveTo) {
@@ -1865,7 +1866,7 @@ async function scheduleCheckinReminderForBooking(
       bookingForEmail,
       bookingForEmail._count.bookingAssets,
       hints,
-      organizationId
+      organizationId,
     );
 
     const when = new Date(effectiveTo);
@@ -1954,7 +1955,7 @@ async function checkoutBookingWritesWithinTx(
     dataToUpdate: Prisma.BookingUpdateInput;
     kitIds: string[];
     hasKits: boolean;
-  }
+  },
 ) {
   /**
    * Checkout guard for unfulfilled `BookingModelRequest` rows. Model
@@ -2001,7 +2002,7 @@ async function checkoutBookingWritesWithinTx(
         (req: { assetModel: { name: string }; quantity: number }) => ({
           assetModelName: req.assetModel.name,
           remaining: req.quantity,
-        })
+        }),
       );
 
     const summary = outstanding
@@ -2042,7 +2043,7 @@ async function checkoutBookingWritesWithinTx(
 
       const { available } = await computeBookingAvailableQuantity(
         assetId,
-        bookingId
+        bookingId,
       );
 
       // Sum the requested units for this asset on this booking.
@@ -2057,7 +2058,7 @@ async function checkoutBookingWritesWithinTx(
           qtyTrackedBookingAssets.find((ba) => ba.asset.id === assetId)?.asset
             .title ?? "";
         insufficientQtyWarnings.push(
-          `"${title}": requested ${requested}, only ${available} available`
+          `"${title}": requested ${requested}, only ${available} available`,
         );
       }
     }
@@ -2067,7 +2068,7 @@ async function checkoutBookingWritesWithinTx(
         cause: null,
         label,
         message: `Some quantity-tracked assets have insufficient availability:\n${insufficientQtyWarnings.join(
-          "\n"
+          "\n",
         )}\nPlease adjust quantities in the booking before checkout.`,
         shouldBeCaptured: false,
         status: 400,
@@ -2175,7 +2176,7 @@ async function runCheckoutSideEffects({
   await scheduleCheckinReminderForBooking(
     { id: bookingFound.id, to: effectiveTo ?? null },
     hints,
-    organizationId
+    organizationId,
   );
 
   /** Hydrate the full booking with relations for the return payload only. */
@@ -2299,7 +2300,7 @@ export async function checkoutBooking({
       .map((ba) => ba.asset)
       .filter(
         (asset) =>
-          !isQuantityTracked(asset) && asset.status === AssetStatus.IN_CUSTODY
+          !isQuantityTracked(asset) && asset.status === AssetStatus.IN_CUSTODY,
       );
 
     if (assetsInCustody.length > 0) {
@@ -2329,7 +2330,7 @@ export async function checkoutBooking({
      * adjustments) that could oversubscribe the same physical pool.
      */
     const qtyTrackedBookingAssets = bookingFound.bookingAssets.filter((ba) =>
-      isQuantityTracked(ba.asset)
+      isQuantityTracked(ba.asset),
     );
 
     /**
@@ -2347,7 +2348,7 @@ export async function checkoutBooking({
      * Get the kitIds because we need them to update their status later on
      */
     const kitIds = getKitIdsByAssets(
-      bookingFound.bookingAssets.map((ba) => ba.asset)
+      bookingFound.bookingAssets.map((ba) => ba.asset),
     );
     const hasKits = kitIds.length > 0;
 
@@ -2392,13 +2393,13 @@ export async function checkoutBooking({
      * events from main's audit-trail integration — atomic with the
      * checkout writes so a partial failure doesn't leave orphaned events. */
     const uniqueQtyTrackedAssetIds = Array.from(
-      new Set(qtyTrackedBookingAssets.map((ba) => ba.asset.id))
+      new Set(qtyTrackedBookingAssets.map((ba) => ba.asset.id)),
     );
 
     // Dedupe asset ids before recording one BOOKING_CHECKED_OUT per asset —
     // a booking can carry multiple BookingAsset rows per asset.
     const uniqueCheckedOutAssetIds = Array.from(
-      new Set(bookingFound.bookingAssets.map((ba) => ba.asset.id))
+      new Set(bookingFound.bookingAssets.map((ba) => ba.asset.id)),
     );
 
     // Per-asset booked quantity (sum across all BookingAsset rows for the
@@ -2413,7 +2414,7 @@ export async function checkoutBooking({
     for (const ba of bookingFound.bookingAssets) {
       checkedOutQtyByAssetId.set(
         ba.asset.id,
-        (checkedOutQtyByAssetId.get(ba.asset.id) ?? 0) + ba.quantity
+        (checkedOutQtyByAssetId.get(ba.asset.id) ?? 0) + ba.quantity,
       );
       checkedOutAssetById.set(ba.asset.id, {
         type: ba.asset.type,
@@ -2458,11 +2459,11 @@ export async function checkoutBooking({
                 meta: asset ? assetQtyMeta(asset, totalQty) : {},
               };
             }),
-            tx
+            tx,
           );
         }
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     /** Build effective post-checkout values by merging bookingFound with any
@@ -2662,7 +2663,7 @@ export async function fulfilModelRequestsAndCheckout({
       .map((ba) => ba.asset)
       .filter(
         (asset) =>
-          !isQuantityTracked(asset) && asset.status === AssetStatus.IN_CUSTODY
+          !isQuantityTracked(asset) && asset.status === AssetStatus.IN_CUSTODY,
       );
 
     if (assetsInCustody.length > 0) {
@@ -2723,7 +2724,7 @@ export async function fulfilModelRequestsAndCheckout({
      * (matches `checkoutBooking`'s behaviour).
      */
     const preExistingKitIds = getKitIdsByAssets(
-      bookingFound.bookingAssets.map((ba) => ba.asset)
+      bookingFound.bookingAssets.map((ba) => ba.asset),
     );
 
     /**
@@ -2774,19 +2775,19 @@ export async function fulfilModelRequestsAndCheckout({
         });
 
         const qtyTrackedBookingAssets = postScanBookingAssets.filter((ba) =>
-          isQuantityTracked(ba.asset)
+          isQuantityTracked(ba.asset),
         );
         const uniqueQtyTrackedAssetIds = Array.from(
-          new Set(qtyTrackedBookingAssets.map((ba) => ba.asset.id))
+          new Set(qtyTrackedBookingAssets.map((ba) => ba.asset.id)),
         );
         const allBookingAssetIds = postScanBookingAssets.map(
-          (ba) => ba.asset.id
+          (ba) => ba.asset.id,
         );
 
         // Union pre-existing kit ids with scanned kit ids so the
         // CHECKED_OUT flip covers both. (Dedup via Set.)
         const unionKitIds = Array.from(
-          new Set([...preExistingKitIds, ...kitIds])
+          new Set([...preExistingKitIds, ...kitIds]),
         );
         const hasKits = unionKitIds.length > 0;
 
@@ -2825,11 +2826,11 @@ export async function fulfilModelRequestsAndCheckout({
               assetId: ba.asset.id,
               meta: assetQtyMeta(ba.asset, ba.quantity),
             })),
-            tx
+            tx,
           );
         }
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     /** Post-commit: activity notes for the scanned assets + kits */
@@ -2967,7 +2968,7 @@ export function attributeDispositionsByBookingAsset(args: {
     if (log.bookingAssetId) {
       out.set(
         log.bookingAssetId,
-        (out.get(log.bookingAssetId) ?? 0) + (log.quantity ?? 0)
+        (out.get(log.bookingAssetId) ?? 0) + (log.quantity ?? 0),
       );
     } else {
       legacyPool += log.quantity ?? 0;
@@ -3065,12 +3066,12 @@ export function attributeCategorizedDispositionsByBookingAsset(args: {
       b[CATEGORY_FIELD[log.category]] += log.quantity ?? 0;
       runningTotal.set(
         log.bookingAssetId,
-        (runningTotal.get(log.bookingAssetId) ?? 0) + (log.quantity ?? 0)
+        (runningTotal.get(log.bookingAssetId) ?? 0) + (log.quantity ?? 0),
       );
     } else {
       legacyByCategory.set(
         log.category,
-        (legacyByCategory.get(log.category) ?? 0) + (log.quantity ?? 0)
+        (legacyByCategory.get(log.category) ?? 0) + (log.quantity ?? 0),
       );
     }
   }
@@ -3110,7 +3111,7 @@ export function attributeCategorizedDispositionsByBookingAsset(args: {
 export async function computeBookingAssetRemaining(
   tx: any,
   bookingId: Booking["id"],
-  assetId: Asset["id"]
+  assetId: Asset["id"],
 ): Promise<number> {
   // The old `bookingId_assetId` composite unique was replaced by two
   // partial uniques (manual + kit-driven) so the same asset can have
@@ -3137,7 +3138,7 @@ export async function computeBookingAssetRemaining(
 
   const booked = (pivots as Array<{ quantity: number }>).reduce(
     (sum, p) => sum + (p.quantity ?? 0),
-    0
+    0,
   );
   const logged = loggedSum._sum?.quantity ?? 0;
   return Math.max(0, booked - logged);
@@ -3164,7 +3165,7 @@ export async function computeBookingAssetRemaining(
 export async function computeBookingAssetSliceRemaining(
   tx: any,
   bookingId: Booking["id"],
-  bookingAssetId: string
+  bookingAssetId: string,
 ): Promise<number> {
   const [slice, loggedSum] = await Promise.all([
     tx.bookingAsset.findUnique({
@@ -3232,7 +3233,7 @@ type CheckoutRemainingTxClient = Pick<
 export async function computeBookingAssetsRemainingToCheckOut(
   tx: CheckoutRemainingTxClient,
   bookingId: Booking["id"],
-  assetIds: Asset["id"][]
+  assetIds: Asset["id"][],
 ): Promise<Map<string, number>> {
   const uniqueAssetIds = [...new Set(assetIds)];
   const remainingByAsset = new Map<string, number>();
@@ -3273,14 +3274,14 @@ export async function computeBookingAssetsRemainingToCheckOut(
     // pivots" and does not depend on each row projecting its own `assetId`.
     const booked = (pivots as Array<{ quantity: number }>).reduce(
       (sum, p) => sum + (p.quantity ?? 0),
-      0
+      0,
     );
     bookedByAsset.set(uniqueAssetIds[0], booked);
   } else {
     for (const p of pivots as Array<{ assetId: string; quantity: number }>) {
       bookedByAsset.set(
         p.assetId,
-        (bookedByAsset.get(p.assetId) ?? 0) + (p.quantity ?? 0)
+        (bookedByAsset.get(p.assetId) ?? 0) + (p.quantity ?? 0),
       );
     }
   }
@@ -3305,7 +3306,7 @@ export async function computeBookingAssetsRemainingToCheckOut(
   // positional-array parser, scoped to the requested assets via set membership
   // so the INDIVIDUAL-vs-QT skip in the parser never drops a requested asset.
   const logsByAsset = checkoutSessionsToLogsByAsset(sessionsArr, (id) =>
-    requestedSet.has(id)
+    requestedSet.has(id),
   );
 
   for (const assetId of uniqueAssetIds) {
@@ -3321,7 +3322,7 @@ export async function computeBookingAssetsRemainingToCheckOut(
 
     const claimed = (logsByAsset.get(assetId) ?? []).reduce(
       (sum, log) => sum + log.quantity,
-      0
+      0,
     );
     remainingByAsset.set(assetId, Math.max(0, booked - claimed));
   }
@@ -3367,7 +3368,7 @@ export async function computeBookingAssetsRemainingToCheckOut(
 export async function computeBookingAssetRemainingToCheckOut(
   tx: any,
   bookingId: Booking["id"],
-  assetId: Asset["id"]
+  assetId: Asset["id"],
 ): Promise<number> {
   // Delegate to the batched core with a single-element set so this helper stays
   // byte-for-byte identical for its ~6 external callers while the attribution,
@@ -3375,7 +3376,7 @@ export async function computeBookingAssetRemainingToCheckOut(
   const remainingByAsset = await computeBookingAssetsRemainingToCheckOut(
     tx,
     bookingId,
-    [assetId]
+    [assetId],
   );
   return remainingByAsset.get(assetId) ?? 0;
 }
@@ -3432,7 +3433,7 @@ export async function computeBookingAssetRemainingToCheckOut(
 export async function computeCheckedOutForAsset(
   tx: any,
   assetId: Asset["id"],
-  organizationId: string
+  organizationId: string,
 ): Promise<number> {
   // Pull every BookingAsset slice for this asset on an active booking
   // in this organization. We need the booking id so we can reuse the
@@ -3460,7 +3461,7 @@ export async function computeCheckedOutForAsset(
   for (const p of pivots) {
     bookedByBooking.set(
       p.bookingId,
-      (bookedByBooking.get(p.bookingId) ?? 0) + (p.quantity ?? 0)
+      (bookedByBooking.get(p.bookingId) ?? 0) + (p.quantity ?? 0),
     );
   }
 
@@ -3474,15 +3475,15 @@ export async function computeCheckedOutForAsset(
         const remainingOnBooking = await computeBookingAssetRemainingToCheckOut(
           tx,
           bookingId,
-          assetId
+          assetId,
         );
         // Floor at 0 defensively — `remaining` is itself floored at 0,
         // but pathological data (e.g. a manual DB edit that pushed
         // PartialBookingCheckout claims above the booked total) could
         // otherwise drive the per-booking subtraction negative.
         return Math.max(0, bookedOnBooking - remainingOnBooking);
-      }
-    )
+      },
+    ),
   );
 
   return perBookingCheckedOut.reduce((sum, n) => sum + n, 0);
@@ -3525,7 +3526,7 @@ export async function computeCheckedOutForAsset(
 export async function computeBookingAssetSliceRemainingToCheckOut(
   tx: any,
   bookingId: Booking["id"],
-  bookingAssetId: string
+  bookingAssetId: string,
 ): Promise<number> {
   // Delegate to the batched core with a single-element list so this helper stays
   // byte-for-byte identical for its external caller (getRemainingCheckoutPayload)
@@ -3535,7 +3536,7 @@ export async function computeBookingAssetSliceRemainingToCheckOut(
   const remainingBySlice = await computeBookingAssetsSliceRemainingToCheckOut(
     tx,
     bookingId,
-    [bookingAssetId]
+    [bookingAssetId],
   );
   return remainingBySlice.get(bookingAssetId) ?? 0;
 }
@@ -3577,7 +3578,7 @@ export async function computeBookingAssetSliceRemainingToCheckOut(
 export async function computeBookingAssetsSliceRemainingToCheckOut(
   tx: CheckoutRemainingTxClient,
   bookingId: Booking["id"],
-  bookingAssetIds: string[]
+  bookingAssetIds: string[],
 ): Promise<Map<string, number>> {
   const uniqueSliceIds = [...new Set(bookingAssetIds)];
   const remainingBySlice = new Map<string, number>();
@@ -3681,7 +3682,7 @@ export async function computeBookingAssetsSliceRemainingToCheckOut(
       quantities: number[];
       bookingAssetIds: string[];
     }>,
-    (id) => involvedAssetIds.has(id)
+    (id) => involvedAssetIds.has(id),
   );
 
   // Attribute each involved asset's claims across its full slice set ONCE, then
@@ -3743,7 +3744,7 @@ export async function computeBookingAssetsSliceRemainingToCheckOut(
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function isBookingFullyCheckedIn(
   tx: any,
-  bookingId: Booking["id"]
+  bookingId: Booking["id"],
 ): Promise<boolean> {
   const [bookingAssets, partialCheckins, partialCheckouts] = await Promise.all([
     tx.bookingAsset.findMany({
@@ -3796,14 +3797,14 @@ export async function isBookingFullyCheckedIn(
       quantities: number[];
       bookingAssetIds: string[];
     }>,
-    () => true
+    () => true,
   );
   const checkedOutAssetIds = new Set<string>(logsByAsset.keys());
   const checkedOutUnitsByAsset = new Map<string, number>();
   for (const [assetId, logs] of logsByAsset) {
     checkedOutUnitsByAsset.set(
       assetId,
-      logs.reduce((sum, log) => sum + log.quantity, 0)
+      logs.reduce((sum, log) => sum + log.quantity, 0),
     );
   }
 
@@ -3846,7 +3847,7 @@ export async function isBookingFullyCheckedIn(
       const remaining = await computeBookingAssetRemaining(
         tx,
         bookingId,
-        ba.assetId
+        ba.assetId,
       );
       if (remaining > 0) return false;
       continue;
@@ -4065,14 +4066,14 @@ export async function checkinBooking({
             }
 
             const checkedInAssets = partiallyCheckedInAssetsByBooking.get(
-              linkedBooking.id
+              linkedBooking.id,
             );
             if (checkedInAssets && checkedInAssets.has(asset.id)) {
               return false;
             }
 
             return true;
-          }
+          },
         );
 
         if (hasActiveBookingConflict) {
@@ -4088,12 +4089,12 @@ export async function checkinBooking({
     const kitsToCheckin = hasKits
       ? kitIds.filter((kitId) => {
           const kitAssetsInBooking = bookingFoundAssets.filter(
-            (asset) => asset.assetKits?.[0]?.kitId === kitId
+            (asset) => asset.assetKits?.[0]?.kitId === kitId,
           );
           return kitAssetsInBooking.every(
             (asset) =>
               assetsToCheckinSet.has(asset.id) ||
-              asset.status === AssetStatus.AVAILABLE
+              asset.status === AssetStatus.AVAILABLE,
           );
         })
       : [];
@@ -4116,11 +4117,11 @@ export async function checkinBooking({
     const explicitByBookingAssetId = new Map<string, CheckinDispositionInput>(
       checkins
         ?.filter((d) => d.bookingAssetId)
-        .map((d) => [d.bookingAssetId!, d]) ?? []
+        .map((d) => [d.bookingAssetId!, d]) ?? [],
     );
     const explicitByAssetId = new Map<string, CheckinDispositionInput>(
       checkins?.filter((d) => !d.bookingAssetId).map((d) => [d.assetId, d]) ??
-        []
+        [],
     );
 
     /**
@@ -4187,7 +4188,7 @@ export async function checkinBooking({
             const remaining = await computeBookingAssetRemaining(
               tx,
               id,
-              assetId
+              assetId,
             );
             if (remaining > 0) {
               throw new ShelfError({
@@ -4213,7 +4214,7 @@ export async function checkinBooking({
         for (const assetId of qtyTrackedAssetIds) {
           assetRemainingSoFar.set(
             assetId,
-            await computeBookingAssetRemaining(tx, id, assetId)
+            await computeBookingAssetRemaining(tx, id, assetId),
           );
         }
 
@@ -4236,7 +4237,7 @@ export async function checkinBooking({
           const sliceRemaining = await computeBookingAssetSliceRemaining(
             tx,
             id,
-            slice.id
+            slice.id,
           );
           if (sliceRemaining <= 0) continue; // Already reconciled.
 
@@ -4425,7 +4426,7 @@ export async function checkinBooking({
           const qtyAssetIds = bookingFoundAssets
             .filter(
               (a) =>
-                a.type === "QUANTITY_TRACKED" && assetsToCheckin.includes(a.id)
+                a.type === "QUANTITY_TRACKED" && assetsToCheckin.includes(a.id),
             )
             .map((a) => a.id);
 
@@ -4456,7 +4457,7 @@ export async function checkinBooking({
         // assetQtyMeta). Atomic with the booking status update for audit
         // trail consistency.
         const checkedInBookingAssets = bookingFound.bookingAssets.filter((ba) =>
-          assetsToCheckinSet.has(ba.asset.id)
+          assetsToCheckinSet.has(ba.asset.id),
         );
         if (checkedInBookingAssets.length > 0) {
           await recordEvents(
@@ -4470,7 +4471,7 @@ export async function checkinBooking({
               assetId: ba.asset.id,
               meta: assetQtyMeta(ba.asset, ba.quantity),
             })),
-            tx
+            tx,
           );
         }
 
@@ -4494,7 +4495,7 @@ export async function checkinBooking({
           },
         });
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     // Create status transition note
@@ -4526,7 +4527,7 @@ export async function checkinBooking({
         const kitIds = getKitIdsByAssets(
           (updatedBooking.bookingAssets || [])
             .map((ba) => ba.asset)
-            .filter((a) => specificAssetIds?.includes(a.id))
+            .filter((a) => specificAssetIds?.includes(a.id)),
         );
         const completeKits: Array<{ id: string; name: string }> = [];
         const standaloneAssets: Array<{ id: string; title: string }> = [];
@@ -4554,40 +4555,40 @@ export async function checkinBooking({
         if (hasKits && hasAssets) {
           const kitContent = wrapKitsWithDataForNote(
             completeKits,
-            "checked in"
+            "checked in",
           );
           const assetContent = wrapAssetsWithDataForNote(
             standaloneAssets,
-            "checked in"
+            "checked in",
           );
           itemsDescription = `${assetContent} and ${kitContent}`;
         } else if (hasKits) {
           itemsDescription = wrapKitsWithDataForNote(
             completeKits,
-            "checked in"
+            "checked in",
           );
         } else if (hasAssets) {
           itemsDescription = wrapAssetsWithDataForNote(
             standaloneAssets,
-            "checked in"
+            "checked in",
           );
         }
 
         // Create enhanced completion message
         const fromStatusBadge = wrapBookingStatusForNote(
           bookingFound.status,
-          updatedBooking.custodianUserId || undefined
+          updatedBooking.custodianUserId || undefined,
         );
         const toStatusBadge = wrapBookingStatusForNote(
           BookingStatus.COMPLETE,
-          updatedBooking.custodianUserId || undefined
+          updatedBooking.custodianUserId || undefined,
         );
 
         await createSystemBookingNote({
           bookingId: updatedBooking.id,
           organizationId,
           content: `${wrapUserLinkForNote(
-            user!
+            user!,
           )} performed a partial check-in: ${itemsDescription} and completed the booking. Status changed from ${fromStatusBadge} to ${toStatusBadge}`,
         });
 
@@ -4621,7 +4622,7 @@ export async function checkinBooking({
                 fromStatus: bookingFound.status,
               },
               label,
-            })
+            }),
           );
         }
       } else {
@@ -4666,7 +4667,7 @@ export async function checkinBooking({
          */
         const bookingLink = wrapLinkForNote(
           `/bookings/${updatedBooking.id}`,
-          updatedBooking.name
+          updatedBooking.name,
         );
 
         for (const summary of qtySummariesRef.value) {
@@ -4680,7 +4681,7 @@ export async function checkinBooking({
           const fmt = (qty: number) =>
             formatUnitCount(
               { type: summary.type, unitOfMeasure: summary.unitOfMeasure },
-              qty
+              qty,
             ) ?? String(qty);
 
           const parts: string[] = [];
@@ -4695,7 +4696,7 @@ export async function checkinBooking({
           if (parts.length > 0) {
             await createNotes({
               content: `${actor} via check-in on ${bookingLink}: ${parts.join(
-                ", "
+                ", ",
               )}.`,
               type: "UPDATE",
               userId,
@@ -4711,7 +4712,7 @@ export async function checkinBooking({
         // aggregate totals. Previously this note conflated everything
         // into "10 returned, 2 lost" with no asset names.
         const perAssetFragment = buildQtyPerAssetFragment(
-          qtySummariesRef.value
+          qtySummariesRef.value,
         );
         if (perAssetFragment) {
           await createSystemBookingNote({
@@ -4727,7 +4728,7 @@ export async function checkinBooking({
             message: "Failed to write quantity check-in activity notes",
             label,
             additionalData: { userId, bookingId: id },
-          })
+          }),
         );
       }
     }
@@ -4794,7 +4795,7 @@ export async function checkinBooking({
       await sendBookingEmailToAllRecipients({
         recipients,
         booking: updatedBooking,
-        subject: `🎉 Booking complete (${updatedBooking.name}) - shelf.nu`,
+        subject: `🎉 Booking complete (${updatedBooking.name}) - ${config.appName}`,
         textContent: text,
         heading: `Your booking has been completed: "${updatedBooking.name}"`,
         hints,
@@ -4925,7 +4926,7 @@ function buildQtyPerAssetFragment(
     lost: number;
     damaged: number;
     pendingAfter?: number;
-  }>
+  }>,
 ): string {
   const fragments: string[] = [];
   for (const s of summaries) {
@@ -4986,7 +4987,7 @@ function buildQtyPerAssetCheckoutFragment(
     assetKitId: string | null;
     kitName: string | null;
     sliceBooked: number;
-  }>
+  }>,
 ): string {
   const fragments: string[] = [];
   for (const s of summaries) {
@@ -5140,7 +5141,7 @@ export async function partialCheckinBooking({
      * two services.
      */
     const hasQuantityDispositions = dispositions.some(
-      (d) => sumDisposition(d) > 0
+      (d) => sumDisposition(d) > 0,
     );
 
     const user = await getUserByID(userId, {
@@ -5193,12 +5194,12 @@ export async function partialCheckinBooking({
 
     /** Types keyed by assetId — lets per-asset branches pick the right code path. */
     const assetTypeById = new Map<string, AssetType>(
-      bookingFoundAssets.map((a) => [a.id, a.type])
+      bookingFoundAssets.map((a) => [a.id, a.type]),
     );
 
     const bookingAssetIds = new Set(bookingFoundAssets.map((a) => a.id));
     const invalidAssetIds = effectiveAssetIds.filter(
-      (id_) => !bookingAssetIds.has(id_)
+      (id_) => !bookingAssetIds.has(id_),
     );
     if (invalidAssetIds.length > 0) {
       throw new ShelfError({
@@ -5206,7 +5207,7 @@ export async function partialCheckinBooking({
         status: 400,
         label,
         message: `Some assets are not part of this booking: ${invalidAssetIds.join(
-          ", "
+          ", ",
         )}`,
         shouldBeCaptured: false,
       });
@@ -5249,7 +5250,7 @@ export async function partialCheckinBooking({
     // including the final batch). An all-at-once checkout leaves no records, so
     // fall back to "every booking asset is eligible".
     const checkedOutForThisBooking = new Set(
-      await getPartiallyCheckedOutAssetIds({ bookingId: id, organizationId })
+      await getPartiallyCheckedOutAssetIds({ bookingId: id, organizationId }),
     );
     const eligibleCheckinAssetIds =
       checkedOutForThisBooking.size > 0
@@ -5261,7 +5262,7 @@ export async function partialCheckinBooking({
       select: { id: true, title: true },
     });
     const notCheckedOut = scannedAssets.filter(
-      (a) => !eligibleCheckinAssetIds.has(a.id)
+      (a) => !eligibleCheckinAssetIds.has(a.id),
     );
     if (notCheckedOut.length > 0) {
       // why: with progressive checkout a booking can hold still-Booked
@@ -5306,7 +5307,7 @@ export async function partialCheckinBooking({
       // and counting those as outstanding would keep it stuck ONGOING forever
       // after the actually checked-out items are all returned.
       const outstandingAssetIds = [...eligibleCheckinAssetIds].filter(
-        (assetId) => !recordedAssetIdSet.has(assetId)
+        (assetId) => !recordedAssetIdSet.has(assetId),
       );
 
       if (
@@ -5351,17 +5352,17 @@ export async function partialCheckinBooking({
     // in this session. Qty-tracked assets aren't kitted, so this logic only
     // applies to individuals.
     const assetsBeingCheckedIn = bookingFoundAssets.filter((a) =>
-      effectiveAssetIds.includes(a.id)
+      effectiveAssetIds.includes(a.id),
     );
     const kitIdsBeingCheckedIn = getKitIdsByAssets(assetsBeingCheckedIn);
 
     const completeKitIds: string[] = [];
     for (const kitId of kitIdsBeingCheckedIn) {
       const kitAssetsInBooking = bookingFoundAssets.filter(
-        (a) => a.assetKits?.[0]?.kitId === kitId
+        (a) => a.assetKits?.[0]?.kitId === kitId,
       );
       const kitAssetsBeingCheckedIn = assetsBeingCheckedIn.filter(
-        (a) => a.assetKits?.[0]?.kitId === kitId
+        (a) => a.assetKits?.[0]?.kitId === kitId,
       );
 
       if (kitAssetsInBooking.length === kitAssetsBeingCheckedIn.length) {
@@ -5419,7 +5420,7 @@ export async function partialCheckinBooking({
         const remaining = await computeBookingAssetRemaining(
           tx,
           id,
-          disp.assetId
+          disp.assetId,
         );
 
         /**
@@ -5436,7 +5437,7 @@ export async function partialCheckinBooking({
           const sliceRemaining = await computeBookingAssetSliceRemaining(
             tx,
             id,
-            disp.bookingAssetId
+            disp.bookingAssetId,
           );
           cap = Math.min(cap, sliceRemaining);
         }
@@ -5588,7 +5589,7 @@ export async function partialCheckinBooking({
 
       // ---- Individual asset status updates (unchanged) ----
       const individualAssetIds = effectiveAssetIds.filter(
-        (id_) => assetTypeById.get(id_) === AssetType.INDIVIDUAL
+        (id_) => assetTypeById.get(id_) === AssetType.INDIVIDUAL,
       );
       if (individualAssetIds.length > 0) {
         // Scope to the caller's org (cross-org IDOR defence).
@@ -5607,8 +5608,8 @@ export async function partialCheckinBooking({
       const qtyCheckinIds = [
         ...new Set(
           effectiveAssetIds.filter(
-            (id_) => assetTypeById.get(id_) === AssetType.QUANTITY_TRACKED
-          )
+            (id_) => assetTypeById.get(id_) === AssetType.QUANTITY_TRACKED,
+          ),
         ),
       ];
       for (const assetId of qtyCheckinIds) {
@@ -5692,7 +5693,7 @@ export async function partialCheckinBooking({
             bookingId: id,
             assetId,
           })),
-          tx
+          tx,
         );
       }
 
@@ -5766,7 +5767,7 @@ export async function partialCheckinBooking({
        */
       const bookingLink = wrapLinkForNote(
         `/bookings/${txResult.booking.id}`,
-        txResult.booking.name
+        txResult.booking.name,
       );
 
       /**
@@ -5812,7 +5813,7 @@ export async function partialCheckinBooking({
         const fmt = (qty: number) =>
           formatUnitCount(
             { type: summary.type, unitOfMeasure: summary.unitOfMeasure },
-            qty
+            qty,
           ) ?? String(qty);
 
         const parts: string[] = [];
@@ -5829,7 +5830,7 @@ export async function partialCheckinBooking({
 
         await createNotes({
           content: `${actor} via partial check-in on ${bookingLink}: ${parts.join(
-            ", "
+            ", ",
           )}.`,
           type: "UPDATE",
           userId,
@@ -5905,14 +5906,14 @@ export async function partialCheckinBooking({
       if (hasKits && hasAssets) {
         itemsDescription = `${wrapAssetsWithDataForNote(
           standaloneAssets,
-          "checked in"
+          "checked in",
         )} and ${wrapKitsWithDataForNote(completeKits, "checked in")}`;
       } else if (hasKits) {
         itemsDescription = wrapKitsWithDataForNote(completeKits, "checked in");
       } else if (hasAssets) {
         itemsDescription = wrapAssetsWithDataForNote(
           standaloneAssets,
-          "checked in"
+          "checked in",
         );
       }
 
@@ -5932,11 +5933,11 @@ export async function partialCheckinBooking({
       if (txResult.isComplete) {
         const fromStatusBadge = wrapBookingStatusForNote(
           txResult.previousStatus,
-          txResult.booking.custodianUserId || undefined
+          txResult.booking.custodianUserId || undefined,
         );
         const toStatusBadge = wrapBookingStatusForNote(
           BookingStatus.COMPLETE,
-          txResult.booking.custodianUserId || undefined
+          txResult.booking.custodianUserId || undefined,
         );
         await createSystemBookingNote({
           bookingId: id,
@@ -5962,7 +5963,7 @@ export async function partialCheckinBooking({
           message: "Failed to write check-in activity notes",
           label,
           additionalData: { userId, bookingId: id },
-        })
+        }),
       );
     }
 
@@ -5982,7 +5983,7 @@ export async function partialCheckinBooking({
       select: { assetIds: true },
     });
     const reconciledIndividualIds = new Set<string>(
-      allSessions.flatMap((s) => s.assetIds as string[])
+      allSessions.flatMap((s) => s.assetIds as string[]),
     );
     let remainingAssetCount = 0;
     for (const ba of outstandingBookingAssets) {
@@ -6222,7 +6223,7 @@ export async function partialCheckoutBooking({
 
     /** Quick lookup: assetId → AssetType (used by qty/individual branching). */
     const assetTypeById = new Map<string, AssetType>(
-      bookingAssetsDeduped.map((a) => [a.id, a.type])
+      bookingAssetsDeduped.map((a) => [a.id, a.type]),
     );
 
     // Validate that all provided assetIds are actually in the booking BEFORE any
@@ -6235,7 +6236,7 @@ export async function partialCheckoutBooking({
     // client-side filtering.
     const bookingAssetIds = new Set(bookingAssetsDeduped.map((a) => a.id));
     const invalidAssetIds = effectiveAssetIds.filter(
-      (assetId) => !bookingAssetIds.has(assetId)
+      (assetId) => !bookingAssetIds.has(assetId),
     );
 
     if (invalidAssetIds.length > 0) {
@@ -6244,7 +6245,7 @@ export async function partialCheckoutBooking({
         status: 400,
         label,
         message: `Some assets are not part of this booking: ${invalidAssetIds.join(
-          ", "
+          ", ",
         )}`,
       });
     }
@@ -6276,7 +6277,7 @@ export async function partialCheckoutBooking({
     // belongs to THIS booking AND matches its `assetId` before it is used for
     // caps or stored (covers both the delegate and progressive paths below).
     const assetIdBySliceId = new Map(
-      bookingFound.bookingAssets.map((ba) => [ba.id, ba.asset.id])
+      bookingFound.bookingAssets.map((ba) => [ba.id, ba.asset.id]),
     );
     for (const d of dispositions) {
       if (
@@ -6338,7 +6339,7 @@ export async function partialCheckoutBooking({
         const remainingForFull = await computeBookingAssetRemainingToCheckOut(
           db,
           id,
-          d.assetId
+          d.assetId,
         );
         if (d.quantity < remainingForFull) {
           qtyClaimsCoverFullRemaining = false;
@@ -6401,7 +6402,7 @@ export async function partialCheckoutBooking({
           checkoutQtyByAssetId.set(d.assetId, d.quantity);
         }
         const outstandingQuantities = outstandingAssetIds.map(
-          (assetId) => checkoutQtyByAssetId.get(assetId) ?? 1
+          (assetId) => checkoutQtyByAssetId.get(assetId) ?? 1,
         );
         // Greedy `""` for every deduped entry (see comment above).
         const outstandingBookingAssetIds = outstandingAssetIds.map(() => "");
@@ -6452,7 +6453,7 @@ export async function partialCheckoutBooking({
     // IN_CUSTODY status with only SOME units claimed; the per-slice cap inside
     // the tx (below) is the authoritative availability check for QT.
     const inCustody = scannedAssetsWithConflicts.filter(
-      (a) => !isQuantityTracked(a) && a.status === AssetStatus.IN_CUSTODY
+      (a) => !isQuantityTracked(a) && a.status === AssetStatus.IN_CUSTODY,
     );
     if (inCustody.length > 0) {
       const names = inCustody
@@ -6473,7 +6474,7 @@ export async function partialCheckoutBooking({
 
     if (bookingFound.from && bookingFound.to) {
       const conflicted = scannedAssetsWithConflicts.filter((a) =>
-        hasAssetBookingConflicts(a, id)
+        hasAssetBookingConflicts(a, id),
       );
       if (conflicted.length > 0) {
         const names = conflicted
@@ -6503,7 +6504,7 @@ export async function partialCheckoutBooking({
     const assetIdsToCheckOut = effectiveAssetIds.filter(
       (assetId) =>
         !alreadyCheckedOutSet.has(assetId) ||
-        assetTypeById.get(assetId) === AssetType.QUANTITY_TRACKED
+        assetTypeById.get(assetId) === AssetType.QUANTITY_TRACKED,
     );
     if (assetIdsToCheckOut.length === 0) {
       throw new ShelfError({
@@ -6519,7 +6520,7 @@ export async function partialCheckoutBooking({
     // first kitId per asset (kits-as-bag-of-assets is still a 1:1 relation in
     // the customer-facing semantics of this flow).
     const assetsBeingCheckedOut = bookingAssetsDeduped.filter((a) =>
-      assetIdsToCheckOut.includes(a.id)
+      assetIdsToCheckOut.includes(a.id),
     );
     const kitIdsBeingCheckedOut = getKitIdsByAssets(assetsBeingCheckedOut);
 
@@ -6527,10 +6528,10 @@ export async function partialCheckoutBooking({
     const completeKitIds: string[] = [];
     for (const kitId of kitIdsBeingCheckedOut) {
       const kitAssetsInBooking = bookingAssetsDeduped.filter(
-        (a) => a.assetKits?.[0]?.kitId === kitId
+        (a) => a.assetKits?.[0]?.kitId === kitId,
       );
       const kitAssetsBeingCheckedOut = assetsBeingCheckedOut.filter(
-        (a) => a.assetKits?.[0]?.kitId === kitId
+        (a) => a.assetKits?.[0]?.kitId === kitId,
       );
 
       if (kitAssetsInBooking.length === kitAssetsBeingCheckedOut.length) {
@@ -6651,9 +6652,9 @@ export async function partialCheckoutBooking({
             dispositions
               .filter(
                 (d) =>
-                  assetTypeById.get(d.assetId) === AssetType.QUANTITY_TRACKED
+                  assetTypeById.get(d.assetId) === AssetType.QUANTITY_TRACKED,
               )
-              .map((d) => d.assetId)
+              .map((d) => d.assetId),
           ),
         ].sort();
 
@@ -6681,7 +6682,7 @@ export async function partialCheckoutBooking({
           await computeBookingAssetsRemainingToCheckOut(
             tx,
             id,
-            qtyDispositionAssetIds
+            qtyDispositionAssetIds,
           );
 
         /**
@@ -6701,16 +6702,16 @@ export async function partialCheckoutBooking({
               .filter(
                 (d) =>
                   d.bookingAssetId &&
-                  assetTypeById.get(d.assetId) === AssetType.QUANTITY_TRACKED
+                  assetTypeById.get(d.assetId) === AssetType.QUANTITY_TRACKED,
               )
-              .map((d) => d.bookingAssetId!)
+              .map((d) => d.bookingAssetId!),
           ),
         ];
         const sliceCommittedRemainingBySlice =
           await computeBookingAssetsSliceRemainingToCheckOut(
             tx,
             id,
-            sliceTaggedBookingAssetIds
+            sliceTaggedBookingAssetIds,
           );
 
         for (const disp of dispositions) {
@@ -6734,7 +6735,7 @@ export async function partialCheckoutBooking({
             claimedByAssetThisBatch.get(disp.assetId) ?? 0;
           const assetCap = Math.max(
             0,
-            committedRemaining - claimedSoFarThisBatch
+            committedRemaining - claimedSoFarThisBatch,
           );
 
           /**
@@ -6768,7 +6769,7 @@ export async function partialCheckoutBooking({
               claimedBySliceThisBatch.get(disp.bookingAssetId) ?? 0;
             const sliceCap = Math.max(
               0,
-              sliceCommittedRemaining - claimedThisSliceSoFar
+              sliceCommittedRemaining - claimedThisSliceSoFar,
             );
             cap = Math.min(cap, sliceCap);
           }
@@ -6805,7 +6806,7 @@ export async function partialCheckoutBooking({
                   type: lockedAsset.type,
                   unitOfMeasure: lockedAsset.unitOfMeasure,
                 },
-                cap
+                cap,
               ) ?? `${cap} units`;
             throw new ShelfError({
               cause: null,
@@ -6819,12 +6820,12 @@ export async function partialCheckoutBooking({
           // Record the claim so the NEXT iteration sees the running total.
           claimedByAssetThisBatch.set(
             disp.assetId,
-            claimedSoFarThisBatch + claimed
+            claimedSoFarThisBatch + claimed,
           );
           if (disp.bookingAssetId) {
             claimedBySliceThisBatch.set(
               disp.bookingAssetId,
-              (claimedBySliceThisBatch.get(disp.bookingAssetId) ?? 0) + claimed
+              (claimedBySliceThisBatch.get(disp.bookingAssetId) ?? 0) + claimed,
             );
           }
 
@@ -6843,12 +6844,12 @@ export async function partialCheckoutBooking({
                 // running claim for the SAME slice (this iteration inclusive).
                 Math.max(
                   0,
-                  sliceCommittedRemaining - claimedThisSliceSoFar - claimed
+                  sliceCommittedRemaining - claimedThisSliceSoFar - claimed,
                 )
               : // Legacy: asset-level remaining after this iteration.
                 Math.max(
                   0,
-                  committedRemaining - claimedSoFarThisBatch - claimed
+                  committedRemaining - claimedSoFarThisBatch - claimed,
                 );
 
           qtySummaries.push({
@@ -6873,7 +6874,8 @@ export async function partialCheckoutBooking({
          * custody validation upstream already rejects ineligible assets.
          */
         const individualToFlip = assetIdsToCheckOut.filter(
-          (assetId) => assetTypeById.get(assetId) !== AssetType.QUANTITY_TRACKED
+          (assetId) =>
+            assetTypeById.get(assetId) !== AssetType.QUANTITY_TRACKED,
         );
         if (individualToFlip.length > 0) {
           await tx.asset.updateMany({
@@ -6922,7 +6924,7 @@ export async function partialCheckoutBooking({
           const thisBatchClaim = claimedByAssetThisBatch.get(assetId) ?? 0;
           const remainingAfterAllSessions = Math.max(
             0,
-            committedRemaining - thisBatchClaim
+            committedRemaining - thisBatchClaim,
           );
           const bookedTotal = bookedTotalByAsset.get(assetId) ?? 0;
           // Flip only when every booked unit has been claimed. Guard against
@@ -7016,7 +7018,7 @@ export async function partialCheckoutBooking({
               assetIds: individualToFlip,
               organizationId,
             },
-            tx
+            tx,
           );
         }
 
@@ -7087,7 +7089,7 @@ export async function partialCheckoutBooking({
             transitionData.from = DateTime.fromFormat(
               fromDateStr,
               DATE_TIME_FORMAT,
-              { zone: hints.timeZone }
+              { zone: hints.timeZone },
             ).toJSDate();
           }
 
@@ -7150,23 +7152,23 @@ export async function partialCheckoutBooking({
         if (hasKits && hasAssets) {
           const kitContent = wrapKitsWithDataForNote(
             completeKits,
-            "checked out"
+            "checked out",
           );
           const assetContent = wrapAssetsWithDataForNote(
             standaloneAssets,
-            "checked out"
+            "checked out",
           );
           itemsDescription = `${assetContent} and ${kitContent}`;
         } else if (hasKits) {
           const kitContent = wrapKitsWithDataForNote(
             completeKits,
-            "checked out"
+            "checked out",
           );
           itemsDescription = kitContent;
         } else if (hasAssets) {
           const assetContent = wrapAssetsWithDataForNote(
             standaloneAssets,
-            "checked out"
+            "checked out",
           );
           itemsDescription = assetContent;
         }
@@ -7227,10 +7229,10 @@ export async function partialCheckoutBooking({
             bookingId: id,
             organizationId,
             content: `${wrapUserLinkForNote(
-              user!
+              user!,
             )} performed a partial check-out: ${itemsBody}${statusNote}.`,
           },
-          tx
+          tx,
         );
 
         /**
@@ -7245,7 +7247,7 @@ export async function partialCheckoutBooking({
          */
         const uniqueBookingAssetIds = [
           ...new Set(
-            updatedBookingForNote.bookingAssets.map((ba) => ba.asset.id)
+            updatedBookingForNote.bookingAssets.map((ba) => ba.asset.id),
           ),
         ];
         // ONE batched read for EVERY unique booking asset, then count in memory.
@@ -7259,7 +7261,7 @@ export async function partialCheckoutBooking({
           await computeBookingAssetsRemainingToCheckOut(
             tx,
             id,
-            uniqueBookingAssetIds
+            uniqueBookingAssetIds,
           );
         let remainingAssetCount = 0;
         for (const assetId of uniqueBookingAssetIds) {
@@ -7290,7 +7292,7 @@ export async function partialCheckoutBooking({
         // batched to O(1), but a large booking still does meaningful work inside
         // the tx, so keep the same generous ceiling as the all-at-once path.
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     /**
@@ -7311,7 +7313,7 @@ export async function partialCheckoutBooking({
       });
       const bookingLink = wrapLinkForNote(
         `/bookings/${result.booking.id}`,
-        result.booking.name
+        result.booking.name,
       );
 
       for (const summary of result.qtySummaries) {
@@ -7322,14 +7324,14 @@ export async function partialCheckoutBooking({
             type: summary.type,
             unitOfMeasure: summary.unitOfMeasure,
           },
-          summary.checkedOut
+          summary.checkedOut,
         );
         const remainingFragment =
           summary.remainingAfter > 0
             ? ` (${
                 formatUnitCount(
                   { type: summary.type, unitOfMeasure: summary.unitOfMeasure },
-                  summary.remainingAfter
+                  summary.remainingAfter,
                 ) ?? String(summary.remainingAfter)
               } still booked)`
             : "";
@@ -7349,7 +7351,7 @@ export async function partialCheckoutBooking({
           message: "Failed to write partial check-out activity notes",
           label,
           additionalData: { userId, bookingId: id },
-        })
+        }),
       );
     }
 
@@ -7370,7 +7372,7 @@ export async function partialCheckoutBooking({
         await scheduleCheckinReminderForBooking(
           { id: bookingFound.id, to: bookingFound.to },
           hints,
-          organizationId
+          organizationId,
         );
       }
     }
@@ -7560,7 +7562,7 @@ export async function updateBookingAssets({
       // for the kit ids).
       await assertAssetKitsBelongToOrg(
         { assetKitIds: slices.map((s) => s.assetKitId), organizationId },
-        tx
+        tx,
       );
 
       // INVARIANT: an INDIVIDUAL asset is a single physical unit, so it can
@@ -7578,13 +7580,13 @@ export async function updateBookingAssets({
       const individualKitSliceAssetIds = [...kitSliceAssetIds].filter(
         (assetId) =>
           validAssets.some(
-            (a) => a.id === assetId && a.type === AssetType.INDIVIDUAL
-          )
+            (a) => a.id === assetId && a.type === AssetType.INDIVIDUAL,
+          ),
       );
       const individualKitOverlapAssetIds = new Set(
         individualKitSliceAssetIds.filter((assetId) =>
-          assetIds.includes(assetId)
-        )
+          assetIds.includes(assetId),
+        ),
       );
 
       // FINDING: an INDIVIDUAL kit member ALREADY on the booking as a standalone
@@ -7606,10 +7608,10 @@ export async function updateBookingAssets({
                 select: { assetId: true },
               })
             ).map((row) => row.assetId)
-          : []
+          : [],
       );
       const effectiveSlices = slices.filter(
-        (s) => !existingStandaloneIndividualAssetIds.has(s.assetId)
+        (s) => !existingStandaloneIndividualAssetIds.has(s.assetId),
       );
 
       // Standalone rows go through an upsert keyed on the
@@ -7619,10 +7621,10 @@ export async function updateBookingAssets({
       // above). `standaloneAssetIds` and `standaloneQuantities` stay
       // index-aligned because both derive from the same filtered array.
       const standaloneAssetIds = [...new Set(assetIds)].filter(
-        (assetId) => !individualKitOverlapAssetIds.has(assetId)
+        (assetId) => !individualKitOverlapAssetIds.has(assetId),
       );
       const standaloneQuantities = standaloneAssetIds.map(
-        (assetId) => quantities?.[assetId] ?? 1
+        (assetId) => quantities?.[assetId] ?? 1,
       );
 
       // Kit-driven rows go through a separate insert keyed on the
@@ -7707,13 +7709,13 @@ export async function updateBookingAssets({
         for (const sid of standaloneAssetIds) {
           addedQtyByAssetId.set(
             sid,
-            (addedQtyByAssetId.get(sid) ?? 0) + (quantities?.[sid] ?? 1)
+            (addedQtyByAssetId.get(sid) ?? 0) + (quantities?.[sid] ?? 1),
           );
         }
         for (const slice of slices) {
           addedQtyByAssetId.set(
             slice.assetId,
-            (addedQtyByAssetId.get(slice.assetId) ?? 0) + slice.quantity
+            (addedQtyByAssetId.get(slice.assetId) ?? 0) + slice.quantity,
           );
         }
 
@@ -7733,7 +7735,7 @@ export async function updateBookingAssets({
                 : {},
             };
           }),
-          tx
+          tx,
         );
       }
 
@@ -7771,7 +7773,7 @@ export async function updateBookingAssets({
           assets.length === 1 && assets[0].title && assets[0].type
             ? wrapAssetWithCountForNote(
                 assets[0],
-                quantities?.[assets[0].id] ?? 1
+                quantities?.[assets[0].id] ?? 1,
               )
             : wrapAssetsWithDataForNote(assets, "added");
 
@@ -7788,7 +7790,7 @@ export async function updateBookingAssets({
             bookingId: booking.id,
             organizationId,
             content: `${wrapUserLinkForNote(
-              user
+              user,
             )} added ${assetContent} to the booking.`,
           });
         } else {
@@ -7805,7 +7807,7 @@ export async function updateBookingAssets({
             message: "Failed to create booking note after asset update",
             label,
             shouldBeCaptured: false,
-          })
+          }),
         );
       }
     }
@@ -7855,7 +7857,7 @@ export async function createKitBookingNote({
       bookingId,
       organizationId,
       content: `${wrapUserLinkForNote(
-        user
+        user,
       )} ${action} ${kitContent} to the booking.`,
     });
   } else {
@@ -8118,7 +8120,7 @@ export async function cancelBooking({
       await sendBookingEmailToAllRecipients({
         recipients,
         booking,
-        subject: `❌ Booking cancelled (${booking.name}) - shelf.nu`,
+        subject: `❌ Booking cancelled (${booking.name}) - ${config.appName}`,
         textContent: text,
         heading: `Your booking has been cancelled: "${booking.name}"`,
         hints,
@@ -8302,7 +8304,7 @@ export async function extendBooking({
 
     /** Get assets that have been returned via partial check-in */
     const checkedInAssetIds = booking.partialCheckins.flatMap(
-      (checkin) => checkin.assetIds
+      (checkin) => checkin.assetIds,
     );
 
     /** Filter to only assets that are actively checked out (not returned) */
@@ -8312,7 +8314,7 @@ export async function extendBooking({
         (asset) =>
           (asset.status === AssetStatus.CHECKED_OUT ||
             asset.status === AssetStatus.IN_CUSTODY) &&
-          !checkedInAssetIds.includes(asset.id)
+          !checkedInAssetIds.includes(asset.id),
       );
 
     /** Validate that there are still active assets to extend the booking for */
@@ -8391,9 +8393,9 @@ export async function extendBooking({
       bookingId: updatedBooking.id,
       organizationId,
       content: `${wrapUserLinkForNote(
-        user
+        user,
       )} extended the booking from **${wrapDateForNote(
-        booking.to
+        booking.to,
       )}** to **${wrapDateForNote(newEndDate)}**.`,
     });
 
@@ -8439,7 +8441,7 @@ export async function extendBooking({
           message: "Failed to record extendBooking activity events",
           additionalData: { bookingId: updatedBooking.id },
           label,
-        })
+        }),
       );
     }
 
@@ -8476,10 +8478,10 @@ export async function extendBooking({
       await sendBookingEmailToAllRecipients({
         recipients,
         booking: updatedBooking,
-        subject: `Booking extended (${updatedBooking.name}) - shelf.nu`,
+        subject: `Booking extended (${updatedBooking.name}) - ${config.appName}`,
         textContent: text,
         heading: `Booking extended from ${format(booking.to)} to ${format(
-          newEndDate
+          newEndDate,
         )}`,
         hints,
       });
@@ -8502,7 +8504,7 @@ export async function extendBooking({
         updatedBooking,
         updatedBooking._count.bookingAssets,
         hints,
-        updatedBooking.organizationId
+        updatedBooking.organizationId,
       );
 
       await scheduleNextBookingJob({
@@ -8679,7 +8681,7 @@ export async function getBookingsFilterData({
  * @returns A `Prisma.BookingWhereInput` OR-clause to push into `where.AND`.
  */
 export function bookingDraftVisibilityClause(
-  userId: Booking["creatorId"]
+  userId: Booking["creatorId"],
 ): Prisma.BookingWhereInput {
   return {
     OR: [
@@ -8952,7 +8954,7 @@ export async function getBookings(params: {
       }
 
       andClauses.push(
-        selfBranches.length === 1 ? selfBranches[0] : { OR: selfBranches }
+        selfBranches.length === 1 ? selfBranches[0] : { OR: selfBranches },
       );
     }
 
@@ -9283,7 +9285,7 @@ export async function removeAssets({
       for (const row of rowsBeingDeleted) {
         removedQtyByAssetId.set(
           row.assetId,
-          (removedQtyByAssetId.get(row.assetId) ?? 0) + row.quantity
+          (removedQtyByAssetId.get(row.assetId) ?? 0) + row.quantity,
         );
       }
 
@@ -9296,7 +9298,7 @@ export async function removeAssets({
         if (!asset.assetModelId) continue;
         removalsByModel.set(
           asset.assetModelId,
-          (removalsByModel.get(asset.assetModelId) ?? 0) + 1
+          (removalsByModel.get(asset.assetModelId) ?? 0) + 1,
         );
       }
 
@@ -9314,7 +9316,7 @@ export async function removeAssets({
         // some), we only decrement the fulfilled share.
         const nextFulfilled = Math.max(
           0,
-          request.fulfilledQuantity - decrementBy
+          request.fulfilledQuantity - decrementBy,
         );
         // If we're dropping below the reserved `quantity`, the request
         // has outstanding units again — clear the completion stamp so
@@ -9429,14 +9431,14 @@ export async function removeAssets({
         const assetMarkup = wrapAssetWithCountForNote(assetForNote, removedQty);
         return {
           content: `${wrapUserLinkForNote(
-            userForNotes
+            userForNotes,
           )} removed ${assetMarkup} from ${bookingLink}.`,
           assetId,
         };
       }
       return {
         content: `${wrapUserLinkForNote(
-          userForNotes
+          userForNotes,
         )} removed assets from ${bookingLink}.`,
         assetId,
       };
@@ -9471,7 +9473,7 @@ export async function removeAssets({
               assetId,
               meta: asset ? assetQtyMeta(asset, removedQty) : {},
             };
-          })
+          }),
         );
       } catch (err) {
         Logger.error(
@@ -9480,7 +9482,7 @@ export async function removeAssets({
             message: "Failed to record BOOKING_ASSETS_REMOVED events",
             additionalData: { bookingId: booking.id, assetIds },
             label,
-          })
+          }),
         );
       }
     }
@@ -9508,7 +9510,7 @@ export async function removeAssets({
         bookingId: booking.id,
         organizationId,
         content: `${wrapUserLinkForNote(
-          userForNotes
+          userForNotes,
         )} removed ${kitContent} and ${assetContent} from booking.`,
       });
     } else if (hasKits) {
@@ -9522,7 +9524,7 @@ export async function removeAssets({
         bookingId: booking.id,
         organizationId,
         content: `${wrapUserLinkForNote(
-          userForNotes
+          userForNotes,
         )} removed ${kitContent} from booking.`,
       });
     } else if (hasAssets) {
@@ -9533,7 +9535,7 @@ export async function removeAssets({
         bookingId: booking.id,
         organizationId,
         content: `${wrapUserLinkForNote(
-          userForNotes
+          userForNotes,
         )} removed ${assetContent} from booking.`,
       });
     }
@@ -9596,7 +9598,7 @@ export async function removeAssets({
 export async function deleteBooking(
   booking: Pick<Booking, "id" | "organizationId">,
   hints: ClientHint,
-  userId?: string
+  userId?: string,
 ) {
   const { id, organizationId } = booking;
   const currentBooking = await db.booking.findUnique({
@@ -9715,7 +9717,7 @@ export async function deleteBooking(
       await sendBookingEmailToAllRecipients({
         recipients,
         booking: b,
-        subject: `🗑️ Booking deleted (${b.name}) - shelf.nu`,
+        subject: `🗑️ Booking deleted (${b.name}) - ${config.appName}`,
         textContent: text,
         heading: `Your booking has been deleted: "${b.name}"`,
         hints,
@@ -9741,7 +9743,7 @@ export async function deleteBooking(
       currentBooking ?? {
         id: b.id,
         activeSchedulerReference: b.activeSchedulerReference,
-      }
+      },
     );
 
     return b;
@@ -9815,7 +9817,7 @@ function assertBookingInActiveOrg({
     userOrganizations?.length &&
     bookingFound.organizationId !== organizationId &&
     userOrganizations.some(
-      (org) => org.organizationId === bookingFound.organizationId
+      (org) => org.organizationId === bookingFound.organizationId,
     )
   ) {
     const redirectTo =
@@ -9830,7 +9832,7 @@ function assertBookingInActiveOrg({
       additionalData: {
         model: "booking",
         organization: userOrganizations.find(
-          (org) => org.organizationId === bookingFound.organizationId
+          (org) => org.organizationId === bookingFound.organizationId,
         ),
         redirectTo,
       },
@@ -9846,7 +9848,7 @@ export async function getBooking<T extends Prisma.BookingInclude | undefined>(
     userOrganizations?: Pick<UserOrganization, "organizationId">[];
     request: Request;
     extraInclude?: T;
-  }
+  },
 ) {
   try {
     const { id, organizationId, userOrganizations, request, extraInclude } =
@@ -10070,7 +10072,7 @@ export async function getBookingsForCalendar(params: {
             `bookingId-${booking.id}`,
             ...getStatusClasses(
               booking.status,
-              isOneDayEvent(booking.from as Date, booking.to as Date)
+              isOneDayEvent(booking.from as Date, booking.to as Date),
             ),
           ],
           extendedProps: {
@@ -10269,7 +10271,7 @@ export async function getBookingFlags(
     modelRequestCount?: number;
     /** Caller's validated org — scopes the asset lookup (cross-org IDOR guard) */
     organizationId: string;
-  }
+  },
 ) {
   const assets = await db.asset.findMany({
     // why: organizationId scoping prevents flag computation from reading
@@ -10348,7 +10350,7 @@ export async function getBookingFlags(
   const hasCheckedOutAssets = assets.some(
     (asset) =>
       asset.type !== AssetType.QUANTITY_TRACKED &&
-      asset.status === AssetStatus.CHECKED_OUT
+      asset.status === AssetStatus.CHECKED_OUT,
   );
 
   const hasAlreadyBookedAssets = assets.some((asset) => {
@@ -10378,7 +10380,7 @@ export async function getBookingFlags(
   // server-side guards in `checkoutBooking`.
   const hasAssetsInCustody = assets.some(
     (asset) =>
-      !isQuantityTracked(asset) && asset.status === AssetStatus.IN_CUSTODY
+      !isQuantityTracked(asset) && asset.status === AssetStatus.IN_CUSTODY,
   );
 
   const hasKits = assets.some((asset) => (asset.assetKits ?? []).length > 0);
@@ -10411,7 +10413,7 @@ export async function bulkDeleteBookings({
   try {
     /** If all are selected in the list, then we have to consider filter */
     const where: Prisma.BookingWhereInput = bookingIds.includes(
-      ALL_SELECTED_KEY
+      ALL_SELECTED_KEY,
     )
       ? getBookingWhereInput({ currentSearchParams, organizationId })
       : { id: { in: bookingIds }, organizationId };
@@ -10445,12 +10447,12 @@ export async function bulkDeleteBookings({
 
     /** If some booking was OVERDUE or ONGOING, we have to make their assets and kits available */
     const overdueOrOngoingBookings = bookings.filter(
-      (booking) => booking.status === "OVERDUE" || booking.status === "ONGOING"
+      (booking) => booking.status === "OVERDUE" || booking.status === "ONGOING",
     );
 
     /** We have to cancel scheduler for the bookings */
     const bookingsWithSchedulerReference = bookings.filter(
-      (booking) => !!booking.activeSchedulerReference
+      (booking) => !!booking.activeSchedulerReference,
     );
 
     await db.$transaction(async (tx) => {
@@ -10465,7 +10467,7 @@ export async function bulkDeleteBookings({
       /** Making assets and kits available */
       if (overdueOrOngoingBookings.length > 0) {
         const allAssets = overdueOrOngoingBookings.flatMap((booking) =>
-          booking.bookingAssets.map((ba) => ba.asset)
+          booking.bookingAssets.map((ba) => ba.asset),
         );
 
         const allKitIds = allAssets
@@ -10498,7 +10500,7 @@ export async function bulkDeleteBookings({
               booking.name
             }**.`,
             type: "UPDATE" as const,
-          }))
+          })),
         )
         .flat() satisfies Prisma.NoteCreateManyInput[];
 
@@ -10507,7 +10509,7 @@ export async function bulkDeleteBookings({
 
     /** Cancelling scheduler */
     await Promise.all(
-      bookingsWithSchedulerReference.map((booking) => cancelScheduler(booking))
+      bookingsWithSchedulerReference.map((booking) => cancelScheduler(booking)),
     );
 
     // Resolve notification recipients and send personalized emails for each deleted booking
@@ -10538,7 +10540,7 @@ export async function bulkDeleteBookings({
         await sendBookingEmailToAllRecipients({
           recipients,
           booking: b,
-          subject: `🗑️ Booking deleted (${b.name}) - shelf.nu`,
+          subject: `🗑️ Booking deleted (${b.name}) - ${config.appName}`,
           textContent: text,
           heading: `Your booking has been deleted: "${b.name}"`,
           hints,
@@ -10583,7 +10585,7 @@ export async function bulkArchiveBookings({
   try {
     /** If all are selected in the list, then we have to consider filter */
     const where: Prisma.BookingWhereInput = bookingIds.includes(
-      ALL_SELECTED_KEY
+      ALL_SELECTED_KEY,
     )
       ? getBookingWhereInput({ currentSearchParams, organizationId })
       : { id: { in: bookingIds }, organizationId };
@@ -10607,7 +10609,7 @@ export async function bulkArchiveBookings({
      * @see {@link isBookingArchivable}
      */
     const ineligibleBookings = bookings.filter(
-      (b) => !isBookingArchivable({ status: b.status, to: b.to })
+      (b) => !isBookingArchivable({ status: b.status, to: b.to }),
     );
 
     if (ineligibleBookings.length > 0) {
@@ -10716,7 +10718,7 @@ export async function bulkArchiveBookings({
         entityType: "BOOKING" as const,
         entityId: booking.id,
         bookingId: booking.id,
-      }))
+      })),
     );
 
     /** Create booking status transition notes for each archived booking.
@@ -10775,7 +10777,7 @@ export async function bulkCancelBookings({
   try {
     /** If all are selected in the list, then we have to consider filter */
     const where: Prisma.BookingWhereInput = bookingIds.includes(
-      ALL_SELECTED_KEY
+      ALL_SELECTED_KEY,
     )
       ? getBookingWhereInput({ currentSearchParams, organizationId })
       : { id: { in: bookingIds }, organizationId };
@@ -10816,7 +10818,7 @@ export async function bulkCancelBookings({
     ];
 
     const someUnavailableToCancelBookings = bookings.some((b) =>
-      unavailableBookingStatus.includes(b.status)
+      unavailableBookingStatus.includes(b.status),
     );
 
     if (someUnavailableToCancelBookings) {
@@ -10835,12 +10837,12 @@ export async function bulkCancelBookings({
 
     /** We have to make all the assets and kits available if the booking as ongoing or overdue */
     const ongoingOrOverdueBookings = bookings.filter(
-      (b) => b.status === "ONGOING" || b.status === "OVERDUE"
+      (b) => b.status === "ONGOING" || b.status === "OVERDUE",
     );
 
     /** We have to cancel scheduler for the bookings */
     const bookingsWithSchedulerReference = bookings.filter(
-      (booking) => !!booking.activeSchedulerReference
+      (booking) => !!booking.activeSchedulerReference,
     );
 
     await db.$transaction(async (tx) => {
@@ -10853,7 +10855,7 @@ export async function bulkCancelBookings({
       /** Updating status of assets and kits  */
       if (ongoingOrOverdueBookings.length > 0) {
         const allAssets = ongoingOrOverdueBookings.flatMap((b) =>
-          b.bookingAssets.map((ba) => ba.asset)
+          b.bookingAssets.map((ba) => ba.asset),
         );
         const allKitIds = allAssets
           .map((a) => a.assetKits?.[0]?.kitId)
@@ -10887,7 +10889,7 @@ export async function bulkCancelBookings({
             content: `${actor} cancelled booking.`,
             userId,
             type: "UPDATE" as const,
-          }))
+          })),
         )
         .flat() satisfies Prisma.NoteCreateManyInput[];
 
@@ -10922,13 +10924,13 @@ export async function bulkCancelBookings({
           entityId: booking.id,
           bookingId: booking.id,
         })),
-        tx
+        tx,
       );
     });
 
     /** Cancelling scheduler */
     await Promise.all(
-      bookingsWithSchedulerReference.map((booking) => cancelScheduler(booking))
+      bookingsWithSchedulerReference.map((booking) => cancelScheduler(booking)),
     );
 
     // Resolve notification recipients and send personalized cancellation emails
@@ -10960,7 +10962,7 @@ export async function bulkCancelBookings({
         await sendBookingEmailToAllRecipients({
           recipients,
           booking: b,
-          subject: `❌ Booking cancelled (${b.name}) - shelf.nu`,
+          subject: `❌ Booking cancelled (${b.name}) - ${config.appName}`,
           textContent: text,
           heading: `Your booking has been cancelled: "${b.name}"`,
           hints,
@@ -11040,7 +11042,7 @@ async function createNotesForScannedAssetsAndKits({
   for (const row of bookedRows) {
     bookedQtyByAssetId.set(
       row.assetId,
-      (bookedQtyByAssetId.get(row.assetId) ?? 0) + row.quantity
+      (bookedQtyByAssetId.get(row.assetId) ?? 0) + row.quantity,
     );
   }
   const assetById = new Map(assets.map((a) => [a.id, a]));
@@ -11056,7 +11058,7 @@ async function createNotesForScannedAssetsAndKits({
   // Separate standalone assets from kit assets for booking notes
   const standaloneAssetIds = assetIds.filter((id) => !assetIdToKitName.has(id));
   const standaloneAssets = assets.filter((asset) =>
-    standaloneAssetIds.includes(asset.id)
+    standaloneAssetIds.includes(asset.id),
   );
 
   // Get user info for note attribution
@@ -11085,7 +11087,7 @@ async function createNotesForScannedAssetsAndKits({
     // Both kits and assets added - create combined booking note
     const kitContent = wrapKitsWithDataForNote(
       kits.map((kit) => ({ id: kit.id, name: kit.name })),
-      "added"
+      "added",
     );
     const assetContent = wrapAssetsWithDataForNote(standaloneAssets, "added");
 
@@ -11093,21 +11095,21 @@ async function createNotesForScannedAssetsAndKits({
       bookingId: booking.id,
       organizationId,
       content: `${wrapUserLinkForNote(
-        userForNotes
+        userForNotes,
       )} added ${kitContent} and ${assetContent} to booking.`,
     });
   } else if (hasKits) {
     // Only kits added - create booking note
     const kitContent = wrapKitsWithDataForNote(
       kits.map((kit) => ({ id: kit.id, name: kit.name })),
-      "added"
+      "added",
     );
 
     await createSystemBookingNote({
       bookingId: booking.id,
       organizationId,
       content: `${wrapUserLinkForNote(
-        userForNotes
+        userForNotes,
       )} added ${kitContent} to booking.`,
     });
   } else if (hasAssets) {
@@ -11118,7 +11120,7 @@ async function createNotesForScannedAssetsAndKits({
       bookingId: booking.id,
       organizationId,
       content: `${wrapUserLinkForNote(
-        userForNotes
+        userForNotes,
       )} added ${assetContent} to booking.`,
     });
   }
@@ -11145,13 +11147,13 @@ async function createNotesForScannedAssetsAndKits({
       const content =
         asset?.title && asset?.type
           ? `${wrapUserLinkForNote(
-              userForNotes
+              userForNotes,
             )} added ${wrapAssetWithCountForNote(
               asset,
-              qty
+              qty,
             )} to ${bookingLink}.`
           : `${wrapUserLinkForNote(
-              userForNotes
+              userForNotes,
             )} added asset to ${bookingLink}.`;
       await createNotes({
         content,
@@ -11190,13 +11192,13 @@ async function createNotesForScannedAssetsAndKits({
           const content =
             asset?.title && asset?.type
               ? `${wrapUserLinkForNote(
-                  userForNotes
+                  userForNotes,
                 )} added ${wrapAssetWithCountForNote(
                   asset,
-                  qty
+                  qty,
                 )} via ${kitLink} to ${bookingLink}.`
               : `${wrapUserLinkForNote(
-                  userForNotes
+                  userForNotes,
                 )} added asset via ${kitLink} to ${bookingLink}.`;
           await createNotes({
             content,
@@ -11286,14 +11288,14 @@ async function addScannedAssetsToBookingWithinTx(
       assetKitId: string;
       quantity?: number;
     }>;
-  }
+  },
 ) {
   // The deduped union of standalone + kit-slice asset ids. Model-request
   // materialisation, events, and status flips operate on this set so a
   // kit-only scan still materialises requests and records events for its
   // member assets.
   const allScannedAssetIds = Array.from(
-    new Set([...assetIds, ...kitSlices.map((s) => s.assetId)])
+    new Set([...assetIds, ...kitSlices.map((s) => s.assetId)]),
   );
 
   // Cross-org guards (request-supplied ids). The materialisation loop
@@ -11305,7 +11307,7 @@ async function addScannedAssetsToBookingWithinTx(
   // `updateBookingAssets` performs.
   await assertAssetsBelongToOrg(
     { assetIds: allScannedAssetIds, organizationId },
-    tx
+    tx,
   );
   await assertAssetKitsBelongToOrg(
     // Filter falsy ids: the kit-qty resolution below (line ~7557) already
@@ -11315,7 +11317,7 @@ async function addScannedAssetsToBookingWithinTx(
       assetKitIds: kitSlices.map((s) => s.assetKitId).filter(Boolean),
       organizationId,
     },
-    tx
+    tx,
   );
 
   /**
@@ -11370,7 +11372,7 @@ async function addScannedAssetsToBookingWithinTx(
         bookingAssets: Array<{ booking: { id: string; status: string } }>;
       };
       const conflicted = (candidates as ConflictCandidate[]).filter((asset) =>
-        hasAssetBookingConflicts(asset, bookingId)
+        hasAssetBookingConflicts(asset, bookingId),
       );
 
       if (conflicted.length > 0) {
@@ -11429,7 +11431,7 @@ async function addScannedAssetsToBookingWithinTx(
         })
       : [];
   const scannedAssetsMetaById = new Map<string, ScannedAssetMeta>(
-    scannedAssetsMeta.map((a) => [a.id, a])
+    scannedAssetsMeta.map((a) => [a.id, a]),
   );
 
   for (const assetId of allScannedAssetIds) {
@@ -11455,7 +11457,7 @@ async function addScannedAssetsToBookingWithinTx(
    * resolved it) still wins.
    */
   const referencedAssetKitIds = Array.from(
-    new Set(kitSlices.map((s) => s.assetKitId).filter(Boolean))
+    new Set(kitSlices.map((s) => s.assetKitId).filter(Boolean)),
   );
   const assetKitQtyById = new Map<string, number>(
     referencedAssetKitIds.length > 0
@@ -11466,7 +11468,7 @@ async function addScannedAssetsToBookingWithinTx(
             select: { id: true, quantity: true },
           })
         ).map((ak: { id: string; quantity: number }) => [ak.id, ak.quantity])
-      : []
+      : [],
   );
 
   const booking = await tx.booking.update({
@@ -11518,7 +11520,7 @@ async function addScannedAssetsToBookingWithinTx(
     for (const sid of assetIds) {
       addedQtyByAssetId.set(
         sid,
-        (addedQtyByAssetId.get(sid) ?? 0) + (quantities[sid] ?? 1)
+        (addedQtyByAssetId.get(sid) ?? 0) + (quantities[sid] ?? 1),
       );
     }
     for (const slice of kitSlices) {
@@ -11526,7 +11528,7 @@ async function addScannedAssetsToBookingWithinTx(
         slice.quantity ?? assetKitQtyById.get(slice.assetKitId) ?? 1;
       addedQtyByAssetId.set(
         slice.assetId,
-        (addedQtyByAssetId.get(slice.assetId) ?? 0) + sliceQty
+        (addedQtyByAssetId.get(slice.assetId) ?? 0) + sliceQty,
       );
     }
 
@@ -11546,7 +11548,7 @@ async function addScannedAssetsToBookingWithinTx(
             : {},
         };
       }),
-      tx
+      tx,
     );
   }
 
@@ -11618,7 +11620,7 @@ export async function addScannedAssetsToBooking({
         userId,
         quantities,
         kitSlices,
-      })
+      }),
     );
 
     /**
@@ -11627,7 +11629,7 @@ export async function addScannedAssetsToBooking({
      * full union of standalone + kit-slice asset ids.
      */
     const allAddedAssetIds = Array.from(
-      new Set([...assetIds, ...kitSlices.map((s) => s.assetId)])
+      new Set([...assetIds, ...kitSlices.map((s) => s.assetId)]),
     );
     await createNotesForScannedAssetsAndKits({
       booking: updatedBooking,
@@ -11665,7 +11667,7 @@ export async function addScannedAssetsToBooking({
  */
 export async function getExistingBookingDetails(
   bookingId: string,
-  organizationId: string
+  organizationId: string,
 ) {
   try {
     // why: findFirst + organizationId (findUnique can't take a non-unique org
@@ -11751,7 +11753,7 @@ export async function getExistingBookingDetails(
  */
 export async function getAvailableAssetsIdsForBooking(
   assetIds: Asset["id"][],
-  organizationId: string
+  organizationId: string,
 ): Promise<string[]> {
   try {
     const selectedAssets = await db.asset.findMany({
@@ -11806,7 +11808,7 @@ export async function processBooking(
   bookingId: string,
   assetIds: string[],
   organizationId: string,
-  auth: { userId: string; role: OrganizationRoles }
+  auth: { userId: string; role: OrganizationRoles },
 ) {
   try {
     const [finalAssetIds, bookingInfo] = await Promise.all([
@@ -11853,10 +11855,10 @@ export async function processBooking(
       bookingInfo.status === BookingStatus.OVERDUE
     ) {
       const existingAssetIds = new Set(
-        bookingInfo.bookingAssets.map((ba) => ba.assetId)
+        bookingInfo.bookingAssets.map((ba) => ba.assetId),
       );
       const newAssetIdsToCheck = finalAssetIds.filter(
-        (id) => !existingAssetIds.has(id)
+        (id) => !existingAssetIds.has(id),
       );
 
       const checkedOutAssets =
@@ -11971,7 +11973,7 @@ export async function assertKitsAddableToActiveBooking({
             select: { kitId: true },
           })
         ).map((ak) => ak.kitId)
-      : []
+      : [],
   );
 
   const kitIdsToGuard = kitIds.filter((id) => !kitIdsAlreadyOnBooking.has(id));
@@ -12012,13 +12014,13 @@ export async function loadBookingsData({
   request,
   organizationId,
   userId,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
   ids,
 }: {
   request: Request;
   organizationId: string;
   userId: string;
-  isSelfServiceOrBase: boolean;
+  isScopedToOwnRecords: boolean;
   ids?: string[];
 }): Promise<BookingLoaderResponse> {
   // Get search parameters and pagination settings
@@ -12032,7 +12034,7 @@ export async function loadBookingsData({
   // Self-service / base users may only work with their own bookings — resolve
   // the full scope (user link + every team-member link) so legacy rows aren't
   // hidden here while showing on the index.
-  const custodianScope = isSelfServiceOrBase
+  const custodianScope = isScopedToOwnRecords
     ? await resolveCustodianScope({ userId, organizationId })
     : undefined;
 
@@ -12184,7 +12186,7 @@ export async function computeBookingKitDrift({
       select: { id: true, kitId: true },
     });
     const kitIdByAssetKitId = new Map(
-      assetKitRows.map((ak) => [ak.id, ak.kitId])
+      assetKitRows.map((ak) => [ak.id, ak.kitId]),
     );
 
     // Group source slices by the kit they came from (resolved via AssetKit.kitId).
@@ -12368,10 +12370,10 @@ export async function duplicateBooking({
     // re-resolved against the kit's CURRENT AssetKit rows below so the
     // duplicate reflects the kit's current contents.
     const standaloneSourceSlices = bookingToDuplicate.bookingAssets.filter(
-      (ba) => ba.assetKitId == null
+      (ba) => ba.assetKitId == null,
     );
     const kitSourceSlices = bookingToDuplicate.bookingAssets.filter(
-      (ba) => ba.assetKitId != null
+      (ba) => ba.assetKitId != null,
     );
 
     // Distinct kit ids referenced by the source. Resolved from
@@ -12382,7 +12384,7 @@ export async function duplicateBooking({
     const distinctKitIds = new Set<string>();
     for (const slice of kitSourceSlices) {
       const kitId = slice.asset.assetKits.find(
-        (ak) => ak.id === slice.assetKitId
+        (ak) => ak.id === slice.assetKitId,
       )?.kitId;
       if (kitId) distinctKitIds.add(kitId);
     }
@@ -12490,7 +12492,7 @@ export async function duplicateBooking({
             ? {
                 notificationRecipients: {
                   connect: bookingToDuplicate.notificationRecipients.map(
-                    (tm: { id: string }) => ({ id: tm.id })
+                    (tm: { id: string }) => ({ id: tm.id }),
                   ),
                 },
               }
@@ -12517,7 +12519,7 @@ export async function duplicateBooking({
             duplicatedFromBookingId: bookingToDuplicate.id,
           },
         },
-        tx
+        tx,
       );
 
       // One BOOKING_ASSETS_ADDED event per newly-created BookingAsset row.
@@ -12555,7 +12557,7 @@ export async function duplicateBooking({
             assetId: row.assetId,
             meta: assetQtyMeta(row.asset, row.quantity),
           })),
-          tx
+          tx,
         );
       }
 
@@ -12612,7 +12614,7 @@ export function getPartialCheckinHistory(bookingId: string) {
  * Get total assets checked in via partial check-ins for a booking
  */
 export async function getTotalPartialCheckinCount(
-  bookingId: string
+  bookingId: string,
 ): Promise<number> {
   const result = await db.partialBookingCheckin.aggregate({
     where: { bookingId },
@@ -12625,7 +12627,7 @@ export async function getTotalPartialCheckinCount(
  * Get all unique asset IDs that have been checked in via partial check-ins
  */
 export async function getPartiallyCheckedInAssetIds(
-  bookingId: string
+  bookingId: string,
 ): Promise<string[]> {
   const partialCheckins = await db.partialBookingCheckin.findMany({
     where: { bookingId },
@@ -12730,7 +12732,7 @@ export async function checkinAssets({
         .string()
         .optional()
         .transform((val) => val === "true"),
-    })
+    }),
   );
 
   /**
@@ -12952,7 +12954,7 @@ export async function checkoutAssets({
         .string()
         .optional()
         .transform((val) => val === "true"),
-    })
+    }),
   );
 
   /**
@@ -13094,7 +13096,7 @@ export async function getRemainingCheckoutAssetIds({
   // Assets returned via partial check-in are AVAILABLE again but must NOT be
   // re-checked out, so exclude them explicitly.
   const checkedInAssetIds = new Set(
-    booking.partialCheckins.flatMap((checkin) => checkin.assetIds)
+    booking.partialCheckins.flatMap((checkin) => checkin.assetIds),
   );
 
   // Dedup by asset id since qty-tracked assets may have multiple pivot rows.
@@ -13109,7 +13111,7 @@ export async function getRemainingCheckoutAssetIds({
     .filter(
       (asset) =>
         asset.status === AssetStatus.AVAILABLE &&
-        !checkedInAssetIds.has(asset.id)
+        !checkedInAssetIds.has(asset.id),
     )
     .map((asset) => asset.id);
 }
@@ -13174,7 +13176,7 @@ export async function getRemainingCheckoutPayload({
   // Assets returned via partial check-in are AVAILABLE again but must NOT be
   // re-checked out, so exclude them explicitly.
   const checkedInAssetIds = new Set(
-    booking.partialCheckins.flatMap((checkin) => checkin.assetIds)
+    booking.partialCheckins.flatMap((checkin) => checkin.assetIds),
   );
 
   const individualAssetIds: string[] = [];
@@ -13197,7 +13199,7 @@ export async function getRemainingCheckoutPayload({
       const sliceRemaining = await computeBookingAssetSliceRemainingToCheckOut(
         db,
         bookingId,
-        ba.id
+        ba.id,
       );
       if (sliceRemaining > 0) {
         checkouts.push({
@@ -13266,7 +13268,7 @@ export async function checkoutRemainingAssets({
         .string()
         .optional()
         .transform((val) => val === "true"),
-    })
+    }),
   );
 
   const { assetIds, checkouts } = await getRemainingCheckoutPayload({

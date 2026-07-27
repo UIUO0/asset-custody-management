@@ -1,5 +1,6 @@
 import type { Prisma, User } from "@prisma/client";
 import type PgBoss from "pg-boss";
+import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import { sendEmail } from "~/emails/mail.server";
 import { ShelfError } from "~/utils/error";
@@ -59,7 +60,7 @@ const ASSET_SCHEDULER_EVENT_HANDLERS: Record<
           additionalData: { ...job.data },
           label: "Asset Scheduler",
           shouldBeCaptured: false,
-        })
+        }),
       );
       return;
     }
@@ -69,7 +70,7 @@ const ASSET_SCHEDULER_EVENT_HANDLERS: Record<
       .map((teamMember) => teamMember.user! as UserToEmail);
 
     const hasTeamMemberWithoutUser = reminder.teamMembers.some(
-      (tm) => !tm.user
+      (tm) => !tm.user,
     );
 
     /**
@@ -122,7 +123,7 @@ const ASSET_SCHEDULER_EVENT_HANDLERS: Record<
         });
 
         sendEmail({
-          subject: "⏰ Asset Reminder Notice - Shelf",
+          subject: `⏰ Asset Reminder Notice - ${config.appName}`,
           to: user.email,
           text: assetAlertEmailText({
             asset: reminder.asset,
@@ -168,9 +169,9 @@ export async function regierAssetWorkers() {
             message: "Something went wrong while executing scheduled work.",
             additionalData: { data: job.data, work: job.data.eventType },
             label: "Asset Scheduler",
-          })
+          }),
         );
       }
-    }
+    },
   );
 }

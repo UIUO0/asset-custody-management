@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import {
@@ -10,6 +11,7 @@ import { Button } from "../shared/button";
 import { TagsAutocomplete } from "../tag/tags-autocomplete";
 
 export default function BulkRemoveTagsDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkRemoveTags", BulkUpdateTagsSchema);
 
   const fetcher = useFetcher<TagsFetcherData>();
@@ -35,7 +37,7 @@ export default function BulkRemoveTagsDialog() {
       {
         method: "GET",
         action: "/api/model-filters",
-      }
+      },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -54,8 +56,8 @@ export default function BulkRemoveTagsDialog() {
     <BulkUpdateDialogContent
       ref={zo.ref}
       type="tag-remove"
-      title="Remove tags from assets"
-      description="Remove tags to selected assets. Assets that don't have any of the selected tags, will be skipped."
+      title={t("bulkActions.removeTagsTitle")}
+      description={t("bulkActions.removeTagsDescription")}
       actionUrl="/api/assets/bulk-assign-tags?remove=true"
       arrayFieldId="assetIds"
     >
@@ -85,7 +87,7 @@ export default function BulkRemoveTagsDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -93,7 +95,7 @@ export default function BulkRemoveTagsDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

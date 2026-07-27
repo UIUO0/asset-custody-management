@@ -23,6 +23,7 @@
  * @see {@link file://./../../modules/asset/service.server.ts} — `replaceAssetPlacements`
  */
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Form } from "~/components/custom-form";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -96,6 +97,7 @@ export function ManagePlacementsForm({
   kitDrivenPlacements,
   serverErrorMessage,
 }: ManagePlacementsFormProps) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const unit = unitOfMeasure || "units";
   const totalPool = assetQuantity ?? 1;
@@ -115,13 +117,13 @@ export function ManagePlacementsForm({
             locationId: "",
             quantity: isQty ? totalPool : 1,
           },
-        ]
+        ],
   );
 
   /** Sum of currently-entered placements — drives the placed/unplaced indicator. */
   const placedSum = useMemo(
     () => rows.reduce((s, r) => (r.locationId ? s + (r.quantity || 0) : s), 0),
-    [rows]
+    [rows],
   );
 
   /** Locations not yet picked, so each dropdown only offers fresh options. */
@@ -129,9 +131,9 @@ export function ManagePlacementsForm({
     () => (locationId: string) =>
       locations.filter(
         (loc) =>
-          loc.id === locationId || !rows.some((r) => r.locationId === loc.id)
+          loc.id === locationId || !rows.some((r) => r.locationId === loc.id),
       ),
-    [locations, rows]
+    [locations, rows],
   );
 
   /**
@@ -183,7 +185,7 @@ export function ManagePlacementsForm({
 
   const updateLocation = (rowId: string, locationId: string) => {
     setRows((prev) =>
-      prev.map((r) => (r.rowId === rowId ? { ...r, locationId } : r))
+      prev.map((r) => (r.rowId === rowId ? { ...r, locationId } : r)),
     );
   };
 
@@ -191,7 +193,7 @@ export function ManagePlacementsForm({
     if (!Number.isFinite(raw)) return;
     const capped = Math.max(1, Math.min(Math.floor(raw), totalPool));
     setRows((prev) =>
-      prev.map((r) => (r.rowId === rowId ? { ...r, quantity: capped } : r))
+      prev.map((r) => (r.rowId === rowId ? { ...r, quantity: capped } : r)),
     );
   };
 
@@ -204,9 +206,9 @@ export function ManagePlacementsForm({
           .map((r) => ({
             locationId: r.locationId,
             quantity: isQty ? r.quantity : 1,
-          }))
+          })),
       ),
-    [rows, isQty]
+    [rows, isQty],
   );
 
   return (
@@ -312,7 +314,7 @@ export function ManagePlacementsForm({
       {isQty ? (
         <div className="mb-4 rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
           <div className="flex justify-between text-gray-700">
-            <span>Placed (manual)</span>
+            <span>{t("assets.placedManual")}</span>
             <span className="tabular-nums">
               {placedSum} / {totalPool} {unit}
             </span>

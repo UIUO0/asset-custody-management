@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -20,6 +21,7 @@ export function TagsRequiredSettings({
   header: { title: string; subHeading?: string };
   defaultValue: boolean;
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const disabled = useDisabled();
   const zo = useZorm("TagsRequiredForm", TagsRequiredSettingsSchema);
@@ -37,13 +39,8 @@ export function TagsRequiredSettings({
           onChange={(e) => void fetcher.submit(e.currentTarget)}
         >
           <FormRow
-            rowLabel="Require tags for bookings"
-            subHeading={
-              <div>
-                When enabled, users must add at least one tag to their bookings.
-                This helps with categorization and organization of bookings.
-              </div>
-            }
+            rowLabel={t("bookingSettings.requireTagsLabel")}
+            subHeading={<div>{t("bookingSettings.requireTagsHint")}</div>}
             className="border-b-0 pb-[10px] pt-0"
           >
             <div className="flex flex-col items-center gap-2">
@@ -51,13 +48,13 @@ export function TagsRequiredSettings({
                 name={zo.fields.tagsRequired()}
                 disabled={disabled}
                 defaultChecked={defaultValue}
-                title="Require tags for bookings"
+                title={t("bookingSettings.requireTagsLabel")}
               />
               <label
                 htmlFor={`tagsRequired-${zo.fields.tagsRequired()}`}
                 className=" hidden text-gray-500"
               >
-                Require tags for bookings
+                {t("bookingSettings.requireTagsLabel")}
               </label>
             </div>
           </FormRow>

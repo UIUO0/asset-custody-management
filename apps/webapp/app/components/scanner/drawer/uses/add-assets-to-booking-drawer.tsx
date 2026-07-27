@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { AssetStatus, AssetType, KitStatus } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { z } from "zod";
 import {
@@ -72,6 +73,7 @@ export default function AddAssetsToBookingDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<typeof loader>();
 
   // Get the scanned items from jotai
@@ -96,10 +98,10 @@ export default function AddAssetsToBookingDrawer({
   // Separate asset IDs and kit IDs for the form
   // Extract asset IDs from kits and flatten with directly scanned assets
   const assetIdsFromKits = kits.flatMap((kit) =>
-    kit.assetKits.map((ak) => ak.asset.id)
+    kit.assetKits.map((ak) => ak.asset.id),
   );
   const assetIdsForBooking = Array.from(
-    new Set([...assetIds, ...assetIdsFromKits])
+    new Set([...assetIds, ...assetIdsFromKits]),
   );
   const kitIdsForBooking = kits.map((k) => k.id);
 
@@ -133,9 +135,9 @@ export default function AddAssetsToBookingDrawer({
   const quantitiesJson = JSON.stringify(
     Object.fromEntries(
       Object.entries(assetQuantities).filter(([assetId]) =>
-        assetIdsForBooking.includes(assetId)
-      )
-    )
+        assetIdsForBooking.includes(assetId),
+      ),
+    ),
   );
 
   // Setup blockers
@@ -145,7 +147,7 @@ export default function AddAssetsToBookingDrawer({
   const assetsAlreadyAddedIds = assets
     .filter((asset) => !!asset)
     .filter((asset) =>
-      booking.bookingAssets.some((ba) => ba.assetId === asset.id)
+      booking.bookingAssets.some((ba) => ba.assetId === asset.id),
     )
     .map((a) => !!a && a.id);
 
@@ -165,7 +167,7 @@ export default function AddAssetsToBookingDrawer({
         !!asset &&
         asset.type === AssetType.INDIVIDUAL &&
         asset.assetKits.length > 0 &&
-        asset.id
+        asset.id,
     )
     .map((asset) => asset.id);
 
@@ -262,7 +264,7 @@ export default function AddAssetsToBookingDrawer({
           of a kit.
         </>
       ),
-      description: "Note: Scan Kit QR to add the full kit",
+      description: t("scanner.noteScanKitQrToAdd"),
       onResolve: () => removeAssetsFromList(assetsPartOfKitIds),
     },
     {
@@ -348,7 +350,7 @@ export default function AddAssetsToBookingDrawer({
       }}
       items={items}
       onClearItems={clearList}
-      title="Items scanned"
+      title={t("scanner.itemsScanned")}
       isLoading={isLoading}
       renderItem={renderItemRow}
       Blockers={Blockers}
@@ -363,6 +365,7 @@ export default function AddAssetsToBookingDrawer({
 
 // Implement item renderers if they're not already defined elsewhere
 export function AssetRow({ asset }: { asset: AssetFromQr }) {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<typeof loader>();
   // Check if booking is in checked-out state and asset is checked out
   const bookingIsCheckedOut = ["ONGOING", "OVERDUE"].includes(booking.status);
@@ -370,26 +373,26 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
 
   // Use a combination of standard presets and custom configurations
   const availabilityConfigs = [
-    assetLabelPresets.unavailable(!asset.availableToBook),
+    assetLabelPresets.unavailable(t, !asset.availableToBook),
     assetLabelPresets.partOfKit(
+      t,
       asset.assetKits.length > 0,
-      isQuantityTracked(asset)
+      isQuantityTracked(asset),
     ),
     // Custom preset for "already in this booking"
     {
       condition: booking.bookingAssets.some((ba) => ba.assetId === asset.id),
-      badgeText: "Already added to this booking",
-      tooltipTitle: "Asset is part of booking",
-      tooltipContent: "This asset is already added to the current booking.",
+      badgeText: t("scanAvailability.alreadyAddedToBooking"),
+      tooltipTitle: t("scanAvailability.assetPartOfBookingTitle"),
+      tooltipContent: t("scanAvailability.alreadyInBookingContent"),
       priority: 70,
     },
     // Custom preset for "already checked out" - blocking issue
     {
       condition: bookingIsCheckedOut && isCheckedOut,
-      badgeText: "Already checked out",
-      tooltipTitle: "Asset is checked out",
-      tooltipContent:
-        "This asset is already checked out and cannot be added to a checked-out booking.",
+      badgeText: t("scanAvailability.alreadyCheckedOut"),
+      tooltipTitle: t("scanAvailability.assetCheckedOutTitle"),
+      tooltipContent: t("scanAvailability.assetCheckedOutBlockedContent"),
       priority: 80, // High priority - blocking issue
       // Uses default warning colors (red/orange) appropriate for blocking issue
     },
@@ -401,7 +404,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
 
   const qtyTracked = isQuantityTracked(asset) && asset.quantity != null;
   const alreadyInBooking = booking.bookingAssets.some(
-    (ba) => ba.assetId === asset.id
+    (ba) => ba.assetId === asset.id,
   );
   // `pickerMeta` is the booking picker's available pool — same
   // formula as `bookings/$bookingId/overview/manage-assets`.
@@ -431,7 +434,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
             className={tw(
               "inline-block bg-gray-50 px-[6px] py-[2px]",
               "rounded-md border border-gray-200",
-              "text-xs text-gray-700"
+              "text-xs text-gray-700",
             )}
           >
             asset
@@ -452,6 +455,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
 }
 
 export function KitRow({ kit }: { kit: KitFromQr }) {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<typeof loader>();
 
   // Check if booking is in checked-out state and kit is checked out
@@ -460,20 +464,21 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
 
   // Use preset configurations to define the availability labels
   const availabilityConfigs = [
-    kitLabelPresets.inCustody(kit.status === KitStatus.IN_CUSTODY),
+    kitLabelPresets.inCustody(t, kit.status === KitStatus.IN_CUSTODY),
     kitLabelPresets.hasAssetsInCustody(
-      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY)
+      t,
+      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY),
     ),
     kitLabelPresets.containsUnavailableAssets(
-      kit.assetKits.some((ak) => !ak.asset.availableToBook)
+      t,
+      kit.assetKits.some((ak) => !ak.asset.availableToBook),
     ),
     // Custom preset for "already checked out" - only show when booking is checked out
     {
       condition: bookingIsCheckedOut && isCheckedOut,
-      badgeText: "Already checked out",
-      tooltipTitle: "Kit is checked out",
-      tooltipContent:
-        "This kit is already checked out and cannot be added to a checked-out booking.",
+      badgeText: t("scanAvailability.alreadyCheckedOut"),
+      tooltipTitle: t("scanAvailability.kitCheckedOutTitle"),
+      tooltipContent: t("scanAvailability.kitCheckedOutBlockedContent"),
       priority: 80, // High priority - blocking issue
       // Uses default warning colors (red/orange) appropriate for blocking issue
     },
@@ -497,7 +502,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit

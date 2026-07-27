@@ -98,7 +98,7 @@ function AreYouSureModal({ shouldBlock }: { shouldBlock: boolean }) {
   // Block navigating elsewhere when data has been entered into the input
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      shouldBlock && currentLocation.pathname !== nextLocation.pathname
+      shouldBlock && currentLocation.pathname !== nextLocation.pathname,
   );
   return blocker && blocker.state === "blocked" ? (
     <AlertDialog open={blocker.state === "blocked"}>
@@ -116,8 +116,8 @@ function AreYouSureModal({ shouldBlock }: { shouldBlock: boolean }) {
               Team subscription{isTrial ? " trial" : ""}
             </span>
             . <br />
-            Do you want to create your Team workspace to get full advantage of
-            Shelf?
+            Do you want to create your Team workspace to get the full benefit of
+            your subscription?
           </AlertDialogDescription>
           <WarningBox className="my-4 ">
             <>

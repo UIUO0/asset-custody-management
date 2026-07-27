@@ -315,6 +315,7 @@ function OptionSelect({
   field: CustomField;
   getCustomFieldVal: (id: string) => string;
 }) {
+  const { t } = useTranslation();
   // State for popover, search, selection
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [value, setValue] = useState(getCustomFieldVal(field.id) || "");
@@ -415,7 +416,9 @@ function OptionSelect({
 
             {/* Options list */}
             {filteredOptions.length === 0 ? (
-              <div className="max-w-[400px] p-4">No options found</div>
+              <div className="max-w-[400px] p-4">
+                {t("assets.noOptionsFound")}
+              </div>
             ) : (
               filteredOptions.map((option, index) => {
                 const isSelected = value === option;

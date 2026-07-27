@@ -10,6 +10,7 @@
  */
 
 import type { ConsumptionType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import {
   Tooltip,
   TooltipContent,
@@ -41,16 +42,17 @@ export function ConsumptionTypeBadge({
   consumptionType,
   className,
 }: ConsumptionTypeBadgeProps) {
+  const { t } = useTranslation();
   if (!consumptionType) return null;
 
   const isReturnable = consumptionType === "TWO_WAY";
-  const label = isReturnable ? "Returnable" : "Consumable";
+  const label = isReturnable ? t("assets.returnable") : t("assets.consumable");
   const tooltipTitle = isReturnable
-    ? "Returnable (two-way)"
-    : "Consumable (one-way)";
+    ? t("assets.returnableTwoWay")
+    : t("assets.consumableOneWay");
   const tooltipBody = isReturnable
-    ? "Units flow back to the pool on check-in. Useful for items like tools or hardware that come and go."
-    : "Units are used once and leave the pool. Useful for items like batteries, gloves, or adhesives.";
+    ? t("assets.returnableTwoWayTooltip")
+    : t("assets.consumableOneWayTooltip");
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -60,7 +62,7 @@ export function ConsumptionTypeBadge({
             className={tw(
               "inline-flex cursor-help items-center rounded-md border border-gray-200 bg-gray-50",
               "px-[6px] py-[2px] text-xs text-gray-600",
-              className
+              className,
             )}
           >
             {label}

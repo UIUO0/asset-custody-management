@@ -1,5 +1,6 @@
 import { InviteStatuses } from "@prisma/client";
-import type { LoaderFunctionArgs } from "react-router";
+import { useTranslation } from "react-i18next";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
   data,
   redirect,
@@ -12,6 +13,8 @@ import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { useSearchParams } from "~/hooks/search-params";
 import { useDisabled } from "~/hooks/use-disabled";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { signInWithEmail } from "~/modules/auth/service.server";
 import { generateRandomCode } from "~/modules/invite/helpers";
 import {
@@ -90,12 +93,19 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
       error({ ...reason, title: reason.title || "Accept team invite" }),
       {
         status: reason.status,
-      }
+      },
     );
   }
 }
 
-export const meta = () => [{ title: appendToMetaTitle("Accept team invite") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.auth.acceptTeamInvite) }];
+};
 
 export async function action({ context, request }: LoaderFunctionArgs) {
   try {
@@ -105,7 +115,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
       {
         message:
           "The invitation link doesn't have a token provided. Please try clicking the link in your email again or request a new invite. If the issue persists, feel free to contact support",
-      }
+      },
     );
 
     const decodedInvite = jwt.verify(token, INVITE_TOKEN_SECRET) as {
@@ -132,7 +142,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
       return redirect(safeRedirect(`/assets`), {
         headers: [
           setCookie(
-            await setSelectedOrganizationIdCookie(updatedInvite.organizationId)
+            await setSelectedOrganizationIdCookie(updatedInvite.organizationId),
           ),
         ],
       });
@@ -141,10 +151,10 @@ export async function action({ context, request }: LoaderFunctionArgs) {
     /** Sign in the user */
     const authSession = await signInWithEmail(
       updatedInvite.inviteeEmail,
-      password
+      password,
     ).catch(
       // We don't care about the error here, let the user login if he's already registered
-      () => null
+      () => null,
     );
 
     /**
@@ -159,15 +169,15 @@ export async function action({ context, request }: LoaderFunctionArgs) {
 
     return redirect(
       safeRedirect(
-        `/onboarding?organizationId=${updatedInvite.organizationId}`
+        `/onboarding?organizationId=${updatedInvite.organizationId}`,
       ),
       {
         headers: [
           setCookie(
-            await setSelectedOrganizationIdCookie(updatedInvite.organizationId)
+            await setSelectedOrganizationIdCookie(updatedInvite.organizationId),
           ),
         ],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause);
@@ -185,7 +195,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
       }),
       {
         status: reason.status,
-      }
+      },
     );
   }
 }
@@ -205,6 +215,7 @@ function splitIntoStableLines(message: string) {
 }
 
 export default function AcceptInvite() {
+  const { t } = useTranslation();
   const { inviter, workspace } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const disabled = useDisabled();
@@ -237,8 +248,8 @@ export default function AcceptInvite() {
           <div>
             <h2>Accept invite</h2>
             <p className="mt-2">
-              <strong>{inviter}</strong> invites you to join Shelf as a member
-              of <strong>{workspace}’s</strong> workspace.
+              <strong>{inviter}</strong> invites you to join{" "}
+              <strong>{workspace}’s</strong> workspace as a member.
             </p>
             <Form method="post" className="my-3">
               <input
@@ -248,7 +259,7 @@ export default function AcceptInvite() {
               />
 
               <Button type="submit" disabled={disabled || error}>
-                {disabled ? "Validating token..." : "Accept invite"}
+                {disabled ? "Validating token..." : t("auth.acceptInvite")}
               </Button>
             </Form>
           </div>

@@ -8,6 +8,7 @@
  */
 
 import { DonutChart } from "@tremor/react";
+import { useTranslation } from "react-i18next";
 import { ClientOnly } from "remix-utils/client-only";
 
 import { tw } from "~/utils/tw";
@@ -35,6 +36,7 @@ export function ComplianceDonut({
   timeframeLabel,
   className,
 }: ComplianceDonutProps) {
+  const { t } = useTranslation();
   const total = onTime + late;
   const complianceRate = total > 0 ? Math.round((onTime / total) * 100) : 0;
 
@@ -51,10 +53,12 @@ export function ComplianceDonut({
       <div
         className={tw(
           "flex flex-col items-center justify-center rounded border border-gray-200 bg-white p-6",
-          className
+          className,
         )}
       >
-        <p className="text-sm text-gray-500">No completed bookings yet</p>
+        <p className="text-sm text-gray-500">
+          {t("reports.noCompletedBookingsYet")}
+        </p>
       </div>
     );
   }
@@ -63,7 +67,7 @@ export function ComplianceDonut({
     <div
       className={tw(
         "flex flex-col rounded border border-gray-200 bg-white",
-        className
+        className,
       )}
     >
       {/* Header */}

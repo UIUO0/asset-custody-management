@@ -44,13 +44,14 @@ import BulkDownloadQrDialog from "./bulk-download-qr-dialog";
 import Icon from "../icons/icon";
 
 export default function BulkActionsDropdown() {
+  const { t } = useTranslation();
   const isHydrated = useHydrated();
 
   if (!isHydrated) {
     return (
       <Button variant="secondary" to="#" className="font-medium">
         <span className="flex items-center gap-2">
-          Actions <ChevronRight className="chev rotate-90" />
+          {t("list.actions")} <ChevronRight className="chev rotate-90" />
         </span>
       </Button>
     );
@@ -202,10 +203,7 @@ function ConditionalDropdown() {
             variant="secondary"
             disabled={
               disabled
-                ? {
-                    reason:
-                      "You must select at least 1 asset to perform an action",
-                  }
+                ? { reason: t("bulkActions.selectAtLeastOneAsset") }
                 : false
             }
           >
@@ -247,7 +245,7 @@ function ConditionalDropdown() {
                 width="full"
               >
                 <span className="flex items-center gap-2">
-                  <Icon icon="download" /> Download QR Codes
+                  <Icon icon="download" /> {t("bulkActions.downloadQrCodes")}
                 </span>
               </Button>
             </DropdownMenuItem>
@@ -261,7 +259,7 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="start-audit"
-                  label="Create audit"
+                  label={t("bulkActions.createAudit")}
                   onClick={closeMenu}
                   disabled={isLoading}
                 />
@@ -278,7 +276,7 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="border-b py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="add-to-audit"
-                  label="Add to existing audit"
+                  label={t("bulkActions.addToExistingAudit")}
                   onClick={closeMenu}
                   disabled={isLoading}
                 />
@@ -295,7 +293,7 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="release-custody"
-                  label="Release custody"
+                  label={t("bulkActions.releaseCustody")}
                   onClick={closeMenu}
                   disabled={
                     !allAssetsAreInCustody ||
@@ -303,10 +301,10 @@ function ConditionalDropdown() {
                     disableReleaseCustody
                       ? {
                           reason: someAssetPartOfUnavailableKit
-                            ? "Some of the selected assets have custody assigned via a kit. If you want to change their custody, please update the kit instead."
+                            ? t("bulkActions.custodyViaKitReason")
                             : disableReleaseCustody
-                            ? "Self service can only release their own custody."
-                            : "Some of the selected assets are not in custody.",
+                            ? t("bulkActions.selfServiceReleaseReason")
+                            : t("bulkActions.notInCustodyReason"),
                         }
                       : isLoading
                   }
@@ -315,14 +313,18 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="border-b py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="assign-custody"
-                  label={isSelfService ? "Take custody" : "Assign custody"}
+                  label={
+                    isSelfService
+                      ? t("bulkActions.takeCustody")
+                      : t("bulkActions.assignCustody")
+                  }
                   onClick={closeMenu}
                   disabled={
                     !allAssetsAreAvailable || someAssetPartOfUnavailableKit
                       ? {
                           reason: someAssetPartOfUnavailableKit
-                            ? "Some of the selected assets have custody assigned via a kit. If you want to change their custody, please update the kit instead."
-                            : "Some of the selected assets are not available.",
+                            ? t("bulkActions.custodyViaKitReason")
+                            : t("bulkActions.notAvailableReason"),
                         }
                       : isLoading
                   }
@@ -342,7 +344,7 @@ function ConditionalDropdown() {
                   type="tag-add"
                   onClick={closeMenu}
                   disabled={isLoading}
-                  label="Assign tags"
+                  label={t("bulkActions.assignTags")}
                 />
               </DropdownMenuItem>
               <DropdownMenuItem className="py-1 lg:p-0">
@@ -350,7 +352,7 @@ function ConditionalDropdown() {
                   type="tag-remove"
                   onClick={closeMenu}
                   disabled={isLoading}
-                  label="Remove tags"
+                  label={t("bulkActions.removeTags")}
                 />
               </DropdownMenuItem>
               <DropdownMenuItem className="border-t py-1 lg:p-0">
@@ -369,14 +371,13 @@ function ConditionalDropdown() {
               </DropdownMenuItem>
               <DropdownMenuItem className="border-t py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
-                  label="Add to kit"
+                  label={t("bulkActions.addToKit")}
                   type="add-to-kit"
                   onClick={closeMenu}
                   disabled={
                     someAssetCheckedOut
                       ? {
-                          reason:
-                            "Some of the selected kits are checked out. Please finish your booking first, before adding them in kit.",
+                          reason: t("bulkActions.checkedOutAddToKitReason"),
                         }
                       : isLoading
                   }
@@ -384,7 +385,7 @@ function ConditionalDropdown() {
               </DropdownMenuItem>
               <DropdownMenuItem className=" py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
-                  label="Remove from kit"
+                  label={t("bulkActions.removeFromKit")}
                   type="remove-from-kit"
                   onClick={closeMenu}
                   disabled={isLoading}
@@ -392,7 +393,7 @@ function ConditionalDropdown() {
               </DropdownMenuItem>
               <DropdownMenuItem className="border-t py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
-                  label="Mark as available"
+                  label={t("bulkActions.markAsAvailable")}
                   type="available"
                   onClick={closeMenu}
                   disabled={isLoading}
@@ -400,7 +401,7 @@ function ConditionalDropdown() {
               </DropdownMenuItem>
               <DropdownMenuItem className="border-b py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
-                  label="Mark as unavailable"
+                  label={t("bulkActions.markAsUnavailable")}
                   type="unavailable"
                   onClick={closeMenu}
                   disabled={isLoading}
@@ -410,13 +411,12 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="trash"
-                  label="Delete"
+                  label={t("common.delete")}
                   onClick={closeMenu}
                   disabled={
                     someAssetCheckedOut
                       ? {
-                          reason:
-                            "Some of the selected kits are checked out. Please finish your booking first, before deleting them.",
+                          reason: t("bulkActions.checkedOutDeleteReason"),
                         }
                       : isLoading
                   }
@@ -431,7 +431,7 @@ function ConditionalDropdown() {
                   width="full"
                   onClick={() => setOpen(false)}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </DropdownMenuItem>
             </When>

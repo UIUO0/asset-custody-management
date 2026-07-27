@@ -1,5 +1,30 @@
 import "@testing-library/jest-dom/vitest";
+import i18next from "i18next";
+import { initReactI18next } from "react-i18next";
+import { i18nConfig } from "~/i18n/config";
 import { server } from "./mocks";
+
+/**
+ * Initialize i18next once for the whole test run.
+ *
+ * Components call `useTranslation()`, and without an initialised instance
+ * react-i18next logs a warning and `t("some.key")` returns the **key** rather
+ * than the translated string — so every assertion that looks for user-visible
+ * English text fails with a confusing "unable to find element" error.
+ *
+ * Pinned to `en` (not the app default `ar`) because the existing component
+ * tests assert on English copy. Tests that need Arabic can call
+ * `i18next.changeLanguage("ar")` themselves.
+ *
+ * @see {@link file://./../app/i18n/config.ts} — the shared options reused here
+ */
+void i18next.use(initReactI18next).init({
+  ...i18nConfig,
+  lng: "en",
+  // Keys are asserted on directly in some suites; returning the key rather
+  // than an empty string keeps those failures readable.
+  parseMissingKeyHandler: (key) => key,
+});
 
 declare global {
   // Let React know this environment supports act() (Vitest + happy-dom)

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 
 import {
@@ -21,6 +22,7 @@ export function useFilterPreview(options?: {
   query?: string;
   columns?: Column[];
 }) {
+  const { t } = useTranslation();
   const loaderData = useLoaderData<AssetIndexLoaderData>();
   const {
     locations = [],
@@ -37,7 +39,7 @@ export function useFilterPreview(options?: {
       tags: tags.map((tag) => ({ id: tag.id, name: tag.name })),
       teamMembers: teamMembers.map((tm) => ({ id: tm.id, name: tm.name })),
     }),
-    [locations, categories, tags, teamMembers]
+    [locations, categories, tags, teamMembers],
   );
 
   /**
@@ -48,13 +50,13 @@ export function useFilterPreview(options?: {
     function FormatSummary(
       query: string,
       columns: Column[],
-      className = "text-sm text-gray-700"
+      className = "text-sm text-gray-700",
     ) {
       let summary: string;
       try {
-        summary = formatFilterSummary(query, columns, lookupData);
+        summary = formatFilterSummary(query, columns, lookupData, t);
       } catch (_error) {
-        summary = "Unable to preview filters and sorting";
+        summary = t("advancedFilters.unableToPreview");
       }
 
       return (
@@ -98,7 +100,7 @@ export function useFilterPreview(options?: {
       );
     }
     return FormatSummary;
-  }, [lookupData]);
+  }, [lookupData, t]);
 
   // If query and columns are provided, generate the preview component
   const preview = useMemo(() => {
@@ -117,7 +119,7 @@ export function useFilterPreview(options?: {
     return formatSummaryComponent(
       options.query,
       options.columns,
-      "text-sm text-gray-700"
+      "text-sm text-gray-700",
     );
   }, [options?.query, options?.columns, formatSummaryComponent]);
 
@@ -128,7 +130,7 @@ export function useFilterPreview(options?: {
   const formatPreview = useMemo(
     () => (query: string, columns: Column[]) =>
       formatSummaryComponent(query, columns, "truncate text-xs text-gray-500"),
-    [formatSummaryComponent]
+    [formatSummaryComponent],
   );
 
   return { lookupData, preview, formatPreview };

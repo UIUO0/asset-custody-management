@@ -26,7 +26,7 @@ function buildMockBooking(
     custodianUser: BookingForEmail["custodianUser"];
     creator: BookingForEmail["creator"];
     notificationRecipients: BookingForEmail["notificationRecipients"];
-  }> = {}
+  }> = {},
 ): BookingForEmail {
   return {
     id: "booking-1",
@@ -134,7 +134,7 @@ describe("getBookingNotificationRecipients", () => {
     expect(emails).toContain("custodian@example.com");
     expect(emails).toContain("creator@example.com");
     expect(
-      recipients.find((r) => r.email === "creator@example.com")?.reason
+      recipients.find((r) => r.email === "creator@example.com")?.reason,
     ).toBe("creator");
   });
 
@@ -176,13 +176,13 @@ describe("getBookingNotificationRecipients", () => {
       booking,
       eventType: "RESERVATION",
       organizationId: "org-1",
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     });
 
     const adminRecipients = recipients.filter((r) => r.reason === "admin");
     expect(adminRecipients).toHaveLength(2);
     expect(adminRecipients.map((r) => r.email)).toEqual(
-      expect.arrayContaining(["admin1@example.com", "admin2@example.com"])
+      expect.arrayContaining(["admin1@example.com", "admin2@example.com"]),
     );
   });
 
@@ -223,7 +223,7 @@ describe("getBookingNotificationRecipients", () => {
       booking,
       eventType: "RESERVATION",
       organizationId: "org-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     });
 
     expect(mockedGetAdmins).not.toHaveBeenCalled();
@@ -268,11 +268,11 @@ describe("getBookingNotificationRecipients", () => {
     });
 
     const alwaysRecipients = recipients.filter(
-      (r) => r.reason === "always_notify"
+      (r) => r.reason === "always_notify",
     );
     expect(alwaysRecipients).toHaveLength(2);
     expect(alwaysRecipients.map((r) => r.email)).toEqual(
-      expect.arrayContaining(["always1@example.com", "always2@example.com"])
+      expect.arrayContaining(["always1@example.com", "always2@example.com"]),
     );
   });
 
@@ -299,7 +299,7 @@ describe("getBookingNotificationRecipients", () => {
     });
 
     const bookingRecipients = recipients.filter(
-      (r) => r.reason === "booking_recipient"
+      (r) => r.reason === "booking_recipient",
     );
     expect(bookingRecipients).toHaveLength(1);
     expect(bookingRecipients[0].email).toBe("booking-notif@example.com");
@@ -331,7 +331,7 @@ describe("getBookingNotificationRecipients", () => {
     });
 
     const matchingRecipients = recipients.filter(
-      (r) => r.email === "custodian@example.com"
+      (r) => r.email === "custodian@example.com",
     );
     expect(matchingRecipients).toHaveLength(1);
     expect(matchingRecipients[0].reason).toBe("custodian");
@@ -414,7 +414,7 @@ describe("getBookingNotificationRecipients", () => {
     });
 
     const emptyEmailRecipients = recipients.filter(
-      (r) => r.email === "" || !r.email
+      (r) => r.email === "" || !r.email,
     );
     expect(emptyEmailRecipients).toHaveLength(0);
   });

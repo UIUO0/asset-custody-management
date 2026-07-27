@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -12,19 +13,20 @@ export const BulkReleaseCustodySchema = z.object({
 });
 
 export default function BulkReleaseCustodyDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkReleaseCustody", BulkReleaseCustodySchema);
 
   const selectedItems = useAtomValue(selectedBulkItemsAtom);
   const quantityTrackedCount = selectedItems.filter((item) =>
-    isQuantityTracked(item)
+    isQuantityTracked(item),
   ).length;
 
   return (
     <BulkUpdateDialogContent
       ref={zo.ref}
       type="release-custody"
-      title="Release custody of assets"
-      description="Are you sure you want to release custody of all selected assets?"
+      title={t("bulkActions.releaseCustodyTitle")}
+      description={t("bulkActions.releaseCustodyDescription")}
       actionUrl="/api/assets/bulk-release-custody"
       arrayFieldId="assetIds"
     >
@@ -34,9 +36,9 @@ export default function BulkReleaseCustodyDialog() {
             <div className="mb-4">
               <WarningBox>
                 <span>
-                  {quantityTrackedCount} quantity-tracked asset(s) in your
-                  selection will be skipped. Quantity-tracked assets must have
-                  custody released individually.
+                  {t("bulkActions.qtyTrackedSkippedRelease", {
+                    count: quantityTrackedCount,
+                  })}
                 </span>
               </WarningBox>
             </div>
@@ -53,7 +55,7 @@ export default function BulkReleaseCustodyDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -61,7 +63,7 @@ export default function BulkReleaseCustodyDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

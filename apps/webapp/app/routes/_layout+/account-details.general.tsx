@@ -45,7 +45,7 @@ import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { checkExhaustiveSwitch } from "~/utils/check-exhaustive-switch";
 import { delay } from "~/utils/delay";
 import { sendNotification } from "~/utils/emitter/send-notification.server";
-import { ADMIN_EMAIL, SERVER_URL } from "~/utils/env";
+import { ADMIN_EMAIL, SERVER_URL, SMTP_FROM } from "~/utils/env";
 import { makeShelfError, ShelfError } from "~/utils/error";
 import { payload, error, parseData } from "~/utils/http.server";
 import {
@@ -126,7 +126,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
     // First parse just the intent
     const { intent } = parseData(
       await request.clone().formData(),
-      IntentSchema
+      IntentSchema,
     );
 
     // Then parse the full payload with the correct schema
@@ -135,7 +135,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       getActionSchema(intent),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     switch (intent) {
@@ -257,7 +257,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         }
 
         sendEmail({
-          to: ADMIN_EMAIL || `"Shelf" <updates@emails.shelf.nu>`,
+          to: ADMIN_EMAIL || SMTP_FROM,
           subject: "Delete account request",
           text: `User with id ${userId} and email ${parsedData.email} has requested to delete their account. \n User: ${SERVER_URL}/admin-dashboard/${userId} \n\n Reason: ${reason}\n\n`,
         });
@@ -265,7 +265,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         sendEmail({
           to: parsedData.email,
           subject: "Delete account request received",
-          text: `We have received your request to delete your account. It will be processed within 72 hours.\n\n Kind regards,\nthe Shelf team \n\n`,
+          text: `We have received your request to delete your account. It will be processed within 72 hours.\n\n Kind regards,\nthe support team \n\n`,
         });
 
         sendNotification({
@@ -297,11 +297,11 @@ export async function action({ context, request }: ActionFunctionArgs) {
           await request.clone().formData(),
           createChangeEmailSchema(
             email,
-            ssoDomains.map((d) => d.domain)
+            ssoDomains.map((d) => d.domain),
           ),
           {
             additionalData: { userId },
-          }
+          },
         );
 
         // Generate email change link/OTP
@@ -329,14 +329,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
         // Send email with OTP using our email service
         sendEmail({
           to: newEmail,
-          subject: `🔐 Shelf verification code: ${linkData.properties.email_otp}`,
+          subject: `🔐 Verification code: ${linkData.properties.email_otp}`,
           text: changeEmailAddressTextEmail({
             otp: linkData.properties.email_otp,
             user,
           }),
           html: await changeEmailAddressHtmlEmail(
             linkData.properties.email_otp,
-            user
+            user,
           ),
         });
 
@@ -390,7 +390,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         /** Destroy all other sessions */
         await getSupabaseAdmin().auth.admin.signOut(
           newSession.accessToken,
-          "others"
+          "others",
         );
 
         sendNotification({

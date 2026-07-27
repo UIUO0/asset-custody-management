@@ -1,5 +1,6 @@
 import { Fragment, useCallback } from "react";
 import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import FeedbackNavItem from "~/components/feedback/feedback-nav-item";
 import type { NavItem } from "~/hooks/use-sidebar-nav-items";
 import ChildNavItem from "./child-nav-item";
@@ -49,6 +50,7 @@ function NavItemRenderer({
   navItem: NavItem;
   closeIfMobile: () => void;
 }) {
+  const { t } = useTranslation();
   switch (navItem.type) {
     case "parent": {
       return (
@@ -93,7 +95,7 @@ function NavItemRenderer({
       }
 
       // Special handling for Feedback button
-      if (navItem.title === "Questions/Feedback") {
+      if (navItem.title === t("nav.feedback")) {
         return <FeedbackNavItem />;
       }
 

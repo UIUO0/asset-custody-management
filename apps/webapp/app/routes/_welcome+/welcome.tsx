@@ -27,7 +27,7 @@ import { error, parseData, payload } from "~/utils/http.server";
 import { getOrCreateCustomerId } from "~/utils/stripe.server";
 
 export const meta: MetaFunction = () => [
-  { title: appendToMetaTitle("Welcome to shelf.nu") },
+  { title: appendToMetaTitle("Welcome") },
 ];
 
 export async function loader({ context }: LoaderFunctionArgs) {
@@ -68,7 +68,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
         barcodePrices,
         usedAuditTrial,
         usedBarcodeTrial,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -87,7 +87,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         intent: z.literal("personal-with-addons"),
         auditPriceId: z.string().optional(),
         barcodePriceId: z.string().optional(),
-      })
+      }),
     );
 
     if (intent !== "personal-with-addons") {

@@ -30,6 +30,7 @@ vi.mock("~/utils/env", () => ({
   GEOCODING_USER_AGENT: "",
 }));
 
+import { config } from "~/config/shelf.config";
 import {
   trialEndsSoonEmailText,
   sendTrialEndsSoonEmail,
@@ -47,9 +48,9 @@ describe("trialEndsSoonEmailText", () => {
     });
     expect(text).toContain("ACTION REQUIRED");
     expect(text).toContain(
-      "automatically charged at the regular subscription rate"
+      "automatically charged at the regular subscription rate",
     );
-    expect(text).toContain("Shelf Team");
+    expect(text).toContain(`${config.appName} Team`);
   });
 
   it("shows upgrade message when hasPaymentMethod is false", () => {
@@ -60,7 +61,7 @@ describe("trialEndsSoonEmailText", () => {
       trialEndDate,
     });
     expect(text).not.toContain("ACTION REQUIRED");
-    expect(text).toContain("Shelf Team trial");
+    expect(text).toContain(`${config.appName} Team trial`);
     expect(text).toContain("upgrade to a paid plan");
   });
 
@@ -71,7 +72,7 @@ describe("trialEndsSoonEmailText", () => {
       planName: "Plus",
       trialEndDate,
     });
-    expect(text).toContain("Shelf Plus trial");
+    expect(text).toContain(`${config.appName} Plus trial`);
   });
 
   it("formats trialEndDate correctly", () => {
@@ -113,8 +114,8 @@ describe("sendTrialEndsSoonEmail", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "alice@example.com",
-        subject: "Your Shelf Team trial ends in 3 days — auto-charge reminder",
-      })
+        subject: `Your ${config.appName} Team trial ends in 3 days — auto-charge reminder`,
+      }),
     );
   });
 
@@ -130,8 +131,8 @@ describe("sendTrialEndsSoonEmail", () => {
     expect(mockSendEmail).toHaveBeenCalledOnce();
     expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: "Your Shelf Plus trial is ending soon",
-      })
+        subject: `Your ${config.appName} Plus trial is ending soon`,
+      }),
     );
   });
 
@@ -147,7 +148,7 @@ describe("sendTrialEndsSoonEmail", () => {
         hasPaymentMethod: true,
         planName: "Team",
         trialEndDate: new Date("2026-03-24T00:00:00Z"),
-      })
+      }),
     ).resolves.toBeUndefined();
   });
 });

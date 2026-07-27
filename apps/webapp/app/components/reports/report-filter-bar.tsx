@@ -19,6 +19,7 @@
 
 import { useCallback } from "react";
 
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 import type {
   ResolvedTimeframe,
@@ -62,7 +63,7 @@ export function ReportFilterBar({ reportId, timeframe, isLoading }: Props) {
       params.delete("page"); // Reset to page 1 when filter changes
       setSearchParams(params, { replace: true });
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams],
   );
 
   const handleIdleThresholdChange = useCallback(
@@ -72,7 +73,7 @@ export function ReportFilterBar({ reportId, timeframe, isLoading }: Props) {
       params.delete("page"); // Reset to page 1 when filter changes
       setSearchParams(params, { replace: true });
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams],
   );
 
   if (showTimeframePicker(reportId)) {

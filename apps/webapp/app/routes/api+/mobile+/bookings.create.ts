@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { DateTime } from "luxon";
 import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
@@ -21,6 +20,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { enforceUserRateLimit } from "~/utils/rate-limit.server";
 
 /**
@@ -96,10 +96,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Resolve the caller's role to branch self-service rules + admin bypass.
     const { role } = await getMobileUserContext(user.id, organizationId);
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
-    const isAdminOrOwner = !isSelfServiceOrBase;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+    const isAdminOrOwner = !isScopedToOwnRecords;
 
     // Validate + org-scope the custodian team member. `getTeamMember` is
     // org-scoped, so a foreign-org team member id 404s here (cross-org IDOR
@@ -123,7 +121,7 @@ export async function action({ request }: ActionFunctionArgs) {
     });
 
     // Self-service / base users may only assign a booking to themselves.
-    if (isSelfServiceOrBase && custodian.userId !== user.id) {
+    if (isScopedToOwnRecords && custodian.userId !== user.id) {
       throw new ShelfError({
         cause: null,
         message: "Self user can assign booking to themselves only.",
@@ -233,7 +231,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause, { userId });
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

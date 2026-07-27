@@ -53,7 +53,7 @@ vi.mock("~/modules/audit/complete-audit-with-images.server", () => ({
 }));
 
 // why: permission resolution is mocked so we can drive `organizationId` +
-// `isSelfServiceOrBase` from each test.
+// `isScopedToOwnRecords` from each test.
 vi.mock("~/utils/roles.server", () => ({
   requirePermission: vi.fn(),
 }));
@@ -82,7 +82,7 @@ const mockContext = {
  * without a mocked parser.
  */
 function makeDeleteRequest(
-  fields: Record<string, string> = { confirmation: "Q4 Audit" }
+  fields: Record<string, string> = { confirmation: "Q4 Audit" },
 ): Request {
   return new Request("http://localhost/audits/audit-1", {
     method: "POST",
@@ -98,7 +98,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
     vi.clearAllMocks();
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
     vi.mocked(deleteAuditSession).mockResolvedValue(undefined);
   });
@@ -109,7 +109,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
         request: makeDeleteRequest(),
         params: { auditId: "audit-1" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(requirePermission).toHaveBeenCalledWith(
@@ -117,7 +117,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
         entity: PermissionEntity.audit,
         action: PermissionAction.delete,
         userId: "user-1",
-      })
+      }),
     );
   });
 
@@ -127,7 +127,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
         request: makeDeleteRequest({ confirmation: "  Q4 audit  " }),
         params: { auditId: "audit-1" },
         context: mockContext,
-      })
+      }),
     );
 
     expect(deleteAuditSession).toHaveBeenCalledWith({
@@ -146,7 +146,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
         request: makeDeleteRequest(),
         params: { auditId: "audit-1" },
         context: mockContext,
-      })
+      }),
     )) as Response;
 
     // React Router's `redirect(...)` returns a Response with a 3xx status
@@ -161,7 +161,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
   it("returns 403 and does NOT call the service when the caller is self-service/base", async () => {
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     const response = (await action(
@@ -169,7 +169,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
         request: makeDeleteRequest(),
         params: { auditId: "audit-1" },
         context: mockContext,
-      })
+      }),
     )) as any;
 
     expect(response.init?.status).toBe(403);
@@ -188,7 +188,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
         }),
         params: { auditId: "audit-1" },
         context: mockContext,
-      })
+      }),
     )) as any;
 
     expect(response.init?.status).toBeDefined();
@@ -209,7 +209,7 @@ describe("audits.$auditId action — delete-audit intent", () => {
           message,
           label: "Audit",
           status: status as 400 | 404 | 409,
-        })
+        }),
       );
 
       const response = (await action(
@@ -217,11 +217,11 @@ describe("audits.$auditId action — delete-audit intent", () => {
           request: makeDeleteRequest(),
           params: { auditId: "audit-1" },
           context: mockContext,
-        })
+        }),
       )) as any;
 
       expect(response.init?.status).toBe(status);
       expect(response.data?.error?.message).toBe(message);
-    }
+    },
   );
 });

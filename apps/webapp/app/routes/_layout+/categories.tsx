@@ -46,6 +46,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { requirePermission } from "~/utils/roles.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -165,7 +166,14 @@ export const ErrorBoundary = () => <ErrorContent />;
 
 export default function CategoriesPage() {
   const { t } = useTranslation();
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
+  // Bulk actions on this screen are destructive; gate on the same permission
+  // the delete action enforces rather than on "is this an admin?".
+  const canBulkManage = userHasPermission({
+    roles,
+    entity: PermissionEntity.category,
+    action: PermissionAction.delete,
+  });
 
   return (
     <>
@@ -183,9 +191,7 @@ export default function CategoriesPage() {
         <Filters />
         <Outlet />
         <List
-          bulkActions={
-            isBaseOrSelfService ? undefined : <BulkActionsDropdown />
-          }
+          bulkActions={canBulkManage ? <BulkActionsDropdown /> : undefined}
           customEmptyStateContent={{
             title: t("categories.emptyTitle"),
             text: t("categories.emptyText"),

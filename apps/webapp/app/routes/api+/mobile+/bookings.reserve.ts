@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { DateTime } from "luxon";
 import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
@@ -21,6 +20,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { enforceUserRateLimit } from "~/utils/rate-limit.server";
 
 /**
@@ -76,10 +76,8 @@ export async function action({ request }: ActionFunctionArgs) {
     const { bookingId, timeZone } = BodySchema.parse(await request.json());
 
     const { role } = await getMobileUserContext(user.id, organizationId);
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
-    const isAdminOrOwner = !isSelfServiceOrBase;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+    const isAdminOrOwner = !isScopedToOwnRecords;
 
     // Read the draft's current values; the mobile "Reserve" tap transitions it
     // to RESERVED without re-entering the form.
@@ -102,12 +100,12 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!booking) {
       return data(
         { error: { message: "Booking not found in this workspace." } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Self-service / base users may only reserve their own bookings.
-    if (isSelfServiceOrBase && booking.custodianUserId !== user.id) {
+    if (isScopedToOwnRecords && booking.custodianUserId !== user.id) {
       throw new ShelfError({
         cause: null,
         message: "You can only reserve your own bookings.",
@@ -202,7 +200,7 @@ export async function action({ request }: ActionFunctionArgs) {
       custodianUserId: booking.custodianUserId ?? undefined,
       tags: booking.tags.map((t) => ({ id: t.id })),
       hints,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       userId: user.id,
     });
 
@@ -217,7 +215,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause, { userId });
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

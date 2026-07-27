@@ -38,7 +38,7 @@ vi.mock("./helpers.server", () => ({
 // why: deterministic note content for assertions; real impl returns markdoc syntax
 vi.mock("~/utils/markdoc-wrappers", () => ({
   wrapUserLinkForNote: vi.fn(
-    ({ firstName, lastName }) => `@${firstName ?? ""}-${lastName ?? ""}`
+    ({ firstName, lastName }) => `@${firstName ?? ""}-${lastName ?? ""}`,
   ),
 }));
 
@@ -305,7 +305,7 @@ describe("audit service", () => {
 
   it("throws when no assets are provided", async () => {
     await expect(
-      createAuditSession({ ...defaultInput, assetIds: [] })
+      createAuditSession({ ...defaultInput, assetIds: [] }),
     ).rejects.toBeInstanceOf(ShelfError);
   });
 
@@ -314,7 +314,7 @@ describe("audit service", () => {
       { id: "asset-1", title: "Camera A" },
     ]);
     await expect(createAuditSession(defaultInput)).rejects.toBeInstanceOf(
-      ShelfError
+      ShelfError,
     );
   });
 
@@ -511,7 +511,7 @@ describe("audit service", () => {
           assetIds: ["asset-1"],
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
 
@@ -528,7 +528,7 @@ describe("audit service", () => {
           assetIds: ["asset-1"],
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
   });
@@ -605,7 +605,7 @@ describe("audit service", () => {
           auditAssetId: "audit-asset-1",
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
 
@@ -620,7 +620,7 @@ describe("audit service", () => {
           auditAssetId: "audit-asset-1",
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
 
@@ -636,7 +636,7 @@ describe("audit service", () => {
           auditAssetId: "nonexistent-asset",
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
   });
@@ -710,7 +710,7 @@ describe("audit service", () => {
           auditAssetIds: ["audit-asset-1"],
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
 
@@ -727,7 +727,7 @@ describe("audit service", () => {
           auditAssetIds: ["audit-asset-1"],
           organizationId: "org-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
   });
@@ -794,21 +794,21 @@ describe("audit service", () => {
         ]);
       });
 
-      it("scopes to the user's assignments when isSelfServiceOrBase with userId", () => {
+      it("scopes to the user's assignments when isScopedToOwnRecords with userId", () => {
         const where = getAuditWhereInput({
           organizationId: "org-1",
           userId: "user-1",
-          isSelfServiceOrBase: true,
+          isScopedToOwnRecords: true,
         });
 
         expect(where.assignments).toEqual({ some: { userId: "user-1" } });
       });
 
-      it("does not apply the assignments filter when isSelfServiceOrBase is false", () => {
+      it("does not apply the assignments filter when isScopedToOwnRecords is false", () => {
         const where = getAuditWhereInput({
           organizationId: "org-1",
           userId: "user-1",
-          isSelfServiceOrBase: false,
+          isScopedToOwnRecords: false,
         });
 
         expect(where.assignments).toBeUndefined();
@@ -817,7 +817,7 @@ describe("audit service", () => {
       it("does not apply the assignments filter when userId is missing", () => {
         const where = getAuditWhereInput({
           organizationId: "org-1",
-          isSelfServiceOrBase: true,
+          isScopedToOwnRecords: true,
         });
 
         expect(where.assignments).toBeUndefined();
@@ -895,7 +895,7 @@ describe("audit service", () => {
             auditIds: ["a1"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toThrow(/No archivable audits were found/);
       });
 
@@ -910,7 +910,7 @@ describe("audit service", () => {
             auditIds: ["a1", "a2"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toThrow(/not in a completed or cancelled state/);
       });
 
@@ -920,18 +920,18 @@ describe("audit service", () => {
           currentSearchParams: "status=COMPLETED",
           organizationId: "org-1",
           userId: "user-1",
-          isSelfServiceOrBase: true,
+          isScopedToOwnRecords: true,
         });
 
         const expectedWhere = getAuditWhereInput({
           organizationId: "org-1",
           currentSearchParams: "status=COMPLETED",
           userId: "user-1",
-          isSelfServiceOrBase: true,
+          isScopedToOwnRecords: true,
         });
 
         expect(mockDb.auditSession.findMany.mock.calls[0][0].where).toEqual(
-          expectedWhere
+          expectedWhere,
         );
       });
 
@@ -948,7 +948,7 @@ describe("audit service", () => {
             auditIds: ["a1", "a2", "a3"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toMatchObject({
           status: 409,
           message: expect.stringMatching(/status changed/),
@@ -977,7 +977,7 @@ describe("audit service", () => {
             auditIds: ["a1"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toMatchObject({
           status: 500,
           message: expect.stringMatching(/Failed to bulk archive audits/),
@@ -1039,7 +1039,7 @@ describe("audit service", () => {
           deleteAuditSession({
             ...baseInput,
             expectedName: "  résumé q4  ".normalize("NFD"),
-          })
+          }),
         ).resolves.toBeUndefined();
 
         expect(mockDb.auditSession.deleteMany).toHaveBeenCalled();
@@ -1047,7 +1047,7 @@ describe("audit service", () => {
 
       it("rejects with 400 when the confirmation doesn't match the audit name", async () => {
         await expect(
-          deleteAuditSession({ ...baseInput, expectedName: "Wrong Name" })
+          deleteAuditSession({ ...baseInput, expectedName: "Wrong Name" }),
         ).rejects.toMatchObject({
           status: 400,
           message: expect.stringMatching(/Confirmation did not match/),
@@ -1118,7 +1118,7 @@ describe("audit service", () => {
         mockDb.auditSession.findFirst.mockResolvedValue(null);
 
         await expect(
-          deleteAuditSession({ ...baseInput, auditSessionId: "missing" })
+          deleteAuditSession({ ...baseInput, auditSessionId: "missing" }),
         ).rejects.toMatchObject({
           status: 404,
           message: expect.stringMatching(/Audit not found/),
@@ -1144,12 +1144,12 @@ describe("audit service", () => {
           await expect(deleteAuditSession(baseInput)).rejects.toMatchObject({
             status: 409,
             message: expect.stringMatching(
-              /Only archived audits can be deleted/
+              /Only archived audits can be deleted/,
             ),
           });
 
           expect(mockDb.auditSession.deleteMany).not.toHaveBeenCalled();
-        }
+        },
       );
 
       it("rejects with 409 when the atomic deleteMany finds nothing (TOCTOU race)", async () => {
@@ -1246,7 +1246,7 @@ describe("audit service", () => {
             auditIds: ["a1"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toMatchObject({
           status: 400,
           message: expect.stringMatching(/No deletable audits were found/),
@@ -1265,7 +1265,7 @@ describe("audit service", () => {
             auditIds: ["a1", "a2"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toMatchObject({
           status: 409,
           message: expect.stringMatching(/are not archived/),
@@ -1288,17 +1288,17 @@ describe("audit service", () => {
               currentSearchParams: params,
               organizationId: "org-1",
               userId: "user-1",
-            })
+            }),
           ).rejects.toMatchObject({
             status: 400,
             message: expect.stringMatching(
-              /Select-all delete requires.*Archived/
+              /Select-all delete requires.*Archived/,
             ),
           });
 
           // Must fail fast — before the findMany pre-read runs.
           expect(mockDb.auditSession.findMany).not.toHaveBeenCalled();
-        }
+        },
       );
 
       it("accepts select-all when params explicitly narrow to ARCHIVED (case-insensitive)", async () => {
@@ -1375,7 +1375,7 @@ describe("audit service", () => {
             auditIds: ["a1", "a2", "a3"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toMatchObject({
           status: 409,
           message: expect.stringMatching(/status changed/),
@@ -1393,7 +1393,7 @@ describe("audit service", () => {
             auditIds: ["a1"],
             organizationId: "org-1",
             userId: "user-1",
-          })
+          }),
         ).rejects.toMatchObject({
           status: 500,
           message: expect.stringMatching(/Failed to bulk delete audits/),
@@ -1461,8 +1461,8 @@ describe("audit service", () => {
       };
       mockDb.auditSession.findFirst.mockImplementation((args: any) =>
         Promise.resolve(
-          args?.where?.id === "audit-copy" ? copySession : originalAudit
-        )
+          args?.where?.id === "audit-copy" ? copySession : originalAudit,
+        ),
       );
 
       // Default: all assets still exist.
@@ -1622,7 +1622,7 @@ describe("audit service", () => {
 
     it("wraps unknown causes in a 500 ShelfError", async () => {
       mockDb.auditSession.findFirst.mockRejectedValueOnce(
-        new Error("DB exploded")
+        new Error("DB exploded"),
       );
 
       await expect(duplicateAuditSession(baseInput)).rejects.toMatchObject({
@@ -1645,12 +1645,12 @@ describe("audit service", () => {
         await expect(duplicateAuditSession(baseInput)).rejects.toMatchObject({
           status: 400,
           message: expect.stringMatching(
-            /completed, cancelled, or archived audits can be duplicated/
+            /completed, cancelled, or archived audits can be duplicated/,
           ),
         });
 
         expect(mockDb.auditSession.create).not.toHaveBeenCalled();
-      }
+      },
     );
 
     it.each([
@@ -1730,7 +1730,7 @@ describe("audit service", () => {
           userId: creatorId,
           isAdminOrOwner: false,
           hints,
-        })
+        }),
       ).resolves.toMatchObject({ status: AuditStatus.CANCELLED });
 
       // Atomic transition: status guard prevents overwriting a row that
@@ -1759,7 +1759,7 @@ describe("audit service", () => {
           userId: adminId,
           isAdminOrOwner: true,
           hints,
-        })
+        }),
       ).resolves.toMatchObject({ status: AuditStatus.CANCELLED });
     });
 
@@ -1771,7 +1771,7 @@ describe("audit service", () => {
           userId: stranger,
           isAdminOrOwner: false,
           hints,
-        })
+        }),
       ).rejects.toMatchObject({
         status: 403,
         message: expect.stringMatching(/creator or a workspace admin/),
@@ -1793,7 +1793,7 @@ describe("audit service", () => {
           userId: adminId,
           isAdminOrOwner: true,
           hints,
-        })
+        }),
       ).rejects.toMatchObject({ status: 400 });
     });
 
@@ -1807,7 +1807,7 @@ describe("audit service", () => {
       });
 
       expect(sendAuditCancelledEmails).toHaveBeenCalledWith(
-        expect.objectContaining({ cancelledByName: "Acting User" })
+        expect.objectContaining({ cancelledByName: "Acting User" }),
       );
     });
 
@@ -1837,7 +1837,7 @@ describe("audit service", () => {
         sendAuditCancelledEmails as unknown as ReturnType<typeof vi.fn>
       ).mock.calls.at(-1)?.[0];
       const recipientIds = call.assigneesToNotify.map(
-        (a: { userId: string }) => a.userId
+        (a: { userId: string }) => a.userId,
       );
 
       expect(recipientIds).toContain("user-assignee");
@@ -1869,7 +1869,7 @@ describe("audit service", () => {
         sendAuditCancelledEmails as unknown as ReturnType<typeof vi.fn>
       ).mock.calls.at(-1)?.[0];
       const creatorEntries = call.assigneesToNotify.filter(
-        (a: { userId: string }) => a.userId === creatorId
+        (a: { userId: string }) => a.userId === creatorId,
       );
 
       expect(creatorEntries).toHaveLength(1);
@@ -1888,7 +1888,7 @@ describe("audit service", () => {
         sendAuditCancelledEmails as unknown as ReturnType<typeof vi.fn>
       ).mock.calls.at(-1)?.[0];
       const recipientIds = call.assigneesToNotify.map(
-        (a: { userId: string }) => a.userId
+        (a: { userId: string }) => a.userId,
       );
 
       expect(recipientIds).not.toContain(creatorId);
@@ -1907,7 +1907,7 @@ describe("audit service", () => {
           userId: creatorId,
           isAdminOrOwner: false,
           hints,
-        })
+        }),
       ).rejects.toMatchObject({
         status: 409,
         message: expect.stringMatching(/Audit status changed/),
@@ -1934,7 +1934,7 @@ describe("audit service", () => {
       });
 
       expect(sendAuditCancelledEmails).toHaveBeenCalledWith(
-        expect.objectContaining({ cancelledByName: "a workspace admin" })
+        expect.objectContaining({ cancelledByName: "a workspace admin" }),
       );
     });
 
@@ -1954,7 +1954,7 @@ describe("audit service", () => {
       });
 
       expect(sendAuditCancelledEmails).toHaveBeenCalledWith(
-        expect.objectContaining({ cancelledByName: "the audit creator" })
+        expect.objectContaining({ cancelledByName: "the audit creator" }),
       );
     });
   });
@@ -1975,7 +1975,7 @@ describe("audit service", () => {
       await getAuditsForOrganization({
         organizationId: "org-1",
         userId: "admin-user",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
         assignedToUserId: "admin-user",
       });
 
@@ -1992,7 +1992,7 @@ describe("audit service", () => {
       await getAuditsForOrganization({
         organizationId: "org-1",
         userId: "admin-user",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
         assignedToUserId: null,
       });
 
@@ -2008,7 +2008,7 @@ describe("audit service", () => {
       await getAuditsForOrganization({
         organizationId: "org-1",
         userId: "base-user",
-        isSelfServiceOrBase: true,
+        isScopedToOwnRecords: true,
       });
 
       const findManyArgs = mockDb.auditSession.findMany.mock.calls[0]?.[0];
@@ -2020,7 +2020,7 @@ describe("audit service", () => {
       });
     });
 
-    it("throws when isSelfServiceOrBase is true but userId is missing", async () => {
+    it("throws when isScopedToOwnRecords is true but userId is missing", async () => {
       // why: silently falling back to assignedToUserId (or null) when a
       // caller signals role-scoping but forgets the userId would leak
       // the whole org list to a BASE/SELF_SERVICE user. The guard fails
@@ -2028,9 +2028,9 @@ describe("audit service", () => {
       await expect(
         getAuditsForOrganization({
           organizationId: "org-1",
-          isSelfServiceOrBase: true,
+          isScopedToOwnRecords: true,
           // userId intentionally omitted
-        })
+        }),
       ).rejects.toThrow(/Missing user context/);
       expect(mockDb.auditSession.findMany).not.toHaveBeenCalled();
     });

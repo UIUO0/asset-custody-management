@@ -1,5 +1,6 @@
 import type { AssetStatus } from "@prisma/client";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -52,6 +53,7 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const {
     ref: dropdownRef,
     defaultApplied,
@@ -82,23 +84,23 @@ function ConditionalDropdown() {
     allSelected || selectedKits.every((kit) => kit.status === "AVAILABLE");
 
   const someKitsCheckedOut = selectedKits.some(
-    (kit) => kit.status === "CHECKED_OUT"
+    (kit) => kit.status === "CHECKED_OUT",
   );
 
   const someAssetsInsideKitsCheckedOutOrInCustody = selectedKits.some(
     (kit) =>
       kit.assets?.some(
-        (asset: { status: AssetStatus }) => asset.status === "CHECKED_OUT"
+        (asset: { status: AssetStatus }) => asset.status === "CHECKED_OUT",
       ) ||
       kit.assets?.some(
-        (asset: { status: AssetStatus }) => asset.status === "IN_CUSTODY"
-      )
+        (asset: { status: AssetStatus }) => asset.status === "IN_CUSTODY",
+      ),
   );
 
   const disabled = selectedKits.length === 0;
 
   const selfUserCustody = selectedKits.some(
-    (k) => k?.custody?.custodian?.userId === user?.id
+    (k) => k?.custody?.custodian?.userId === user?.id,
   );
   const disableReleaseCustody = isSelfService && !selfUserCustody;
 
@@ -111,7 +113,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -202,7 +204,7 @@ function ConditionalDropdown() {
               >
                 <BulkUpdateDialogTrigger
                   type="start-audit"
-                  label="Create audit"
+                  label={t("kitActions.createAudit")}
                   onClick={closeMenu}
                 />
               </DropdownMenuItem>
@@ -218,14 +220,14 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="release-custody"
-                  label="Release custody"
+                  label={t("kitActions.releaseCustody")}
                   onClick={closeMenu}
                   disabled={
                     !allKitsInCustody || disableReleaseCustody
                       ? {
                           reason: disableReleaseCustody
-                            ? "Self service can only release their own custody."
-                            : "Some of the selected kits are not in custody",
+                            ? t("kitActions.selfServiceReleaseReason")
+                            : t("kitActions.notInCustodyReason"),
                         }
                       : isLoading
                   }
@@ -234,15 +236,19 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="border-b py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="assign-custody"
-                  label={isSelfService ? "Take custody" : "Assign custody"}
+                  label={
+                    isSelfService
+                      ? t("kitActions.takeCustody")
+                      : t("kitActions.assignCustody")
+                  }
                   onClick={closeMenu}
                   disabled={
                     !allKitsAvailable ||
                     someAssetsInsideKitsCheckedOutOrInCustody
                       ? {
                           reason: someAssetsInsideKitsCheckedOutOrInCustody
-                            ? "Some of the asset(s) inside this kits are either checked out or in custody. You need to resolve that before you can assign custody."
-                            : "Some of the selected kits are not available",
+                            ? t("kitActions.assetsBlockCustodyReason")
+                            : t("kitActions.notAvailableReason"),
                         }
                       : isLoading
                   }
@@ -278,8 +284,7 @@ function ConditionalDropdown() {
                   disabled={
                     someKitsCheckedOut
                       ? {
-                          reason:
-                            "Some of the selected kits are checked out. Please finish your booking first, before deleting them.",
+                          reason: t("kitActions.checkedOutDeleteReason"),
                         }
                       : isLoading
                   }

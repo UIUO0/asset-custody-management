@@ -5,6 +5,7 @@ import type {
   Location,
   Tag,
 } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -260,6 +261,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function LocationAssets() {
+  const { t } = useTranslation();
   const assetSortingOptions = useAssetSortingOptions();
   const { roles } = useUserRoleHelper();
   const { location } = useLoaderData<typeof loader>();
@@ -305,13 +307,13 @@ export default function LocationAssets() {
                       queryKey: "name",
                       deletedAt: null,
                     }}
-                    label="Filter by custodian"
-                    placeholder="Search team members"
+                    label={t("list.filterByCustodian")}
+                    placeholder={t("list.searchTeamMembers")}
                     initialDataKey="teamMembers"
                     countKey="totalTeamMembers"
                     withoutValueItem={{
                       id: "without-custody",
-                      name: "Without custody",
+                      name: t("list.withoutCustody"),
                     }}
                     renderItem={(item) => resolveTeamMemberName(item, true)}
                   />
@@ -379,8 +381,8 @@ export default function LocationAssets() {
             </>
           }
           customEmptyStateContent={{
-            title: "There are currently no assets at the location",
-            text: "Add assets in this location",
+            title: t("locations.noAssetsAtLocation"),
+            text: t("locations.addAssetsInLocation"),
             newButtonRoute: "manage-assets",
             newButtonContent: "Add asset",
           }}
@@ -429,6 +431,7 @@ const ListAssetContent = ({
   };
   extraProps: { canReadCustody: boolean; userRoleCanManageAssets: boolean };
 }) => {
+  const { t } = useTranslation();
   const { category, tags, custody } = item;
   // The location whose detail page we're on — used to pick this asset's
   // pivot row out of `item.assetLocations`. Mirrors the kit-page
@@ -550,7 +553,7 @@ const ListAssetContent = ({
                                   <p className="text-xs font-semibold text-gray-700">
                                     {kitEntries.length === 1
                                       ? kitEntries[0].kit.name
-                                      : "Placed via multiple kits"}
+                                      : t("locations.placedViaMultipleKits")}
                                   </p>
                                   <ul className="mt-1 flex flex-col gap-0.5 text-xs text-gray-500">
                                     {kitEntries.map((e) => (

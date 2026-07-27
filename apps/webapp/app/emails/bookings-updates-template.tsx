@@ -6,6 +6,7 @@ import {
   Container,
   Heading,
 } from "@react-email/components";
+import { config } from "~/config/shelf.config";
 import {
   BOOKING_EMAIL_ASSETS_DISPLAY_LIMIT,
   type ReservationEmailAsset,
@@ -78,7 +79,7 @@ export function BookingUpdatesEmailTemplate({
   // represent historical fulfilment — they shouldn't appear in a
   // reservation notification email.
   const outstandingModelRequests = (modelRequests ?? []).filter(
-    (req) => req.fulfilledAt === null
+    (req) => req.fulfilledAt === null,
   );
   const fromDate = getDateTimeFormatFromHints(hints, {
     dateStyle: "short",
@@ -91,7 +92,7 @@ export function BookingUpdatesEmailTemplate({
   return (
     <Html>
       <Head>
-        <title>Bookings update from Shelf.nu</title>
+        <title>{`Bookings update from ${config.appName}`}</title>
       </Head>
 
       <Container
@@ -392,5 +393,5 @@ export const bookingUpdatesTemplateString = ({
       modelRequests={modelRequests}
       recipientReason={recipientReason}
       recipientEmail={recipientEmail}
-    />
+    />,
   );

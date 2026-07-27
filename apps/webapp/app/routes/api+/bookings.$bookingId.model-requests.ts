@@ -76,7 +76,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
      * service layer enforces the additional constraint that only
      * DRAFT / RESERVED bookings accept edits.
      */
-    const { organizationId, role, isSelfServiceOrBase } =
+    const { organizationId, role, isScopedToOwnRecords } =
       await requirePermission({
         request,
         userId,
@@ -94,7 +94,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
      * Mirrors the guard pattern used on the page-level booking routes
      * (see `bookings.$bookingId.overview.tsx` and the calendar export).
      */
-    if (isSelfServiceOrBase) {
+    if (isScopedToOwnRecords) {
       const booking = await db.booking.findFirst({
         where: { id: bookingId, organizationId },
         select: { creatorId: true, custodianUserId: true },
@@ -124,7 +124,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     if (isPost(request)) {
       const { assetModelId, quantity } = parseData(
         formData,
-        UpsertModelRequestSchema
+        UpsertModelRequestSchema,
       );
 
       const modelRequest = await upsertBookingModelRequest({

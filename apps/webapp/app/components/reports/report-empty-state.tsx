@@ -8,6 +8,7 @@
  * @see {@link file://../../components/dashboard/empty-state.tsx}
  */
 
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { tw } from "~/utils/tw";
 
@@ -30,24 +31,27 @@ export interface ReportEmptyStateProps {
   className?: string;
 }
 
+/**
+ * Default title/description per empty reason.
+ *
+ * Values are **i18n keys** — this record is module-scope, so the strings are
+ * resolved with `t()` inside {@link ReportEmptyState}.
+ */
 const CONTENT: Record<
   ReportEmptyReason,
-  { title: string; description: string }
+  { titleKey: string; descriptionKey: string }
 > = {
   no_data: {
-    title: "No activity yet",
-    description:
-      "This report will populate as activity events are recorded. Check back after some bookings or asset changes have occurred.",
+    titleKey: "reports.emptyNoActivityYet",
+    descriptionKey: "reports.emptyNoActivityYetBody",
   },
   no_results: {
-    title: "No matching results",
-    description:
-      "No data matches your current filters. Try adjusting the timeframe or removing some filters.",
+    titleKey: "reports.emptyNoMatches",
+    descriptionKey: "reports.emptyNoMatchesBody",
   },
   error: {
-    title: "Unable to load report",
-    description:
-      "Something went wrong loading this report. Please try again or contact support if the issue persists.",
+    titleKey: "reports.emptyLoadFailed",
+    descriptionKey: "reports.emptyLoadFailedBody",
   },
 };
 
@@ -66,13 +70,14 @@ export function ReportEmptyState({
   onClearFilters,
   className,
 }: ReportEmptyStateProps) {
+  const { t } = useTranslation();
   const content = CONTENT[reason];
 
   return (
     <div
       className={tw(
         "flex flex-col items-center justify-center gap-8 px-4 py-[100px] text-center",
-        className
+        className,
       )}
     >
       {/* Empty state illustration - matches app pattern */}
@@ -86,11 +91,13 @@ export function ReportEmptyState({
       <div className="flex flex-col gap-2">
         {/* Title */}
         <div className="text-lg font-semibold text-gray-900">
-          {title || content.title}
+          {title || t(content.titleKey)}
         </div>
 
         {/* Description */}
-        <p className="text-gray-600">{description || content.description}</p>
+        <p className="text-gray-600">
+          {description || t(content.descriptionKey)}
+        </p>
       </div>
 
       {/* Actions */}
@@ -98,12 +105,12 @@ export function ReportEmptyState({
         <div className="flex items-center gap-3">
           {ctaTo && (
             <Button to={ctaTo} variant="primary">
-              {ctaLabel || "Get started"}
+              {ctaLabel || t("reports.getStarted")}
             </Button>
           )}
           {onClearFilters && (
             <Button type="button" variant="secondary" onClick={onClearFilters}>
-              Clear filters
+              {t("reports.clearFilters")}
             </Button>
           )}
         </div>

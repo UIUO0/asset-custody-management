@@ -51,6 +51,7 @@ import {
 import { Td, Th } from "~/components/table";
 import UnsavedChangesAlert from "~/components/unsaved-changes-alert";
 import { db } from "~/database/db.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
 import { getPaginatedAndFilterableKits } from "~/modules/kit/service.server";
 import { updateLocationKits } from "~/modules/location/service.server";
@@ -118,11 +119,14 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       plural: "kits",
     };
 
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     return payload({
       header: {
-        title: `Move kits to '${location?.name}' location`,
-        subHeading:
-          "Search your database for kits that you would like to move to this location.",
+        title: t("locations.moveKitsTitle", { name: location?.name }),
+        subHeading: t("locations.moveKitsSubHeading"),
       },
       showSidebar: true,
       noScroll: true,
@@ -164,7 +168,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         removedKitIds: z.array(z.string()).optional().default([]),
         redirectTo: z.string().optional(),
       }),
-      { additionalData: { userId, organizationId, locationId } }
+      { additionalData: { userId, organizationId, locationId } },
     );
 
     await updateLocationKits({
@@ -218,9 +222,9 @@ export default function ManageLocationKits() {
     () =>
       location.kits.filter(
         (kit) =>
-          !selectedBulkItems.some((selectedItem) => selectedItem.id === kit.id)
+          !selectedBulkItems.some((selectedItem) => selectedItem.id === kit.id),
       ),
-    [location.kits, selectedBulkItems]
+    [location.kits, selectedBulkItems],
   );
 
   /**

@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CircleX } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import {
   clearScannedItemsAtom,
@@ -62,6 +63,7 @@ export default function UpdateLocationDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   // Get the scanned items from jotai
   const items = useAtomValue(scannedItemsAtom);
   const clearList = useSetAtom(clearScannedItemsAtom);
@@ -120,7 +122,7 @@ export default function UpdateLocationDrawer({
       schema={BulkLocationUpdateSchema}
       items={items}
       onClearItems={clearList}
-      title="Items scanned"
+      title={t("scanner.itemsScanned")}
       isLoading={isLoading}
       renderItem={renderItemRow}
       Blockers={Blockers}
@@ -133,6 +135,7 @@ export default function UpdateLocationDrawer({
 }
 
 function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
+  const { t } = useTranslation();
   const { assetIds, idsTotalCount, kitIds } = useAtomValue(scannedItemIdsAtom);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locationState, setLocationState] = useState<LocationState>({
@@ -150,7 +153,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
       if (assetIds.length === 0 && kitIds.length === 0) {
         setLocationState({
           status: "error",
-          errorMessage: "No assets or kits selected to update location",
+          errorMessage: t("scanner.noSelectionForLocation"),
         });
         return;
       }
@@ -168,7 +171,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
             {
               method: "POST",
               body: formData,
-            }
+            },
           );
           const assetsData = await assetsResponse.json();
           locationState = {
@@ -202,7 +205,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
           errorMessage:
             error instanceof ShelfError
               ? error.message
-              : "Something went wrong while adding assets/kit to location. Please try again.",
+              : t("scanner.addToLocationFailedBody"),
         });
       }
     },
@@ -249,7 +252,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
             <LocationSelect
               isBulk
               hideClearButton
-              placeholder="Select location"
+              placeholder={t("scanner.selectLocation")}
             />
             {zo.errors.newLocationId()?.message ? (
               <p className="text-sm text-error-500">
@@ -276,6 +279,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
 
 // Implement item renderers
 export function AssetRow({ asset }: { asset: AssetFromQr }) {
+  const { t } = useTranslation();
   const primaryLocation = getPrimaryLocation(asset);
 
   // Use predefined presets to create label configurations for asset rows
@@ -284,9 +288,13 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
       ? [
           {
             condition: true,
-            badgeText: `Currently in: ${primaryLocation.name}`,
-            tooltipTitle: "Current Location",
-            tooltipContent: `Asset is currently located in ${primaryLocation.name}`,
+            badgeText: t("scanAvailability.currentlyIn", {
+              name: primaryLocation.name,
+            }),
+            tooltipTitle: t("scanAvailability.currentLocationTitle"),
+            tooltipContent: t("scanAvailability.currentLocationContent", {
+              name: primaryLocation.name,
+            }),
             priority: 60,
             className: "bg-gray-50 border-gray-200 text-gray-700",
           },
@@ -299,7 +307,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     availabilityConfigs,
     {
       maxLabels: 3,
-    }
+    },
   );
 
   return (
@@ -313,7 +321,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           asset
@@ -339,7 +347,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit
@@ -402,11 +410,12 @@ function SubmissionState({
   status: "processing" | "success" | "error";
   errorMessage?: string;
 }) {
+  const { t } = useTranslation();
   if (status === "processing") {
     return (
       <div className="flex flex-row gap-2">
         <Spinner />
-        <TextLoader text="Adding assets/kit to location" />
+        <TextLoader text={t("scanner.addingAssetsToLocation")} />
       </div>
     );
   } else if (status === "success") {

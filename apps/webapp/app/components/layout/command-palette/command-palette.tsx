@@ -33,6 +33,11 @@ import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import type { LayoutLoaderResponse } from "~/routes/_layout+/_layout";
 import type { DataOrErrorResponse } from "~/utils/http.server";
 import { isPersonalOrg } from "~/utils/organization";
+import {
+  PermissionAction,
+  PermissionEntity,
+} from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { tw } from "~/utils/tw";
 import { useCommandPalette } from "./command-palette-context";
 
@@ -123,11 +128,24 @@ type QuickAction = QuickCommand & {
   isVisible?: (context: CommandContext) => boolean;
 };
 
+/**
+ * Capability flags each quick command is gated on.
+ *
+ * Every flag is derived from `Role2PermissionMap` via `userHasPermission`, not
+ * from the role name. The palette previously hid entries behind
+ * `!isBaseOrSelfService`, which surfaced every command to any role added later
+ * — including ones whose destination route would then 403.
+ */
 type CommandContext = {
   canInviteUsers: boolean;
   canCreateBookings: boolean;
   isPersonalWorkspace: boolean;
-  isBaseOrSelfService: boolean;
+  canReadAudits: boolean;
+  canReadTeam: boolean;
+  canReadWorkspaceSettings: boolean;
+  canReadDashboard: boolean;
+  canCreateAssets: boolean;
+  canCreateKits: boolean;
 };
 
 const NAVIGATION_COMMANDS: QuickCommand[] = [
@@ -164,7 +182,7 @@ const NAVIGATION_COMMANDS: QuickCommand[] = [
     href: "/audits",
     keywords: ["audits", "audit", "inventory", "check", "verify"],
     icon: ClipboardCheckIcon,
-    isVisible: ({ isBaseOrSelfService }) => !isBaseOrSelfService,
+    isVisible: ({ canReadAudits }) => canReadAudits,
   },
   {
     id: "team",
@@ -173,8 +191,8 @@ const NAVIGATION_COMMANDS: QuickCommand[] = [
     href: "/settings/team/users",
     keywords: ["users", "members", "people"],
     icon: UserPlus2Icon,
-    isVisible: ({ isPersonalWorkspace, isBaseOrSelfService }) =>
-      !isPersonalWorkspace && !isBaseOrSelfService,
+    isVisible: ({ isPersonalWorkspace, canReadTeam }) =>
+      !isPersonalWorkspace && canReadTeam,
   },
   {
     id: "settings",
@@ -183,7 +201,7 @@ const NAVIGATION_COMMANDS: QuickCommand[] = [
     href: "/settings",
     keywords: ["preferences", "configuration"],
     icon: SettingsIcon,
-    isVisible: ({ isBaseOrSelfService }) => !isBaseOrSelfService,
+    isVisible: ({ canReadWorkspaceSettings }) => canReadWorkspaceSettings,
   },
   {
     id: "home",
@@ -192,7 +210,7 @@ const NAVIGATION_COMMANDS: QuickCommand[] = [
     href: "/home",
     keywords: ["overview", "analytics", "dashboard"],
     icon: HomeIcon,
-    isVisible: ({ isBaseOrSelfService }) => !isBaseOrSelfService,
+    isVisible: ({ canReadDashboard }) => canReadDashboard,
   },
 ];
 
@@ -204,7 +222,7 @@ const ACTION_COMMANDS: QuickAction[] = [
     href: "/assets/new",
     keywords: ["new", "asset", "inventory"],
     icon: FilePlus2Icon,
-    isVisible: ({ isBaseOrSelfService }) => !isBaseOrSelfService,
+    isVisible: ({ canCreateAssets }) => canCreateAssets,
   },
   {
     id: "create-kit",
@@ -213,7 +231,7 @@ const ACTION_COMMANDS: QuickAction[] = [
     href: "/kits/new",
     keywords: ["new", "kit", "inventory", "collection"],
     icon: PackageIcon,
-    isVisible: ({ isBaseOrSelfService }) => !isBaseOrSelfService,
+    isVisible: ({ canCreateKits }) => canCreateKits,
   },
   {
     id: "create-booking",
@@ -283,7 +301,7 @@ function getAssetSubtitle(asset: AssetSearchResult, query: string): string {
 
   // Check if query matches any QR codes
   const matchingQrCode = asset.qrCodes?.find((qr) =>
-    qr.toLowerCase().includes(lowercaseQuery)
+    qr.toLowerCase().includes(lowercaseQuery),
   );
   if (matchingQrCode) {
     return `QR: ${matchingQrCode}${
@@ -293,7 +311,7 @@ function getAssetSubtitle(asset: AssetSearchResult, query: string): string {
 
   // Check if query matches any barcodes
   const matchingBarcode = asset.barcodes?.find((barcode) =>
-    barcode.toLowerCase().includes(lowercaseQuery)
+    barcode.toLowerCase().includes(lowercaseQuery),
   );
   if (matchingBarcode) {
     return `Barcode: ${matchingBarcode}${
@@ -313,7 +331,7 @@ function getAssetSubtitle(asset: AssetSearchResult, query: string): string {
 
   // Check if query matches any tags
   const matchingTag = asset.tagNames?.find((tag) =>
-    tag.toLowerCase().includes(lowercaseQuery)
+    tag.toLowerCase().includes(lowercaseQuery),
   );
   if (matchingTag) {
     return `Tag: ${matchingTag}${
@@ -343,7 +361,7 @@ function getAssetSubtitle(asset: AssetSearchResult, query: string): string {
 
   // Check if query matches any custom field values
   const matchingCustomField = asset.customFieldValues?.find((value) =>
-    String(value).toLowerCase().includes(lowercaseQuery)
+    String(value).toLowerCase().includes(lowercaseQuery),
   );
   if (matchingCustomField) {
     const stringValue = String(matchingCustomField);
@@ -378,7 +396,7 @@ function getAssetSubtitle(asset: AssetSearchResult, query: string): string {
 
 export function getKitCommandValue(kit: KitSearchResult) {
   const searchableFields = [kit.name, kit.description ?? "", kit.id].filter(
-    Boolean
+    Boolean,
   );
 
   return [`kit-${kit.id}`, ...searchableFields].join(" ").trim();
@@ -478,7 +496,7 @@ export function CommandPalette() {
   const navigate = useNavigate();
   const inputRef = useAutoFocus<HTMLInputElement>({ when: open });
   const layoutData = useRouteLoaderData<LayoutLoaderResponse>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   );
 
   const [query, setQuery] = useState("");
@@ -499,29 +517,33 @@ export function CommandPalette() {
     enabled: open && Boolean(debouncedQuery),
   });
 
-  const canInviteUsers = useMemo(() => {
-    const roles = layoutData?.currentOrganizationUserRoles ?? [];
-    return roles.includes("ADMIN") || roles.includes("OWNER");
-  }, [layoutData?.currentOrganizationUserRoles]);
-
   const canCreateBookings = layoutData?.canUseBookings ?? false;
   const isPersonalWorkspace = isPersonalOrg(layoutData?.currentOrganization);
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
 
-  const commandContext = useMemo<CommandContext>(
-    () => ({
-      canInviteUsers,
+  const commandContext = useMemo<CommandContext>(() => {
+    const can = (entity: PermissionEntity, action: PermissionAction) =>
+      userHasPermission({ roles, entity, action });
+
+    return {
+      // was: roles.includes("ADMIN") || roles.includes("OWNER") — a hardcoded
+      // role list that would have handed invite rights to any new role that
+      // slipped past the old `!isBaseOrSelfService` checks elsewhere.
+      canInviteUsers: can(PermissionEntity.teamMember, PermissionAction.create),
       canCreateBookings,
       isPersonalWorkspace,
-      isBaseOrSelfService,
-    }),
-    [
-      canInviteUsers,
-      canCreateBookings,
-      isPersonalWorkspace,
-      isBaseOrSelfService,
-    ]
-  );
+      canReadAudits: can(PermissionEntity.audit, PermissionAction.read),
+      canReadTeam: can(PermissionEntity.teamMember, PermissionAction.read),
+      // `/settings` is reachable if ANY settings child is — INVENTORY only has
+      // custom fields, and would otherwise lose its way in.
+      canReadWorkspaceSettings:
+        can(PermissionEntity.generalSettings, PermissionAction.read) ||
+        can(PermissionEntity.customField, PermissionAction.read),
+      canReadDashboard: can(PermissionEntity.dashboard, PermissionAction.read),
+      canCreateAssets: can(PermissionEntity.asset, PermissionAction.create),
+      canCreateKits: can(PermissionEntity.kit, PermissionAction.create),
+    };
+  }, [roles, canCreateBookings, isPersonalWorkspace]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -561,9 +583,9 @@ export function CommandPalette() {
   const availableNavigation = useMemo(
     () =>
       NAVIGATION_COMMANDS.filter((nav) =>
-        nav.isVisible ? nav.isVisible(commandContext) : true
+        nav.isVisible ? nav.isVisible(commandContext) : true,
       ),
-    [commandContext]
+    [commandContext],
   );
 
   const navigationResults = useMemo(() => {
@@ -583,9 +605,9 @@ export function CommandPalette() {
   const availableActions = useMemo(
     () =>
       ACTION_COMMANDS.filter((action) =>
-        action.isVisible ? action.isVisible(commandContext) : true
+        action.isVisible ? action.isVisible(commandContext) : true,
       ),
-    [commandContext]
+    [commandContext],
   );
 
   const actionResults = useMemo(() => {
@@ -646,7 +668,7 @@ export function CommandPalette() {
 
   const assetMatches = useMemo(
     () => assetResults.slice(0, ASSET_RESULTS_LIMIT),
-    [assetResults]
+    [assetResults],
   );
 
   const isSearching = isLoading;
@@ -783,9 +805,9 @@ export function CommandPalette() {
                     {booking.custodianName ? ` • ${booking.custodianName}` : ""}
                     {booking.from && booking.to
                       ? ` • ${new Date(
-                          booking.from
+                          booking.from,
                         ).toLocaleDateString()} - ${new Date(
-                          booking.to
+                          booking.to,
                         ).toLocaleDateString()}`
                       : ""}
                   </span>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -28,6 +29,7 @@ export function ExplicitCheckinSettings({
     requireExplicitCheckinForSelfService: boolean;
   };
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const { isOwner } = useUserRoleHelper();
   const zo = useZorm("ExplicitCheckinForm", ExplicitCheckinSettingsSchema);
@@ -49,12 +51,9 @@ export function ExplicitCheckinSettings({
           }}
         >
           <FormRow
-            rowLabel="Require explicit check-in for Admins"
+            rowLabel={t("bookingSettings.explicitCheckinAdminLabel")}
             subHeading={
-              <div>
-                When enabled, administrators must use the scanner-based explicit
-                check-in flow instead of the one-click quick check-in.
-              </div>
+              <div>{t("bookingSettings.explicitCheckinAdminHint")}</div>
             }
             className="border-b-0 pb-[10px] pt-0"
           >
@@ -63,23 +62,20 @@ export function ExplicitCheckinSettings({
                 name={zo.fields.requireExplicitCheckinForAdmin()}
                 disabled={!isOwner}
                 defaultChecked={defaultValues.requireExplicitCheckinForAdmin}
-                title="Require explicit check-in for Admins"
+                title={t("bookingSettings.explicitCheckinAdminLabel")}
               />
               <label
                 htmlFor={`requireExplicitCheckinForAdmin-${zo.fields.requireExplicitCheckinForAdmin()}`}
                 className="hidden text-gray-500"
               >
-                Require explicit check-in for Admins
+                {t("bookingSettings.explicitCheckinAdminLabel")}
               </label>
             </div>
           </FormRow>
           <FormRow
-            rowLabel="Require explicit check-in for Self Service"
+            rowLabel={t("bookingSettings.explicitCheckinSelfServiceLabel")}
             subHeading={
-              <div>
-                When enabled, self-service users must use the scanner-based
-                explicit check-in flow instead of the one-click quick check-in.
-              </div>
+              <div>{t("bookingSettings.explicitCheckinSelfServiceHint")}</div>
             }
             className="mt-4 border-b-0 pb-[10px] pt-0"
           >
@@ -90,19 +86,19 @@ export function ExplicitCheckinSettings({
                 defaultChecked={
                   defaultValues.requireExplicitCheckinForSelfService
                 }
-                title="Require explicit check-in for Self Service"
+                title={t("bookingSettings.explicitCheckinSelfServiceLabel")}
               />
               <label
                 htmlFor={`requireExplicitCheckinForSelfService-${zo.fields.requireExplicitCheckinForSelfService()}`}
                 className="hidden text-gray-500"
               >
-                Require explicit check-in for Self Service
+                {t("bookingSettings.explicitCheckinSelfServiceLabel")}
               </label>
             </div>
           </FormRow>
           {!isOwner && (
             <p className="text-sm text-gray-500">
-              Only the workspace owner can change this setting.
+              {t("bookingSettings.ownerOnlySetting")}
             </p>
           )}
           <input type="hidden" value="updateExplicitCheckin" name="intent" />

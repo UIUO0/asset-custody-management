@@ -34,6 +34,11 @@ import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
 import { resolveDisplayCode } from "~/modules/barcode/display";
 import { formatCustodyList } from "~/modules/custody/utils";
 import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
+import {
+  PermissionAction,
+  PermissionEntity,
+} from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { tw } from "~/utils/tw";
 import { AssetCodeBadge } from "../asset-code-badge";
 import { AssetImage } from "../asset-image";
@@ -73,7 +78,22 @@ export const AssetsList = ({
   const advancedExtraProps = useMemo(() => ({ columns }), [columns]);
   const { isMd } = useViewportHeight();
   const isUserPage = useIsUserAssetsPage();
-  const { isBase } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
+  /**
+   * The bulk dropdown gates each of its own entries; this only decides whether
+   * ANY of them apply. Covers all three write shapes so no role is shown an
+   * empty dropdown, and none is denied one it can use — INVENTORY reaches it
+   * through `delete` alone.
+   */
+  const canBulkManageAssets = userHasPermission({
+    roles,
+    entity: PermissionEntity.asset,
+    action: [
+      PermissionAction.update,
+      PermissionAction.custody,
+      PermissionAction.delete,
+    ],
+  });
   const fetchers = useFetchers();
   const { resources, events } = useAssetAvailabilityData(items);
   // Workspace pref + addon entitlement — used by the availability-view
@@ -135,7 +155,7 @@ export const AssetsList = ({
           className="absolute inset-0 z-[100] flex flex-col items-center  bg-gray-25/95 pt-[30vh]"
         >
           <Spinner />
-          <p className="mt-2">Changing mode...</p>
+          <p className="mt-2">{t("assetsIndex.changingMode")}</p>
         </m.div>
       </When>
 
@@ -213,7 +233,7 @@ export const AssetsList = ({
               ItemComponent={modeIsSimple ? ListAssetContent : AdvancedAssetRow}
               customPagination={<AssetIndexPagination />}
               bulkActions={
-                disableBulkActions || isBase ? undefined : (
+                disableBulkActions || !canBulkManageAssets ? undefined : (
                   <BulkActionsDropdown />
                 )
               }

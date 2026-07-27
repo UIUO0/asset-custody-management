@@ -32,7 +32,7 @@ import {
 import { tw } from "~/utils/tw";
 
 export const meta: MetaFunction = () => [
-  { title: appendToMetaTitle("Welcome to shelf.nu") },
+  { title: appendToMetaTitle("Welcome") },
 ];
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -54,7 +54,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     /** Get the Stripe customer */
     const customer = user.customerId
       ? ((await getStripeCustomer(
-          user.customerId
+          user.customerId,
         )) as CustomerWithSubscriptions)
       : null;
 
@@ -74,7 +74,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         customer,
         auditPrices,
         barcodePrices,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -101,17 +101,17 @@ export default function SelectPlan() {
   }, [prices]);
 
   const [selectedPlan, setSelectedPlan] = useState<BillingInterval | null>(
-    () => (planPrices.month ? "month" : planPrices.year ? "year" : null)
+    () => (planPrices.month ? "month" : planPrices.year ? "year" : null),
   );
 
   // Initialize audit toggle from URL param (passed from welcome page)
   const [wantsAudits, setWantsAudits] = useState(
-    () => searchParams.get("withAudits") === "true"
+    () => searchParams.get("withAudits") === "true",
   );
 
   // Initialize barcode toggle from URL param (passed from welcome page)
   const [wantsBarcodes, setWantsBarcodes] = useState(
-    () => searchParams.get("withBarcodes") === "true"
+    () => searchParams.get("withBarcodes") === "true",
   );
 
   const navigation = useNavigation();
@@ -142,7 +142,7 @@ export default function SelectPlan() {
 
   // Generate dynamic plan copy from Stripe prices
   const getPlanCopy = (
-    price: (typeof prices)[number]
+    price: (typeof prices)[number],
   ): { label: string; price: string; footnote: string } => {
     const interval = price.recurring?.interval;
     const amount = price.unit_amount ?? 0;
@@ -185,7 +185,7 @@ export default function SelectPlan() {
       ? `You won't be charged during the trial. After ${
           config.freeTrialDays
         } days, continue on Team + ${selectedAddons.join(
-          " + "
+          " + ",
         )} or change plans.`
       : `You won't be charged during the trial. After ${config.freeTrialDays} days, continue on Team or change plans.`;
 
@@ -237,14 +237,14 @@ export default function SelectPlan() {
                     "relative flex flex-col gap-2 rounded border px-6 py-5 transition",
                     isSelected
                       ? "border-primary-400 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
+                      : "border-gray-200 bg-white hover:border-gray-300",
                   )}
                 >
                   {interval === "year" ? (
                     <Tag
                       className={tw(
                         "w-max",
-                        " absolute right-2 top-2 bg-orange-100 text-orange-700"
+                        " absolute right-2 top-2 bg-orange-100 text-orange-700",
                       )}
                     >
                       Save 54%
@@ -282,7 +282,7 @@ export default function SelectPlan() {
                   className={tw(
                     "flex h-full cursor-pointer flex-col gap-3 p-0",
                     "transition-shadow",
-                    wantsAudits ? "" : "hover:border-gray-300"
+                    wantsAudits ? "" : "hover:border-gray-300",
                   )}
                 >
                   <button
@@ -292,7 +292,7 @@ export default function SelectPlan() {
                       "flex size-full flex-col gap-3 rounded border border-transparent p-4 text-start",
                       wantsAudits
                         ? "border-primary-400 bg-primary-50"
-                        : "border-transparent"
+                        : "border-transparent",
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -301,7 +301,7 @@ export default function SelectPlan() {
                           "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border-2",
                           wantsAudits
                             ? "border-primary-500 bg-primary-500"
-                            : "border-gray-300 bg-white"
+                            : "border-gray-300 bg-white",
                         )}
                         aria-hidden="true"
                       >
@@ -340,7 +340,7 @@ export default function SelectPlan() {
                         <span className="text-lg font-semibold text-gray-900">
                           {fmtPrice(
                             activeAuditPrice.unit_amount || 0,
-                            activeAuditPrice.currency
+                            activeAuditPrice.currency,
                           )}
                           /{isYearly ? "yr" : "mo"}
                         </span>
@@ -362,7 +362,7 @@ export default function SelectPlan() {
                   className={tw(
                     "flex h-full cursor-pointer flex-col gap-3 p-0",
                     "transition-shadow",
-                    wantsBarcodes ? "" : "hover:border-gray-300"
+                    wantsBarcodes ? "" : "hover:border-gray-300",
                   )}
                 >
                   <button
@@ -372,7 +372,7 @@ export default function SelectPlan() {
                       "flex size-full flex-col gap-3 rounded border border-transparent p-4 text-start",
                       wantsBarcodes
                         ? "border-primary-400 bg-primary-50"
-                        : "border-transparent"
+                        : "border-transparent",
                     )}
                   >
                     <div className="flex items-start gap-3">
@@ -381,7 +381,7 @@ export default function SelectPlan() {
                           "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border-2",
                           wantsBarcodes
                             ? "border-primary-500 bg-primary-500"
-                            : "border-gray-300 bg-white"
+                            : "border-gray-300 bg-white",
                         )}
                         aria-hidden="true"
                       >
@@ -420,7 +420,7 @@ export default function SelectPlan() {
                         <span className="text-lg font-semibold text-gray-900">
                           {fmtPrice(
                             activeBarcodePrice.unit_amount || 0,
-                            activeBarcodePrice.currency
+                            activeBarcodePrice.currency,
                           )}
                           /{isYearly ? "yr" : "mo"}
                         </span>

@@ -8,6 +8,7 @@ import { LinkIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 
 import { db } from "~/database/db.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError, ShelfError } from "~/utils/error";
 import { payload, error, getParams } from "~/utils/http.server";
@@ -28,6 +29,10 @@ export const loader = async ({
   const { qrId } = getParams(params, z.object({ qrId: z.string() }));
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     // why: org-scope the QR lookup. Without organizationId an authenticated
     // user in any workspace could read another tenant's QR (and the linked
     // asset title / kit name) just by guessing the QR id — cross-org IDOR.
@@ -72,7 +77,7 @@ export const loader = async ({
 
     return payload({
       header: {
-        title: "Successfully linked asset to QR code",
+        title: t("qr.successfulLinkTitle"),
       },
       qr,
     });

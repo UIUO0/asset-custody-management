@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Prisma } from "@prisma/client";
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -30,6 +31,7 @@ import When from "~/components/when/when";
 import { config } from "~/config/shelf.config";
 import { sendEmail } from "~/emails/mail.server";
 import { onboardingEmailText } from "~/emails/onboarding-email";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   getAuthUserById,
   signInWithEmail,
@@ -136,7 +138,7 @@ function createOnboardingSchema({
           teamSize,
           companyName,
         },
-        ctx
+        ctx,
       ) => {
         if (password !== confirmPassword) {
           ctx.addIssue({
@@ -147,8 +149,8 @@ function createOnboardingSchema({
         }
 
         // Only validate teamSize and companyName if business intel is collected
-        // and jobTitle is not "Personal use"
-        if (shouldCollectBusinessIntel && jobTitle !== "Personal use") {
+        // and jobTitle is not the sentinel PERSONAL_USE_JOB_TITLE value
+        if (shouldCollectBusinessIntel && jobTitle !== PERSONAL_USE_JOB_TITLE) {
           // teamSize is only required for non-invited users
           if (
             requireCompanyName &&
@@ -174,7 +176,7 @@ function createOnboardingSchema({
         }
 
         return { password, confirmPassword, username, firstName, lastName };
-      }
+      },
     );
 }
 
@@ -196,11 +198,20 @@ async function resolveInvitedCompanyName({
     // eslint-disable-next-line no-console
     console.error(
       `Failed to resolve organization name for ${verifiedOrganizationId}:`,
-      error
+      error,
     );
     return fallback ?? undefined;
   }
 }
+
+/**
+ * Sentinel `jobTitle` value marking a personal-use signup.
+ *
+ * Persisted to the DB and compared against on both the client and the server,
+ * so it must stay a stable English literal — the *displayed* label is
+ * translated separately via `onboardingForm.personalUse`.
+ */
+const PERSONAL_USE_JOB_TITLE = "Personal use";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -248,7 +259,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     const organizationMembership = organizationIdParam
       ? user.userOrganizations?.find(
-          (membership) => membership.organizationId === organizationIdParam
+          (membership) => membership.organizationId === organizationIdParam,
         )
       : null;
 
@@ -259,7 +270,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
      * of the company field.
      */
     const createdWithInvite = Boolean(
-      user.createdWithInvite || organizationMembership
+      user.createdWithInvite || organizationMembership,
     );
 
     const requireCompanyName = !createdWithInvite;
@@ -278,9 +289,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       createdWithInvite,
     });
 
-    const title = "Set up your account";
-    const subHeading =
-      "You are almost ready to use Shelf. We just need some basic information to get you started.";
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+    const title = t("onboardingForm.setUpAccount");
+    const subHeading = t("onboardingForm.almostReady");
 
     return payload({
       title,
@@ -340,7 +353,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
             const trimmed = value.trim();
             return trimmed.length > 0 ? trimmed : undefined;
           }),
-      })
+      }),
     );
 
     /**
@@ -349,14 +362,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
      */
     const organizationMembership = metadata.organizationId
       ? existingUser.userOrganizations?.find(
-          (membership) => membership.organizationId === metadata.organizationId
+          (membership) => membership.organizationId === metadata.organizationId,
         )
       : null;
 
     const verifiedOrganizationId =
       organizationMembership?.organizationId ?? null;
     const createdWithInvite = Boolean(
-      existingUser.createdWithInvite || verifiedOrganizationId
+      existingUser.createdWithInvite || verifiedOrganizationId,
     );
 
     /**
@@ -459,23 +472,24 @@ export async function action({ context, request }: ActionFunctionArgs) {
     if (config.sendOnboardingEmail) {
       /** Send onboarding email */
       sendEmail({
-        from: SMTP_FROM || `"Carlos from shelf.nu" <carlos@emails.shelf.nu>`,
-        replyTo: "carlos@shelf.nu",
+        from: SMTP_FROM,
         to: user.email,
-        subject: "🏷️ Welcome to Shelf - can I ask you a question?",
+        subject: `🏷️ Welcome to ${config.appName}`,
         text: onboardingEmailText({ firstName: user.firstName as string }),
       });
     }
 
     const redirectViaInvite = Boolean(
-      verifiedOrganizationId || user.createdWithInvite
+      verifiedOrganizationId || user.createdWithInvite,
     );
 
     const headers = [];
 
     if (verifiedOrganizationId) {
       headers.push(
-        setCookie(await setSelectedOrganizationIdCookie(verifiedOrganizationId))
+        setCookie(
+          await setSelectedOrganizationIdCookie(verifiedOrganizationId),
+        ),
       );
     }
 
@@ -486,13 +500,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
     const reason = makeShelfError(
       cause,
       { userId },
-      !isZodValidationError(cause)
+      !isZodValidationError(cause),
     );
     return data(error(reason), { status: reason.status });
   }
 }
 
 export default function Onboarding() {
+  const { t } = useTranslation();
   const {
     user,
     userSignedUpWithPassword,
@@ -528,15 +543,15 @@ export default function Onboarding() {
     businessIntel?.howDidYouHearAboutUs ?? user?.referralSource ?? "";
 
   const [isPersonalUse, setIsPersonalUse] = useState(
-    jobTitleDefault === "Personal use"
+    jobTitleDefault === PERSONAL_USE_JOB_TITLE,
   );
 
   const [customizeOpen, setCustomizeOpen] = useState(
     Boolean(
       businessIntel?.primaryUseCase ||
         businessIntel?.currentSolution ||
-        businessIntel?.timeline
-    )
+        businessIntel?.timeline,
+    ),
   );
 
   return (
@@ -555,7 +570,7 @@ export default function Onboarding() {
 
         <div className="md:flex md:gap-6">
           <Input
-            label="First name"
+            label={t("userForm.firstName")}
             autoComplete="given-name"
             required
             data-test-id="firstName"
@@ -566,7 +581,7 @@ export default function Onboarding() {
             className="mb-5 md:mb-0 md:flex-1"
           />
           <Input
-            label="Last name"
+            label={t("userForm.lastName")}
             autoComplete="family-name"
             required
             data-test-id="lastName"
@@ -580,14 +595,14 @@ export default function Onboarding() {
         <div>
           <Input
             label="Username"
-            addOn="shelf.nu/"
+            addOn="@"
             autoComplete="username"
             required
             type="text"
             name={zo.fields.username()}
             error={
               getValidationErrors<typeof OnboardingFormSchema>(
-                actionData?.error
+                actionData?.error,
               )?.username?.message || zo.errors.username()?.message
             }
             defaultValue={user?.username}
@@ -611,7 +626,7 @@ export default function Onboarding() {
 
             <PasswordInput
               required
-              label="Confirm password"
+              label={t("auth.confirmPassword")}
               data-test-id="confirmPassword"
               placeholder="********"
               name={zo.fields.confirmPassword()}
@@ -626,44 +641,44 @@ export default function Onboarding() {
           <>
             <Input
               required
-              label="How did you hear about us?"
-              placeholder="Twitter, Reddit, ChatGPT, Google, etc..."
+              label={t("onboardingForm.howDidYouHear")}
+              placeholder={t("onboardingForm.howDidYouHearPlaceholder")}
               name={zo.fields.referralSource()}
               defaultValue={referralSourceDefault}
               error={zo.errors.referralSource()?.message}
             />
 
             <SelectWithOther
-              label="What's your role?"
+              label={t("onboardingForm.yourRole")}
               name={zo.fields.jobTitle()}
               options={ROLE_OPTIONS}
               required
               error={zo.errors.jobTitle()?.message}
               defaultValue={jobTitleDefault}
-              otherInputLabel="Specify your role"
-              otherInputPlaceholder="Tell us about your role"
+              otherInputLabel={t("onboardingForm.specifyYourRole")}
+              otherInputPlaceholder={t("onboardingForm.tellUsAboutRole")}
               onValueChange={(value) => {
-                setIsPersonalUse(value === "Personal use");
+                setIsPersonalUse(value === PERSONAL_USE_JOB_TITLE);
               }}
             />
 
             <When truthy={!isPersonalUse && requireCompanyName}>
               <SelectWithOther
-                label="How many people will use this?"
+                label={t("onboardingForm.howManyPeople")}
                 name={zo.fields.teamSize()}
                 options={TEAM_SIZE_OPTIONS}
                 required
                 error={zo.errors.teamSize()?.message}
                 defaultValue={teamSizeDefault}
-                otherInputLabel="Specify team size"
-                otherInputPlaceholder="Enter your team size"
+                otherInputLabel={t("onboardingForm.specifyTeamSize")}
+                otherInputPlaceholder={t("onboardingForm.enterTeamSize")}
               />
             </When>
 
             <When truthy={!isPersonalUse && requireCompanyName}>
               <Input
-                label="Company/Organization"
-                placeholder="Shelf Inc."
+                label={t("onboardingForm.companyOrganization")}
+                placeholder={t("onboardingForm.companyPlaceholder")}
                 name={zo.fields.companyName()}
                 error={zo.errors.companyName()?.message}
                 defaultValue={companyNameDefault}
@@ -689,7 +704,7 @@ export default function Onboarding() {
                 className="flex w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-start font-medium text-gray-700 hover:bg-gray-100"
               >
                 <span>
-                  Help us customize Shelf
+                  Help us customize your workspace
                   <span className="ms-1 text-sm font-normal text-gray-500">
                     (optional)
                   </span>
@@ -697,7 +712,7 @@ export default function Onboarding() {
                 <ChevronDownIcon
                   className={tw(
                     "size-4 transition-transform duration-200",
-                    customizeOpen ? "rotate-180" : ""
+                    customizeOpen ? "rotate-180" : "",
                   )}
                 />
               </button>
@@ -705,32 +720,32 @@ export default function Onboarding() {
             <CollapsibleContent>
               <div className="mt-4 grid gap-5 md:grid-cols-2">
                 <SelectWithOther
-                  label="What will you primarily track?"
+                  label={t("onboardingForm.whatWillYouTrack")}
                   name={zo.fields.primaryUseCase()}
                   options={PRIMARY_USE_CASE_OPTIONS}
                   defaultValue={businessIntel?.primaryUseCase ?? null}
-                  otherInputLabel="Tell us what you'll track"
-                  otherInputPlaceholder="Describe your use case"
-                  placeholder="Select an option"
+                  otherInputLabel={t("onboardingForm.tellUsWhatYoullTrack")}
+                  otherInputPlaceholder={t("onboardingForm.describeUseCase")}
+                  placeholder={t("onboardingForm.selectAnOption")}
                 />
                 <SelectWithOther
-                  label="How do you currently track assets?"
+                  label={t("onboardingForm.currentTracking")}
                   name={zo.fields.currentSolution()}
                   options={CURRENT_SOLUTION_OPTIONS}
                   defaultValue={businessIntel?.currentSolution ?? null}
-                  otherInputLabel="Share your current solution"
-                  otherInputPlaceholder="Let us know what you use today"
-                  placeholder="Select an option"
+                  otherInputLabel={t("onboardingForm.shareCurrentSolution")}
+                  otherInputPlaceholder={t("onboardingForm.letUsKnowCurrent")}
+                  placeholder={t("onboardingForm.selectAnOption")}
                 />
                 <div className="md:col-span-2">
                   <SelectWithOther
-                    label="When do you need this working?"
+                    label={t("onboardingForm.timeline")}
                     name={zo.fields.timeline()}
                     options={TIMELINE_OPTIONS}
                     defaultValue={businessIntel?.timeline ?? null}
-                    otherInputLabel="Specify your timeline"
-                    otherInputPlaceholder="Tell us about your timeline"
-                    placeholder="Select an option"
+                    otherInputLabel={t("onboardingForm.specifyTimeline")}
+                    otherInputPlaceholder={t("onboardingForm.tellUsTimeline")}
+                    placeholder={t("onboardingForm.selectAnOption")}
                   />
                 </div>
               </div>

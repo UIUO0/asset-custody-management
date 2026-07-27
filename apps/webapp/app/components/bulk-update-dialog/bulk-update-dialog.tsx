@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect } from "react";
 import type { ElementRef, ReactNode } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 
 import {
   bulkDialogAtom,
@@ -93,7 +94,7 @@ function BulkUpdateTriggerButton({
       type="button"
       variant="link"
       className={tw(
-        "w-full justify-start px-4  py-3 text-gray-700 hover:text-gray-700"
+        "w-full justify-start px-4  py-3 text-gray-700 hover:text-gray-700",
       )}
       width="full"
       onClick={() => {
@@ -113,9 +114,17 @@ function BulkUpdateTriggerButton({
 function BulkUpdateDialogTrigger({
   type,
   onClick,
-  label = `Update ${type}`,
+  label,
   disabled,
 }: BulkUpdateDialogTriggerProps) {
+  const { t } = useTranslation();
+  // Falls back to "Update <type>" with the dialog type rendered in the current
+  // language (`bulkActions.type_*`) rather than the raw English enum value.
+  const resolvedLabel =
+    label ??
+    t("bulkActions.updateTypeTitle", {
+      type: t(`bulkActions.type_${type}`),
+    });
   const isDisabled =
     disabled === undefined // If it is undefined, then it is not disabled
       ? false
@@ -139,14 +148,16 @@ function BulkUpdateDialogTrigger({
           <BulkUpdateTriggerButton
             disabled={isDisabled}
             type={type}
-            label={label}
+            label={resolvedLabel}
             onClick={onClick}
             onOpen={handleOpenDialog}
           />
         </HoverCardTrigger>
         {reason && (
           <HoverCardContent side="left">
-            <h5 className="text-start text-[14px]">Action disabled</h5>
+            <h5 className="text-start text-[14px]">
+              {t("bulkActions.actionDisabled")}
+            </h5>
             <p className="text-start text-[14px]">{reason}</p>
           </HoverCardContent>
         )}
@@ -157,7 +168,7 @@ function BulkUpdateDialogTrigger({
   return (
     <BulkUpdateTriggerButton
       type={type}
-      label={label}
+      label={resolvedLabel}
       onClick={onClick}
       onOpen={handleOpenDialog}
     />
@@ -179,12 +190,13 @@ type BulkUpdateDialogContentProps = CommonBulkDialogProps & {
   className?: string;
   /**
    * Title for the Dialog content
-   * @default `Update ${type}`
+   * @default The localised "Update <type>" copy (`bulkActions.updateTypeTitle`)
    */
   title?: string;
   /**
    * Description for the dialog content
-   * @default `Adjust the ${type} of selected (${itemsSelected}) assets.`
+   * @default The localised "Adjust the <type> of selected (N) assets."
+   * copy (`bulkActions.updateTypeDescription`)
    */
   description?: string;
   /**
@@ -236,7 +248,7 @@ const BulkUpdateDialogContent = forwardRef<
     type,
     children,
     onSuccess,
-    title = `Update ${type}`,
+    title,
     description,
     actionUrl,
     arrayFieldId,
@@ -244,8 +256,9 @@ const BulkUpdateDialogContent = forwardRef<
     keepSelectionOnSuccess = false,
     formClassName = "",
   },
-  ref
+  ref,
 ) {
+  const { t } = useTranslation();
   const fetcher = useFetcherWithReset<any>();
   const disabled = isFormProcessing(fetcher.state);
 
@@ -305,7 +318,7 @@ const BulkUpdateDialogContent = forwardRef<
         handleBulkActionSuccess();
       }
     },
-    [fetcher.data, handleBulkActionSuccess]
+    [fetcher.data, handleBulkActionSuccess],
   );
 
   return (
@@ -322,11 +335,18 @@ const BulkUpdateDialogContent = forwardRef<
               </div>
             ) : null}
             <div className={tw("mb-5", type === "cancel" && "mt-5")}>
-              <h4>{title}</h4>
+              <h4>
+                {title ??
+                  t("bulkActions.updateTypeTitle", {
+                    type: t(`bulkActions.type_${type}`),
+                  })}
+              </h4>
               <p>
-                {description
-                  ? description
-                  : `Adjust the ${type} of selected (${totalItemsSelected}) assets.`}
+                {description ??
+                  t("bulkActions.updateTypeDescription", {
+                    type: t(`bulkActions.type_${type}`),
+                    count: totalItemsSelected,
+                  })}
               </p>
             </div>
           </div>

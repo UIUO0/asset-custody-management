@@ -125,7 +125,7 @@ describe("settings.general loader", () => {
       organizations: [baseOrganization()],
       currentOrganization: baseOrganization(),
       role: OrganizationRoles.OWNER,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -168,19 +168,19 @@ describe("settings.general loader", () => {
         context: mockContext,
         request: new Request("http://localhost/settings/general"),
         params: {},
-      })
+      }),
     );
 
     expect(canHideShelfBrandingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         canHideShelfBranding: true,
-      })
+      }),
     );
 
     expect(result).toEqual(
       expect.objectContaining({
         canHideShelfBranding: true,
-      })
+      }),
     );
   });
 
@@ -195,7 +195,7 @@ describe("settings.general loader", () => {
       organizations: [personalOrg],
       currentOrganization: personalOrg,
       role: OrganizationRoles.OWNER,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -213,14 +213,14 @@ describe("settings.general loader", () => {
         context: mockContext,
         request: new Request("http://localhost/settings/general"),
         params: {},
-      })
+      }),
     );
 
     // Even though tier allows hiding, workspace-tier mismatch prevents it
     expect(result).toEqual(
       expect.objectContaining({
         canHideShelfBranding: false,
-      })
+      }),
     );
   });
 
@@ -235,7 +235,7 @@ describe("settings.general loader", () => {
       organizations: [personalOrg],
       currentOrganization: personalOrg,
       role: OrganizationRoles.OWNER,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -253,14 +253,14 @@ describe("settings.general loader", () => {
         context: mockContext,
         request: new Request("http://localhost/settings/general"),
         params: {},
-      })
+      }),
     );
 
     // Plus tier on personal workspace = allowed
     expect(result).toEqual(
       expect.objectContaining({
         canHideShelfBranding: true,
-      })
+      }),
     );
   });
 
@@ -277,14 +277,14 @@ describe("settings.general loader", () => {
         context: mockContext,
         request: new Request("http://localhost/settings/general"),
         params: {},
-      })
+      }),
     );
 
     // Team tier on team workspace = allowed
     expect(result).toEqual(
       expect.objectContaining({
         canHideShelfBranding: true,
-      })
+      }),
     );
   });
 });
@@ -298,7 +298,7 @@ describe("settings.general action", () => {
       currentOrganization: baseOrganization(),
       role: OrganizationRoles.OWNER,
       organizations: [baseOrganization()],
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -338,17 +338,17 @@ describe("settings.general action", () => {
     });
 
     await action(
-      createActionArgs({ context: mockContext, request, params: {} })
+      createActionArgs({ context: mockContext, request, params: {} }),
     );
 
     expect(canHideShelfBrandingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         canHideShelfBranding: false,
-      })
+      }),
     );
 
     expect(updateOrganizationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ showShelfBranding: true })
+      expect.objectContaining({ showShelfBranding: true }),
     );
   });
 
@@ -382,18 +382,18 @@ describe("settings.general action", () => {
     });
 
     await action(
-      createActionArgs({ context: mockContext, request, params: {} })
+      createActionArgs({ context: mockContext, request, params: {} }),
     );
 
     expect(canHideShelfBrandingMock).toHaveBeenCalledWith(
       expect.objectContaining({
         canHideShelfBranding: true,
-      })
+      }),
     );
 
     // Verify branding is actually turned OFF
     expect(updateOrganizationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ showShelfBranding: false })
+      expect.objectContaining({ showShelfBranding: false }),
     );
   });
 
@@ -409,7 +409,7 @@ describe("settings.general action", () => {
       currentOrganization: orgWithBrandingOff,
       role: OrganizationRoles.OWNER,
       organizations: [orgWithBrandingOff],
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -444,12 +444,12 @@ describe("settings.general action", () => {
     });
 
     await action(
-      createActionArgs({ context: mockContext, request, params: {} })
+      createActionArgs({ context: mockContext, request, params: {} }),
     );
 
     // Verify branding is turned back ON
     expect(updateOrganizationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ showShelfBranding: true })
+      expect.objectContaining({ showShelfBranding: true }),
     );
   });
 
@@ -464,7 +464,7 @@ describe("settings.general action", () => {
       currentOrganization: personalOrg,
       role: OrganizationRoles.OWNER,
       organizations: [personalOrg],
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -502,12 +502,12 @@ describe("settings.general action", () => {
     });
 
     await action(
-      createActionArgs({ context: mockContext, request, params: {} })
+      createActionArgs({ context: mockContext, request, params: {} }),
     );
 
     // Should force branding to stay on due to workspace-tier mismatch
     expect(updateOrganizationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ showShelfBranding: true })
+      expect.objectContaining({ showShelfBranding: true }),
     );
   });
 
@@ -522,7 +522,7 @@ describe("settings.general action", () => {
       currentOrganization: personalOrg,
       role: OrganizationRoles.OWNER,
       organizations: [personalOrg],
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       userOrganizations: [],
       canSeeAllBookings: true,
       canSeeAllCustody: true,
@@ -560,12 +560,12 @@ describe("settings.general action", () => {
     });
 
     await action(
-      createActionArgs({ context: mockContext, request, params: {} })
+      createActionArgs({ context: mockContext, request, params: {} }),
     );
 
     // Should allow hiding branding (Plus tier on personal workspace)
     expect(updateOrganizationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ showShelfBranding: false })
+      expect.objectContaining({ showShelfBranding: false }),
     );
   });
 });

@@ -9,6 +9,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { AssetStatus, AssetType } from "@prisma/client";
 import type { Booking } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { z } from "zod";
 import type { BookingExpectedAsset } from "~/atoms/qr-scanner";
@@ -173,7 +174,7 @@ function useCheckoutDispositionContext(): CheckoutDispositionContextValue {
   const ctx = useContext(CheckoutDispositionContext);
   if (!ctx) {
     throw new Error(
-      "useCheckoutDispositionContext called outside of PartialCheckoutDrawer"
+      "useCheckoutDispositionContext called outside of PartialCheckoutDrawer",
     );
   }
   return ctx;
@@ -217,7 +218,7 @@ type FullyCheckedOutAsset = {
 function isAssetFullyCheckedOut(
   asset: FullyCheckedOutAsset,
   remainingByAssetId: Record<string, number>,
-  checkedOutIdSet: Set<string>
+  checkedOutIdSet: Set<string>,
 ): boolean {
   if (asset.type === "QUANTITY_TRACKED") {
     // Use the loader-supplied remaining only when an entry exists for
@@ -307,6 +308,7 @@ export default function PartialCheckoutDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   const {
     booking,
     checkedOutAssetIds,
@@ -415,7 +417,7 @@ export default function PartialCheckoutDrawer({
       a,
       alreadyCheckedOut,
       alreadyReturned,
-      remainingByAssetId
+      remainingByAssetId,
     );
 
   const assetIdsForCheckout = Array.from(
@@ -425,9 +427,9 @@ export default function PartialCheckoutDrawer({
         k.assetKits
           .map((ak) => ak.asset)
           .filter(isCheckoutEligibleAsset)
-          .map((a) => a.id)
+          .map((a) => a.id),
       ),
-    ])
+    ]),
   );
 
   // Build the per-slice qty-info map from the booking's QUANTITY_TRACKED
@@ -466,7 +468,7 @@ export default function PartialCheckoutDrawer({
     for (const [assetId, slices] of slicesByAsset) {
       const fallbackTotal = slices.reduce(
         (acc, s) => acc + (s.quantity ?? 0),
-        0
+        0,
       );
       let assetRemaining = remainingByAssetId[assetId] ?? fallbackTotal;
       if (assetRemaining <= 0) continue;
@@ -640,7 +642,7 @@ export default function PartialCheckoutDrawer({
     bookingAssetsList,
     checkedOutAssetIds || [],
     checkedInAssetIds || [],
-    remainingByAssetId
+    remainingByAssetId,
   );
 
   // Early checkout only applies while the booking is still RESERVED, because
@@ -650,7 +652,7 @@ export default function PartialCheckoutDrawer({
   // subsequent scans would be a confusing no-op.
   const isEarlyCheckout = Boolean(
     assetIdsForCheckout.length > 0 &&
-      shouldPromptEarlyCheckout(booking.status, booking.from)
+      shouldPromptEarlyCheckout(booking.status, booking.from),
   );
 
   // Setup blockers
@@ -671,7 +673,7 @@ export default function PartialCheckoutDrawer({
     .filter(
       (asset) =>
         bookingAssetIds.has(asset.id) &&
-        isAssetFullyCheckedOut(asset, remainingByAssetId, alreadyCheckedOut)
+        isAssetFullyCheckedOut(asset, remainingByAssetId, alreadyCheckedOut),
     )
     .map((a) => a.id);
 
@@ -687,7 +689,8 @@ export default function PartialCheckoutDrawer({
   const assetsInCustody = assets
     .filter(
       (asset) =>
-        bookingAssetIds.has(asset.id) && asset.status === AssetStatus.IN_CUSTODY
+        bookingAssetIds.has(asset.id) &&
+        asset.status === AssetStatus.IN_CUSTODY,
     )
     .map((a) => a.id);
 
@@ -709,7 +712,7 @@ export default function PartialCheckoutDrawer({
   // Kit blockers - kits not in this booking
   const kitsNotInBooking = kits
     .filter(
-      (kit) => !kit.assetKits.some((ak) => bookingAssetIds.has(ak.asset.id))
+      (kit) => !kit.assetKits.some((ak) => bookingAssetIds.has(ak.asset.id)),
     )
     .map((kit) => kit.id);
 
@@ -736,7 +739,7 @@ export default function PartialCheckoutDrawer({
       return (
         kitAssetsInBooking.length > 0 &&
         kitAssetsInBooking.every((asset) =>
-          isAssetFullyCheckedOut(asset, remainingByAssetId, alreadyCheckedOut)
+          isAssetFullyCheckedOut(asset, remainingByAssetId, alreadyCheckedOut),
         )
       );
     })
@@ -772,7 +775,7 @@ export default function PartialCheckoutDrawer({
       // Find the QR ID for this asset
       const assetQrId = Object.entries(items).find(
         ([, item]) =>
-          item?.type === "asset" && (item?.data as any)?.id === asset.id
+          item?.type === "asset" && (item?.data as any)?.id === asset.id,
       )?.[0];
 
       if (assetQrId) {
@@ -803,7 +806,7 @@ export default function PartialCheckoutDrawer({
           checked out for this booking.
         </>
       ),
-      description: "These assets cannot be checked out again",
+      description: t("scanner.blockerCannotCheckOutAgain"),
       onResolve: () => removeItemsFromList(qrIdsOfAlreadyCheckedOutAssets),
     },
     {
@@ -815,7 +818,7 @@ export default function PartialCheckoutDrawer({
           in custody — release custody first.
         </>
       ),
-      description: "Release custody before checking these assets out",
+      description: t("scanner.blockerReleaseCustodyFirst"),
       onResolve: () => removeItemsFromList(qrIdsOfAssetsInCustody),
     },
     {
@@ -827,7 +830,7 @@ export default function PartialCheckoutDrawer({
           already been checked out for this booking.
         </>
       ),
-      description: "All assets from these kits have already been checked out",
+      description: t("scanner.blockerAllKitsCheckedOut"),
       onResolve: () => removeItemsFromList(qrIdsOfAlreadyCheckedOutKits),
     },
     {
@@ -985,7 +988,7 @@ export default function PartialCheckoutDrawer({
     (asset: QtyExpectedAsset) => {
       quickCheckoutQtyAsset(asset);
     },
-    [quickCheckoutQtyAsset]
+    [quickCheckoutQtyAsset],
   );
 
   /**
@@ -1007,7 +1010,9 @@ export default function PartialCheckoutDrawer({
       <>
         {scannedCount > 0 ? (
           <SectionHeader
-            label={`Checked out this session (${scannedCount})`}
+            label={t("scanner.checkedOutThisSession", {
+              count: scannedCount,
+            })}
             tone="active"
           />
         ) : null}
@@ -1087,7 +1092,7 @@ export default function PartialCheckoutDrawer({
               scanned
               <InfoTooltip
                 iconClassName="size-4"
-                content={<p>All assets inside kits are counted individually</p>}
+                content={<p>{t("scanner.assetsInKitsCountedIndividually")}</p>}
               />
             </span>
             <span className="flex h-5 flex-col justify-center font-medium text-gray-900">
@@ -1111,7 +1116,7 @@ export default function PartialCheckoutDrawer({
         defaultExpanded={defaultExpanded}
         className={tw(
           "[&_.default-base-drawer-header]:rounded-b [&_.default-base-drawer-header]:border [&_.default-base-drawer-header]:px-4 [&_thead]:hidden",
-          className
+          className,
         )}
         style={style}
         headerContent={<BookingHeader booking={booking} />}
@@ -1122,6 +1127,7 @@ export default function PartialCheckoutDrawer({
 
 // Asset row renderer
 export function AssetRow({ asset }: { asset: AssetFromQr }) {
+  const { t } = useTranslation();
   const { booking, checkedOutAssetIds, remainingToCheckOutByAsset } =
     useLoaderData<typeof loader>();
   const items = useAtomValue(scannedItemsAtom);
@@ -1135,7 +1141,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
   // Check if asset is in this booking. Post-pivot, booking-asset membership
   // lives behind the BookingAsset pivot row.
   const isInBooking = booking.bookingAssets.some(
-    (ba) => ba.asset.id === asset.id
+    (ba) => ba.asset.id === asset.id,
   );
 
   // Check if asset is fully checked out — type-aware. For a QT asset with
@@ -1145,7 +1151,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
   const isAlreadyCheckedOut = isAssetFullyCheckedOut(
     asset,
     remainingByAssetId,
-    alreadyCheckedOut
+    alreadyCheckedOut,
   );
 
   // Check if asset is currently in custody (must be released before check-out)
@@ -1191,7 +1197,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
       : null;
   const isQuickCheckout = Boolean(
     scannedBookingAssetId &&
-      items[`${QUICK_CHECKOUT_QR_PREFIX}${scannedBookingAssetId}`]
+      items[`${QUICK_CHECKOUT_QR_PREFIX}${scannedBookingAssetId}`],
   );
 
   // Use custom configurations for partial check-out context
@@ -1199,10 +1205,9 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     // Custom preset for redundant assets (highest priority - blocking issue)
     {
       condition: isRedundant && isInBooking,
-      badgeText: "Already covered by kit QR",
-      tooltipTitle: "Asset already covered",
-      tooltipContent:
-        "This asset is already covered by the scanned kit QR code. Remove this individual asset scan.",
+      badgeText: t("scanAvailability.coveredByKitQr"),
+      tooltipTitle: t("scanAvailability.coveredByKitQrTitle"),
+      tooltipContent: t("scanAvailability.coveredByKitQrContent"),
       priority: 90, // Highest priority - blocking issue
     },
     // Custom preset for QUANTITY_TRACKED assets with zero remaining units —
@@ -1215,10 +1220,9 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
         isAlreadyCheckedOut &&
         isInBooking &&
         asset.type === AssetType.QUANTITY_TRACKED,
-      badgeText: "No units remaining",
-      tooltipTitle: "All booked units already checked out",
-      tooltipContent:
-        "Every unit of this quantity-tracked asset has already been checked out for this booking. Nothing left to scan.",
+      badgeText: t("scanAvailability.noUnitsRemaining"),
+      tooltipTitle: t("scanAvailability.noUnitsRemainingTitle"),
+      tooltipContent: t("scanAvailability.noUnitsRemainingContent"),
       priority: 85, // High priority - blocking issue
     },
     // Custom preset for INDIVIDUAL already-checked-out assets. QT assets
@@ -1229,39 +1233,38 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
         isAlreadyCheckedOut &&
         isInBooking &&
         asset.type !== AssetType.QUANTITY_TRACKED,
-      badgeText: "Already checked out",
-      tooltipTitle: "Asset already checked out",
-      tooltipContent:
-        "This asset has already been checked out for this booking and cannot be checked out again.",
+      badgeText: t("scanAvailability.alreadyCheckedOut"),
+      tooltipTitle: t("scanAvailability.assetAlreadyCheckedOutTitle"),
+      tooltipContent: t(
+        "scanAvailability.assetAlreadyCheckedOutBookingContent",
+      ),
       priority: 85, // High priority - blocking issue
     },
     // Custom preset for assets in custody
     {
       condition: isInCustody && isInBooking,
-      badgeText: "In custody",
-      tooltipTitle: "Asset in custody",
-      tooltipContent:
-        "This asset is currently in custody. Release the custody before checking it out.",
+      badgeText: t("availability.inCustodyBadge"),
+      tooltipTitle: t("scanAvailability.assetInCustodyCheckoutTitle"),
+      tooltipContent: t("scanAvailability.assetInCustodyCheckoutContent"),
       priority: 84, // High priority - blocking issue
     },
     // Custom preset for "not in this booking"
     {
       condition: !isInBooking,
-      badgeText: "Not in this booking",
-      tooltipTitle: "Asset not part of booking",
-      tooltipContent:
-        "This asset is not part of the current booking and cannot be checked out.",
+      badgeText: t("scanAvailability.notInThisBooking"),
+      tooltipTitle: t("scanAvailability.assetNotInBookingTitle"),
+      tooltipContent: t("scanAvailability.assetNotInBookingCheckoutContent"),
       priority: 80,
       // Uses default warning colors (appropriate for blocking issue)
     },
     // Custom preset for kit assets - different message based on whether it's the last one
     {
       condition: !!assetKitId && !isRedundant, // Only show if not redundant
-      badgeText: "Part of kit",
-      tooltipTitle: "Asset is part of a kit",
+      badgeText: t("scanAvailability.partOfKit"),
+      tooltipTitle: t("scanAvailability.partOfKitTitle"),
       tooltipContent: isLastKitAssetInBooking
-        ? "This is the last asset from this kit in the booking. Checking it out will also mark the entire kit as checked out."
-        : "This asset belongs to a kit. Checking out this asset individually will not affect the kit status or other kit assets.",
+        ? t("scanAvailability.lastKitAssetCheckoutContent")
+        : t("scanAvailability.kitAssetCheckoutContent"),
       priority: 60, // Lower priority than blocking issues
       className: "bg-blue-50 border-blue-200 text-blue-700", // Informational blue
     },
@@ -1280,10 +1283,9 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
         !isAlreadyCheckedOut &&
         !isInCustody &&
         isQuickCheckout,
-      badgeText: "Checked out without scan",
-      tooltipTitle: "Marked out without scanning",
-      tooltipContent:
-        "This quantity-tracked asset was added via the Check out without scanning button — no QR scan required.",
+      badgeText: t("scanAvailability.checkedOutWithoutScan"),
+      tooltipTitle: t("scanAvailability.markedOutWithoutScanTitle"),
+      tooltipContent: t("scanAvailability.markedOutWithoutScanContent"),
       priority: 50,
       className: "bg-indigo-50 border-indigo-200 text-indigo-700",
     },
@@ -1341,7 +1343,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
             className={tw(
               "inline-block bg-gray-50 px-[6px] py-[2px]",
               "rounded-md border border-gray-200",
-              "text-xs text-gray-700"
+              "text-xs text-gray-700",
             )}
           >
             asset
@@ -1388,6 +1390,7 @@ function QuantityCheckoutBlock({
   bookingAssetId: string;
   info: CheckoutQtyInfo;
 }) {
+  const { t } = useTranslation();
   const { dispositions, updateQuantity } = useCheckoutDispositionContext();
   // Default value: full slice qty. Tracked as a string so an empty
   // input stays empty (controlled `value=""`) instead of coercing to 0.
@@ -1407,11 +1410,13 @@ function QuantityCheckoutBlock({
         // Match the check-IN block's box: full width on mobile, fixed
         // 256px right column on desktop with `shrink-0` so inputs
         // don't squish when the title wraps.
-        "w-full rounded-md border border-gray-200 bg-white px-3 py-2 sm:w-64 sm:shrink-0"
+        "w-full rounded-md border border-gray-200 bg-white px-3 py-2 sm:w-64 sm:shrink-0",
       )}
     >
       <label className="flex items-center justify-between gap-3">
-        <span className="text-xs font-medium text-gray-700">Check out</span>
+        <span className="text-xs font-medium text-gray-700">
+          {t("scanner.checkOut")}
+        </span>
         <div className="flex items-center gap-2">
           <input
             ref={inputRef}
@@ -1422,13 +1427,13 @@ function QuantityCheckoutBlock({
             value={value}
             onChange={(e) => updateQuantity(bookingAssetId, e.target.value)}
             inputMode="numeric"
-            aria-label="Check out quantity"
+            aria-label={t("scanner.checkOutQuantity")}
             className={tw(
               "w-14 rounded-md border border-gray-200 px-2 py-1 text-end text-sm tabular-nums text-gray-900",
               "focus:outline-none focus:ring-1 focus:ring-primary-500",
               "[appearance:textfield]",
               "[&::-webkit-inner-spin-button]:m-0 [&::-webkit-inner-spin-button]:appearance-none",
-              "[&::-webkit-outer-spin-button]:appearance-none"
+              "[&::-webkit-outer-spin-button]:appearance-none",
             )}
           />
           <span className="text-xs tabular-nums text-gray-500">
@@ -1442,6 +1447,7 @@ function QuantityCheckoutBlock({
 }
 
 export function KitRow({ kit }: { kit: KitFromQr }) {
+  const { t } = useTranslation();
   const { booking, checkedOutAssetIds, remainingToCheckOutByAsset } =
     useLoaderData<typeof loader>();
   const items = useAtomValue(scannedItemsAtom);
@@ -1453,10 +1459,10 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
 
   // Check how many assets from this kit are in the booking
   const bookingAssetIds = new Set(
-    booking.bookingAssets.map((ba) => ba.asset.id)
+    booking.bookingAssets.map((ba) => ba.asset.id),
   );
   const kitAssetsInBooking = kitAssetsAll.filter((a) =>
-    bookingAssetIds.has(a.id)
+    bookingAssetIds.has(a.id),
   );
   const allKitAssetsInBooking =
     kitAssetsInBooking.length === kitAssetsAll.length;
@@ -1478,12 +1484,12 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
 
   // Check if this kit is currently scanned
   const isKitScanned = Object.values(items).some(
-    (item) => item?.type === "kit" && (item?.data as KitFromQr)?.id === kit.id
+    (item) => item?.type === "kit" && (item?.data as KitFromQr)?.id === kit.id,
   );
 
   // Calculate remaining assets (not already checked out)
   const uncheckedKitAssetsInBooking = kitAssetsInBooking.filter(
-    (asset) => !isAssetCheckedOut(asset)
+    (asset) => !isAssetCheckedOut(asset),
   );
 
   const remainingKitAssetsInBooking = isKitScanned
@@ -1501,32 +1507,33 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
     // Custom preset for "already checked out" kits (highest priority - blocking issue)
     {
       condition: allKitAssetsInBookingAreCheckedOut,
-      badgeText: "Already checked out",
-      tooltipTitle: "Kit already checked out",
-      tooltipContent:
-        "All assets from this kit have already been checked out for this booking and cannot be checked out again.",
+      badgeText: t("scanAvailability.alreadyCheckedOut"),
+      tooltipTitle: t("scanAvailability.kitAlreadyCheckedOutTitle"),
+      tooltipContent: t("scanAvailability.kitAlreadyCheckedOutContent"),
       priority: 85, // High priority - blocking issue
     },
-    kitLabelPresets.inCustody(kit.status === AssetStatus.IN_CUSTODY),
+    kitLabelPresets.inCustody(t, kit.status === AssetStatus.IN_CUSTODY),
     kitLabelPresets.hasAssetsInCustody(
-      kitAssetsAll.some((asset) => asset.status === AssetStatus.IN_CUSTODY)
+      t,
+      kitAssetsAll.some((asset) => asset.status === AssetStatus.IN_CUSTODY),
     ),
     // Custom preset for "not in booking"
     {
       condition: noKitAssetsInBooking,
-      badgeText: "Not in this booking",
-      tooltipTitle: "Kit not part of booking",
-      tooltipContent:
-        "None of this kit's assets are part of the current booking.",
+      badgeText: t("scanAvailability.notInThisBooking"),
+      tooltipTitle: t("scanAvailability.kitNotInBookingTitle"),
+      tooltipContent: t("scanAvailability.kitNotInBookingContent"),
       priority: 80,
     },
     // Custom preset for "partially in booking" - informational only
     {
       condition: !allKitAssetsInBooking && !noKitAssetsInBooking,
-      badgeText: `${kitAssetsInBooking.length}/${kitAssetsAll.length} assets in booking`,
-      tooltipTitle: "Kit partially in booking",
-      tooltipContent:
-        "Only some of this kit's assets are part of the current booking.",
+      badgeText: t("scanAvailability.kitPartiallyInBooking", {
+        inBooking: kitAssetsInBooking.length,
+        total: kitAssetsAll.length,
+      }),
+      tooltipTitle: t("scanAvailability.kitPartiallyInBookingTitle"),
+      tooltipContent: t("scanAvailability.kitPartiallyInBookingContent"),
       priority: 70,
       className: "bg-blue-50 border-blue-200 text-blue-700", // Informational blue
     },
@@ -1560,7 +1567,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit

@@ -13,6 +13,7 @@ import {
 } from "@radix-ui/react-popover";
 import { Reorder } from "framer-motion";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Switch } from "~/components/forms/switch";
 import { ChevronRight, HandleIcon, PlusIcon } from "~/components/icons/library";
@@ -60,7 +61,7 @@ export function AdvancedFilteringAndSorting() {
 const getTriggerClasses = (
   open: boolean,
   activeItems: number,
-  className?: string
+  className?: string,
 ) =>
   tw(
     "font-normal text-gray-500",
@@ -68,11 +69,12 @@ const getTriggerClasses = (
     activeItems > 0
       ? "whitespace-nowrap border-primary bg-primary-25 text-primary"
       : "",
-    className
+    className,
   );
 
 // react-doctor:no-giant-component — deferred for follow-up refactor
 function AdvancedFilter() {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const { settings, customFields } = useLoaderData<AssetIndexLoaderData>();
 
@@ -210,14 +212,14 @@ function AdvancedFilter() {
           <PopoverContent
             align="start"
             className={tw(
-              "z-[9999]  mt-2 min-w-[580px] rounded-md border border-gray-200 bg-white"
+              "z-[9999]  mt-2 min-w-[580px] rounded-md border border-gray-200 bg-white",
             )}
           >
             <div className="border-b p-4 pb-5">
               {filters.length === 0 ? (
                 <div>
-                  <h5>No filters applied to this view</h5>
-                  <p>Add a column below to filter the view</p>
+                  <h5>{t("advancedFilters.noFiltersApplied")}</h5>
+                  <p>{t("advancedFilters.addColumnToFilter")}</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
@@ -251,7 +253,7 @@ function AdvancedFilter() {
                             setFilter={(name) => {
                               setFilters((prev) => {
                                 const column = availableColumns.find(
-                                  (c) => c.name === name
+                                  (c) => c.name === name,
                                 ) as Column;
 
                                 // Only proceed with type/operator/value setup if a valid column is selected
@@ -268,7 +270,7 @@ function AdvancedFilter() {
                                     operator: operatorsPerType[fieldType][0],
                                     value: getDefaultValueForFieldType(
                                       column,
-                                      customFields
+                                      customFields,
                                     ),
                                     isNew: false,
                                   };
@@ -296,7 +298,11 @@ function AdvancedFilter() {
                                 }}
                                 disabled={
                                   filter.isNew
-                                    ? { reason: "Please select a column" }
+                                    ? {
+                                        reason: t(
+                                          "advancedFilters.selectColumn",
+                                        ),
+                                      }
                                     : false
                                 }
                               />
@@ -328,7 +334,7 @@ function AdvancedFilter() {
                           icon="x"
                           onClick={() => {
                             setFilters((prev) =>
-                              prev.filter((_, i) => i !== index)
+                              prev.filter((_, i) => i !== index),
                             );
                             setHasUnappliedChanges(true);
                           }}
@@ -350,8 +356,7 @@ function AdvancedFilter() {
                   disabled={
                     disabled || availableColumns.length === 0
                       ? {
-                          reason:
-                            "You are not able to add more filters because all columns are already used. If you want to filter by more columns, please enable them on your column settings.",
+                          reason: t("advancedFilters.allColumnsUsedFilters"),
                         }
                       : false
                   }
@@ -361,14 +366,6 @@ function AdvancedFilter() {
                     <PlusIcon />
                   </div>
                   <span className="inline-block align-middle">Add filter</span>
-                </Button>
-                <Button
-                  variant="block-link-gray"
-                  size="xs"
-                  className="ms-1"
-                  to="mailto:nikolay@shelf.nu?subject=Advanced filtering suggestions"
-                >
-                  Need more filtering options?
                 </Button>
               </div>
               <div className="ms-8 flex items-center justify-between gap-2">
@@ -406,6 +403,7 @@ function AdvancedFilter() {
 }
 
 function AdvancedSorting() {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [sorts, setSorts] = useState<Sort[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -518,14 +516,14 @@ function AdvancedSorting() {
         <PopoverContent
           align="start"
           className={tw(
-            "z-[9999]  mt-2 w-[480px] rounded-md border border-gray-200 bg-white"
+            "z-[9999]  mt-2 w-[480px] rounded-md border border-gray-200 bg-white",
           )}
         >
           <div className="border-b p-4 pb-5">
             {sorts.length === 0 ? (
               <div>
-                <h5>No sorting applied to this view</h5>
-                <p>Add a column below to sort by</p>
+                <h5>{t("advancedFilters.noSortingApplied")}</h5>
+                <p>{t("advancedFilters.addColumnToSort")}</p>
               </div>
             ) : (
               <Reorder.Group values={sorts} onReorder={setSorts}>
@@ -630,6 +628,7 @@ function PickAColumnToSortBy({
   sorts: Sort[];
   setSorts: Dispatch<SetStateAction<Sort[]>>;
 }) {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -639,7 +638,7 @@ function PickAColumnToSortBy({
 
   const availableColumns = useMemo(
     () => getAvailableColumns(columns, sorts, "sort"),
-    [columns, sorts]
+    [columns, sorts],
   );
 
   // Convert to sort options with proper handling of the name column
@@ -671,7 +670,7 @@ function PickAColumnToSortBy({
     return baseOptions.filter((option) =>
       parseColumnName(option.name)
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+        .includes(searchQuery.toLowerCase()),
     );
   }, [baseOptions, searchQuery]);
 
@@ -685,7 +684,7 @@ function PickAColumnToSortBy({
       case "ArrowDown":
         event.preventDefault();
         setSelectedIndex((prev) =>
-          prev < filteredOptions.length - 1 ? prev + 1 : prev
+          prev < filteredOptions.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
@@ -714,7 +713,7 @@ function PickAColumnToSortBy({
 
   useEffect(() => {
     const selectedElement = document.getElementById(
-      `sort-option-${selectedIndex}`
+      `sort-option-${selectedIndex}`,
     );
     if (selectedElement) {
       selectedElement.scrollIntoView({ block: "nearest" });
@@ -731,13 +730,12 @@ function PickAColumnToSortBy({
           disabled={
             availableColumns.length === 0
               ? {
-                  reason:
-                    "You are not able to add more sorts because all columns are already used. If you want to sort by more columns, please enable them on your column settings.",
+                  reason: t("advancedFilters.allColumnsUsedSorts"),
                 }
               : false
           }
         >
-          <span>Pick a column to sort by</span>{" "}
+          <span>{t("advancedFilters.pickColumnToSort")}</span>{" "}
           <ChevronRight className="ms-2 inline-block rotate-90" />
         </Button>
       </PopoverTrigger>
@@ -745,14 +743,14 @@ function PickAColumnToSortBy({
         <PopoverContent
           align="start"
           className={tw(
-            "z-[9999] mt-2 max-h-[400px] w-[250px] overflow-scroll rounded-md border border-gray-200 bg-white"
+            "z-[9999] mt-2 max-h-[400px] w-[250px] overflow-scroll rounded-md border border-gray-200 bg-white",
           )}
         >
           <div className="flex items-center border-b">
             <Search className="ms-4 size-4 text-gray-500" />
             <input
               ref={searchInputRef}
-              placeholder="Search column..."
+              placeholder={t("advancedFilters.searchColumn")}
               className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
               value={searchQuery}
               onChange={handleSearch}
@@ -773,7 +771,7 @@ function PickAColumnToSortBy({
                       "before:absolute before:inset-x-0 before:top-0 before:border-t before:border-gray-200",
                     index !== filteredOptions.length - 1 &&
                       "after:absolute after:inset-x-0 after:bottom-0 after:border-b after:border-gray-200",
-                  ]
+                  ],
                 )}
                 role="option"
                 aria-selected={selectedIndex === index}

@@ -132,7 +132,7 @@ export const CodePreview = ({
   const captureDivRef = useRef<HTMLImageElement>(null);
   const downloadBtnRef = useRef<HTMLAnchorElement>(null);
   const { canUseBarcodes } = useBarcodePermissions();
-  const { isBaseOrSelfService, isOwner } = useUserRoleHelper();
+  const { isScopedToOwnRecords, isOwner } = useUserRoleHelper();
   const organization = useCurrentOrganization();
   const resolvedShowShelfBranding = resolveShowShelfBranding(
     showShelfBranding,
@@ -318,7 +318,7 @@ export const CodePreview = ({
             }}
             className={tw(
               "min-w-0  flex-1 truncate rounded-md border border-gray-300 bg-white px-3 py-2 pe-7 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500",
-              isBaseOrSelfService ? "max-w-[320px]" : "max-w-[280px]",
+              isScopedToOwnRecords ? "max-w-[320px]" : "max-w-[280px]",
             )}
           >
             {availableCodes.map((code) => (
@@ -327,7 +327,7 @@ export const CodePreview = ({
               </option>
             ))}
           </select>
-          <When truthy={!isBaseOrSelfService}>
+          <When truthy={!isScopedToOwnRecords}>
             <Button
               type="button"
               icon="plus"

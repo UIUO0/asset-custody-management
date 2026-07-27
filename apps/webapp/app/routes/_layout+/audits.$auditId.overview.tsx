@@ -82,7 +82,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     });
 
     const { organizationId, userOrganizations } = permissionResult;
-    const isSelfServiceOrBase = permissionResult.isSelfServiceOrBase || false;
+    const isScopedToOwnRecords = permissionResult.isScopedToOwnRecords || false;
 
     const [{ session }, assetsData, allImages] = await Promise.all([
       getAuditSessionDetails({
@@ -110,7 +110,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const header = { title: `${session.name} · Overview` };
 
     const rolesForOrg = userOrganizations.find(
-      (org) => org.organization.id === organizationId
+      (org) => org.organization.id === organizationId,
     )?.roles;
 
     const isAdminOrOwner = rolesForOrg
@@ -127,7 +127,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     requireAuditAssigneeForBaseSelfService({
       audit: session,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       auditId,
     });
 
@@ -145,7 +145,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           singular: "asset",
           plural: "assets",
         },
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, auditId });
@@ -160,7 +160,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   });
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.audit,
@@ -178,7 +178,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         organizationId,
         userId,
         request,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
       });
 
       await completeAuditWithImages({
@@ -199,7 +199,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         userId,
         // Admin/owner is the inverse of self-service/base in this codebase.
         // Allows non-creator admin/owners to cancel team-managed audits.
-        isAdminOrOwner: !isSelfServiceOrBase,
+        isAdminOrOwner: !isScopedToOwnRecords,
         hints,
       });
 
@@ -282,7 +282,7 @@ export default function AuditOverview() {
     useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const currentFilter = searchParams.get(
-    "auditStatus"
+    "auditStatus",
   ) as AuditFilterType | null;
   // Show audit status column when "ALL" or "EXPECTED" filter is selected
   // - ALL: Shows status for all assets (Expected/Found/Missing/Unexpected)
@@ -677,7 +677,7 @@ function StatCard({
         "rounded-lg border p-4 text-start transition-all hover:shadow-md",
         isActive
           ? "border-gray-900 bg-gray-900 text-static-white"
-          : "border-gray-200 bg-white text-gray-900 hover:border-gray-300"
+          : "border-gray-200 bg-white text-gray-900 hover:border-gray-300",
       )}
     >
       <div className="text-sm font-medium">{label}</div>

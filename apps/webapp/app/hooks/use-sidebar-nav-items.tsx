@@ -13,7 +13,6 @@ import {
   MessageCircleIcon,
   Package,
   PackageOpenIcon,
-  QrCodeIcon,
   ScanBarcodeIcon,
   SettingsIcon,
   TagsIcon,
@@ -26,6 +25,11 @@ import { UpgradeMessage } from "~/components/marketing/upgrade-message";
 import When from "~/components/when/when";
 import type { loader } from "~/routes/_layout+/_layout";
 import { isPersonalOrg } from "~/utils/organization";
+import {
+  PermissionAction,
+  PermissionEntity,
+} from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { useCurrentOrganization } from "./use-current-organization";
 import { useUserRoleHelper } from "./user-user-role-helper";
 
@@ -70,9 +74,42 @@ export function useSidebarNavItems() {
   const { t } = useTranslation();
   const { isAdmin, canUseBookings, subscription, unreadUpdatesCount } =
     useLoaderData<typeof loader>();
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { roles, isScopedToOwnRecords } = useUserRoleHelper();
   const currentOrganization = useCurrentOrganization();
   const isPersonalOrganization = isPersonalOrg(currentOrganization);
+
+  /**
+   * Nav visibility is derived per-entity rather than from "is this an admin?".
+   *
+   * Every entry below used to read `hidden: isBaseOrSelfService`, which meant
+   * any role added later saw the whole sidebar — including sections it has no
+   * permission for, so the links 403'd on click. Asking the permission map the
+   * same question the loader will ask keeps the two in step.
+   */
+  const can = (entity: PermissionEntity, action: PermissionAction) =>
+    userHasPermission({ roles, entity, action });
+
+  const canReadDashboard = can(
+    PermissionEntity.dashboard,
+    PermissionAction.read,
+  );
+  const canReadTeam = can(PermissionEntity.teamMember, PermissionAction.read);
+  const canReadGeneralSettings = can(
+    PermissionEntity.generalSettings,
+    PermissionAction.read,
+  );
+  const canReadCustomFields = can(
+    PermissionEntity.customField,
+    PermissionAction.read,
+  );
+  // why: BASE already holds `assetModel.read` for the asset form, but has never
+  // had a workspace-settings entry. The scope check preserves that.
+  const canReadAssetModels =
+    !isScopedToOwnRecords &&
+    can(PermissionEntity.assetModel, PermissionAction.read);
+
+  const canSeeWorkspaceSettings =
+    canReadGeneralSettings || canReadCustomFields || canReadAssetModels;
 
   const bookingDisabled = useMemo(() => {
     if (canUseBookings) {
@@ -112,7 +149,7 @@ export function useSidebarNavItems() {
       title: t("nav.home"),
       to: "/home",
       Icon: HomeIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !canReadDashboard,
     },
     {
       type: "child",
@@ -131,21 +168,21 @@ export function useSidebarNavItems() {
       title: t("nav.categories"),
       to: "/categories",
       Icon: BoxesIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !can(PermissionEntity.category, PermissionAction.read),
     },
     {
       type: "child",
       title: t("nav.tags"),
       to: "/tags",
       Icon: TagsIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !can(PermissionEntity.tag, PermissionAction.read),
     },
     {
       type: "child",
       title: t("nav.locations"),
       to: "/locations",
       Icon: MapPinIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !can(PermissionEntity.location, PermissionAction.read),
     },
     {
       type: "child",
@@ -175,26 +212,26 @@ export function useSidebarNavItems() {
       type: "child",
       title: t("nav.reminders"),
       Icon: AlarmClockIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !can(PermissionEntity.assetReminders, PermissionAction.read),
       to: "/reminders",
     },
     {
       type: "child",
       title: t("nav.reports"),
       Icon: FileBarChartIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !canReadDashboard,
       to: "/reports",
     },
     {
       type: "label",
       title: t("nav.organization"),
-      hidden: isBaseOrSelfService,
+      hidden: !canReadTeam && !canSeeWorkspaceSettings,
     },
     {
       type: "parent",
       title: t("nav.team"),
       Icon: UsersRoundIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !canReadTeam,
       children: [
         {
           title: t("nav.users"),
@@ -216,37 +253,33 @@ export function useSidebarNavItems() {
       type: "parent",
       title: t("nav.workspaceSettings"),
       Icon: SettingsIcon,
-      hidden: isBaseOrSelfService,
+      hidden: !canSeeWorkspaceSettings,
       children: [
         {
           title: t("nav.general"),
           to: "/settings/general",
+          hidden: !canReadGeneralSettings,
         },
         {
           title: t("nav.bookings"),
           to: "/settings/bookings",
-          hidden: isPersonalOrganization,
+          hidden: isPersonalOrganization || !canReadGeneralSettings,
         },
         {
           title: t("nav.customFields"),
           to: "/settings/custom-fields",
+          hidden: !canReadCustomFields,
         },
         {
           title: t("nav.assetModels"),
           to: "/settings/asset-models",
+          hidden: !canReadAssetModels,
         },
       ],
     },
   ];
 
   const bottomMenuItems: NavItem[] = [
-    {
-      type: "child",
-      title: t("nav.assetLabels"),
-      to: `https://store.shelf.nu/?ref=shelf_webapp_sidebar`,
-      Icon: QrCodeIcon,
-      target: "_blank",
-    },
     {
       type: "child",
       title: t("nav.qrScanner"),

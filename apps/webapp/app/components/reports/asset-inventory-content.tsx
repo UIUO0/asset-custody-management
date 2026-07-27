@@ -17,6 +17,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { ReportEmptyState } from "~/components/reports/report-empty-state";
 import {
   AssetCell,
@@ -38,7 +39,7 @@ import { formatCurrency } from "~/utils/currency";
  * - CHECKED_OUT → violet
  */
 function getAssetStatusVariant(
-  status: string
+  status: string,
 ): "success" | "blue" | "violet" | "neutral" {
   switch (status) {
     case "AVAILABLE":
@@ -53,16 +54,41 @@ function getAssetStatusVariant(
 }
 
 /**
- * Format asset status for display.
- * Matches the labels from asset-status-badge.tsx.
+ * Status pill for an inventory row, translated at render time.
+ *
+ * Wraps {@link StatusCell} in a component so the `useTranslation` hook has a
+ * stable call position — the column definitions are module-scope and their
+ * `cell` renderers run per row.
+ *
+ * @param props.status - Raw status value from the report row
  */
-function formatAssetStatus(status: string): string {
-  const labels: Record<string, string> = {
-    AVAILABLE: "Available",
-    IN_CUSTODY: "In custody",
-    CHECKED_OUT: "Checked out",
+function AssetStatusCell({ status }: { status: string }) {
+  const { t } = useTranslation();
+  const key = assetStatusKey(status);
+
+  return (
+    <StatusCell
+      status={key ? t(key) : status}
+      variant={getAssetStatusVariant(status)}
+    />
+  );
+}
+
+/**
+ * Resolves the i18n key for an asset status.
+ *
+ * Returns a key rather than copy: this helper is module-scope (used by the
+ * hoisted column definitions), so the caller resolves it with `t()`. Keys come
+ * from the shared `status` namespace, keeping these labels identical to
+ * `asset-status-badge.tsx`.
+ */
+function assetStatusKey(status: string): string | null {
+  const keys: Record<string, string> = {
+    AVAILABLE: "status.AVAILABLE",
+    IN_CUSTODY: "status.IN_CUSTODY",
+    CHECKED_OUT: "status.CHECKED_OUT",
   };
-  return labels[status] || status;
+  return keys[status] ?? null;
 }
 
 /**
@@ -73,7 +99,7 @@ function formatAssetStatus(status: string): string {
 const ASSET_INVENTORY_COLUMNS: ColumnDef<AssetInventoryRow>[] = [
   {
     accessorKey: "assetName",
-    header: "Asset",
+    header: "reports.colAsset",
     cell: ({ row }) => (
       <AssetCell
         name={row.original.assetName}
@@ -84,35 +110,30 @@ const ASSET_INVENTORY_COLUMNS: ColumnDef<AssetInventoryRow>[] = [
   },
   {
     accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <StatusCell
-        status={formatAssetStatus(row.original.status)}
-        variant={getAssetStatusVariant(row.original.status)}
-      />
-    ),
+    header: "reports.colStatus",
+    cell: ({ row }) => <AssetStatusCell status={row.original.status} />,
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: "reports.colCategory",
     cell: ({ row }) =>
       row.original.category || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "location",
-    header: "Location",
+    header: "reports.colLocation",
     cell: ({ row }) =>
       row.original.location || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "custodian",
-    header: "Assigned to",
+    header: "reports.assignedTo",
     cell: ({ row }) =>
       row.original.custodian || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "valuation",
-    header: "Value",
+    header: "reports.colValue",
     // Asset-aware: shows TOTAL (valuation × quantity) for QT assets, with
     // a "<unit price> × N <unit>" subtext. INDIVIDUAL assets render the
     // single-line value as before. See {@link CurrencyCell}.
@@ -120,7 +141,7 @@ const ASSET_INVENTORY_COLUMNS: ColumnDef<AssetInventoryRow>[] = [
   },
   {
     accessorKey: "createdAt",
-    header: "Created",
+    header: "reports.colCreated",
     cell: ({ row }) => <DateCell date={row.original.createdAt} />,
   },
 ];
@@ -150,6 +171,7 @@ export function AssetInventoryContent({
   totalRows,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   const currentOrganization = useCurrentOrganization();
   const { locale } = useHints();
 
@@ -189,7 +211,9 @@ export function AssetInventoryContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Total Value</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.totalValue")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {totalValue > 0
                   ? formatCurrency({
@@ -201,7 +225,9 @@ export function AssetInventoryContent({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Not in use</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.notInUse")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {availableCount}
               </span>
@@ -231,8 +257,8 @@ export function AssetInventoryContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No assets"
-              description="Your inventory is empty."
+              title={t("reports.noAssets")}
+              description={t("reports.inventoryEmpty")}
             />
           }
         />

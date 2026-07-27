@@ -8,6 +8,7 @@ import {
 } from "@radix-ui/react-popover";
 import { useAtom } from "jotai";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ChevronRight } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 import When from "~/components/when/when";
@@ -51,7 +52,22 @@ const ACTION_CONFIGS = [
 // Create a type from the array values
 export type ActionType = (typeof ACTION_CONFIGS)[number]["id"];
 
+/**
+ * Display label per action.
+ *
+ * The `id` values above double as the persisted scanner-action state, so they
+ * stay in English. This map is the display layer on top of them — resolved
+ * with `t()` at render time.
+ */
+const ACTION_LABEL_KEYS: Record<ActionType, string> = {
+  "View asset": "scanner.viewAsset",
+  "Assign custody": "scanner.assignCustody",
+  "Release custody": "scanner.releaseCustody",
+  "Update location": "scanner.updateLocation",
+};
+
 export function ActionSwitcher() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [action, setAction] = useAtom(scannerActionAtom);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -68,18 +84,21 @@ export function ActionSwitcher() {
           roles,
           entity: permissionEntity,
           action: permissionAction,
-        })
+        }),
       ).map((config) => config.id),
-    [roles]
+    [roles],
   );
 
   const filteredActions = useMemo(() => {
     if (!searchQuery) return availableActions;
 
+    // Filter on the *translated* label so search works in the active language.
     return availableActions.filter((action) =>
-      action.toLowerCase().includes(searchQuery.toLowerCase())
+      t(ACTION_LABEL_KEYS[action])
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery, availableActions]);
+  }, [searchQuery, availableActions, t]);
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(event.target.value);
@@ -150,25 +169,29 @@ export function ActionSwitcher() {
             variant="secondary"
             className={tw(
               "py-[7px] text-[12px] font-normal ",
-              open ? "bg-gray-50" : ""
+              open ? "bg-gray-50" : "",
             )}
           >
             <ChevronRight className="ms-[2px] inline-block rotate-90" />
-            <span className="ms-2">Action: {action.toLowerCase()}</span>
+            <span className="ms-2">
+              {t("scanner.actionPrefix", {
+                action: t(ACTION_LABEL_KEYS[action]),
+              })}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverPortal>
           <PopoverContent
             align="start"
             className={tw(
-              "z-[999999] mt-2 max-h-[400px] overflow-y-scroll rounded-md border border-gray-200 bg-white"
+              "z-[999999] mt-2 max-h-[400px] overflow-y-scroll rounded-md border border-gray-200 bg-white",
             )}
           >
             <div className="flex items-center border-b">
               <Search className="ms-4 size-4 text-gray-500" />
               <input
                 ref={searchInputRef}
-                placeholder="Search action..."
+                placeholder={t("scanner.searchAction")}
                 className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
                 value={searchQuery}
                 onChange={handleSearch}
@@ -191,7 +214,7 @@ export function ActionSwitcher() {
                     // Bottom border - exclude for last item
                     index !== filteredActions.length - 1 &&
                       "after:absolute after:inset-x-0 after:bottom-0 after:border-b after:border-gray-200",
-                  ]
+                  ],
                 )}
                 role="option"
                 aria-selected={selectedIndex === index}
@@ -199,15 +222,17 @@ export function ActionSwitcher() {
                 onClick={() => changeAction(action)}
                 onKeyDown={handleActivationKeyPress(() => changeAction(action))}
               >
-                <span className="font-medium">{action}</span>
+                <span className="font-medium">
+                  {t(ACTION_LABEL_KEYS[action])}
+                </span>
                 <span className="ms-2 font-normal text-gray-500">
-                  {getActionScope(action)}
+                  {t(getActionScopeKey(action))}
                 </span>
               </div>
             ))}
             {filteredActions.length === 0 && (
               <div className="px-4 py-2 text-[14px] text-gray-500">
-                No columns found
+                {t("scanner.noActionsFound")}
               </div>
             )}
           </PopoverContent>
@@ -217,16 +242,19 @@ export function ActionSwitcher() {
   );
 }
 
-/*
- * Returns the scope of the action
+/**
+ * Returns the i18n key for an action's scope ("single" vs "bulk").
+ *
+ * Returns a key rather than copy because this helper sits at module scope,
+ * outside any component — the caller resolves it with `t()`.
  */
-function getActionScope(action: ActionType) {
+function getActionScopeKey(action: ActionType) {
   switch (action) {
     case "View asset":
-      return "single";
+      return "scanner.scopeSingle";
     case "Assign custody":
     case "Release custody":
     case "Update location":
-      return "bulk";
+      return "scanner.scopeBulk";
   }
 }

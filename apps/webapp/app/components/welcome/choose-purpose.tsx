@@ -2,6 +2,7 @@ import type React from "react";
 import { useReducer } from "react";
 import type { Currency } from "@prisma/client";
 import { CheckIcon, UserIcon, UsersIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { Form } from "~/components/custom-form";
 import type { PriceWithProduct } from "~/components/subscription/prices";
@@ -45,7 +46,7 @@ const INITIAL_CHOOSE_PURPOSE_STATE: ChoosePurposeState = {
 
 function choosePurposeReducer(
   state: ChoosePurposeState,
-  action: ChoosePurposeAction
+  action: ChoosePurposeAction,
 ): ChoosePurposeState {
   switch (action.type) {
     case "select_plan":
@@ -100,21 +101,22 @@ const PLAN_DETAILS: Record<
     title: string;
     description: string;
     chip: string;
-    helper?: string;
+    /** i18n key for the helper line under the plan cards. */
+    helperKey?: string;
     badge?: string;
     analytics: string;
-    ctaLabel: string;
+    /** i18n key for the primary CTA label. */
+    ctaLabelKey: string;
     href: string;
   }
 > = {
   personal: {
     title: "Personal",
-    description:
-      "For testing or individual use. Includes 3 custom fields and branded QR labels.",
+    description: "welcome.personalPlanHint",
     chip: "Free",
-    helper: "Personal workspaces are free and ready to use immediately.",
+    helperKey: "welcome.personalFreeHint",
     analytics: "cta-start-personal",
-    ctaLabel: "Start using Shelf",
+    ctaLabelKey: "welcome.startUsingSystem",
     href: "/assets",
   },
   team: {
@@ -123,7 +125,7 @@ const PLAN_DETAILS: Record<
     chip: `${config.freeTrialDays}-day trial`,
     badge: "Recommended",
     analytics: "cta-next-team",
-    ctaLabel: "Next: Select a plan",
+    ctaLabelKey: "welcome.nextSelectPlan",
     href: "/select-plan",
   },
 };
@@ -139,9 +141,10 @@ export function ChoosePurpose({
   usedAuditTrial: boolean;
   usedBarcodeTrial: boolean;
 }) {
+  const { t } = useTranslation();
   const [state, dispatch] = useReducer(
     choosePurposeReducer,
-    INITIAL_CHOOSE_PURPOSE_STATE
+    INITIAL_CHOOSE_PURPOSE_STATE,
   );
   const {
     selectedPlan,
@@ -181,7 +184,9 @@ export function ChoosePurpose({
   const ctaLabel =
     selectedPlan === "personal" && wantsAnyAddon
       ? `Start with ${selectedAddons.join(" & ")} trial`
-      : selectedDetails?.ctaLabel ?? "Start using Shelf";
+      : selectedDetails
+      ? t(selectedDetails.ctaLabelKey)
+      : t("welcome.startUsingSystem");
 
   // Determine href for team flow (pass addon params)
   const teamParams = new URLSearchParams();
@@ -204,15 +209,15 @@ export function ChoosePurpose({
         <ShelfSymbolLogo className="mb-4 size-8" />
         <div className="mb-4 max-w-2xl text-center">
           <h3 className="text-2xl font-semibold text-gray-900">
-            How would you like to get started with Shelf?
+            How would you like to get started?
           </h3>
           <p className="mt-3 text-base text-gray-600">
             Your choice determines which features we prepare for you. You can
             always switch later.
           </p>
           <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
-            If your organization already uses Shelf, you don't need to create a
-            new workspace — look for your email invite or sign in instead.
+            If your organization already has a workspace, you don't need to
+            create a new one — look for your email invite or sign in instead.
           </p>
         </div>
         <h4 className=" w-full text-start  font-semibold text-gray-700">
@@ -231,7 +236,11 @@ export function ChoosePurpose({
                   dispatch({ type: "select_plan", plan: key });
                 }}
                 selected={isSelected}
-                description={plan.description}
+                description={
+                  planKey === "personal"
+                    ? t(plan.description)
+                    : plan.description
+                }
                 title={plan.title}
                 chipLabel={plan.chip}
                 badgeLabel={plan.badge}
@@ -240,9 +249,9 @@ export function ChoosePurpose({
             );
           })}
         </div>
-        {PLAN_DETAILS.personal.helper ? (
+        {PLAN_DETAILS.personal.helperKey ? (
           <p className="mt-1 w-full text-sm text-gray-500">
-            {PLAN_DETAILS.personal.helper}
+            {t(PLAN_DETAILS.personal.helperKey)}
           </p>
         ) : null}
 
@@ -349,7 +358,7 @@ function AddonToggle({
         className={tw(
           "my-0 p-0",
           "transition-shadow",
-          selected ? "" : "hover:border-gray-300"
+          selected ? "" : "hover:border-gray-300",
         )}
       >
         <button
@@ -357,7 +366,9 @@ function AddonToggle({
           onClick={onToggle}
           className={tw(
             "relative flex w-full items-start gap-3 rounded border border-transparent p-4 text-start",
-            selected ? "border-primary-400 bg-primary-50" : "border-transparent"
+            selected
+              ? "border-primary-400 bg-primary-50"
+              : "border-transparent",
           )}
         >
           <div
@@ -365,11 +376,13 @@ function AddonToggle({
               "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border-2",
               selected
                 ? "border-primary-500 bg-primary-500"
-                : "border-gray-300 bg-white"
+                : "border-gray-300 bg-white",
             )}
             aria-hidden="true"
           >
-            {selected ? <CheckIcon className="size-3 text-static-white" /> : null}
+            {selected ? (
+              <CheckIcon className="size-3 text-static-white" />
+            ) : null}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -411,7 +424,7 @@ function AddonBillingCards({
             (yearlyPrice.unit_amount || 0) /
               12 /
               (monthlyPrice.unit_amount || 1)) *
-            100
+            100,
         )
       : null;
 
@@ -425,13 +438,15 @@ function AddonBillingCards({
             "flex flex-1 cursor-pointer flex-col items-center rounded-lg p-4 text-center transition-colors",
             billingInterval === "month"
               ? "border-2 border-primary-200 bg-primary-25"
-              : "border border-gray-200"
+              : "border border-gray-200",
           )}
         >
           <p
             className={tw(
               "mb-1 text-sm font-medium",
-              billingInterval === "month" ? "text-primary-600" : "text-gray-500"
+              billingInterval === "month"
+                ? "text-primary-600"
+                : "text-gray-500",
             )}
           >
             Monthly
@@ -452,7 +467,7 @@ function AddonBillingCards({
             "relative flex flex-1 cursor-pointer flex-col items-center rounded-lg p-4 text-center transition-colors",
             billingInterval === "year"
               ? "border-2 border-primary-200 bg-primary-25"
-              : "border border-gray-200"
+              : "border border-gray-200",
           )}
         >
           {yearlyDiscount != null && yearlyDiscount > 0 && (
@@ -463,7 +478,7 @@ function AddonBillingCards({
           <p
             className={tw(
               "mb-1 text-sm font-medium",
-              billingInterval === "year" ? "text-primary-600" : "text-gray-500"
+              billingInterval === "year" ? "text-primary-600" : "text-gray-500",
             )}
           >
             Yearly
@@ -471,7 +486,7 @@ function AddonBillingCards({
           <p className="text-2xl font-semibold">
             {fmtPrice(
               Math.round((yearlyPrice.unit_amount || 0) / 12),
-              yearlyPrice.currency
+              yearlyPrice.currency,
             )}
             <span className="text-sm font-normal text-gray-500">/mo</span>
           </p>
@@ -510,7 +525,7 @@ function PlanCard({
       className={tw(
         "flex-1 p-0",
         "transition-shadow",
-        selected ? "" : "hover:border-gray-300"
+        selected ? "" : "hover:border-gray-300",
       )}
     >
       <button
@@ -518,7 +533,7 @@ function PlanCard({
         onClick={() => onSelect(planKey)}
         className={tw(
           "relative flex size-full flex-col rounded border border-transparent bg-white px-4 py-5 text-start",
-          selected ? "border-primary-400 bg-primary-50" : "border-transparent"
+          selected ? "border-primary-400 bg-primary-50" : "border-transparent",
         )}
       >
         <div className="absolute right-1.5 top-1.5">

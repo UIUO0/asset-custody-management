@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AssetStatus, AssetType, KitStatus } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
 import { AlertCircleIcon } from "lucide-react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useTranslation } from "react-i18next";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import {
   data,
   redirect,
@@ -52,6 +57,9 @@ import {
 import { Td, Th } from "~/components/table";
 import When from "~/components/when/when";
 import { db } from "~/database/db.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getPaginatedAndFilterableAssets } from "~/modules/asset/service.server";
 import type { AssetsFromViewItem } from "~/modules/asset/types";
 import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
@@ -71,14 +79,27 @@ import {
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 
-export const meta = () => [{ title: appendToMetaTitle("Manage kit assets") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.kits.manageKitAssets) }];
+};
 
 type LoaderData = typeof loader;
 
+/**
+ * Kit-membership filter options for the picker.
+ *
+ * `labelKey` holds an **i18n key**: this list is module-scope, so the copy is
+ * resolved with `t()` where the options are rendered.
+ */
 const ASSET_KIT_FILTERS = [
-  { label: "All assets", value: "ALL" },
-  { label: "Not in any kit", value: "NOT_IN_KIT" },
-  { label: "In other kits", value: "IN_OTHER_KITS" },
+  { labelKey: "list.allAssets", value: "ALL" },
+  { labelKey: "list.notInAnyKit", value: "NOT_IN_KIT" },
+  { labelKey: "list.inOtherKits", value: "IN_OTHER_KITS" },
 ];
 
 /**
@@ -191,15 +212,19 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       pickerMeta: pickerMetaByAssetId.get(a.id) ?? null,
     }));
 
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     return payload({
       header: {
-        title: `Add assets for ${kit.name}`,
-        subHeading: "Fill up the kit with the assets of your choice.",
+        title: t("kits.addAssetsForTitle", { name: kit.name }),
+        subHeading: t("kits.addAssetsSubHeading"),
       },
-      searchFieldLabel: "Search assets",
+      searchFieldLabel: t("search.assetsLabel"),
       searchFieldTooltip: {
-        title: "Search your asset database",
-        text: "Search assets based on asset name or description, category, tag, location, custodian name. Simply separate your keywords by a space: 'Laptop lenovo 2020'.",
+        title: t("search.assetsTitle"),
+        text: t("search.assetsText"),
       },
       showSidebar: true,
       noScroll: true,
@@ -263,6 +288,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function ManageAssetsInKit() {
+  const { t } = useTranslation();
   const assetSortingOptions = useAssetSortingOptions();
   const { kit, items, totalItems } = useLoaderData<LoaderData>();
   // why: `.map` returns a new array each render. The effects below depend on
@@ -413,9 +439,12 @@ export default function ManageAssetsInKit() {
                 />
                 <SelectWithSearchParams
                   name="assetKitFilter"
-                  items={ASSET_KIT_FILTERS}
+                  items={ASSET_KIT_FILTERS.map(({ labelKey, value }) => ({
+                    label: t(labelKey),
+                    value,
+                  }))}
                   defaultValue="ALL"
-                  placeholder="Filter by kit"
+                  placeholder={t("list.filterByKit")}
                 />
               </div>
             ),
@@ -430,7 +459,7 @@ export default function ManageAssetsInKit() {
             </div>
           }
           model={{ name: "category", queryKey: "name" }}
-          label="Filter by category"
+          label={t("list.filterByCategory")}
           initialDataKey="categories"
           countKey="totalCategories"
         />
@@ -441,7 +470,7 @@ export default function ManageAssetsInKit() {
             </div>
           }
           model={{ name: "tag", queryKey: "name" }}
-          label="Filter by tags"
+          label={t("list.filterByTags")}
           initialDataKey="tags"
           countKey="totalTags"
         />
@@ -452,7 +481,7 @@ export default function ManageAssetsInKit() {
             </div>
           }
           model={{ name: "location", queryKey: "name" }}
-          label="Filter by Location"
+          label={t("list.filterByLocationTitle")}
           initialDataKey="locations"
           countKey="totalLocations"
           renderItem={({ metadata }) => (
@@ -513,8 +542,8 @@ export default function ManageAssetsInKit() {
             updateItem(item);
           }}
           customEmptyStateContent={{
-            title: "You haven't added any assets yet.",
-            text: "What are you waiting for? Create your first asset now!",
+            title: t("assets.pickerEmptyTitle"),
+            text: t("assets.pickerEmptyText"),
             newButtonRoute: "/assets/new",
             newButtonContent: "New asset",
           }}

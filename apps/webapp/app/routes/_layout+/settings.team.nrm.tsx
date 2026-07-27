@@ -31,6 +31,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { requirePermission } from "~/utils/roles.server";
 import { canImportNRM } from "~/utils/subscription.server";
 
@@ -172,7 +173,13 @@ export async function action({ context, request }: ActionFunctionArgs) {
 export default function NrmSettings() {
   const { t } = useTranslation();
   const { canImportNRM } = useLoaderData<typeof loader>();
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
+  // The new operational roles read the team directory but never mutate it.
+  const canBulkManage = userHasPermission({
+    roles,
+    entity: PermissionEntity.teamMember,
+    action: PermissionAction.delete,
+  });
 
   return (
     <div>
@@ -195,9 +202,7 @@ export default function NrmSettings() {
         </Filters>
 
         <List
-          bulkActions={
-            isBaseOrSelfService ? undefined : <BulkActionsDropdown />
-          }
+          bulkActions={canBulkManage ? <BulkActionsDropdown /> : undefined}
           className="overflow-x-visible md:overflow-x-auto"
           ItemComponent={TeamMemberRow}
           customEmptyStateContent={{

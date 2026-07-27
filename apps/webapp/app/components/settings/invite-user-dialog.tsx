@@ -1,17 +1,20 @@
 import type { ReactElement } from "react";
 import { cloneElement, useCallback, useEffect, useState } from "react";
-import { OrganizationRoles } from "@prisma/client";
 import { UserIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import useFetcherWithReset from "~/hooks/use-fetcher-with-reset";
-import type { UserFriendlyRoles } from "~/routes/_layout+/settings.team";
 import { isFormProcessing } from "~/utils/form";
 import { getValidationErrors } from "~/utils/http";
 import type { DataOrErrorResponse } from "~/utils/http.server";
 import { validEmail } from "~/utils/misc";
+import {
+  ASSIGNABLE_ORGANIZATION_ROLES,
+  ORGANIZATION_ROLE_DESCRIPTION_KEYS,
+  ORGANIZATION_ROLE_LABEL_KEYS,
+} from "~/utils/roles";
 import Input from "../forms/input";
 import {
   Select,
@@ -43,25 +46,21 @@ export const InviteUserFormSchema = z.object({
       message: "Please enter a valid email",
     })),
   teamMemberId: z.string().optional(),
+  /**
+   * Driven by the shared role list rather than a hand-written tuple.
+   *
+   * The tuple used to name three roles explicitly, so WAREHOUSE/FINANCE/
+   * INVENTORY invites would have been rejected by validation even once the
+   * dropdown offered them.
+   */
   role: z.preprocess(
     (value) => String(value).trim().toUpperCase(),
-    z.enum(
-      [
-        OrganizationRoles.ADMIN,
-        OrganizationRoles.BASE,
-        OrganizationRoles.SELF_SERVICE,
-      ],
-      { message: "Please select a role" },
-    ),
+    z.enum(ASSIGNABLE_ORGANIZATION_ROLES, {
+      message: "Please select a role",
+    }),
   ),
   inviteMessage: z.string().max(1000).optional(),
 });
-
-const organizationRolesMap: Record<string, UserFriendlyRoles> = {
-  [OrganizationRoles.ADMIN]: "Administrator",
-  [OrganizationRoles.BASE]: "Base",
-  [OrganizationRoles.SELF_SERVICE]: "Self service",
-};
 
 export default function InviteUserDialog({
   className,
@@ -196,11 +195,14 @@ export default function InviteUserDialog({
                     align="start"
                   >
                     <div className=" max-h-[320px] overflow-auto">
-                      {Object.entries(organizationRolesMap).map(([k, v]) => (
-                        <SelectItem value={k} key={k} className="p-2">
-                          <div className="flex items-center gap-2">
-                            <div className=" ms-px block text-sm lowercase text-gray-900 first-letter:uppercase">
-                              {v}
+                      {ASSIGNABLE_ORGANIZATION_ROLES.map((role) => (
+                        <SelectItem value={role} key={role} className="p-2">
+                          <div className="flex flex-col items-start gap-0.5 text-start">
+                            <div className="ms-px block text-sm text-gray-900">
+                              {t(ORGANIZATION_ROLE_LABEL_KEYS[role])}
+                            </div>
+                            <div className="ms-px block text-xs text-gray-500">
+                              {t(ORGANIZATION_ROLE_DESCRIPTION_KEYS[role])}
                             </div>
                           </div>
                         </SelectItem>

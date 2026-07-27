@@ -1,8 +1,15 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import { data } from "react-router";
 import { z } from "zod";
-import { newBookingHeader } from "~/components/booking/new-booking-header";
+import { getNewBookingHeader } from "~/components/booking/new-booking-header";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
+import { getLocale } from "~/i18n/i18n.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getTagsForBookingTagsFilter } from "~/modules/tag/service.server";
 import { getTeamMemberForForm } from "~/modules/team-member/service.server";
 import NewBooking, {
@@ -23,7 +30,14 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Create new booking") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.bookings.createNewBooking) }];
+};
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const searchParams = getCurrentSearchParams(request);
@@ -34,7 +48,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
-    const { organizationId, currentOrganization, isSelfServiceOrBase } =
+    const { organizationId, currentOrganization, isScopedToOwnRecords } =
       await requirePermission({
         userId,
         request,
@@ -58,7 +72,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       getTeamMemberForForm({
         organizationId,
         userId,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         getAll:
           searchParams.has("getAll") &&
           hasGetAllValue(searchParams, "teamMember"),
@@ -68,13 +82,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       }),
     ]);
 
-    const selfServiceOrBaseUser = isSelfServiceOrBase
+    const selfServiceOrBaseUser = isScopedToOwnRecords
       ? teamMembersData.teamMembers.find(
-          (member) => member.userId === authSession.userId
+          (member) => member.userId === authSession.userId,
         )
       : undefined;
 
-    if (isSelfServiceOrBase && !selfServiceOrBaseUser) {
+    if (isScopedToOwnRecords && !selfServiceOrBaseUser) {
       throw new ShelfError({
         cause: null,
         message:
@@ -84,11 +98,11 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     }
 
     return payload({
-      header: newBookingHeader,
+      header: getNewBookingHeader(getLocale(request)),
       currentOrganization,
       userId,
       showModal: true,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       selfServiceOrBaseUser,
       ...teamMembersData,
       // For consistency, also provide teamMembersForForm

@@ -1,7 +1,7 @@
 /**
  * Bar Chart Component
  *
- * Categorical bar chart built on Recharts with Shelf's design tokens.
+ * Categorical bar chart built on Recharts with the app's design tokens.
  * Supports both vertical and horizontal orientations.
  *
  * Features:
@@ -36,7 +36,7 @@ const SERIES_COLORS = [
   "#f59e0b", // amber-500
 ];
 
-/** Shelf's color palette for charts */
+/** Brand color palette for charts */
 const CHART_COLORS = {
   grid: "#F2F4F7", // gray-100
   axis: "#667085", // gray-500
@@ -198,7 +198,7 @@ export function BarChart({
                         {tooltipFormatter
                           ? tooltipFormatter(
                               entry.value as number,
-                              entry.name as string
+                              entry.name as string,
                             )
                           : (entry.value as number).toLocaleString()}
                       </span>

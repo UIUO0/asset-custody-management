@@ -16,7 +16,8 @@ export function ScanDetails({
   const { t } = useTranslation();
   let latitude, longitude;
 
-  const hasLocation = lastScan?.coordinates !== "Unknown location";
+  const hasLocation =
+    lastScan?.coordinates !== t("scanDetails.unknownLocation");
 
   if (hasLocation) {
     latitude = lastScan?.coordinates.split(",")[0];
@@ -60,7 +61,7 @@ export function ScanDetails({
               <p>
                 {lastScan.ua.device.model && lastScan.ua.device.vendor
                   ? `${lastScan.ua.device.vendor} - ${lastScan.ua.device.model}`
-                  : "Unknown device"}
+                  : t("scanDetails.unknownDevice")}
               </p>
             </div>
             <div className="flex justify-between py-2">
@@ -81,7 +82,7 @@ export function ScanDetails({
               <p>Source</p>
               <p>
                 {lastScan.manuallyGenerated
-                  ? "Manually updated"
+                  ? t("scanDetails.manuallyUpdated")
                   : "QR code scan"}{" "}
                 <InfoTooltip
                   icon={<HelpIcon />}

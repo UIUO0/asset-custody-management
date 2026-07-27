@@ -35,7 +35,7 @@ export default function BookingActionsDropdown() {
   const disabledTrigger = availableToBook
     ? false
     : {
-        reason: "This asset has been marked as unavailable for bookings.",
+        reason: t("assetActions.markedUnavailableForBookings"),
       };
 
   const links = [
@@ -43,14 +43,14 @@ export default function BookingActionsDropdown() {
       indexType: "asset",
       id: asset.id,
       disabled,
-      label: "Create new booking",
+      label: t("assetActions.createNewBooking"),
       icon: "bookings",
       to: "overview/create-new-booking",
     },
     {
       indexType: "asset",
       id: asset.id,
-      label: "Add to existing booking",
+      label: t("assetActions.addToExistingBooking"),
       icon: "booking-exist",
       disabled,
       to: `overview/add-to-existing-booking`,

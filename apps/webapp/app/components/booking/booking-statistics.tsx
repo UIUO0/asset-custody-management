@@ -1,4 +1,5 @@
 import type { BookingStatus, Tag as PrismaTag, User } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { BookingLifecycleProgress as BookingLifecycleProgressType } from "~/modules/booking/utils.server";
 import { resolveUserDisplayName } from "~/utils/user";
 import { BookingLifecycleProgress as BookingLifecycleProgressBar } from "./booking-lifecycle-progress";
@@ -40,13 +41,17 @@ export function BookingStatistics({
   autoArchivedAt?: Date | null;
   status: BookingStatus;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="m-0">
-      <h3>Booking statistics</h3>
+      <h3>{t("bookings.statisticsTitle")}</h3>
       <div className="mt-4 flex flex-col gap-4">
         <Separator />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Booking duration</span>
+          <span className="text-sm text-gray-500">
+            {t("bookings.bookingDuration")}
+          </span>
           <span className="text-end font-medium">{duration}</span>
         </div>
 
@@ -65,42 +70,39 @@ export function BookingStatistics({
           )}
         <Separator />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Assets</span>
+          <span className="text-sm text-gray-500">{t("assets.title")}</span>
           <span className="text-end font-medium">{assetsCount}</span>
         </div>
         <Separator />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Kits</span>
+          <span className="text-sm text-gray-500">{t("nav.kits")}</span>
           <span className="text-end font-medium">{kitsCount}</span>
         </div>
         <Separator />
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1 text-sm text-gray-500">
-            Total assets{" "}
+            {t("bookings.totalAssets")}{" "}
             <InfoTooltip
               iconClassName="size-4"
-              content={
-                <p>
-                  The total number of assets in this booking including assets
-                  inside kits.
-                </p>
-              }
+              content={<p>{t("bookings.totalAssetsTooltip")}</p>}
             />
           </span>
           <span className="text-end font-medium">{totalAssets}</span>
         </div>
         <Separator />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">Total value</span>
+          <span className="text-sm text-gray-500">
+            {t("bookings.totalValue")}
+          </span>
           <span className="text-end font-medium">{totalValue}</span>
         </div>
         <Separator />
         <div className="flex items-start justify-between">
-          <span className="text-sm text-gray-500">Categories</span>
+          <span className="text-sm text-gray-500">{t("nav.categories")}</span>
           <div className="text-end">
             <ItemsWithViewMore
               items={allCategories}
-              emptyMessage="No categories"
+              emptyMessage={t("bookings.noCategories")}
               renderItem={(category) => (
                 <CategoryBadge category={category} key={category.id} />
               )}
@@ -109,11 +111,11 @@ export function BookingStatistics({
         </div>
         <Separator />
         <div className="flex items-start justify-between">
-          <span className="text-sm text-gray-500">Tags</span>
+          <span className="text-sm text-gray-500">{t("nav.tags")}</span>
           <div className="text-end">
             <ItemsWithViewMore
               items={tags}
-              emptyMessage="No tags"
+              emptyMessage={t("bookings.noTags")}
               renderItem={(tag) => (
                 <TagBadge
                   key={tag.id}
@@ -129,7 +131,9 @@ export function BookingStatistics({
         <Separator />
 
         <div className="flex items-start justify-between">
-          <span className="text-sm text-gray-500">Created by</span>
+          <span className="text-sm text-gray-500">
+            {t("bookings.createdBy")}
+          </span>
 
           <UserBadge
             name={resolveUserDisplayName(creator)}
@@ -142,7 +146,7 @@ export function BookingStatistics({
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">
-                Automatically archived
+                {t("bookings.automaticallyArchived")}
               </span>
               <span className="text-end font-medium">
                 <DateS date={autoArchivedAt} />

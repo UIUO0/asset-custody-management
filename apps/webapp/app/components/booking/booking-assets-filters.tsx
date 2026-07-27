@@ -1,3 +1,4 @@
+import { Trans } from "react-i18next";
 import { Filters } from "~/components/list/filters";
 import { SortBy } from "~/components/list/filters/sort-by";
 import { BOOKING_ASSET_SORTING_OPTIONS } from "~/modules/booking/constants";
@@ -41,13 +42,16 @@ export function BookingAssetsFilters() {
             hint={
               <div className="text-xs">
                 <p>
-                  <strong>Status</strong> keeps items still to check out on top
-                  and moves checked-out items to the bottom, so you can focus on
-                  what's left.
+                  <Trans
+                    i18nKey="bookings.sortStatusHint"
+                    components={{ 1: <strong /> }}
+                  />
                 </p>
                 <p className="mt-1">
-                  <strong>Item type</strong> groups kits first, then individual
-                  assets.
+                  <Trans
+                    i18nKey="bookings.sortItemTypeHint"
+                    components={{ 1: <strong /> }}
+                  />
                 </p>
               </div>
             }

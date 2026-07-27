@@ -26,6 +26,7 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import { AssetImage } from "~/components/assets/asset-image";
 import KitImage from "~/components/kits/kit-image";
 import { DateS } from "~/components/shared/date";
@@ -96,6 +97,7 @@ export function ReportTable<TData>({
   manualSorting = false,
   onSortChange,
 }: ReportTableProps<TData>) {
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>(initialSorting);
 
   // Sync sorting state when initialSorting prop changes (e.g., browser back/forward navigation)
@@ -170,8 +172,15 @@ export function ReportTable<TData>({
                       style={{ width: header.getSize() }}
                     >
                       <div className="flex items-center gap-1.5">
+                        {/* String headers are i18n keys — the column
+                            definitions live at module scope (for render
+                            stability) where the `t` hook is unavailable, so
+                            they store keys and are resolved here. Function
+                            headers render through `flexRender` as usual. */}
                         {header.isPlaceholder
                           ? null
+                          : typeof header.column.columnDef.header === "string"
+                          ? t(header.column.columnDef.header)
                           : flexRender(
                               header.column.columnDef.header,
                               header.getContext(),
@@ -213,7 +222,7 @@ export function ReportTable<TData>({
                 colSpan={columns.length}
                 className="px-4 py-12 text-center text-sm text-gray-500"
               >
-                {emptyContent || "No data available"}
+                {emptyContent || t("reports.noDataAvailable")}
               </td>
             </tr>
           )}

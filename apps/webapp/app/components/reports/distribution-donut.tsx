@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { DonutChart } from "@tremor/react";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ClientOnly } from "remix-utils/client-only";
 
 import { tw } from "~/utils/tw";
@@ -43,7 +44,7 @@ export interface DistributionDonutProps {
  * Uses a harmonious progression from warm to cool colors.
  */
 const DISTRIBUTION_COLORS = [
-  "orange", // Primary (Shelf brand)
+  "orange", // Primary (brand)
   "blue", // Secondary
   "emerald", // Tertiary
   "violet", // Quaternary
@@ -66,11 +67,12 @@ const DISTRIBUTION_COLORS = [
 export function DistributionDonut({
   title,
   data,
-  emptyMessage = "No data available",
+  emptyMessage,
   maxLegendItems = 5,
   onItemClick,
   className,
 }: DistributionDonutProps) {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const total = data.reduce((sum, item) => sum + item.assetCount, 0);
 
@@ -85,7 +87,7 @@ export function DistributionDonut({
     .slice(10)
     .reduce((sum, item) => sum + item.assetCount, 0);
   if (otherCount > 0) {
-    chartData.push({ name: "Other", value: otherCount });
+    chartData.push({ name: t("reports.other"), value: otherCount });
   }
 
   if (data.length === 0 || total === 0) {
@@ -93,14 +95,16 @@ export function DistributionDonut({
       <div
         className={tw(
           "flex flex-col rounded border border-gray-200 bg-white",
-          className
+          className,
         )}
       >
         <div className="border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
         </div>
         <div className="flex h-[200px] items-center justify-center p-4">
-          <p className="text-sm text-gray-500">{emptyMessage}</p>
+          <p className="text-sm text-gray-500">
+            {emptyMessage ?? t("reports.noDataAvailable")}
+          </p>
         </div>
       </div>
     );
@@ -116,7 +120,7 @@ export function DistributionDonut({
     <div
       className={tw(
         "flex flex-col rounded border border-gray-200 bg-white",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -167,7 +171,7 @@ export function DistributionDonut({
                 "-mx-2 flex w-full items-center justify-between rounded-md px-2 py-1.5",
                 isClickable &&
                   "cursor-pointer transition-colors hover:bg-gray-50",
-                !isClickable && "cursor-default"
+                !isClickable && "cursor-default",
               )}
             >
               <div className="flex min-w-0 items-center gap-2">
@@ -175,14 +179,14 @@ export function DistributionDonut({
                   className="size-2.5 shrink-0 rounded-full"
                   style={{
                     backgroundColor: getColorValue(
-                      DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length]
+                      DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length],
                     ),
                   }}
                 />
                 <span
                   className={tw(
                     "truncate text-sm",
-                    isClickable ? "text-gray-900" : "text-gray-700"
+                    isClickable ? "text-gray-900" : "text-gray-700",
                   )}
                   title={item.groupName}
                 >

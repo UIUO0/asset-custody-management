@@ -18,6 +18,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { ReportEmptyState } from "~/components/reports/report-empty-state";
 import {
   AssetCell,
@@ -31,10 +32,71 @@ import { tw } from "~/utils/tw";
  * Column definitions for the Asset Activity table, hoisted to module
  * scope. Same loop fix as IDLE_ASSETS_COLUMNS.
  */
+/**
+ * Pill rendering a single activity type in the current language.
+ *
+ * A component (rather than inline copy in the `cell` renderer) so the
+ * `useTranslation` hook is called at a stable position — TanStack cell
+ * renderers are plain functions invoked per row, where a hook would break
+ * React's call-order guarantee.
+ *
+ * @param props.type - Raw `activityType` value from the report row
+ */
+/**
+ * Fallback actor label for activity rows with no `performedBy` (system-driven
+ * changes). A component so the translation hook has a stable call position.
+ */
+function SystemActorLabel() {
+  const { t } = useTranslation();
+
+  return <span className="text-gray-400">{t("reports.system")}</span>;
+}
+
+function ActivityTypeBadge({ type }: { type: string }) {
+  const { t } = useTranslation();
+
+  /** Plain-language label per activity type — no jargon or internal codes. */
+  const labelKeys: Record<string, string> = {
+    CREATED: "reports.activityCreated",
+    UPDATED: "reports.activityUpdated",
+    CUSTODY_ASSIGNED: "reports.activityCustodyAssigned",
+    CUSTODY_RELEASED: "reports.activityCustodyReleased",
+    BOOKING_CHECKED_OUT: "reports.activityCheckedOut",
+    BOOKING_CHECKED_IN: "reports.activityCheckedIn",
+    LOCATION_CHANGED: "reports.activityLocationChanged",
+    CATEGORY_CHANGED: "reports.activityCategoryChanged",
+  };
+
+  /** Semantic colors for activity types. */
+  const colors: Record<string, string> = {
+    CREATED: "bg-green-100 text-green-700",
+    UPDATED: "bg-blue-100 text-blue-700",
+    CUSTODY_ASSIGNED: "bg-violet-100 text-violet-700",
+    CUSTODY_RELEASED: "bg-violet-100 text-violet-700",
+    BOOKING_CHECKED_OUT: "bg-orange-100 text-orange-700",
+    BOOKING_CHECKED_IN: "bg-green-100 text-green-700",
+    LOCATION_CHANGED: "bg-blue-100 text-blue-700",
+    CATEGORY_CHANGED: "bg-blue-100 text-blue-700",
+  };
+
+  const labelKey = labelKeys[type];
+
+  return (
+    <span
+      className={tw(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        colors[type] || "bg-gray-100 text-gray-700",
+      )}
+    >
+      {labelKey ? t(labelKey) : type}
+    </span>
+  );
+}
+
 const ASSET_ACTIVITY_COLUMNS: ColumnDef<AssetActivityRow>[] = [
   {
     accessorKey: "assetName",
-    header: "Asset",
+    header: "reports.colAsset",
     cell: ({ row }) => (
       <AssetCell
         name={row.original.assetName}
@@ -45,52 +107,17 @@ const ASSET_ACTIVITY_COLUMNS: ColumnDef<AssetActivityRow>[] = [
   },
   {
     accessorKey: "activityType",
-    header: "Activity",
-    cell: ({ row }) => {
-      const type = row.original.activityType;
-      // Plain English labels — no jargon or internal codes
-      const labels: Record<string, string> = {
-        CREATED: "Asset created",
-        UPDATED: "Asset updated",
-        CUSTODY_ASSIGNED: "Assigned to team member",
-        CUSTODY_RELEASED: "Returned from team member",
-        BOOKING_CHECKED_OUT: "Checked out",
-        BOOKING_CHECKED_IN: "Checked in",
-        LOCATION_CHANGED: "Location changed",
-        CATEGORY_CHANGED: "Category changed",
-      };
-      // Semantic colors for activity types
-      const colors: Record<string, string> = {
-        CREATED: "bg-green-100 text-green-700",
-        UPDATED: "bg-blue-100 text-blue-700",
-        CUSTODY_ASSIGNED: "bg-violet-100 text-violet-700",
-        CUSTODY_RELEASED: "bg-violet-100 text-violet-700",
-        BOOKING_CHECKED_OUT: "bg-orange-100 text-orange-700",
-        BOOKING_CHECKED_IN: "bg-green-100 text-green-700",
-        LOCATION_CHANGED: "bg-blue-100 text-blue-700",
-        CATEGORY_CHANGED: "bg-blue-100 text-blue-700",
-      };
-      return (
-        <span
-          className={tw(
-            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-            colors[type] || "bg-gray-100 text-gray-700"
-          )}
-        >
-          {labels[type] || type}
-        </span>
-      );
-    },
+    header: "reports.colActivity",
+    cell: ({ row }) => <ActivityTypeBadge type={row.original.activityType} />,
   },
   {
     accessorKey: "performedBy",
-    header: "Changed by",
-    cell: ({ row }) =>
-      row.original.performedBy || <span className="text-gray-400">System</span>,
+    header: "reports.changedBy",
+    cell: ({ row }) => row.original.performedBy || <SystemActorLabel />,
   },
   {
     accessorKey: "occurredAt",
-    header: "Date & Time",
+    header: "reports.dateAndTime",
     cell: ({ row }) => <DateCell date={row.original.occurredAt} />,
   },
 ];
@@ -117,6 +144,7 @@ export function AssetActivityContent({
   totalRows,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   // Stable reference is guaranteed by `ASSET_ACTIVITY_COLUMNS` living at
   // module scope (see its JSDoc for why that matters).
   const columns = ASSET_ACTIVITY_COLUMNS;
@@ -159,13 +187,17 @@ export function AssetActivityContent({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Check-ins/outs</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.checkInsOuts")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {bookingActivities}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Most Active Asset</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.mostActiveAsset")}
+              </span>
               <span
                 className="max-w-[120px] truncate text-lg font-medium text-gray-900"
                 title={mostActiveAsset}
@@ -218,8 +250,8 @@ export function AssetActivityContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No activity"
-              description="No asset activity recorded in this timeframe."
+              title={t("reports.noActivity")}
+              description={t("reports.noActivityInTimeframe")}
             />
           }
         />

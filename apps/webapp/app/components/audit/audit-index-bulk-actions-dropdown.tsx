@@ -14,6 +14,7 @@
  * @see {@link file://../../routes/_layout+/audits._index.tsx} - Consuming page
  */
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { useSearchParams } from "~/hooks/search-params";
@@ -64,6 +65,7 @@ export default function AuditIndexBulkActionsDropdown() {
 
 /** Inner dropdown rendered only after hydration. */
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const selectedAudits = useAtomValue(selectedBulkItemsAtom);
   const audits = selectedAudits as unknown as AuditListItem[];
 
@@ -134,7 +136,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
           onClick={closeMenu}
           aria-hidden="true"
@@ -196,7 +198,7 @@ function ConditionalDropdown() {
                 disabled={
                   !canArchiveAudit
                     ? {
-                        reason: "You don't have permission to archive audits.",
+                        reason: t("audits.noArchivePermission"),
                       }
                     : someNotArchivable
                     ? {
@@ -220,17 +222,15 @@ function ConditionalDropdown() {
                 disabled={
                   !canDeleteAudit
                     ? {
-                        reason: "You don't have permission to delete audits.",
+                        reason: t("audits.noDeletePermission"),
                       }
                     : someNotArchived
                     ? {
-                        reason:
-                          "Some of the selected audits are not archived. Only archived audits can be deleted.",
+                        reason: t("audits.notArchivedReason"),
                       }
                     : selectAllButFilterNotArchived
                     ? {
-                        reason:
-                          "Filter the list to status = Archived before using Select all to delete.",
+                        reason: t("audits.filterArchivedHint"),
                       }
                     : isLoading
                 }

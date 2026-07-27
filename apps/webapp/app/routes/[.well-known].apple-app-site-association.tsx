@@ -1,7 +1,7 @@
 /**
  * Apple App Site Association (AASA)
  *
- * Served at `https://app.shelf.nu/.well-known/apple-app-site-association` so iOS
+ * Served at `https://<SERVER_URL>/.well-known/apple-app-site-association` so iOS
  * can verify the Shelf Companion app's claim over this domain and route matching
  * `https://` links into the native app (Universal Links) instead of Safari.
  *

@@ -20,6 +20,7 @@ import { InfoTooltip } from "~/components/shared/info-tooltip";
 import { Td, Th } from "~/components/table";
 import { SSOUserBadge } from "~/components/user/sso-user-badge";
 import { TeamUsersActionsDropdown } from "~/components/workspace/users-actions-dropdown";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import type { TeamMembersWithUserOrInvite } from "~/modules/settings/service.server";
 import { getPaginatedAndFilterableSettingUsers } from "~/modules/settings/service.server";
 import type { RouteHandleWithName } from "~/modules/types";
@@ -32,6 +33,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { ORGANIZATION_ROLE_LABEL_KEYS } from "~/utils/roles";
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 
@@ -40,6 +42,10 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     /**
      * requirePermission already fetches the current organization via
      * ORGANIZATION_SELECT_FIELDS, so we reuse it instead of making a
@@ -87,10 +93,10 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       modelName,
       hasActiveFilters,
       organization,
-      searchFieldLabel: "Search by name or email",
+      searchFieldLabel: t("search.teamMembersLabel"),
       searchFieldTooltip: {
-        title: "Search team members",
-        text: "Search team members by first name, last name, or email address.",
+        title: t("search.teamMembersTitle"),
+        text: t("search.teamMembersText"),
       },
     };
   } catch (cause) {
@@ -155,17 +161,7 @@ export default function UserTeamSetting() {
     <div>
       <ContextualModal />
 
-      <p className="mb-6 text-xs text-gray-600">
-        {t("team.usersIntro")}{" "}
-        <Link
-          to="https://www.shelf.nu/knowledge-base/user-roles-and-their-permissions"
-          target="_blank"
-          className="underline"
-        >
-          {t("team.permissionsHere")}
-        </Link>
-        .
-      </p>
+      <p className="mb-6 text-xs text-gray-600">{t("team.usersIntro")}</p>
 
       <ListContentWrapper>
         <Filters>
@@ -216,6 +212,8 @@ export default function UserTeamSetting() {
 }
 
 function UserRow({ item }: { item: TeamMembersWithUserOrInvite }) {
+  const { t } = useTranslation();
+
   return (
     <>
       <Td className="w-full whitespace-normal p-0 md:p-0">
@@ -228,7 +226,9 @@ function UserRow({ item }: { item: TeamMembersWithUserOrInvite }) {
         )}
       </Td>
       <Td>{item.custodies || 0}</Td>
-      <Td>{item.role}</Td>
+      {/* `item.role` is the canonical English name used by emails and the CSV
+          export; the UI shows the translated label for the same enum value. */}
+      <Td>{t(ORGANIZATION_ROLE_LABEL_KEYS[item.roleEnum])}</Td>
       <Td>
         <InviteStatusBadge status={item.status} />
       </Td>

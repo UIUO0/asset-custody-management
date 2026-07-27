@@ -1,6 +1,7 @@
 import React from "react";
 import type { Barcode, BookingStatus, Category, Kit } from "@prisma/client";
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { LocationBadge } from "~/components/location/location-badge";
 import { useBookingStatusHelpers } from "~/hooks/use-booking-status";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
@@ -72,6 +73,7 @@ export default function KitRow({
   partialCheckoutDetails,
   shouldShowCheckoutColumns,
 }: KitRowProps) {
+  const { t } = useTranslation();
   const { isBase } = useUserRoleHelper();
   const { isDraft, isReserved, isInProgress, isFinished } =
     useBookingStatusHelpers(bookingStatus);
@@ -93,7 +95,7 @@ export default function KitRow({
     { ...kit, assets: assets },
     partialCheckinDetails,
     bookingAssetIds,
-    bookingStatus
+    bookingStatus,
   );
 
   // Kit is overlapping if it's not AVAILABLE and has conflicting bookings
@@ -120,7 +122,7 @@ export default function KitRow({
 
         <Td
           className={tw(
-            "w-full min-w-[300px] max-w-[400px] whitespace-normal p-0 md:p-0"
+            "w-full min-w-[300px] max-w-[400px] whitespace-normal p-0 md:p-0",
           )}
         >
           <div className="flex items-center gap-3 py-4 md:justify-normal md:pe-6">
@@ -140,7 +142,7 @@ export default function KitRow({
                 className="font-medium text-gray-900 hover:text-gray-700"
                 target={"_blank"}
                 onlyNewTabIconOnHover={true}
-                aria-label="Go to kit"
+                aria-label={t("bookings.goToKit")}
               >
                 <div className="">{kit.name}</div>
               </Button>
@@ -179,12 +181,14 @@ export default function KitRow({
         <Td>
           <When truthy={isOverlapping && !isInProgress}>
             <AvailabilityBadge
-              badgeText="Already booked"
-              tooltipTitle="Kit is already booked"
-              tooltipContent="This kit is already added to a booking that is overlapping the selected time period."
+              badgeText={t("bookings.alreadyBooked")}
+              tooltipTitle={t("bookings.kitAlreadyBookedTitle")}
+              tooltipContent={t("bookings.kitAlreadyBookedContent")}
             />
           </When>
-          <div className="text-sm text-gray-600">{assets.length} assets</div>
+          <div className="text-sm text-gray-600">
+            {t("models.asset", { count: assets.length })}
+          </div>
         </Td>
 
         <Td>
@@ -250,7 +254,7 @@ export default function KitRow({
               }}
               variant="link"
               className="text-center font-bold text-gray-600 hover:text-gray-900"
-              aria-label="Toggle kit expand"
+              aria-label={t("bookings.toggleKitExpand")}
             >
               <ChevronDownIcon
                 className={tw(`size-6 ${!isExpanded ? "rotate-180" : ""}`)}

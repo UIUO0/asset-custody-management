@@ -21,6 +21,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { BarChart } from "~/components/reports/bar-chart";
 import { ChartCard } from "~/components/reports/chart-card";
 import { ReportEmptyState } from "~/components/reports/report-empty-state";
@@ -41,24 +42,24 @@ import { tw } from "~/utils/tw";
 const MONTHLY_BOOKING_TRENDS_COLUMNS: ColumnDef<MonthlyBookingTrendRow>[] = [
   {
     accessorKey: "month",
-    header: "Month",
+    header: "reports.colMonth",
     cell: ({ row }) => (
       <span className="font-medium">{row.original.month}</span>
     ),
   },
   {
     accessorKey: "bookingsCreated",
-    header: "Bookings Created",
+    header: "reports.bookingsCreated",
     cell: ({ row }) => <NumberCell value={row.original.bookingsCreated} />,
   },
   {
     accessorKey: "bookingsCompleted",
-    header: "Bookings Completed",
+    header: "reports.bookingsCompleted",
     cell: ({ row }) => <NumberCell value={row.original.bookingsCompleted} />,
   },
   {
     accessorKey: "momChange",
-    header: "vs Last Month",
+    header: "reports.vsLastMonth",
     cell: ({ row }) => {
       const change = row.original.momChange;
       if (change === null) return <span className="text-gray-400">—</span>;
@@ -70,7 +71,7 @@ const MONTHLY_BOOKING_TRENDS_COLUMNS: ColumnDef<MonthlyBookingTrendRow>[] = [
               ? "bg-green-100 text-green-700"
               : change < 0
               ? "bg-red-100 text-red-700"
-              : "bg-gray-100 text-gray-700"
+              : "bg-gray-100 text-gray-700",
           )}
         >
           {change > 0 ? "+" : ""}
@@ -110,6 +111,7 @@ export function MonthlyBookingTrendsContent({
   totalRows,
   chartSeries,
 }: Props) {
+  const { t } = useTranslation();
   const columns = MONTHLY_BOOKING_TRENDS_COLUMNS;
 
   // Extract KPI values
@@ -147,13 +149,17 @@ export function MonthlyBookingTrendsContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Average per Month</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.averagePerMonth")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {avgMonthly}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Peak Month</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.peakMonth")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {peakMonth}
               </span>
@@ -173,7 +179,7 @@ export function MonthlyBookingTrendsContent({
                       ? "text-green-600"
                       : trendDirection === "Decreasing"
                       ? "text-red-600"
-                      : "text-gray-900"
+                      : "text-gray-900",
                   )}
                 >
                   {trendDirection}
@@ -182,7 +188,7 @@ export function MonthlyBookingTrendsContent({
                   <span
                     className={tw(
                       "text-sm",
-                      trendDelta > 0 ? "text-green-600" : "text-red-600"
+                      trendDelta > 0 ? "text-green-600" : "text-red-600",
                     )}
                   >
                     ({trendDelta > 0 ? "+" : ""}
@@ -193,8 +199,7 @@ export function MonthlyBookingTrendsContent({
                   iconClassName="size-3.5"
                   content={
                     <p>
-                      {trendDescription ||
-                        "Compares the most recent month to the previous month"}
+                      {trendDescription || t("reports.comparesRecentMonth")}
                     </p>
                   }
                 />
@@ -206,7 +211,7 @@ export function MonthlyBookingTrendsContent({
 
       {/* Bar chart - proper Recharts visualization */}
       {chartSeries && chartSeries[0]?.data.length > 0 && (
-        <ChartCard title="Booking Volume by Month">
+        <ChartCard title={t("reports.bookingVolumeByMonth")}>
           <div className="h-64">
             <BarChart
               series={chartSeries}
@@ -233,8 +238,8 @@ export function MonthlyBookingTrendsContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No trend data"
-              description="No bookings in the selected timeframe."
+              title={t("reports.noTrendData")}
+              description={t("reports.noBookingsInTimeframe")}
             />
           }
         />

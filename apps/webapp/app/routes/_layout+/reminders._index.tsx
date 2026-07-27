@@ -8,6 +8,7 @@ import type {
 import RemindersTable from "~/components/asset-reminder/reminders-table";
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getPaginatedAndFilterableReminders } from "~/modules/asset-reminder/service.server";
@@ -26,6 +27,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId } = await requirePermission({
       userId,
       request,
@@ -53,10 +58,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       page,
       perPage,
       totalPages,
-      searchFieldLabel: "Search reminders",
+      searchFieldLabel: t("search.remindersLabel"),
       searchFieldTooltip: {
-        title: "Search reminders",
-        text: "Search reminders by reminder name, message, asset name or team member name. Separate your keywords by a comma(,) to search with OR condition. For example: searching 'Laptop, maintenance' will find reminders matching any of these terms.",
+        title: t("search.remindersTitle"),
+        text: t("search.remindersText"),
       },
       search,
     });

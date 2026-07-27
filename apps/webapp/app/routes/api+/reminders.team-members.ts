@@ -8,6 +8,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { ROLES_WITH_ORG_WIDE_VISIBILITY } from "~/utils/permissions/role-scope";
 import { requirePermission } from "~/utils/roles.server";
 
 const TEAM_MEMBER_INCLUDE = {
@@ -52,7 +53,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
                 some: {
                   AND: [
                     { organizationId },
-                    { roles: { hasSome: ["ADMIN", "OWNER"] } },
+                    // why: the recipient list is "people who see the whole
+                    // organization", which is exactly the visibility allow-list.
+                    // Hardcoding ADMIN/OWNER silently excluded every EPDA
+                    // operational role from being picked.
+                    { roles: { hasSome: [...ROLES_WITH_ORG_WIDE_VISIBILITY] } },
                   ],
                 },
               },

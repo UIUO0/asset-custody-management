@@ -1,7 +1,7 @@
 /**
  * ConsumptionLog Service
  *
- * Manages quantity-tracking operations for assets in Shelf.nu.
+ * Manages quantity-tracking operations for assets.
  * Handles creating consumption logs (CHECKOUT, RETURN, RESTOCK, ADJUSTMENT, LOSS),
  * querying paginated log history, computing available quantities, and adjusting
  * the total quantity of a quantity-tracked asset.
@@ -224,7 +224,7 @@ export type AvailableQuantity = {
  * @throws {ShelfError} If the asset is not found or the query fails
  */
 export async function computeAvailableQuantity(
-  assetId: string
+  assetId: string,
 ): Promise<AvailableQuantity> {
   try {
     const [asset, custodySum] = await Promise.all([
@@ -290,7 +290,7 @@ export async function computeAvailableQuantity(
  */
 export async function computeBookingAvailableQuantity(
   assetId: string,
-  excludeBookingId?: string
+  excludeBookingId?: string,
 ): Promise<AvailableQuantity & { reserved: number }> {
   try {
     /** Reuse existing custody-based availability calculation */

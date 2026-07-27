@@ -142,7 +142,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
 
   const {
     roles,
-    isBaseOrSelfService,
+    isScopedToOwnRecords,
     isBase,
     isAdministratorOrOwner,
     isAdministrator,
@@ -241,8 +241,8 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
    *
    */
   const canSeeActions =
-    !isBaseOrSelfService ||
-    (isBaseOrSelfService &&
+    !isScopedToOwnRecords ||
+    (isScopedToOwnRecords &&
       (defaultTeamMember?.userId === userId ||
         defaultTeamMember?.id === userId));
 
@@ -312,12 +312,12 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
                   bookingFlags?.hasUnavailableAssets
                     ? {
                         reason: bookingFlags?.hasUnavailableAssets
-                          ? "You have some assets in your booking that are marked as unavailble. Either remove the assets from this booking or make them available again"
+                          ? t("bookingForm.reserveDisabledUnavailable")
                           : bookingFlags?.hasAlreadyBookedAssets
-                          ? "Your booking has assets that are already booked for the desired period. You need to resolve that before you can reserve"
+                          ? t("bookingForm.reserveDisabledAlreadyBooked")
                           : isProcessing || isLoadingWorkingHours
                           ? undefined
-                          : "You need to add assets or reserve at least one model on your booking before you can reserve it",
+                          : t("bookingForm.reserveDisabledNoAssets"),
                       }
                     : false
                 }
@@ -327,7 +327,9 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
                 className="grow whitespace-nowrap"
                 size="sm"
               >
-                {isBase ? "Request reservation" : "Reserve"}
+                {isBase
+                  ? t("bookingForm.requestReservation")
+                  : t("bookingForm.reserve")}
               </Button>
             ) : null}
 
@@ -363,12 +365,12 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
                   bookingFlags?.hasAssetsInCustody
                     ? {
                         reason: bookingFlags?.hasAssetsInCustody
-                          ? "Some assets in this booking are currently in custody. You need to resolve that before you can check-out"
+                          ? t("bookingForm.checkoutDisabledInCustody")
                           : bookingFlags?.hasAlreadyBookedAssets
-                          ? "Your booking has assets that are already booked for the desired period. You need to resolve that before you can check-out"
+                          ? t("bookingForm.checkoutDisabledAlreadyBooked")
                           : isProcessing || isLoadingWorkingHours
                           ? undefined
-                          : "Some assets in this booking are not Available because they're part of an Ongoing or Overdue booking",
+                          : t("bookingForm.checkoutDisabledNotAvailable"),
                       }
                     : false;
 
@@ -384,7 +386,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
                       className="grow"
                       size="sm"
                     >
-                      Check Out
+                      {t("bookings.checkOut")}
                     </Button>
                   );
                 }
@@ -505,7 +507,7 @@ export function EditBookingForm({ booking, action }: BookingFormData) {
                   disabled={
                     disabled ||
                     isLoadingWorkingHours ||
-                    isBaseOrSelfService ||
+                    isScopedToOwnRecords ||
                     inputFieldIsDisabled
                   }
                   userCanSeeCustodian={userCanSeeCustodian}

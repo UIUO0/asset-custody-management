@@ -2,9 +2,15 @@
  * EPDA seed script — هيئة تطوير المنطقة الشرقية
  *
  * Creates the initial accounts for the internal deployment:
- *   1. Super admin  : admin@epda.local   (app-wide ADMIN role + workspace OWNER)
- *   2. Test user 1  : user1@epda.local   (workspace BASE member)
- *   3. Test user 2  : user2@epda.local   (workspace BASE member)
+ *   1. Super admin  : admin@epda.local      (app-wide ADMIN role + workspace OWNER)
+ *   2. Test user 1  : user1@epda.local      (workspace BASE member)
+ *   3. Test user 2  : user2@epda.local      (workspace BASE member)
+ *   4. Warehouse    : warehouse@epda.local  (WAREHOUSE — المستودعات)
+ *   5. Finance      : finance@epda.local    (FINANCE — المالية)
+ *   6. Inventory    : inventory@epda.local  (INVENTORY — المخزون)
+ *
+ * Accounts 4-6 exist so each operational role can be exercised end to end
+ * without hand-editing `UserOrganization.roles` in the database.
  *
  * All three share one TEAM workspace: "هيئة تطوير المنطقة الشرقية".
  * Asset index settings are created lazily by the app on first visit, so they
@@ -69,6 +75,33 @@ const ACCOUNTS = [
     lastName: "تجريبي ٢",
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.BASE],
+  },
+  {
+    email: "warehouse@epda.local",
+    password: "Epda@Warehouse#2026",
+    username: "epda-warehouse",
+    firstName: "موظف",
+    lastName: "المستودعات",
+    isSuperAdmin: false,
+    orgRoles: [OrganizationRoles.WAREHOUSE],
+  },
+  {
+    email: "finance@epda.local",
+    password: "Epda@Finance#2026",
+    username: "epda-finance",
+    firstName: "موظف",
+    lastName: "المالية",
+    isSuperAdmin: false,
+    orgRoles: [OrganizationRoles.FINANCE],
+  },
+  {
+    email: "inventory@epda.local",
+    password: "Epda@Inventory#2026",
+    username: "epda-inventory",
+    firstName: "موظف",
+    lastName: "المخزون",
+    isSuperAdmin: false,
+    orgRoles: [OrganizationRoles.INVENTORY],
   },
 ] as const;
 

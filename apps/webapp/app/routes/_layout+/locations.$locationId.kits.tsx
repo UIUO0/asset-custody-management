@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -183,7 +184,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           formData,
           z.object({
             kitIds: z.array(z.string()).min(1),
-          })
+          }),
         );
 
         const resolvedKitIds = await resolveLocationKitIds({
@@ -229,6 +230,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function LocationKits() {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const { locationId } = useParams<z.infer<typeof paramsSchema>>();
   const userRoleCanManageKits = userHasPermission({
@@ -269,14 +271,14 @@ export default function LocationKits() {
                       queryKey: "name",
                       deletedAt: null,
                     }}
-                    label="Filter by custodian"
-                    placeholder="Search team members"
+                    label={t("list.filterByCustodian")}
+                    placeholder={t("list.searchTeamMembers")}
                     initialDataKey="teamMembers"
                     countKey="totalTeamMembers"
                     renderItem={(item) => resolveTeamMemberName(item, true)}
                     withoutValueItem={{
                       id: "without-custody",
-                      name: "Without custody",
+                      name: t("list.withoutCustody"),
                     }}
                   />
                 </div>

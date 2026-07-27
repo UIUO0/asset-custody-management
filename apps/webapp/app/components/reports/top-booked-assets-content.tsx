@@ -14,6 +14,7 @@
  */
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { AssetImage } from "~/components/assets/asset-image";
@@ -30,16 +31,19 @@ import { tw } from "~/utils/tw";
 // setTrigger(...) loops during navigation transitions ("Maximum update depth
 // exceeded" — see SHELF-WEBAPP-1J4).
 function AvgDurationHeader() {
+  const { t } = useTranslation();
+
   return (
     <span className="flex items-center gap-1">
-      Avg Duration
+      {t("reports.avgDuration")}
       <InfoTooltip
         iconClassName="size-3.5"
         content={
           <p>
-            <strong>Average booking duration</strong> — How long this asset is
-            typically kept per booking. Calculated as total days booked ÷ number
-            of bookings.
+            <Trans
+              i18nKey="reports.avgDurationTooltipAsset"
+              components={{ 1: <strong /> }}
+            />
           </p>
         }
       />
@@ -53,10 +57,35 @@ function AvgDurationHeader() {
  * renders. See the loop fix explanation in IDLE_ASSETS_COLUMNS / the
  * commit history of this file.
  */
+/**
+ * Booking-count chip linking to the asset's bookings list.
+ *
+ * A component (not inline JSX in the `cell` renderer) so `useTranslation` has a
+ * stable call position — TanStack cell renderers run once per row and cannot
+ * host hooks.
+ *
+ * @param props.to - Target bookings route for this asset
+ * @param props.count - Number of bookings in the selected timeframe
+ */
+function BookingCountLink({ to, count }: { to: string; count: number }) {
+  const { t } = useTranslation();
+
+  return (
+    <Link
+      to={to}
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-200"
+      title={t("reports.viewAllBookingsForAsset")}
+    >
+      {count}
+    </Link>
+  );
+}
+
 const TOP_BOOKED_ASSETS_COLUMNS: ColumnDef<TopBookedAssetRow>[] = [
   {
     accessorKey: "assetName",
-    header: "Asset",
+    header: "reports.colAsset",
     cell: ({ row }) => (
       <AssetCell
         name={row.original.assetName}
@@ -67,21 +96,17 @@ const TOP_BOOKED_ASSETS_COLUMNS: ColumnDef<TopBookedAssetRow>[] = [
   },
   {
     accessorKey: "bookingCount",
-    header: "Bookings",
+    header: "reports.colBookings",
     cell: ({ row }) => (
-      <Link
+      <BookingCountLink
         to={`/assets/${row.original.assetId}/bookings`}
-        onClick={(e) => e.stopPropagation()}
-        className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-200"
-        title="View all bookings for this asset"
-      >
-        {row.original.bookingCount}
-      </Link>
+        count={row.original.bookingCount}
+      />
     ),
   },
   {
     accessorKey: "totalDaysBooked",
-    header: "Total Days",
+    header: "reports.totalDays",
     cell: ({ row }) => (
       <span className="text-sm text-gray-700">
         {row.original.totalDaysBooked}
@@ -110,7 +135,7 @@ const TOP_BOOKED_ASSETS_COLUMNS: ColumnDef<TopBookedAssetRow>[] = [
                   ? "bg-blue-600"
                   : avgDays >= 3
                   ? "bg-blue-400"
-                  : "bg-blue-200"
+                  : "bg-blue-200",
               )}
               style={{ width: `${barPercent}%` }}
             />
@@ -126,13 +151,13 @@ const TOP_BOOKED_ASSETS_COLUMNS: ColumnDef<TopBookedAssetRow>[] = [
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: "reports.colCategory",
     cell: ({ row }) =>
       row.original.category || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "location",
-    header: "Location",
+    header: "reports.colLocation",
     cell: ({ row }) =>
       row.original.location || <span className="text-gray-400">—</span>,
   },
@@ -170,6 +195,7 @@ export function TopBookedAssetsContent({
   topBookedAsset,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   // Stable reference is guaranteed by `TOP_BOOKED_ASSETS_COLUMNS` living
   // at module scope (see its JSDoc for why that matters).
   const columns = TOP_BOOKED_ASSETS_COLUMNS;
@@ -212,7 +238,9 @@ export function TopBookedAssetsContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Avg per Asset</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.avgPerAsset")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {avgBookingsPerAsset.toFixed(1)}
               </span>
@@ -221,7 +249,9 @@ export function TopBookedAssetsContent({
             {/* Most booked asset with image */}
             {topAsset && (
               <div className="flex flex-col">
-                <span className="text-xs text-gray-500">Most Booked</span>
+                <span className="text-xs text-gray-500">
+                  {t("reports.mostBooked")}
+                </span>
                 <Link
                   to={`/assets/${topAsset.assetId}`}
                   className="group -mx-1.5 mt-0.5 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-50"
@@ -256,16 +286,21 @@ export function TopBookedAssetsContent({
         <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-2 md:px-6">
           <p className="text-xs text-gray-500">
             <span className="font-medium text-gray-600">
-              Understanding this report:
+              {t("reports.understandingThisReport")}
             </span>{" "}
-            Shows which assets are booked most frequently during{" "}
-            <span className="font-medium">
-              {(timeframeLabel || "the selected period").toLowerCase()}
-            </span>
-            . <span className="italic">Total Days</span> = cumulative booking
-            days. <span className="italic">Avg Duration</span> = typical booking
-            length per checkout. Use longer timeframes (30+ days) for meaningful
-            duration trends.
+            <Trans
+              i18nKey="reports.assetsBookedMostIn"
+              values={{
+                period: (
+                  timeframeLabel || t("reports.selectedPeriod")
+                ).toLowerCase(),
+              }}
+              components={{
+                1: <span className="font-medium" />,
+                3: <span className="italic" />,
+                5: <span className="italic" />,
+              }}
+            />
           </p>
         </div>
       </div>
@@ -274,7 +309,9 @@ export function TopBookedAssetsContent({
           and scrolls internally when row count exceeds the visible area. */}
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
-          <h3 className="text-sm font-semibold text-gray-900">Top Assets</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            {t("reports.topAssets")}
+          </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}
           </span>
@@ -286,8 +323,8 @@ export function TopBookedAssetsContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No booking data"
-              description="No assets have been booked within the selected timeframe."
+              title={t("reports.noBookingData")}
+              description={t("reports.noAssetsBookedInTimeframe")}
             />
           }
         />

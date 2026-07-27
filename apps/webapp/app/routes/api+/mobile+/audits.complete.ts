@@ -16,6 +16,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { enforceUserRateLimit } from "~/utils/rate-limit.server";
 
 /**
@@ -48,7 +49,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const { role, canUseAudits } = await getMobileUserContext(
       user.id,
-      organizationId
+      organizationId,
     );
     if (!canUseAudits) {
       return data(
@@ -58,10 +59,10 @@ export async function action({ request }: ActionFunctionArgs) {
               "Audits are not enabled for this workspace. Contact your admin to enable this feature.",
           },
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
-    const isSelfServiceOrBase = role === "SELF_SERVICE" || role === "BASE";
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
     const body = await request.json();
     const { sessionId, completionNote, timeZone } = z
@@ -78,7 +79,7 @@ export async function action({ request }: ActionFunctionArgs) {
       auditSessionId: sessionId,
       organizationId,
       userId: user.id,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
     });
 
     // Derive hints the standard way: locale from the request's Accept-Language
@@ -103,7 +104,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

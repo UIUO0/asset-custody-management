@@ -69,7 +69,7 @@ describe("requireAuditAssetInSession", () => {
     });
   });
 
-  it("passes isSelfServiceOrBase=true to the assignee guard for BASE", async () => {
+  it("passes isScopedToOwnRecords=true to the assignee guard for BASE", async () => {
     (getMobileUserContext as any).mockResolvedValue({ role: "BASE" });
     await requireAuditAssetInSession(args);
     expect(requireAuditAssignee).toHaveBeenCalledWith(
@@ -77,8 +77,8 @@ describe("requireAuditAssetInSession", () => {
         auditSessionId: "session-1",
         organizationId: "org-1",
         userId: "user-1",
-        isSelfServiceOrBase: true,
-      })
+        isScopedToOwnRecords: true,
+      }),
     );
   });
 

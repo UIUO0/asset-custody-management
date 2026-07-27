@@ -2,6 +2,7 @@ import type { MetaFunction } from "react-router";
 import { data, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import type { HeaderData } from "~/components/layout/header/types";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   getBookings,
   resolveCustodianScope,
@@ -28,9 +29,7 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-import BookingsIndexPage, {
-  bookingsSearchFieldTooltipText,
-} from "./bookings._index";
+import BookingsIndexPage from "./bookings._index";
 
 export const meta: MetaFunction<typeof loader> = ({ loaderData }) => [
   { title: appendToMetaTitle(loaderData?.header?.title) },
@@ -45,10 +44,14 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ userId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId } = await requirePermission({
       userId,
       request,
@@ -119,13 +122,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         modelName,
         ...tagsData,
         searchFieldTooltip: {
-          title: "Search your bookings",
-          text: parseMarkdownToReact(bookingsSearchFieldTooltipText),
+          title: t("search.bookingsTitle"),
+          text: parseMarkdownToReact(t("search.bookingsText")),
         },
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

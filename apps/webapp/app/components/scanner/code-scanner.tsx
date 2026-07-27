@@ -10,6 +10,7 @@ import {
   QrCode,
   ScanQrCode,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import Webcam from "react-webcam";
 import { ClientOnly } from "remix-utils/client-only";
@@ -173,6 +174,7 @@ export const CodeScanner = ({
   overlayPosition = "fullscreen",
   savedCameraId,
 }: CodeScannerProps) => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const { isMd } = useViewportHeight();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -181,11 +183,11 @@ export const CodeScanner = ({
   // Camera selector state - initialize with saved camera ID if available
   const [cameraDevices, setCameraDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(
-    savedCameraId ?? null
+    savedCameraId ?? null,
   );
 
   const [mode, setMode] = useState<Mode>(
-    forceMode || (isMd ? "scanner" : "camera")
+    forceMode || (isMd ? "scanner" : "camera"),
   );
 
   const handleModeChange = (mode: Mode) => {
@@ -216,7 +218,7 @@ export const CodeScanner = ({
         setCurrentDeviceId(activeDeviceId);
       }
     },
-    [savedCameraId]
+    [savedCameraId],
   );
 
   // Handler for camera change - updates state and saves preference to cookie
@@ -237,7 +239,7 @@ export const CodeScanner = ({
       ref={containerRef}
       className={tw(
         "relative size-full min-h-[400px] overflow-hidden",
-        className
+        className,
       )}
       data-mode={mode}
     >
@@ -248,7 +250,7 @@ export const CodeScanner = ({
               className={tw(
                 "flex items-center gap-2",
                 // Full width on mobile when actionSwitcher is present
-                actionSwitcher && !isMd && "w-full justify-between"
+                actionSwitcher && !isMd && "w-full justify-between",
               )}
             >
               {!hideBackButtonText && (
@@ -258,7 +260,7 @@ export const CodeScanner = ({
                     "inline-flex items-center justify-start text-[11px] leading-[11px]",
                     actionSwitcher && isMd
                       ? "absolute bottom-[-20px] left-[2px] text-static-white"
-                      : ""
+                      : "",
                   )}
                 >
                   <TriangleLeftIcon className="size-[14px]" />
@@ -347,7 +349,7 @@ export const CodeScanner = ({
               overlayPosition === "fullscreen"
                 ? "top-[75px] h-[400px] w-11/12 max-w-[600px]"
                 : "top-1/2 max-h-[90%] w-11/12 max-w-[500px] -translate-y-1/2 overflow-y-auto md:max-h-[95%]",
-              overlayClassName
+              overlayClassName,
             )}
           >
             <div
@@ -359,7 +361,7 @@ export const CodeScanner = ({
                 // Use different alignment based on content type
                 typeof scanMessage === "string" || !scanMessage
                   ? "justify-center text-center"
-                  : "justify-start text-start"
+                  : "justify-start text-start",
               )}
             >
               {errorMessage ? (
@@ -368,7 +370,7 @@ export const CodeScanner = ({
                     <ErrorIcon />
                   </span>
                   <h5 className="mb-2">
-                    {errorTitle || "Unsupported Barcode detected"}
+                    {errorTitle || t("scanner.unsupportedBarcode")}
                   </h5>
                   <p className="mb-4 max-w-[300px] text-red-600">
                     {errorMessage}
@@ -379,22 +381,22 @@ export const CodeScanner = ({
                     variant="secondary"
                     className="mt-2"
                   >
-                    Scan again
+                    {t("scanner.scanAgain")}
                   </Button>
                 </>
               ) : (
                 <>
-                  <h5>Code detected</h5>
+                  <h5>{t("scanner.codeDetected")}</h5>
 
                   {typeof scanMessage === "string" ? (
                     <>
                       <ClientOnly fallback={null}>
                         {() => <SuccessAnimation />}
                       </ClientOnly>
-                      <p>{scanMessage || "Scanner paused"}</p>
+                      <p>{scanMessage || t("scanner.paused")}</p>
                     </>
                   ) : (
-                    scanMessage || <p>Scanner paused</p>
+                    scanMessage || <p>{t("scanner.paused")}</p>
                   )}
                 </>
               )}
@@ -426,6 +428,7 @@ function ScannerMode({
   callback?: (input: HTMLInputElement, paused: boolean) => void;
   action?: ActionType;
 }) {
+  const { t } = useTranslation();
   const [inputIsFocused, setInputIsFocused] = useState(false);
   const [inputValue, setInputValue] = useState("");
   // Focus the scanner input on mount so users can start scanning immediately.
@@ -454,7 +457,7 @@ function ScannerMode({
         setInputValue("");
       }
     },
-    [onCodeDetectionSuccess, allowNonShelfCodes, paused, callback]
+    [onCodeDetectionSuccess, allowNonShelfCodes, paused, callback],
   );
 
   const handleEnterPress = async (e: KeyboardEvent<HTMLInputElement>) => {
@@ -475,7 +478,7 @@ function ScannerMode({
     <div
       className={tw(
         "flex h-full flex-col items-center justify-center bg-slate-800 text-center ",
-        className
+        className,
       )}
     >
       <RadialBg />
@@ -495,15 +498,15 @@ function ScannerMode({
           name="code"
           label={
             paused
-              ? "Scanner paused"
+              ? t("scanner.paused")
               : inputIsFocused
-              ? "Waiting for scan..."
-              : "Please click on the text field before scanning"
+              ? t("scanner.waitingForScan")
+              : t("scanner.clickTextFieldFirst")
           }
           icon={inputIsFocused ? "qr-code" : "mouse-pointer-click"}
           iconClassName={tw(
             "text-gray-600",
-            !inputIsFocused && "animate-bounce"
+            !inputIsFocused && "animate-bounce",
           )}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleEnterPress}
@@ -562,7 +565,7 @@ type CameraStateAction =
  */
 function cameraStateReducer(
   state: CameraStateValue,
-  action: CameraStateAction
+  action: CameraStateAction,
 ): CameraStateValue {
   switch (action.type) {
     case "switchDevice":
@@ -606,12 +609,13 @@ function CameraMode({
   action?: ActionType;
   onDevicesEnumerated?: (
     devices: MediaDeviceInfo[],
-    activeDeviceId: string | null
+    activeDeviceId: string | null,
   ) => void;
   currentDeviceId?: string | null;
   /** Saved camera ID from user preferences - used for initial constraint */
   savedCameraId?: string;
 }) {
+  const { t } = useTranslation();
   const videoRef = useRef<Webcam>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrame = useRef<number>(0);
@@ -645,7 +649,7 @@ function CameraMode({
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(
-        (device) => device.kind === "videoinput"
+        (device) => device.kind === "videoinput",
       );
 
       // Get current device ID from the active stream
@@ -717,7 +721,7 @@ function CameraMode({
         const enumerateDevices =
           typeof navigator !== "undefined" && navigator.mediaDevices
             ? navigator.mediaDevices.enumerateDevices.bind(
-                navigator.mediaDevices
+                navigator.mediaDevices,
               )
             : undefined;
 
@@ -763,7 +767,7 @@ function CameraMode({
       setError(`Camera error: ${errorMessage}`);
       setIsLoading(false);
     },
-    [hasRetriedConstraints, setIsLoading]
+    [hasRetriedConstraints, setIsLoading],
   );
 
   // Synchronizes the animation loop with the `paused` state and the
@@ -832,13 +836,13 @@ function CameraMode({
             <Camera className="size-12 text-static-white/50" />
           </div>
           <p className="mb-4">{error}</p>
-          <p className="mb-4">If the issue persists, please contact support.</p>
+          <p className="mb-4">{t("scanner.contactSupport")}</p>
           <Button
             type="button"
             onClick={() => window.location.reload()}
             variant="secondary"
           >
-            Reload Page
+            {t("scanner.reloadPage")}
           </Button>
         </InfoOverlay>
       )}
@@ -855,7 +859,7 @@ function CameraMode({
 
           /** Error when there is no video element.  */
           if (!video || !canvas) {
-            setError("Canvas or video element not found");
+            setError(t("scanner.canvasMissing"));
             setIsLoading(false);
             return;
           }
@@ -869,12 +873,12 @@ function CameraMode({
               // Enumerate devices after camera is ready
               void enumerateAndReportDevices();
             },
-            { once: true }
+            { once: true },
           );
 
           video.addEventListener("error", (e) => {
             setError(
-              `Error playing video: ${e instanceof Error ? e.message : e}`
+              `Error playing video: ${e instanceof Error ? e.message : e}`,
             );
             setIsLoading(false);
           });
@@ -905,6 +909,7 @@ function InfoOverlay({ children }: { children: ReactNode }) {
  * If the process takes more than 10 seconds we can safely assume something went wrong and we give the user the option to reload the page
  */
 function Initializing() {
+  const { t } = useTranslation();
   const [expired, setExpired] = useState(false);
 
   useEffect(() => {
@@ -918,9 +923,7 @@ function Initializing() {
         <Camera className="size-12 text-static-white/50" />
       </div>
       <Spinner className="mx-auto mb-2" />
-      {expired
-        ? "Camera initialization is taking longer than expected. Please reload the page"
-        : "Initializing camera..."}
+      {expired ? t("scanner.initSlow") : t("scanner.initializing")}
       {expired && (
         <div>
           <Button

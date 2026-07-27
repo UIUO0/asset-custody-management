@@ -16,7 +16,6 @@ import type { InviteUserFormSchema } from "~/components/settings/invite-user-dia
 import { db } from "~/database/db.server";
 import { invitationTemplateString } from "~/emails/invite-template";
 import { sendEmail } from "~/emails/mail.server";
-import { organizationRolesMap } from "~/routes/_layout+/settings.team";
 import { INVITE_EXPIRY_TTL_DAYS } from "~/utils/constants";
 import { updateCookieWithPerPage } from "~/utils/cookies.server";
 import { sendNotification } from "~/utils/emitter/send-notification.server";
@@ -25,6 +24,10 @@ import type { ErrorLabel } from "~/utils/error";
 import { ShelfError, isLikeShelfError } from "~/utils/error";
 import { getCurrentSearchParams } from "~/utils/http.server";
 import { getParamsValues } from "~/utils/list";
+import {
+  ASSIGNABLE_ORGANIZATION_ROLES,
+  organizationRolesMap,
+} from "~/utils/roles";
 import { checkDomainSSOStatus, doesSSOUserExist } from "~/utils/sso.server";
 import { generateRandomCode, inviteEmailText, splitName } from "./helpers";
 import { processInvitationMessage } from "./message-validator.server";
@@ -36,7 +39,7 @@ const label: ErrorLabel = "Invite";
 const INVITE_EMAIL_BATCH_SIZE = 20;
 const INVITE_EMAIL_BATCH_DELAY_MS = 1_000;
 const INVITE_EMAIL_SPACING_MS = Math.ceil(
-  INVITE_EMAIL_BATCH_DELAY_MS / INVITE_EMAIL_BATCH_SIZE
+  INVITE_EMAIL_BATCH_DELAY_MS / INVITE_EMAIL_BATCH_SIZE,
 );
 
 /**
@@ -47,7 +50,7 @@ const INVITE_EMAIL_SPACING_MS = Math.ceil(
  */
 async function validateInvite(
   email: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<void> {
   const domainStatus = await checkDomainSSOStatus(email);
 
@@ -123,7 +126,7 @@ export async function createInvite(
     teamMemberId?: Invite["teamMemberId"];
     userId: string;
     extraMessage?: string | null;
-  }
+  },
 ) {
   let {
     organizationId,
@@ -625,8 +628,46 @@ export async function bulkInviteUsers({
         user.email &&
         user.role &&
         user.email.trim() !== "" &&
-        user.role.trim() !== ""
+        user.role.trim() !== "",
     );
+
+    /**
+     * Reject unknown role values before they reach the database.
+     *
+     * `payload.role` is the raw CSV cell and is written straight into
+     * `Invite.roles`, a Prisma enum column. Without this check a typo (or an
+     * `OWNER` row, which must never be granted by import) surfaces as an opaque
+     * Postgres enum error with no indication of which row caused it.
+     *
+     * Validated against the shared assignable-role list, so the accepted values
+     * always match what the invite dialog offers.
+     */
+    const invalidRoles = [
+      ...new Set(
+        validUsers
+          .map((user) => user.role.trim())
+          .filter(
+            (role) =>
+              !ASSIGNABLE_ORGANIZATION_ROLES.includes(
+                role as OrganizationRoles,
+              ),
+          ),
+      ),
+    ];
+
+    if (invalidRoles.length > 0) {
+      throw new ShelfError({
+        cause: null,
+        message: `Invalid role(s) in CSV: ${invalidRoles.join(
+          ", ",
+        )}. Valid roles are: ${ASSIGNABLE_ORGANIZATION_ROLES.join(
+          ", ",
+        )}. The role column is case-sensitive.`,
+        additionalData: { organizationId, invalidRoles },
+        label,
+        shouldBeCaptured: false,
+      });
+    }
 
     // Filter out duplicate emails
     const uniquePayloads = lodash.uniqBy(validUsers, (user) => user.email);
@@ -634,8 +675,8 @@ export async function bulkInviteUsers({
     // Batch validate all emails against SS
     await Promise.all(
       uniquePayloads.map((payload) =>
-        validateInvite(payload.email, organizationId)
-      )
+        validateInvite(payload.email, organizationId),
+      ),
     );
 
     const teamMemberIds = uniquePayloads
@@ -751,7 +792,7 @@ export async function bulkInviteUsers({
     let validPayloads = uniquePayloads.filter(
       (p) =>
         !existingInviteEmails.includes(p.email) &&
-        !existingEmailsInOrg.has(p.email)
+        !existingEmailsInOrg.has(p.email),
     );
 
     /** Remove the users with teamMemberId who already have a user associated */
@@ -787,7 +828,7 @@ export async function bulkInviteUsers({
 
     const scheduleInviteEmailSending = (
       invites: InviteWithRelations[],
-      extraInviteMessage?: string | null
+      extraInviteMessage?: string | null,
     ) => {
       invites.forEach((invite, index) => {
         const batchIndex = Math.floor(index / INVITE_EMAIL_BATCH_SIZE);
@@ -839,11 +880,11 @@ export async function bulkInviteUsers({
         }
 
         const createdTm = createdTeamMembers.find(
-          (tm) => tm.name === payload.name
+          (tm) => tm.name === payload.name,
         );
         invariant(
           createdTm,
-          "Unexpected situation! Could not find teamMember in createdTeamMembers."
+          "Unexpected situation! Could not find teamMember in createdTeamMembers.",
         );
 
         return createdTm.id;

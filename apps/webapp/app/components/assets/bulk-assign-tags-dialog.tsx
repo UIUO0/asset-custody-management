@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -20,13 +21,14 @@ export const BulkUpdateTagsSchema = z.object({
     .pipe(
       z.array(z.string()).min(1, {
         message: "At least one tag must be selected",
-      })
+      }),
     ),
 });
 
 export type TagsFetcherData = { filters: Array<{ name: string; id: string }> };
 
 export default function BulkAssignTagsDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkAssignTags", BulkUpdateTagsSchema);
 
   const fetcher = useFetcher<TagsFetcherData>();
@@ -54,7 +56,7 @@ export default function BulkAssignTagsDialog() {
       {
         method: "GET",
         action: "/api/model-filters",
-      }
+      },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -73,8 +75,8 @@ export default function BulkAssignTagsDialog() {
     <BulkUpdateDialogContent
       ref={zo.ref}
       type="tag-add"
-      title="Assign tags to assets"
-      description="Assign tags to selected assets. Assets that already have any of the selected tags, will be skipped."
+      title={t("bulkActions.assignTagsTitle")}
+      description={t("bulkActions.assignTagsDescription")}
       actionUrl="/api/assets/bulk-assign-tags"
       arrayFieldId="assetIds"
     >
@@ -104,7 +106,7 @@ export default function BulkAssignTagsDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -112,7 +114,7 @@ export default function BulkAssignTagsDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

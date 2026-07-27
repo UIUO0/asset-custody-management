@@ -41,7 +41,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           bookings: [],
           locations: [],
           teamMembers: [],
-        })
+        }),
       );
     }
 
@@ -50,7 +50,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       role,
       canSeeAllBookings,
       canSeeAllCustody,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       currentOrganization,
     } = await requirePermission({
       userId,
@@ -80,7 +80,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           ...createTextSearchConditions(term, ["name", "description"]),
           { id: { contains: term, mode: Prisma.QueryMode.insensitive } },
         ],
-      })
+      }),
     );
 
     // Booking search conditions
@@ -90,7 +90,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           ...createTextSearchConditions(term, ["name", "description"]),
           { id: { contains: term, mode: Prisma.QueryMode.insensitive } },
         ],
-      })
+      }),
     );
 
     // Location search conditions
@@ -220,7 +220,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const auditWhere: Prisma.AuditSessionWhereInput = {
       organizationId,
       ...(auditSearchConditions.length ? { OR: auditSearchConditions } : {}),
-      ...(isSelfServiceOrBase && userId
+      ...(isScopedToOwnRecords && userId
         ? {
             assignments: {
               some: {
@@ -358,7 +358,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
                   } | null;
                 };
               }
-            >
+            >,
           );
           return {
             id: asset.id,
@@ -376,7 +376,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
               getPrimaryLocation(
                 asset as unknown as {
                   assetLocations: { location: { name: string } }[];
-                }
+                },
               )?.name ?? null,
             description: asset.description,
             qrCodes: asset.qrCodes?.map((qr) => qr.id) ?? [],
@@ -437,7 +437,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           lastName: member.user?.lastName || null,
           userId: member.userId,
         })),
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

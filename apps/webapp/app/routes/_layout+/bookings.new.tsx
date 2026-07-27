@@ -1,5 +1,6 @@
 import { useAtomValue } from "jotai";
 import { DateTime } from "luxon";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LinksFunction,
@@ -10,11 +11,14 @@ import { data, redirect, useLoaderData } from "react-router";
 import { dynamicTitleAtom } from "~/atoms/dynamic-title-atom";
 import { BookingFormSchema } from "~/components/booking/forms/forms-schema";
 import { NewBookingForm } from "~/components/booking/forms/new-booking-form";
-import { newBookingHeader } from "~/components/booking/new-booking-header";
+import { getNewBookingHeader } from "~/components/booking/new-booking-header";
 import Header from "~/components/layout/header";
 import { db } from "~/database/db.server";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
 import { useUserData } from "~/hooks/use-user-data";
+import { getLocale } from "~/i18n/i18n.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { isQuantityTracked } from "~/modules/asset/utils";
 import {
   buildKitSlicesForBooking,
@@ -62,7 +66,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { organizationId, currentOrganization, isSelfServiceOrBase } =
+    const { organizationId, currentOrganization, isScopedToOwnRecords } =
       await requirePermission({
         userId: authSession?.userId,
         request,
@@ -89,7 +93,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       getTeamMemberForForm({
         organizationId,
         userId,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         getAll:
           searchParams.has("getAll") &&
           hasGetAllValue(searchParams, "teamMember"),
@@ -104,9 +108,9 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       payload({
         userId,
         currentOrganization,
-        header: newBookingHeader,
+        header: getNewBookingHeader(getLocale(request)),
         showModal: false,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         ...teamMembersData,
         // For consistency, also provide teamMembersForForm
         teamMembersForForm: teamMembersData.teamMembers,
@@ -124,7 +128,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         headers: [
           setCookie(await setSelectedOrganizationIdCookie(organizationId)),
         ],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -132,9 +136,14 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
+export const meta: MetaFunction<typeof loader> = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.bookings.createNewBooking) }];
+};
 
 export type NewBookingActionReturnType = typeof action;
 
@@ -143,7 +152,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { organizationId, currentOrganization, isSelfServiceOrBase } =
+    const { organizationId, currentOrganization, isScopedToOwnRecords } =
       await requirePermission({
         userId: authSession?.userId,
         request,
@@ -174,7 +183,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       await getBookingSettingsForOrganization(organizationId);
 
     // ADMIN/OWNER users bypass time restrictions (bufferStartTime, maxBookingLength)
-    const isAdminOrOwner = !isSelfServiceOrBase;
+    const isAdminOrOwner = !isScopedToOwnRecords;
 
     const payload = parseData(
       formData,
@@ -191,7 +200,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         // Sentry (was noise: SHELF-WEBAPP-1KZ).
         shouldBeCaptured: false,
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     const {
@@ -222,7 +231,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
      * Validate if the user is self user and is assigning the booking to
      * him/herself only.
      */
-    if (isSelfServiceOrBase && custodianFromDb.userId !== userId) {
+    if (isScopedToOwnRecords && custodianFromDb.userId !== userId) {
       throw new ShelfError({
         cause: null,
         message: "Self user can assign booking to themselves only.",
@@ -235,7 +244,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       DATE_TIME_FORMAT,
       {
         zone: hints.timeZone,
-      }
+      },
     ).toJSDate();
 
     const to = DateTime.fromFormat(
@@ -243,7 +252,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       DATE_TIME_FORMAT,
       {
         zone: hints.timeZone,
-      }
+      },
     ).toJSDate();
 
     const tags = buildTagsSet(commaSeparatedTags).set;
@@ -297,7 +306,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       // Subtract kit members so a kit member is never written as BOTH a kit
       // slice and a standalone row (which would duplicate it on the booking).
       standaloneAssetIds = standaloneAssetIds.filter(
-        (id) => !kitMemberIds.has(id)
+        (id) => !kitMemberIds.has(id),
       );
     }
 
@@ -325,9 +334,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
     // Only admin/owner users can set these; the field is hidden for
     // self-service/base users, but we guard server-side as well.
     const notificationRecipientIdsRaw = formData.get(
-      "notificationRecipientIds"
+      "notificationRecipientIds",
     ) as string | null;
-    if (notificationRecipientIdsRaw && !isSelfServiceOrBase) {
+    if (notificationRecipientIdsRaw && !isScopedToOwnRecords) {
       const recipientIds = notificationRecipientIdsRaw
         .split(",")
         .filter(Boolean);
@@ -406,31 +415,26 @@ export const handle = {
 };
 
 export default function NewBooking() {
-  const {
-    header,
-    isSelfServiceOrBase,
-    teamMembers,
-    assetIds,
-    kitId,
-    showModal,
-  } = useLoaderData<typeof loader>();
+  const { t } = useTranslation();
+  const { isScopedToOwnRecords, teamMembers, assetIds, kitId, showModal } =
+    useLoaderData<typeof loader>();
   const user = useUserData();
   const dynamicTitle = useAtomValue(dynamicTitleAtom);
 
   // The loader already takes care of returning only the current user so we just get the first and only element in the array
-  const custodianRef = isSelfServiceOrBase
+  const custodianRef = isScopedToOwnRecords
     ? teamMembers.find((tm) => tm.userId === user!.id)?.id
     : undefined;
 
   const pageTitle = dynamicTitle?.trim().length
     ? dynamicTitle
-    : header?.title ?? newBookingHeader.title;
+    : t("bookings.createNewBooking");
 
   return (
     <div className="relative">
       <Header
         title={pageTitle}
-        subHeading={header?.subHeading}
+        subHeading={t("bookings.createNewBookingDescription")}
         hideBreadcrumbs={showModal}
         classNames={showModal ? "[&>div]:border-b-0" : undefined}
       />

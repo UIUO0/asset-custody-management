@@ -15,6 +15,7 @@
  */
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import KitImage from "~/components/kits/kit-image";
@@ -31,16 +32,19 @@ import { tw } from "~/utils/tw";
 // setTrigger(...) loops during navigation transitions ("Maximum update depth
 // exceeded"). See top-booked-assets-content.tsx for the original failure mode.
 function AvgDurationHeader() {
+  const { t } = useTranslation();
+
   return (
     <span className="flex items-center gap-1">
-      Avg Duration
+      {t("reports.avgDuration")}
       <InfoTooltip
         iconClassName="size-3.5"
         content={
           <p>
-            <strong>Average booking duration</strong> — How long this kit is
-            typically kept per booking. Calculated as total days booked ÷ number
-            of bookings.
+            <Trans
+              i18nKey="reports.avgDurationTooltipKit"
+              components={{ 1: <strong /> }}
+            />
           </p>
         }
       />
@@ -53,10 +57,35 @@ function AvgDurationHeader() {
  * cell function refs are stable across TopBookedKitsContent renders (see the
  * render-stability note on AvgDurationHeader above).
  */
+/**
+ * Booking-count chip linking to the kit's bookings list.
+ *
+ * A component (not inline JSX in the `cell` renderer) so `useTranslation` has a
+ * stable call position — TanStack cell renderers run once per row and cannot
+ * host hooks.
+ *
+ * @param props.to - Target bookings route for this kit
+ * @param props.count - Number of bookings in the selected timeframe
+ */
+function BookingCountLink({ to, count }: { to: string; count: number }) {
+  const { t } = useTranslation();
+
+  return (
+    <Link
+      to={to}
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-200"
+      title={t("reports.viewAllBookingsForKit")}
+    >
+      {count}
+    </Link>
+  );
+}
+
 const TOP_BOOKED_KITS_COLUMNS: ColumnDef<TopBookedKitRow>[] = [
   {
     accessorKey: "kitName",
-    header: "Kit",
+    header: "reports.colKit",
     cell: ({ row }) => (
       <KitCell
         name={row.original.kitName}
@@ -68,21 +97,17 @@ const TOP_BOOKED_KITS_COLUMNS: ColumnDef<TopBookedKitRow>[] = [
   },
   {
     accessorKey: "bookingCount",
-    header: "Bookings",
+    header: "reports.colBookings",
     cell: ({ row }) => (
-      <Link
+      <BookingCountLink
         to={`/kits/${row.original.kitId}/bookings`}
-        onClick={(e) => e.stopPropagation()}
-        className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 transition-colors hover:bg-blue-200"
-        title="View all bookings for this kit"
-      >
-        {row.original.bookingCount}
-      </Link>
+        count={row.original.bookingCount}
+      />
     ),
   },
   {
     accessorKey: "totalDaysBooked",
-    header: "Total Days",
+    header: "reports.totalDays",
     cell: ({ row }) => (
       <span className="text-sm text-gray-700">
         {row.original.totalDaysBooked}
@@ -111,7 +136,7 @@ const TOP_BOOKED_KITS_COLUMNS: ColumnDef<TopBookedKitRow>[] = [
                   ? "bg-blue-600"
                   : avgDays >= 3
                   ? "bg-blue-400"
-                  : "bg-blue-200"
+                  : "bg-blue-200",
               )}
               style={{ width: `${barPercent}%` }}
             />
@@ -127,13 +152,13 @@ const TOP_BOOKED_KITS_COLUMNS: ColumnDef<TopBookedKitRow>[] = [
   },
   {
     accessorKey: "category",
-    header: "Category",
+    header: "reports.colCategory",
     cell: ({ row }) =>
       row.original.category || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "location",
-    header: "Location",
+    header: "reports.colLocation",
     cell: ({ row }) =>
       row.original.location || <span className="text-gray-400">—</span>,
   },
@@ -171,6 +196,7 @@ export function TopBookedKitsContent({
   topBookedKit,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   // Stable reference is guaranteed by `TOP_BOOKED_KITS_COLUMNS` living at
   // module scope (see its JSDoc for why that matters).
   const columns = TOP_BOOKED_KITS_COLUMNS;
@@ -221,7 +247,9 @@ export function TopBookedKitsContent({
             {/* Most booked kit with image */}
             {topKit && (
               <div className="flex flex-col">
-                <span className="text-xs text-gray-500">Most Booked</span>
+                <span className="text-xs text-gray-500">
+                  {t("reports.mostBooked")}
+                </span>
                 <Link
                   to={`/kits/${topKit.kitId}`}
                   className="group -mx-1.5 mt-0.5 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-gray-50"
@@ -257,20 +285,21 @@ export function TopBookedKitsContent({
         <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-2 md:px-6">
           <p className="text-xs text-gray-500">
             <span className="font-medium text-gray-600">
-              Understanding this report:
+              {t("reports.understandingThisReport")}
             </span>{" "}
-            Shows which kits are booked most frequently during{" "}
-            <span className="font-medium">
-              {(timeframeLabel || "the selected period").toLowerCase()}
-            </span>
-            . A kit counts once per booking it appears in (kits are booked as a
-            whole unit). <span className="italic">Total Days</span> = cumulative
-            booking days. <span className="italic">Avg Duration</span> = typical
-            booking length per checkout. Category and location reflect each
-            kit&apos;s current settings. Counts confirmed bookings in the period
-            (reserved through completed, plus archived) and excludes drafts and
-            cancellations, so this can differ from a kit&apos;s all-time
-            bookings list.
+            <Trans
+              i18nKey="reports.kitsBookedMostIn"
+              values={{
+                period: (
+                  timeframeLabel || t("reports.selectedPeriod")
+                ).toLowerCase(),
+              }}
+              components={{
+                1: <span className="font-medium" />,
+                3: <span className="italic" />,
+                5: <span className="italic" />,
+              }}
+            />
           </p>
         </div>
       </div>
@@ -279,7 +308,9 @@ export function TopBookedKitsContent({
           and scrolls internally when row count exceeds the visible area. */}
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
-          <h3 className="text-sm font-semibold text-gray-900">Top Kits</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            {t("reports.topKits")}
+          </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}
           </span>
@@ -291,8 +322,8 @@ export function TopBookedKitsContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No booking data"
-              description="No kits have been booked within the selected timeframe."
+              title={t("reports.noBookingData")}
+              description={t("reports.noKitsBookedInTimeframe")}
             />
           }
         />

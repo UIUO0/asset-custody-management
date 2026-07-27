@@ -4,11 +4,12 @@
  * Line/area chart showing weekly compliance rate over the selected period.
  * Helps users understand if compliance is improving or declining.
  *
- * Uses Tremor's AreaChart with Shelf's primary colors.
+ * Uses Tremor's AreaChart with the workspace's primary colors.
  */
 
 import { AreaChart } from "@tremor/react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ClientOnly } from "remix-utils/client-only";
 
 import type { ComplianceTrendPoint } from "~/modules/reports/types";
@@ -35,6 +36,7 @@ export function ComplianceTrend({
   timeframeLabel,
   className,
 }: ComplianceTrendProps) {
+  const { t } = useTranslation();
   // Filter to only points with actual data for trend calculation
   const pointsWithData = data.filter((d) => d.total > 0);
 
@@ -44,10 +46,19 @@ export function ComplianceTrend({
   // Total completions across all periods
   const totalCompletions = data.reduce((sum, d) => sum + d.total, 0);
 
+  /**
+   * Series key for the rate line.
+   *
+   * Tremor matches `categories` against the data object's keys, so the
+   * translated label has to be used as the key too — otherwise the series
+   * silently disappears in any language but English.
+   */
+  const rateSeriesKey = t("reports.complianceRate");
+
   // Transform data for Tremor chart - use null for empty periods (creates gaps)
   const chartData = data.map((point) => ({
     period: point.label,
-    "Compliance Rate": point.rate, // null values create gaps in chart
+    [rateSeriesKey]: point.rate, // null values create gaps in chart
     "On-time": point.onTime,
     Late: point.late,
     hasData: point.total > 0,
@@ -59,7 +70,7 @@ export function ComplianceTrend({
       <div
         className={tw(
           "flex flex-col items-center justify-center rounded border border-gray-200 bg-white p-6",
-          className
+          className,
         )}
       >
         <p className="text-sm text-gray-500">
@@ -75,7 +86,7 @@ export function ComplianceTrend({
       <div
         className={tw(
           "flex flex-col items-center justify-center rounded border border-gray-200 bg-white p-6",
-          className
+          className,
         )}
       >
         <p className="text-sm text-gray-500">
@@ -89,7 +100,7 @@ export function ComplianceTrend({
     <div
       className={tw(
         "flex flex-col rounded border border-gray-200 bg-white",
-        className
+        className,
       )}
     >
       {/* Header with trend indicator */}
@@ -117,7 +128,7 @@ export function ComplianceTrend({
               className="h-[180px]"
               data={chartData}
               index="period"
-              categories={["Compliance Rate"]}
+              categories={[rateSeriesKey]}
               colors={["emerald"]}
               valueFormatter={(value) => (value !== null ? `${value}%` : "—")}
               showLegend={false}
@@ -133,7 +144,7 @@ export function ComplianceTrend({
                 if (!payload || payload.length === 0) return null;
                 const point = payload[0];
                 const periodData = data.find(
-                  (d) => d.label === point.payload.period
+                  (d) => d.label === point.payload.period,
                 );
                 if (!periodData) return null;
 
@@ -144,7 +155,9 @@ export function ComplianceTrend({
                       <p className="text-xs font-medium text-gray-600">
                         {periodData.label}
                       </p>
-                      <p className="text-sm text-gray-400">No completions</p>
+                      <p className="text-sm text-gray-400">
+                        {t("reports.noCompletions")}
+                      </p>
                     </div>
                   );
                 }
@@ -188,7 +201,7 @@ export function ComplianceTrend({
  * Only considers points where rate is not null (has completions).
  */
 function calculateTrend(
-  pointsWithData: ComplianceTrendPoint[]
+  pointsWithData: ComplianceTrendPoint[],
 ): "up" | "down" | "stable" {
   if (pointsWithData.length < 2) return "stable";
 
@@ -248,7 +261,7 @@ function TrendIndicator({ trend }: { trend: "up" | "down" | "stable" }) {
     <span
       className={tw(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-        className
+        className,
       )}
     >
       <Icon className="size-3" />

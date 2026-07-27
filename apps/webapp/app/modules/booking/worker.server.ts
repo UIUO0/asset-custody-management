@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { BookingStatus } from "@prisma/client";
 import type PgBoss from "pg-boss";
+import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import { bookingUpdatesTemplateString } from "~/emails/bookings-updates-template";
 import { sendEmail } from "~/emails/mail.server";
@@ -61,7 +62,7 @@ const checkoutReminder = async ({ data }: PgBoss.Job<SchedulerData>) => {
         resolveUserDisplayName(booking.custodianUser) ||
         (booking.custodianTeamMember?.name as string);
 
-      const subject = `🔔 Checkout reminder (${booking.name}) - shelf.nu`;
+      const subject = `🔔 Checkout reminder (${booking.name}) - ${config.appName}`;
 
       const text = checkoutReminderEmailContent({
         bookingName: booking.name,
@@ -79,7 +80,7 @@ const checkoutReminder = async ({ data }: PgBoss.Job<SchedulerData>) => {
           booking,
           heading: `Your booking is due for checkout in ${getTimeRemainingMessage(
             new Date(booking.from),
-            new Date()
+            new Date(),
           )}.`,
           assetCount: booking._count.bookingAssets,
           hints: data.hints,
@@ -124,7 +125,7 @@ const checkinReminder = async ({ data }: PgBoss.Job<SchedulerData>) => {
       booking,
       booking._count.bookingAssets,
       data.hints,
-      booking.organizationId
+      booking.organizationId,
     );
   }
 
@@ -163,7 +164,7 @@ const overdueHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
   /** Check this just in case  */
   if (booking.status !== BookingStatus.OVERDUE) {
     Logger.warn(
-      `ignoring overdueReminder for booking with id ${data.id}, as its not in overdue status`
+      `ignoring overdueReminder for booking with id ${data.id}, as its not in overdue status`,
     );
     return;
   }
@@ -171,11 +172,11 @@ const overdueHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
   // Create status transition note for automatic overdue transition
   const fromStatusBadge = wrapBookingStatusForNote(
     "ONGOING",
-    booking.custodianUserId || undefined
+    booking.custodianUserId || undefined,
   );
   const toStatusBadge = wrapBookingStatusForNote(
     "OVERDUE",
-    booking.custodianUserId || undefined
+    booking.custodianUserId || undefined,
   );
 
   await createSystemBookingNote({
@@ -198,7 +199,7 @@ const overdueHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
       resolveUserDisplayName(booking.custodianUser) ||
       (booking.custodianTeamMember?.name as string);
 
-    const subject = `⚠️ Overdue booking (${booking.name}) - shelf.nu`;
+    const subject = `⚠️ Overdue booking (${booking.name}) - ${config.appName}`;
 
     const text = overdueBookingEmailContent({
       bookingName: booking.name,
@@ -247,7 +248,7 @@ const autoArchiveHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
 
     if (!booking) {
       Logger.warn(
-        `Auto-archive: Booking ${data.id} not found, skipping archive`
+        `Auto-archive: Booking ${data.id} not found, skipping archive`,
       );
       return;
     }
@@ -256,7 +257,7 @@ const autoArchiveHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
     // (user might have manually archived it or reopened it)
     if (booking.status !== BookingStatus.COMPLETE) {
       Logger.info(
-        `Auto-archive: Booking ${data.id} is no longer COMPLETE (status: ${booking.status}), skipping archive`
+        `Auto-archive: Booking ${data.id} is no longer COMPLETE (status: ${booking.status}), skipping archive`,
       );
       return;
     }
@@ -269,7 +270,7 @@ const autoArchiveHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
 
     if (!bookingSettings?.autoArchiveBookings) {
       Logger.info(
-        `Auto-archive: Auto-archive is disabled for organization ${booking.organizationId}, skipping booking ${data.id}`
+        `Auto-archive: Auto-archive is disabled for organization ${booking.organizationId}, skipping booking ${data.id}`,
       );
       return;
     }
@@ -290,7 +291,7 @@ const autoArchiveHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
 
     if (!updatedBooking) {
       Logger.info(
-        `Auto-archive: Booking ${data.id} was modified concurrently, skipping archive`
+        `Auto-archive: Booking ${data.id} was modified concurrently, skipping archive`,
       );
       return;
     }
@@ -312,7 +313,7 @@ const autoArchiveHandler = async ({ data }: PgBoss.Job<SchedulerData>) => {
         message: "Failed to auto-archive booking",
         additionalData: { bookingId: data.id },
         label: "Booking",
-      })
+      }),
     );
   }
 };
@@ -353,7 +354,7 @@ const autoArchiveExpiredHandler = async ({
 
     if (!booking) {
       Logger.warn(
-        `Auto-archive-expired: Booking ${data.id} not found, skipping`
+        `Auto-archive-expired: Booking ${data.id} not found, skipping`,
       );
       return;
     }
@@ -362,7 +363,7 @@ const autoArchiveExpiredHandler = async ({
     // out. If it was checked out, cancelled, completed, etc., leave it alone.
     if (booking.status !== BookingStatus.RESERVED) {
       Logger.info(
-        `Auto-archive-expired: Booking ${data.id} is no longer RESERVED (status: ${booking.status}), skipping`
+        `Auto-archive-expired: Booking ${data.id} is no longer RESERVED (status: ${booking.status}), skipping`,
       );
       return;
     }
@@ -374,7 +375,7 @@ const autoArchiveExpiredHandler = async ({
 
     if (!bookingSettings?.autoArchiveExpiredReservations) {
       Logger.info(
-        `Auto-archive-expired: setting disabled for organization ${booking.organizationId}, skipping booking ${data.id}`
+        `Auto-archive-expired: setting disabled for organization ${booking.organizationId}, skipping booking ${data.id}`,
       );
       return;
     }
@@ -384,7 +385,7 @@ const autoArchiveExpiredHandler = async ({
     // yet — we re-queue for the new time below instead of archiving early.
     const archiveAfter = new Date(booking.to);
     archiveAfter.setDate(
-      archiveAfter.getDate() + bookingSettings.autoArchiveDays
+      archiveAfter.getDate() + bookingSettings.autoArchiveDays,
     );
     const now = new Date();
     if (archiveAfter > now) {
@@ -394,7 +395,7 @@ const autoArchiveExpiredHandler = async ({
       Logger.info(
         `Auto-archive-expired: Booking ${
           data.id
-        } not due yet, rescheduling for ${archiveAfter.toISOString()}`
+        } not due yet, rescheduling for ${archiveAfter.toISOString()}`,
       );
       await scheduleExpiryArchiveJob({
         bookingId: booking.id,
@@ -428,7 +429,7 @@ const autoArchiveExpiredHandler = async ({
 
     if (!updatedBooking) {
       Logger.info(
-        `Auto-archive-expired: Booking ${data.id} was modified concurrently, skipping`
+        `Auto-archive-expired: Booking ${data.id} was modified concurrently, skipping`,
       );
       return;
     }
@@ -466,7 +467,7 @@ const autoArchiveExpiredHandler = async ({
             "Failed to record BOOKING_ARCHIVED event for an auto-archived expired reservation",
           additionalData: { bookingId: booking.id },
           label: "Booking",
-        })
+        }),
       );
     }
 
@@ -478,7 +479,7 @@ const autoArchiveExpiredHandler = async ({
         message: "Failed to auto-archive expired reservation",
         additionalData: { bookingId: data.id },
         label: "Booking",
-      })
+      }),
     );
   }
 };
@@ -507,7 +508,7 @@ export const registerBookingWorkers = async () => {
           message: "Wrong event type received for the scheduled worker",
           additionalData: { job },
           label: "Booking",
-        })
+        }),
       );
       return;
     }
@@ -520,7 +521,7 @@ export const registerBookingWorkers = async () => {
           message: "Something went wrong while executing scheduled work.",
           additionalData: { data: job.data, work: job.data.eventType },
           label: "Booking",
-        })
+        }),
       );
     }
   });

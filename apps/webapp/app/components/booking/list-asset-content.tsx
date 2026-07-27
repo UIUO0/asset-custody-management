@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { AssetStatus } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { LocationBadge } from "~/components/location/location-badge";
 import { useBookingStatusHelpers } from "~/hooks/use-booking-status";
@@ -65,6 +66,7 @@ export default function ListAssetContent({
   partialCheckoutDetails,
   shouldShowCheckoutColumns,
 }: ListAssetContentProps) {
+  const { t } = useTranslation();
   const { category, tags } = item;
   /**
    * `availableUnitsByAsset` is the workspace-availability map shipped by
@@ -81,7 +83,7 @@ export default function ListAssetContent({
     availableUnitsByAsset?: Record<string, number>;
   }>();
   const currentOrganization = useCurrentOrganization();
-  const { isBase, isSelfService, isBaseOrSelfService } = useUserRoleHelper();
+  const { isBase, isSelfService, isScopedToOwnRecords } = useUserRoleHelper();
 
   // Resolve the asset's display code (QR id, SAM id, or barcode value) per
   // the workspace preference and per-asset override. Cheap pure call; safe
@@ -93,7 +95,7 @@ export default function ListAssetContent({
       })
     : null;
   const { isReserved, isDraft, isFinished } = useBookingStatusHelpers(
-    booking.status
+    booking.status,
   );
   const user = useUserData();
 
@@ -118,7 +120,7 @@ export default function ListAssetContent({
         // Only exclude assets from current booking if current booking is ONGOING/OVERDUE
         !(
           booking.bookingAssets.some(
-            (ba: { assetId: string }) => ba.assetId === item.id
+            (ba: { assetId: string }) => ba.assetId === item.id,
           ) &&
           (booking.status === "ONGOING" || booking.status === "OVERDUE")
         )) ??
@@ -134,7 +136,7 @@ export default function ListAssetContent({
     if (isPartOfKit) return false;
 
     // Admins and owners can always see actions
-    if (!isBaseOrSelfService) return true;
+    if (!isScopedToOwnRecords) return true;
 
     // Check if user is the custodian of the item
     const isUserCustodian = booking?.custodianUser?.id === user?.id;
@@ -155,7 +157,7 @@ export default function ListAssetContent({
     isDraft,
     isSelfService,
     isReserved,
-    isBaseOrSelfService,
+    isScopedToOwnRecords,
   ]);
 
   /**
@@ -282,7 +284,7 @@ export default function ListAssetContent({
         <div
           className={tw(
             "flex justify-between gap-3 py-4 md:justify-normal md:pe-6",
-            isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+            isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
           )}
         >
           <div className="flex items-center gap-3">
@@ -294,10 +296,10 @@ export default function ListAssetContent({
                   thumbnailImage: item.thumbnailImage,
                   mainImageExpiration: item.mainImageExpiration,
                 }}
-                alt={`Image of ${item.title}`}
+                alt={t("bookings.assetImageAlt", { name: item.title })}
                 className={tw(
                   "size-full rounded-[4px] border object-cover",
-                  isKitAsset ? "border-gray-300" : ""
+                  isKitAsset ? "border-gray-300" : "",
                 )}
                 withPreview
               />
@@ -374,7 +376,7 @@ export default function ListAssetContent({
                   <span
                     className={tw(
                       "inline-flex cursor-help items-center gap-1 tabular-nums",
-                      qtyRemaining === 0 ? "text-emerald-700" : "text-gray-900"
+                      qtyRemaining === 0 ? "text-emerald-700" : "text-gray-900",
                     )}
                   >
                     <span className="font-medium">{qtyDispositioned}</span>
@@ -385,11 +387,13 @@ export default function ListAssetContent({
                   <div className="flex flex-col gap-1 text-xs">
                     <div className="font-semibold text-gray-900">
                       {qtyRemaining === 0
-                        ? "All units checked in"
-                        : "Partially checked in"}
+                        ? t("bookings.allUnitsCheckedIn")
+                        : t("bookings.partiallyCheckedIn")}
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-gray-600">Booked</span>
+                      <span className="text-gray-600">
+                        {t("bookings.legendBooked")}
+                      </span>
                       <span className="tabular-nums text-gray-900">
                         {qtyBooked}
                       </span>
@@ -400,7 +404,9 @@ export default function ListAssetContent({
                         vice versa. */}
                     {qtyBreakdown.returned > 0 ? (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-gray-600">Returned</span>
+                        <span className="text-gray-600">
+                          {t("bookings.legendReturned")}
+                        </span>
                         <span className="tabular-nums text-emerald-700">
                           {qtyBreakdown.returned}
                         </span>
@@ -408,7 +414,9 @@ export default function ListAssetContent({
                     ) : null}
                     {qtyBreakdown.consumed > 0 ? (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-gray-600">Consumed</span>
+                        <span className="text-gray-600">
+                          {t("bookings.qtyConsumed")}
+                        </span>
                         <span className="tabular-nums text-gray-900">
                           {qtyBreakdown.consumed}
                         </span>
@@ -416,7 +424,9 @@ export default function ListAssetContent({
                     ) : null}
                     {qtyBreakdown.lost > 0 ? (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-gray-600">Lost</span>
+                        <span className="text-gray-600">
+                          {t("bookings.qtyLost")}
+                        </span>
                         <span className="tabular-nums text-rose-700">
                           {qtyBreakdown.lost}
                         </span>
@@ -424,7 +434,9 @@ export default function ListAssetContent({
                     ) : null}
                     {qtyBreakdown.damaged > 0 ? (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-gray-600">Damaged</span>
+                        <span className="text-gray-600">
+                          {t("bookings.qtyDamaged")}
+                        </span>
                         <span className="tabular-nums text-amber-700">
                           {qtyBreakdown.damaged}
                         </span>
@@ -433,13 +445,15 @@ export default function ListAssetContent({
                     {/* Summary row kept at the bottom as a total so
                         operators can sanity-check the split adds up. */}
                     <div className="mt-1 flex items-center justify-between gap-3 border-t border-gray-100 pt-1">
-                      <span className="text-gray-600">Remaining</span>
+                      <span className="text-gray-600">
+                        {t("bookings.qtyRemaining")}
+                      </span>
                       <span
                         className={tw(
                           "tabular-nums",
                           qtyRemaining === 0
                             ? "text-gray-400"
-                            : "font-medium text-amber-700"
+                            : "font-medium text-amber-700",
                         )}
                       >
                         {qtyRemaining}
@@ -472,10 +486,12 @@ export default function ListAssetContent({
                 <TooltipContent side="top" align="center" className="max-w-xs">
                   <div className="flex flex-col gap-1 text-xs">
                     <div className="font-semibold text-gray-900">
-                      Partially checked out
+                      {t("bookings.partiallyCheckedOut")}
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-gray-600">Checked out</span>
+                      <span className="text-gray-600">
+                        {t("bookings.checkedOut")}
+                      </span>
                       <span className="tabular-nums text-amber-700">
                         {qtyCheckedOut} / {qtyBooked}
                       </span>
@@ -483,7 +499,7 @@ export default function ListAssetContent({
                     {qtyOutstandingCheckout > 0 ? (
                       <div className="flex items-center justify-between gap-3 border-t border-gray-100 pt-1">
                         <span className="text-gray-600">
-                          Still to check out
+                          {t("bookings.stillToCheckOut")}
                         </span>
                         <span className="font-medium tabular-nums text-gray-900">
                           {qtyOutstandingCheckout}
@@ -506,7 +522,7 @@ export default function ListAssetContent({
           the existing `AvailabilityLabel` paths and never reach the badge. */}
       <Td
         className={tw(
-          isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+          isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
         )}
       >
         {!isFinished ? (
@@ -523,14 +539,14 @@ export default function ListAssetContent({
       </Td>
       <Td
         className={tw(
-          isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+          isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
         )}
       >
         <CategoryBadge category={category} />
       </Td>
       <Td
         className={tw(
-          isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+          isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
         )}
       >
         <ListItemTagsColumn tags={tags} />
@@ -538,7 +554,7 @@ export default function ListAssetContent({
 
       <Td
         className={tw(
-          isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+          isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
         )}
       >
         {item.location ? (
@@ -560,7 +576,7 @@ export default function ListAssetContent({
           {/* Checked out on */}
           <Td
             className={tw(
-              isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+              isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
             )}
           >
             {checkoutDetails ? (
@@ -575,7 +591,7 @@ export default function ListAssetContent({
           {/* Checked out by */}
           <Td
             className={tw(
-              isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+              isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
             )}
           >
             {checkoutDetails ? (
@@ -597,7 +613,7 @@ export default function ListAssetContent({
           {/* Checked in on */}
           <Td
             className={tw(
-              isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+              isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
             )}
           >
             {/* Only INDIVIDUAL partials populate `partialCheckinDetails`
@@ -622,7 +638,7 @@ export default function ListAssetContent({
           {/* Checked in by */}
           <Td
             className={tw(
-              isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+              isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
             )}
           >
             {isPartiallyCheckedIn && partialCheckinDetails[item.id] ? (
@@ -648,7 +664,7 @@ export default function ListAssetContent({
       <Td
         className={tw(
           "pe-4 text-end",
-          isKitAsset ? "bg-gray-50/50" : "" // Light background for kit assets
+          isKitAsset ? "bg-gray-50/50" : "", // Light background for kit assets
         )}
       >
         <When truthy={canSeeActions}>

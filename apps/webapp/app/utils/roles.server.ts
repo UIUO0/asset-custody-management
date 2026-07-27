@@ -9,6 +9,7 @@ import type {
   PermissionEntity,
 } from "./permissions/permission.data";
 import { validatePermission } from "./permissions/permission.validator.server";
+import { rolesAreScopedToOwnRecords } from "./permissions/role-scope";
 
 export async function requireUserWithPermission(name: Roles, userId: string) {
   try {
@@ -73,7 +74,7 @@ export async function requirePermission({
   } = await getSelectedOrganization({ userId, request });
 
   const roles = userOrganizations.find(
-    (o) => o.organization.id === organizationId
+    (o) => o.organization.id === organizationId,
   )?.roles;
 
   await validatePermission({
@@ -93,16 +94,26 @@ export async function requirePermission({
 
   const role = roles ? roles[0] : OrganizationRoles.BASE;
 
-  const isSelfServiceOrBase =
-    role === OrganizationRoles.SELF_SERVICE || role === OrganizationRoles.BASE;
+  /**
+   * Whether every query in this request must be narrowed to records the user is
+   * attached to. Derived from an explicit allow-list of organization-wide roles
+   * (see `role-scope.ts`), so a role nobody registered there falls back to the
+   * narrowest scope rather than seeing the whole organization.
+   *
+   * Passes the full `roles` array, not just `role`, so a user holding several
+   * roles gets the widest scope any one of them grants.
+   */
+  const isScopedToOwnRecords = rolesAreScopedToOwnRecords(roles ?? [role]);
 
   /**
-   * This checks the organization settings permissions overrides for BASE and SELF_SERVICE roles
-   * If the user is in a BASE or SELF_SERVICE role, we check if they can see all bookings
+   * Organization settings can widen visibility for the two restricted upstream
+   * roles. The overrides are keyed to SELF_SERVICE and BASE specifically — the
+   * EPDA operational roles are already organization-wide via the allow-list, so
+   * the first clause covers them.
    */
   const canSeeAllBookings =
-    // Admin/Owner always can see all
-    !isSelfServiceOrBase ||
+    // Roles with organization-wide visibility always see everything
+    !isScopedToOwnRecords ||
     // SELF_SERVICE can see all if org setting allows
     (role === OrganizationRoles.SELF_SERVICE &&
       currentOrganization.selfServiceCanSeeBookings) ||
@@ -112,8 +123,8 @@ export async function requirePermission({
 
   // Determine if user can see all custody information
   const canSeeAllCustody =
-    // Admin/Owner always can see all
-    !isSelfServiceOrBase ||
+    // Roles with organization-wide visibility always see everything
+    !isScopedToOwnRecords ||
     // SELF_SERVICE can see all if org setting allows
     (role === OrganizationRoles.SELF_SERVICE &&
       currentOrganization.selfServiceCanSeeCustody) ||
@@ -132,7 +143,7 @@ export async function requirePermission({
     organizationId,
     currentOrganization,
     role,
-    isSelfServiceOrBase,
+    isScopedToOwnRecords,
     userOrganizations,
     canSeeAllBookings,
     canSeeAllCustody,
@@ -180,7 +191,7 @@ function parseGroupIds(field: string | null | undefined): string[] {
  */
 function groupClaimMatches(
   field: string | null | undefined,
-  claimGroups: string[]
+  claimGroups: string[],
 ): boolean {
   const whole = (field ?? "").trim().toLowerCase();
   if (!whole) return false;
@@ -207,7 +218,7 @@ function groupClaimMatches(
  */
 export function getRoleFromGroupId(
   ssoDetails: SsoDetails,
-  groupIds: string[]
+  groupIds: string[],
 ): OrganizationRoles | null {
   // We prioritize the admin group. If the user is in several, the highest role wins.
   if (groupClaimMatches(ssoDetails.adminGroupId, groupIds)) {

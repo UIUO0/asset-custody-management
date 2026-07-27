@@ -35,7 +35,7 @@ import {
  * @returns The stored locale, or `null` when absent/unsupported
  */
 function getLocaleFromCookie(
-  cookieHeader: string | null
+  cookieHeader: string | null,
 ): SupportedLocale | null {
   if (!cookieHeader) return null;
 
@@ -113,7 +113,7 @@ export function serializeLocaleCookie(locale: SupportedLocale): string {
  * @returns An initialised i18next instance bound to `locale`
  */
 export async function createI18nInstance(
-  locale: SupportedLocale
+  locale: SupportedLocale,
 ): Promise<I18nInstance> {
   const instance = createInstance();
 
@@ -123,4 +123,40 @@ export async function createI18nInstance(
   });
 
   return instance;
+}
+
+/**
+ * Memoised, locale-bound instances backing {@link getFixedT}.
+ *
+ * Safe to share across requests — unlike the SSR instance created per request
+ * by {@link createI18nInstance}, these are pinned to one language and are only
+ * ever read from, so there is no cross-request language leak.
+ */
+const fixedInstances = new Map<SupportedLocale, Promise<I18nInstance>>();
+
+/**
+ * Returns a translation function for use inside loaders and actions, where the
+ * React `useTranslation` hook is unavailable.
+ *
+ * Use this for user-facing strings a loader puts into its payload — page
+ * headers, search-field labels, empty-state copy. Do NOT use it for
+ * `sendNotification` or `ShelfError` messages, which stay in English by
+ * convention.
+ *
+ * @param locale - Locale for the request, from {@link getLocale}
+ * @returns The i18next `t` function bound to `locale`
+ *
+ * @example
+ * const t = await getFixedT(getLocale(request));
+ * return payload({ header: { title: t("assets.importTitle") } });
+ */
+export async function getFixedT(locale: SupportedLocale) {
+  let instance = fixedInstances.get(locale);
+
+  if (!instance) {
+    instance = createI18nInstance(locale);
+    fixedInstances.set(locale, instance);
+  }
+
+  return (await instance).t;
 }

@@ -5,8 +5,22 @@ import { QueueNames, scheduler } from "~/utils/scheduler.server";
 import type { EmailPayloadType } from "./types";
 import { SMTP_FROM, SUPPORT_EMAIL } from "../utils/env";
 
-/** Domain used for soft-deleted user email addresses */
-export const SOFT_DELETED_EMAIL_DOMAIN = "@deleted.shelf.nu";
+/**
+ * Domain stamped onto a user's email address when their account is soft-deleted
+ * (`deleted+{randomId}@deleted.epda.local`). Nothing is ever delivered to it —
+ * `sendEmail` below drops any message addressed to this domain.
+ */
+export const SOFT_DELETED_EMAIL_DOMAIN = "@deleted.epda.local";
+
+/**
+ * The pre-EPDA domain. Still matched on send so that accounts soft-deleted
+ * before the rename stay suppressed — the marker is persisted in `User.email`,
+ * so changing the constant alone would silently start delivering mail to rows
+ * written under the old value.
+ *
+ * Safe to delete once no `User.email` ends with it.
+ */
+const LEGACY_SOFT_DELETED_EMAIL_DOMAIN = "@deleted.shelf.nu";
 
 // every node will execute 5 jobs(teamSize) every 3 minutes(newJobCheckIntervalSeconds),
 // increase teamSize if you need better concurrency
@@ -36,13 +50,13 @@ export const registerEmailWorkers = async () => {
                 retryLimit: job.retrylimit,
               },
               label: "Email",
-            })
+            }),
           );
         }
 
         throw cause;
       }
-    }
+    },
   );
 };
 
@@ -54,9 +68,12 @@ export const triggerEmail = async ({
   from,
   replyTo,
 }: EmailPayloadType) => {
-  if (to.endsWith(SOFT_DELETED_EMAIL_DOMAIN)) {
+  if (
+    to.endsWith(SOFT_DELETED_EMAIL_DOMAIN) ||
+    to.endsWith(LEGACY_SOFT_DELETED_EMAIL_DOMAIN)
+  ) {
     Logger.warn(
-      `Skipping email to soft-deleted user: ${to} (subject: ${subject})`
+      `Skipping email to soft-deleted user: ${to} (subject: ${subject})`,
     );
     return;
   }
@@ -64,7 +81,12 @@ export const triggerEmail = async ({
   try {
     // send mail with defined transport object
     await transporter.sendMail({
-      from: from || SMTP_FROM || `"Shelf" <hello@example.com>`, // sender address
+      // why: deliberately a literal rather than `config.appName`. Importing the
+      // config here pulls the whole env module into the email worker, and this
+      // module's tests mock `~/utils/env` with only the two vars they need —
+      // the extra named imports then fail at collection time. This is a
+      // last-resort default anyway: real deployments set SMTP_FROM.
+      from: from || SMTP_FROM || `"EPDA Assets" <hello@example.com>`, // sender address
       replyTo: replyTo || SUPPORT_EMAIL, // reply to
       to, // list of receivers
       subject, // Subject line

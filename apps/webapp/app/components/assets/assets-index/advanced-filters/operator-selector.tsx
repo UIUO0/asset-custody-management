@@ -6,6 +6,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { ChevronRight } from "~/components/icons/library";
 import type { DisabledProp } from "~/components/shared/button";
 import { Button } from "~/components/shared/button";
@@ -28,25 +29,32 @@ function FilterOperatorDisplay({
   );
 }
 
-/** Maps the FilterOperator to a user friendly name */
+/**
+ * Maps each {@link FilterOperator} to its `[symbol, labelKey]` pair.
+ *
+ * The second entry is an **i18n key**, not display copy — the map lives at
+ * module scope where the `useTranslation` hook is unavailable, so consumers
+ * resolve it with `t()` (or the `translate` callback threaded through
+ * `formatFilterSummary`) at render time.
+ */
 export const operatorsMap: Record<FilterOperator, string[]> = {
-  is: ["=", "is"],
-  isNot: ["≠", "Is not"],
-  contains: ["∋", "Contains"],
-  before: ["<", "Before"],
-  after: [">", "After"],
-  between: ["<>", "Between"],
-  gt: [">", "Greater than"],
-  lt: ["<", "Lower than"],
-  gte: [">=", "Greater or equal"],
-  lte: ["<=", "Lower or equal"],
-  in: ["∈", "Is any of"],
-  containsAll: ["⊇", "Contains all"],
-  containsAny: ["⊃", "Contains any"],
-  matchesAny: ["≈", "Matches any"],
-  inDates: ["∈", "In dates"],
-  excludeAny: ["⊄", "Exclude any of"], // New operator with clear meaning for tag exclusion
-  withinHierarchy: ["↳", "Is in (incl. sub-locations)"],
+  is: ["=", "filterOperators.is"],
+  isNot: ["≠", "filterOperators.isNot"],
+  contains: ["∋", "filterOperators.contains"],
+  before: ["<", "filterOperators.before"],
+  after: [">", "filterOperators.after"],
+  between: ["<>", "filterOperators.between"],
+  gt: [">", "filterOperators.gt"],
+  lt: ["<", "filterOperators.lt"],
+  gte: [">=", "filterOperators.gte"],
+  lte: ["<=", "filterOperators.lte"],
+  in: ["∈", "filterOperators.in"],
+  containsAll: ["⊇", "filterOperators.containsAll"],
+  containsAny: ["⊃", "filterOperators.containsAny"],
+  matchesAny: ["≈", "filterOperators.matchesAny"],
+  inDates: ["∈", "filterOperators.inDates"],
+  excludeAny: ["⊄", "filterOperators.excludeAny"], // clear meaning for tag exclusion
+  withinHierarchy: ["↳", "filterOperators.withinHierarchy"],
 };
 
 // Define the allowed operators for each field type
@@ -71,6 +79,7 @@ export function OperatorSelector({
   setFilter: (filter: Filter["operator"]) => void;
   disabled?: DisabledProp;
 }) {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
@@ -160,7 +169,7 @@ export function OperatorSelector({
         <Button
           type="button"
           variant="secondary"
-          title={operatorsMap[operator][1]}
+          title={t(operatorsMap[operator][1])}
           className="w-[62px] font-normal"
           disabled={disabled}
         >
@@ -174,7 +183,7 @@ export function OperatorSelector({
         <PopoverContent
           align="start"
           className={tw(
-            "z-[999999]  mt-2  rounded-md border border-gray-200 bg-white"
+            "z-[999999]  mt-2  rounded-md border border-gray-200 bg-white",
           )}
           onKeyDown={handleKeyDown}
         >
@@ -187,17 +196,17 @@ export function OperatorSelector({
                 key={k + index}
                 className={tw(
                   "px-4 py-2 text-[14px] font-medium text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                  selectedIndex === index && "bg-gray-50"
+                  selectedIndex === index && "bg-gray-50",
                 )}
                 role="option"
                 aria-selected={selectedIndex === index}
                 tabIndex={0}
                 onClick={() => handleSelect(k as FilterOperator)}
                 onKeyDown={handleActivationKeyPress(() =>
-                  handleSelect(k as FilterOperator)
+                  handleSelect(k as FilterOperator),
                 )}
               >
-                <FilterOperatorDisplay symbol={v[0]} text={v[1]} />
+                <FilterOperatorDisplay symbol={v[0]} text={t(v[1])} />
               </div>
             );
           })}

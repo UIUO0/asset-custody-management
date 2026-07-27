@@ -16,6 +16,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
@@ -110,7 +111,8 @@ export function QuantityCustodyList({
   canCustody = true,
   inKit,
 }: QuantityCustodyListProps) {
-  const unitLabel = unitOfMeasure || "units";
+  const { t } = useTranslation();
+  const unitLabel = unitOfMeasure || t("quantity.units");
   const allRecords = custody ?? [];
 
   /**
@@ -142,7 +144,7 @@ export function QuantityCustodyList({
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
         <h3 className="text-[14px] font-semibold text-gray-900">
-          Custody Breakdown
+          {t("quantity.custodyBreakdown")}
         </h3>
         {canCustody ? (
           <QuantityCustodyDialog
@@ -157,14 +159,11 @@ export function QuantityCustodyList({
                 className="py-1 text-xs"
                 disabled={
                   noneAvailable
-                    ? {
-                        reason:
-                          "All units are currently in custody. Release some before assigning more.",
-                      }
+                    ? { reason: t("quantity.allUnitsInCustody") }
                     : false
                 }
               >
-                Assign
+                {t("quantity.assign")}
               </Button>
             }
           />
@@ -187,17 +186,19 @@ export function QuantityCustodyList({
           </ul>
           {hiddenCount > 0 ? (
             <div className="border-t border-gray-100 px-4 py-3 text-[12px] text-gray-500">
-              +{hiddenCount} other {hiddenCount === 1 ? "person" : "people"}{" "}
-              also {hiddenCount === 1 ? "has" : "have"} custody of this asset.
+              {t("quantity.othersHaveCustody", { count: hiddenCount })}
             </div>
           ) : null}
         </>
       ) : (
         <div className="px-4 py-6 text-center text-sm text-gray-500">
-          No custody assigned.
+          {t("quantity.noCustodyAssigned")}
           {availableQuantity != null ? (
             <span className="mt-1 block">
-              {availableQuantity} {unitLabel} available
+              {t("quantity.availableWithUnit", {
+                count: availableQuantity,
+                unit: unitLabel,
+              })}
             </span>
           ) : null}
         </div>
@@ -287,19 +288,25 @@ function KitCustodyBadge({
 }: {
   kit?: { id: string; name: string } | null;
 }) {
+  const { t } = useTranslation();
+
   const tooltipBody = kit ? (
     <span className="block">
-      Held via kit{" "}
-      <Link
-        to={`/kits/${kit.id}`}
-        className="font-medium text-primary-600 underline"
-      >
-        {kit.name}
-      </Link>
-      . Release the kit's custody to clear this allocation.
+      <Trans
+        i18nKey="quantity.heldViaNamedKit"
+        values={{ name: kit.name }}
+        components={{
+          1: (
+            <Link
+              to={`/kits/${kit.id}`}
+              className="font-medium text-primary-600 underline"
+            />
+          ),
+        }}
+      />
     </span>
   ) : (
-    "Held via a kit's custody. Release the kit's custody to clear this allocation."
+    t("quantity.heldViaKitCustody")
   );
 
   return (
@@ -307,7 +314,7 @@ function KitCustodyBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <span className="cursor-help rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-            Via kit
+            {t("quantity.viaKit")}
           </span>
         </TooltipTrigger>
         <TooltipContent side="left" className="max-w-xs text-xs">
@@ -342,6 +349,7 @@ function ReleaseButton({
   maxQuantity,
   unitLabel,
 }: ReleaseButtonProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const fetcher = useFetcher({ key: `release-qty-${teamMemberId}` });
   const disabled = useDisabled(fetcher);
@@ -364,16 +372,18 @@ function ReleaseButton({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button type="button" variant="secondary" className="py-1 text-xs">
-          Release
+          {t("quantity.release")}
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent onEscapeKeyDown={() => setOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Release Quantity</AlertDialogTitle>
+          <AlertDialogTitle>{t("quantity.releaseQuantity")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Enter the number of {unitLabel} to release back to the available
-            pool. Maximum: {maxQuantity}.
+            {t("quantity.releaseDescription", {
+              unit: unitLabel,
+              max: maxQuantity,
+            })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -390,8 +400,8 @@ function ReleaseButton({
               ref={quantityInputRef}
               name="quantity"
               type="number"
-              label={`Quantity (${unitLabel})`}
-              placeholder={`Max: ${maxQuantity}`}
+              label={t("quantity.quantityWithUnit", { unit: unitLabel })}
+              placeholder={t("quantity.maxPlaceholder", { count: maxQuantity })}
               min={1}
               max={maxQuantity}
               step={1}
@@ -402,8 +412,8 @@ function ReleaseButton({
             <Input
               name="note"
               inputType="textarea"
-              label="Note (optional)"
-              placeholder="Reason for release..."
+              label={t("quantity.noteOptional")}
+              placeholder={t("quantity.releaseReasonPlaceholder")}
               rows={2}
             />
           </div>
@@ -411,12 +421,12 @@ function ReleaseButton({
           <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={isSubmitting}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
             <Button type="submit" variant="primary" disabled={disabled}>
-              {isSubmitting ? "Releasing..." : "Release"}
+              {isSubmitting ? t("quantity.releasing") : t("quantity.release")}
             </Button>
           </AlertDialogFooter>
         </fetcher.Form>

@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { AssetStatus, AssetType } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CircleX } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import {
@@ -85,6 +86,7 @@ export default function ReleaseCustodyDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   // Get the scanned items from jotai
   const items = useAtomValue(scannedItemsAtom);
   const clearList = useSetAtom(clearScannedItemsAtom);
@@ -119,7 +121,7 @@ export default function ReleaseCustodyDrawer({
         !!asset &&
         asset.type === AssetType.INDIVIDUAL &&
         asset.assetKits.length > 0 &&
-        asset.id
+        asset.id,
     )
     .map((asset) => asset.id);
 
@@ -153,7 +155,7 @@ export default function ReleaseCustodyDrawer({
           in custody.
         </>
       ),
-      description: "Only assets in custody can be released.",
+      description: t("scanner.blockerOnlyInCustodyReleased"),
       onResolve: () => removeAssetsFromList(assetsNotInCustody),
     },
     {
@@ -165,7 +167,7 @@ export default function ReleaseCustodyDrawer({
           of a kit.
         </>
       ),
-      description: "Note: Scan Kit QR to release the full kit from custody",
+      description: t("scanner.noteScanKitQrToRelease"),
       onResolve: () => removeAssetsFromList(assetsArePartOfKit),
     },
     {
@@ -177,7 +179,7 @@ export default function ReleaseCustodyDrawer({
           in custody.
         </>
       ),
-      description: "Only kits in custody can be released.",
+      description: t("scanner.blockerOnlyKitsInCustody"),
       onResolve: () => removeItemsFromList(qrIdsOfKitsNotInCustody),
     },
     {
@@ -230,7 +232,7 @@ export default function ReleaseCustodyDrawer({
       schema={ReleaseCustodyFromScannedItemsSchema}
       items={items}
       onClearItems={clearList}
-      title="Items scanned"
+      title={t("scanner.itemsScanned")}
       isLoading={isLoading}
       renderItem={renderItemRow}
       Blockers={Blockers}
@@ -243,6 +245,7 @@ export default function ReleaseCustodyDrawer({
 }
 
 function ReleaseCustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
+  const { t } = useTranslation();
   const { assetIds, kitIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [custodyState, setCustodyState] = useState<CustodyState>({
@@ -288,7 +291,7 @@ function ReleaseCustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
               assetErrorMessage:
                 error instanceof ShelfError
                   ? error.message
-                  : "Something went wrong while releasing custody. Please try again.",
+                  : t("scanner.releaseCustodyFailed"),
             }));
           });
       } else {
@@ -330,7 +333,7 @@ function ReleaseCustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
               kitErrorMessage:
                 error instanceof ShelfError
                   ? error.message
-                  : "Something went wrong while releasing custody. Please try again.",
+                  : t("scanner.releaseCustodyFailed"),
             }));
           });
       } else {
@@ -399,31 +402,34 @@ function ReleaseCustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
 
 // Implement item renderers if they're not already defined elsewhere
 export function AssetRow({ asset }: { asset: AssetFromQr }) {
+  const { t } = useTranslation();
   // Use predefined presets to create label configurations with appropriate conditions for release custody
   const availabilityConfigs = [
     {
       condition: asset.status === AssetStatus.IN_CUSTODY,
-      badgeText: `In custody of: ${getPrimaryCustody(asset.custody)?.custodian
-        ?.name}`,
-      tooltipTitle: "Asset is in custody",
-      tooltipContent: `This asset is in custody of ${getPrimaryCustody(
-        asset.custody
-      )?.custodian?.name}.`,
+      badgeText: t("scanAvailability.inCustodyOf", {
+        name: getPrimaryCustody(asset.custody)?.custodian?.name,
+      }),
+      tooltipTitle: t("scanAvailability.assetInCustodyTitle"),
+      tooltipContent: t("scanAvailability.assetInCustodyOfContent", {
+        name: getPrimaryCustody(asset.custody)?.custodian?.name,
+      }),
       priority: 110,
       className: "bg-gray-50 border-gray-200 text-gray-700",
     },
     // For release custody, we highlight assets that are NOT in custody (opposite of assign custody)
     {
       condition: asset.status !== AssetStatus.IN_CUSTODY,
-      badgeText: "Not in custody",
-      tooltipTitle: "Asset is not in custody",
-      tooltipContent: "This asset is not in custody and cannot be released.",
+      badgeText: t("scanAvailability.notInCustody"),
+      tooltipTitle: t("scanAvailability.assetNotInCustodyTitle"),
+      tooltipContent: t("scanAvailability.assetNotInCustodyContent"),
       priority: 100,
     },
-    assetLabelPresets.checkedOut(asset.status === AssetStatus.CHECKED_OUT),
+    assetLabelPresets.checkedOut(t, asset.status === AssetStatus.CHECKED_OUT),
     assetLabelPresets.partOfKit(
+      t,
       asset.assetKits.length > 0,
-      isQuantityTracked(asset)
+      isQuantityTracked(asset),
     ),
   ];
 
@@ -432,7 +438,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     availabilityConfigs,
     {
       maxLabels: 3,
-    }
+    },
   );
 
   return (
@@ -446,7 +452,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           asset
@@ -458,25 +464,30 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
 }
 
 export function KitRow({ kit }: { kit: KitFromQr }) {
+  const { t } = useTranslation();
   // Use predefined presets to create label configurations appropriate for release custody
   const availabilityConfigs = [
     {
       condition: kit.status === AssetStatus.IN_CUSTODY,
-      badgeText: `In custody of: ${kit.custody?.custodian?.name}`,
-      tooltipTitle: "Kit is in custody",
-      tooltipContent: `This kit is in custody of ${kit.custody?.custodian?.name}.`,
+      badgeText: t("scanAvailability.inCustodyOf", {
+        name: kit.custody?.custodian?.name,
+      }),
+      tooltipTitle: t("scanAvailability.kitInCustodyTitle"),
+      tooltipContent: t("scanAvailability.kitInCustodyOfContent", {
+        name: kit.custody?.custodian?.name,
+      }),
       priority: 110,
       className: "bg-gray-50 border-gray-200 text-gray-700",
     },
     // For release custody, we highlight kits that are NOT in custody (opposite of assign custody)
     {
       condition: kit.status !== AssetStatus.IN_CUSTODY,
-      badgeText: "Not in custody",
-      tooltipTitle: "Kit is not in custody",
-      tooltipContent: "This kit is not in custody and cannot be released.",
+      badgeText: t("scanAvailability.notInCustody"),
+      tooltipTitle: t("scanAvailability.kitNotInCustodyTitle"),
+      tooltipContent: t("scanAvailability.kitNotInCustodyContent"),
       priority: 100,
     },
-    kitLabelPresets.checkedOut(kit.status === AssetStatus.CHECKED_OUT),
+    kitLabelPresets.checkedOut(t, kit.status === AssetStatus.CHECKED_OUT),
   ];
 
   // Create the availability labels component with default options
@@ -484,7 +495,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
     availabilityConfigs,
     {
       maxLabels: 3,
-    }
+    },
   );
 
   return (
@@ -501,7 +512,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit
@@ -573,6 +584,7 @@ function SubmissionState({
   status: "processing" | "success" | "error" | "skipped";
   errorMessage?: string;
 }) {
+  const { t } = useTranslation();
   // Return null for skipped status to hide the component entirely
   if (status === "skipped") {
     return null;
@@ -607,7 +619,7 @@ function SubmissionState({
         </div>
         {errorMessage && (
           <span className="text-[12px] text-error-500">
-            <strong>Error:</strong> {errorMessage}
+            <strong>{t("scanner.errorPrefix")}</strong> {errorMessage}
           </span>
         )}
       </div>

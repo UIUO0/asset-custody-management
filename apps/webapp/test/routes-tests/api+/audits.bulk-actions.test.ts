@@ -6,7 +6,7 @@
  *   - HTTP method / intent validation short-circuit before any permission check
  *   - `PermissionAction.archive` is requested for the `bulk-archive` intent
  *   - `organizationId`, `userId`, `currentSearchParams`, and
- *     `isSelfServiceOrBase` are forwarded to the service
+ *     `isScopedToOwnRecords` are forwarded to the service
  *   - `ALL_SELECTED_KEY` sentinel values are passed through unchanged
  *   - Service + permission errors flow through `makeShelfError` and surface
  *     with the correct HTTP status on the response
@@ -74,7 +74,7 @@ vi.mock("~/database/db.server", () => ({
  */
 function makeRequest(
   body: Record<string, string | string[]>,
-  method: string = "POST"
+  method: string = "POST",
 ): Request {
   const formData = new FormData();
   for (const [k, v] of Object.entries(body)) {
@@ -130,7 +130,7 @@ describe("api/audits.bulk-actions action", () => {
 
   it("rejects an unknown intent with a validation error response and does NOT call the service", async () => {
     const response = (await callAction(
-      makeRequest({ intent: "wrong-intent", auditIds: ["a1"] })
+      makeRequest({ intent: "wrong-intent", auditIds: ["a1"] }),
     )) as any;
 
     expect(response.init?.status).toBeDefined();
@@ -141,7 +141,7 @@ describe("api/audits.bulk-actions action", () => {
   it("requests `audit.archive` permission for the `bulk-archive` intent", async () => {
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
     vi.mocked(bulkArchiveAudits).mockResolvedValue(undefined as any);
 
@@ -152,14 +152,14 @@ describe("api/audits.bulk-actions action", () => {
         entity: PermissionEntity.audit,
         action: PermissionAction.archive,
         userId: "user-1",
-      })
+      }),
     );
   });
 
-  it("forwards auditIds, organizationId, userId, currentSearchParams, and isSelfServiceOrBase to the service and emits a success notification", async () => {
+  it("forwards auditIds, organizationId, userId, currentSearchParams, and isScopedToOwnRecords to the service and emits a success notification", async () => {
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
     vi.mocked(bulkArchiveAudits).mockResolvedValue(undefined as any);
 
@@ -168,7 +168,7 @@ describe("api/audits.bulk-actions action", () => {
         intent: "bulk-archive",
         auditIds: ["a1", "a2"],
         currentSearchParams: "status=COMPLETED",
-      })
+      }),
     )) as any;
 
     expect(bulkArchiveAudits).toHaveBeenCalledWith({
@@ -176,7 +176,7 @@ describe("api/audits.bulk-actions action", () => {
       organizationId: "org-1",
       userId: "user-1",
       currentSearchParams: "status=COMPLETED",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     });
     expect(sendNotification).toHaveBeenCalledOnce();
 
@@ -184,14 +184,14 @@ describe("api/audits.bulk-actions action", () => {
     // so `init` is null (no non-2xx status applied).
     const status = response.init?.status;
     expect(status === undefined || status === null || status === 200).toBe(
-      true
+      true,
     );
   });
 
   it("forwards the ALL_SELECTED_KEY sentinel unchanged to the service", async () => {
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
     vi.mocked(bulkArchiveAudits).mockResolvedValue(undefined as any);
 
@@ -200,22 +200,22 @@ describe("api/audits.bulk-actions action", () => {
         intent: "bulk-archive",
         auditIds: [ALL_SELECTED_KEY],
         currentSearchParams: "status=COMPLETED",
-      })
+      }),
     );
 
     expect(bulkArchiveAudits).toHaveBeenCalledWith(
       expect.objectContaining({
         auditIds: [ALL_SELECTED_KEY],
-        isSelfServiceOrBase: true,
+        isScopedToOwnRecords: true,
         currentSearchParams: "status=COMPLETED",
-      })
+      }),
     );
   });
 
   it("surfaces a service ShelfError through the response with the matching status and message", async () => {
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
     vi.mocked(bulkArchiveAudits).mockRejectedValue(
       new ShelfError({
@@ -224,20 +224,20 @@ describe("api/audits.bulk-actions action", () => {
           "Some audits are not in a completed or cancelled state and cannot be archived.",
         label: "Audit",
         status: 400,
-      })
+      }),
     );
 
     const response = (await callAction(
-      makeRequest({ intent: "bulk-archive", auditIds: ["a1"] })
+      makeRequest({ intent: "bulk-archive", auditIds: ["a1"] }),
     )) as any;
 
     expect(response.init?.status).toBe(400);
     expect(response.data?.error?.message).toMatch(
-      /not in a completed or cancelled state/
+      /not in a completed or cancelled state/,
     );
     // Success notification must NOT fire when the service throws.
     expect(sendNotification).not.toHaveBeenCalledWith(
-      expect.objectContaining({ title: "Audits archived" })
+      expect.objectContaining({ title: "Audits archived" }),
     );
   });
 
@@ -248,11 +248,11 @@ describe("api/audits.bulk-actions action", () => {
         message: "Forbidden",
         label: "Auth",
         status: 403,
-      })
+      }),
     );
 
     const response = (await callAction(
-      makeRequest({ intent: "bulk-archive", auditIds: ["a1"] })
+      makeRequest({ intent: "bulk-archive", auditIds: ["a1"] }),
     )) as any;
 
     expect(response.init?.status).toBe(403);
@@ -263,7 +263,7 @@ describe("api/audits.bulk-actions action", () => {
     it("requests `audit.delete` permission for the `bulk-delete` intent", async () => {
       vi.mocked(requirePermission).mockResolvedValue({
         organizationId: "org-1",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
       } as any);
       vi.mocked(bulkDeleteAudits).mockResolvedValue({ count: 1 } as any);
 
@@ -272,7 +272,7 @@ describe("api/audits.bulk-actions action", () => {
           intent: "bulk-delete",
           auditIds: ["a1"],
           confirmation: "DELETE",
-        })
+        }),
       );
 
       expect(requirePermission).toHaveBeenCalledWith(
@@ -280,14 +280,14 @@ describe("api/audits.bulk-actions action", () => {
           entity: PermissionEntity.audit,
           action: PermissionAction.delete,
           userId: "user-1",
-        })
+        }),
       );
     });
 
     it("rejects when the confirmation word is missing or wrong", async () => {
       vi.mocked(requirePermission).mockResolvedValue({
         organizationId: "org-1",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
       } as any);
 
       const response = (await callAction(
@@ -295,7 +295,7 @@ describe("api/audits.bulk-actions action", () => {
           intent: "bulk-delete",
           auditIds: ["a1"],
           confirmation: "delete", // wrong case — schema requires literal "DELETE"
-        })
+        }),
       )) as any;
 
       // Validation failure: non-2xx response and the service must not be called
@@ -307,7 +307,7 @@ describe("api/audits.bulk-actions action", () => {
     it("forwards auditIds + search params to the service and reports the deleted count in the notification", async () => {
       vi.mocked(requirePermission).mockResolvedValue({
         organizationId: "org-1",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
       } as any);
       vi.mocked(bulkDeleteAudits).mockResolvedValue({ count: 3 } as any);
 
@@ -317,10 +317,10 @@ describe("api/audits.bulk-actions action", () => {
           auditIds: ["a1", "a2", "a3"],
           confirmation: "DELETE",
           currentSearchParams: "status=ARCHIVED",
-        })
+        }),
       );
 
-      // isSelfServiceOrBase is intentionally NOT forwarded — delete is
+      // isScopedToOwnRecords is intentionally NOT forwarded — delete is
       // ADMIN/OWNER-only, so plumbing the flag would be dead weight. Assert
       // the explicit shape so a future re-add is caught.
       expect(bulkDeleteAudits).toHaveBeenCalledWith({
@@ -333,14 +333,14 @@ describe("api/audits.bulk-actions action", () => {
         expect.objectContaining({
           title: "Audits deleted",
           message: expect.stringMatching(/3 audits/),
-        })
+        }),
       );
     });
 
     it("uses singular 'audit' (title + message) in the notification when count is 1", async () => {
       vi.mocked(requirePermission).mockResolvedValue({
         organizationId: "org-1",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
       } as any);
       vi.mocked(bulkDeleteAudits).mockResolvedValue({ count: 1 } as any);
 
@@ -349,21 +349,21 @@ describe("api/audits.bulk-actions action", () => {
           intent: "bulk-delete",
           auditIds: ["a1"],
           confirmation: "DELETE",
-        })
+        }),
       );
 
       expect(sendNotification).toHaveBeenCalledWith(
         expect.objectContaining({
           title: "Audit deleted",
           message: expect.stringMatching(/1 audit\./),
-        })
+        }),
       );
     });
 
     it("surfaces a service ShelfError with the matching HTTP status", async () => {
       vi.mocked(requirePermission).mockResolvedValue({
         organizationId: "org-1",
-        isSelfServiceOrBase: false,
+        isScopedToOwnRecords: false,
       } as any);
       vi.mocked(bulkDeleteAudits).mockRejectedValue(
         new ShelfError({
@@ -371,7 +371,7 @@ describe("api/audits.bulk-actions action", () => {
           message: "Some selected audits are not archived.",
           label: "Audit",
           status: 409,
-        })
+        }),
       );
 
       const response = (await callAction(
@@ -379,13 +379,13 @@ describe("api/audits.bulk-actions action", () => {
           intent: "bulk-delete",
           auditIds: ["a1"],
           confirmation: "DELETE",
-        })
+        }),
       )) as any;
 
       expect(response.init?.status).toBe(409);
       expect(response.data?.error?.message).toMatch(/are not archived/);
       expect(sendNotification).not.toHaveBeenCalledWith(
-        expect.objectContaining({ title: "Audits deleted" })
+        expect.objectContaining({ title: "Audits deleted" }),
       );
     });
   });

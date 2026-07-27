@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   LoaderFunctionArgs,
   ActionFunctionArgs,
@@ -15,6 +16,7 @@ import { Button } from "~/components/shared/button";
 import { config } from "~/config/shelf.config";
 import { useSearchParams } from "~/hooks/search-params";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { ContinueWithEmailForm } from "~/modules/auth/components/continue-with-email-form";
 import { signUpWithEmailPass } from "~/modules/auth/service.server";
 import { findUserByEmail } from "~/modules/user/service.server";
@@ -35,9 +37,12 @@ import {
 import { validEmail } from "~/utils/misc";
 import { validateNonSSOSignup } from "~/utils/sso.server";
 
-export function loader({ context }: LoaderFunctionArgs) {
-  const title = "Create an account";
-  const subHeading = "Start your journey with Shelf";
+export async function loader({ context, request }: LoaderFunctionArgs) {
+  // why: loaders run outside React, so `useTranslation` is unavailable —
+  // `getFixedT` gives the same `t` bound to the request's locale.
+  const t = await getFixedT(getLocale(request));
+  const title = t("auth.createAnAccount");
+  const subHeading = t("auth.createAccountSubheading");
   const { disableSignup } = config;
 
   try {
@@ -98,7 +103,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const { email, password } = parseData(
           await request.formData(),
           JoinFormSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
         // Block signup if domain uses SSO
         await validateNonSSOSignup(email);
@@ -122,7 +127,7 @@ export async function action({ request }: ActionFunctionArgs) {
         await signUpWithEmailPass(email, password);
 
         return redirect(
-          `/otp?email=${encodeURIComponent(email)}&mode=confirm_signup`
+          `/otp?email=${encodeURIComponent(email)}&mode=confirm_signup`,
         );
       }
     }
@@ -132,7 +137,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(
       cause,
       undefined,
-      isZodValidationError(cause)
+      isZodValidationError(cause),
     );
     return data(error(reason), { status: reason.status });
   }
@@ -143,6 +148,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function Join() {
+  const { t } = useTranslation();
   const zo = useZorm("NewQuestionWizardScreen", JoinFormSchema);
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
@@ -161,8 +167,8 @@ export default function Join() {
             <Input
               ref={emailInputRef}
               data-test-id="email"
-              label="Email address"
-              placeholder="zaans@huisje.com"
+              label={t("auth.email")}
+              placeholder={t("auth.emailSample")}
               required
               name={zo.fields.email()}
               type="email"
@@ -185,7 +191,7 @@ export default function Join() {
             error={zo.errors.password()?.message}
           />
           <PasswordInput
-            label="Confirm Password"
+            label={t("auth.confirmPassword")}
             placeholder="**********"
             required
             data-test-id="confirmPassword"
@@ -218,7 +224,7 @@ export default function Join() {
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="bg-white px-2 text-gray-500">
-                {"Or use a One Time Password"}
+                {t("auth.orUseOtp")}
               </span>
             </div>
           </div>

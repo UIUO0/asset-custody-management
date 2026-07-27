@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode, ComponentType, FormEvent } from "react";
 import { AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Form } from "react-router";
 import { useZorm } from "react-zorm";
 import type { z } from "zod";
@@ -97,6 +98,7 @@ export default function ConfigurableDrawer<T>({
   customRenderAllItems,
   collapsedHeight,
 }: ConfigurableDrawerProps<T>) {
+  const { t } = useTranslation();
   const zo = useZorm(formName, schema);
   const itemsLength = Object.keys(items).length;
   const hasItems = itemsLength > 0;
@@ -121,7 +123,9 @@ export default function ConfigurableDrawer<T>({
             List is empty
           </div>
         )}
-        <p className="text-sm text-gray-600">Fill list by scanning codes...</p>
+        <p className="text-sm text-gray-600">
+          {t("scanner.fillListByScanning")}
+        </p>
       </div>
     </>
   );
@@ -153,7 +157,7 @@ export default function ConfigurableDrawer<T>({
                   ? customRenderAllItems()
                   : renderItem
                   ? Object.entries(items).map(([qrId, item]) =>
-                      renderItem(qrId, item)
+                      renderItem(qrId, item),
                     )
                   : null}
               </AnimatePresence>

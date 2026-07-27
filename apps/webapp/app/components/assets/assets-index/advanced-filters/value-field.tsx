@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { parseISO } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import DynamicSelect from "~/components/dynamic-select/dynamic-select";
@@ -84,7 +85,7 @@ function filterConflictingSelections(
   newSelection: string[],
   previousSelection: string[],
   positiveId: string,
-  negativeId: string
+  negativeId: string,
 ): string[] {
   const hasPositive = newSelection.includes(positiveId);
   const hasNegative = newSelection.includes(negativeId);
@@ -130,7 +131,7 @@ type CustomFieldSummary = { name?: string; options?: string[] };
  */
 function resolveFilterDefault(
   filter: Filter,
-  customFields: CustomFieldSummary[]
+  customFields: CustomFieldSummary[],
 ): Filter["value"] | typeof NO_DEFAULT {
   if (filter.value !== "") return NO_DEFAULT;
   if (filter.type === "boolean") return true;
@@ -169,10 +170,11 @@ export function ValueField({
   zormError?: string;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
   const customFields = useMemo(() => data?.customFields || [], [data]);
   const [localValue, setLocalValue] = useState<[string, string]>(
-    Array.isArray(filter.value) ? (filter.value as [string, string]) : ["", ""]
+    Array.isArray(filter.value) ? (filter.value as [string, string]) : ["", ""],
   );
   const [localError, setLocalError] = useState<string | null>(null);
   const validateBetweenFilter = useCallback(() => {
@@ -184,7 +186,7 @@ export function ValueField({
           const endDate = new Date(end);
           if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
             if (startDate > endDate) {
-              setLocalError("Start date must be before or equal to end date");
+              setLocalError(t("advancedFilters.startBeforeEndDate"));
               return;
             }
           }
@@ -194,9 +196,7 @@ export function ValueField({
           if (!isNaN(startNum) && !isNaN(endNum)) {
             // For AMOUNT fields, enforce start <= end since amounts are always positive
             if (filter.type === "amount" && startNum > endNum) {
-              setLocalError(
-                "Start value must be less than or equal to end value"
-              );
+              setLocalError(t("advancedFilters.startBeforeEndValue"));
               return;
             }
             // For NUMBER fields, no validation needed - any numeric range is valid
@@ -235,7 +235,7 @@ export function ValueField({
   function handleChange(
     event: ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) {
     const newValue = event.target.value;
     setFilter(newValue);
@@ -286,12 +286,12 @@ export function ValueField({
 
   /** Generates placeholder for text input fields, based on the operator */
   function placeholder(operator: Filter["operator"]) {
-    if (disabled) return "Select a column first";
+    if (disabled) return t("advancedFilters.selectAColumnFirst");
     return ["contains", "containsAll", "containsAny", "matchesAny"].includes(
-      operator
+      operator,
     )
-      ? "Enter comma-separated values"
-      : "Enter value";
+      ? t("advancedFilters.enterCommaSeparated")
+      : t("advancedFilters.enterValue");
   }
 
   switch (filter.type) {
@@ -325,7 +325,7 @@ export function ValueField({
                 name={fieldName}
               />
               {!["contains", "containsAny", "matchesAny"].includes(
-                filter.operator
+                filter.operator,
               ) ? (
                 <TooltipProvider delayDuration={100}>
                   <Tooltip>
@@ -341,8 +341,8 @@ export function ValueField({
                         </h6>
                         <p className="text-xs font-medium text-gray-500">
                           This fields supports barcode scanners. Simply place
-                          your cursor in the field and scan a Shelf QR code with
-                          your barcode scanner. The value will be automatically
+                          your cursor in the field and scan a QR code with your
+                          barcode scanner. The value will be automatically
                           filled in for you.
                         </p>
                       </div>
@@ -584,6 +584,7 @@ function BooleanField({
   handleBooleanChange: (value: "true" | "false") => void;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
@@ -646,7 +647,11 @@ function BooleanField({
           >
             <ChevronRight className="ms-[2px] inline-block rotate-90" />
             <span className="ms-2">
-              {disabled ? "Select a column first" : boolValue ? "Yes" : "No"}
+              {disabled
+                ? t("advancedFilters.selectAColumnFirst")
+                : boolValue
+                ? "Yes"
+                : "No"}
             </span>{" "}
           </Button>
         </PopoverTrigger>
@@ -654,14 +659,14 @@ function BooleanField({
           <PopoverContent
             align="start"
             className={tw(
-              "z-[999999] mt-2 max-h-[400px] min-w-[100px] overflow-scroll rounded-md border border-gray-200 bg-white"
+              "z-[999999] mt-2 max-h-[400px] min-w-[100px] overflow-scroll rounded-md border border-gray-200 bg-white",
             )}
             onKeyDown={handleKeyDown}
           >
             <div
               className={tw(
                 "px-4 py-2 text-[14px] font-medium text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                selectedIndex === 0 && "bg-gray-50"
+                selectedIndex === 0 && "bg-gray-50",
               )}
               role="button"
               tabIndex={0}
@@ -673,7 +678,7 @@ function BooleanField({
             <div
               className={tw(
                 "px-4 py-2 text-[14px] font-medium text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                selectedIndex === 1 && "bg-gray-50"
+                selectedIndex === 1 && "bg-gray-50",
               )}
               role="button"
               tabIndex={0}
@@ -714,6 +719,7 @@ function EnumField({
   name,
   disabled = false,
 }: EnumFieldProps) {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
@@ -740,7 +746,7 @@ function EnumField({
   }
 
   const displayValue = disabled
-    ? "Select a column first"
+    ? t("advancedFilters.selectAColumnFirst")
     : multiSelect
     ? selectedValues
         .map((v) => options.find((opt) => opt.id === v)?.label ?? v)
@@ -835,7 +841,7 @@ function EnumField({
           <PopoverContent
             align="start"
             className={tw(
-              "z-[999999] mt-2 max-h-[400px] min-w-[250px] overflow-scroll rounded-md border border-gray-200 bg-white"
+              "z-[999999] mt-2 max-h-[400px] min-w-[250px] overflow-scroll rounded-md border border-gray-200 bg-white",
             )}
             onKeyDown={handleKeyDown}
           >
@@ -853,13 +859,13 @@ function EnumField({
                     key={option.id}
                     className={tw(
                       "flex items-center justify-between px-4 py-3 text-[14px] text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                      selectedIndex === index && "bg-gray-50"
+                      selectedIndex === index && "bg-gray-50",
                     )}
                     role="button"
                     tabIndex={0}
                     onClick={() => handleOptionClick(option.id)}
                     onKeyDown={handleActivationKeyPress(() =>
-                      handleOptionClick(option.id)
+                      handleOptionClick(option.id),
                     )}
                   >
                     <span>{option.label}</span>
@@ -920,7 +926,7 @@ function CustomFieldEnumField({
   const data = useLoaderData<AssetIndexLoaderData>();
   const customFields = useMemo(
     () => data?.customFields || [],
-    [data?.customFields]
+    [data?.customFields],
   );
 
   const options: EnumOption[] = useMemo(() => {
@@ -954,6 +960,7 @@ function CustodyEnumField({
   name,
   disabled,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parse the existing value to get selected TeamMember IDs
@@ -976,17 +983,17 @@ function CustodyEnumField({
     renderItem: (item: any) => resolveTeamMemberName(item, true),
     initialDataKey: "teamMembers",
     countKey: "totalTeamMembers",
-    label: "Filter by custodian",
+    label: t("list.filterByCustodian"),
     hideLabel: true,
     hideCounter: true,
-    placeholder: "Search team members",
+    placeholder: t("list.searchTeamMembers"),
     withValueItem: {
       id: "in-custody",
       name: "In custody",
     },
     withoutValueItem: {
       id: "without-custody",
-      name: "Without custody",
+      name: t("advancedFilters.withoutCustody"),
     },
     disabled,
   };
@@ -1007,7 +1014,7 @@ function CustodyEnumField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {selectedIds.length > 0
@@ -1017,17 +1024,17 @@ function CustodyEnumField({
                           return "In custody";
                         }
                         if (id === "without-custody") {
-                          return "Without custody";
+                          return t("advancedFilters.withoutCustody");
                         }
                         const teamMember = data.teamMembers.find(
-                          (tm) => tm.id === id
+                          (tm) => tm.id === id,
                         );
                         return resolveTeamMemberName({
                           name: teamMember?.name || "",
                         });
                       })
                       .join(", ")
-                  : "Select custodian"}
+                  : t("advancedFilters.selectCustodian")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1042,7 +1049,7 @@ function CustodyEnumField({
             newSelection,
             previousSelection,
             "in-custody",
-            "without-custody"
+            "without-custody",
           )
         }
         onSelectionChange={(filteredIds) => {
@@ -1056,7 +1063,7 @@ function CustodyEnumField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder="Select custodian"
+      placeholder={t("advancedFilters.selectCustodian")}
       defaultValue={value as string}
       onChange={(selectedId) => {
         if (selectedId !== undefined) {
@@ -1079,6 +1086,7 @@ function CategoryEnumField({
   name,
   disabled = false,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parse the existing value to get selected Category IDs
@@ -1112,10 +1120,10 @@ function CategoryEnumField({
     ),
     initialDataKey: "categories",
     countKey: "totalCategories",
-    label: "Filter by category",
+    label: t("list.filterByCategory"),
     hideLabel: true,
     hideCounter: true,
-    placeholder: "Search categories",
+    placeholder: t("list.searchCategories"),
     withoutValueItem: {
       id: "uncategorized",
       name: "Uncategorized",
@@ -1139,11 +1147,11 @@ function CategoryEnumField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {disabled
-                  ? "Select a column first"
+                  ? t("advancedFilters.selectAColumnFirst")
                   : selectedIds.length > 0
                   ? selectedIds
                       .map((id) => {
@@ -1151,12 +1159,12 @@ function CategoryEnumField({
                           return "Uncategorized";
                         }
                         const category = data.categories?.find(
-                          (cat) => cat.id === id
+                          (cat) => cat.id === id,
                         );
                         return category?.name || "";
                       })
                       .join(", ")
-                  : "Select category"}
+                  : t("advancedFilters.selectCategory")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1178,7 +1186,11 @@ function CategoryEnumField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder={disabled ? "Select a column first" : "Select category"}
+      placeholder={
+        disabled
+          ? t("advancedFilters.selectAColumnFirst")
+          : t("advancedFilters.selectCategory")
+      }
       defaultValue={value as string}
       onChange={(selectedId) => {
         if (selectedId !== undefined) {
@@ -1201,6 +1213,7 @@ function AssetModelEnumField({
   name,
   disabled = false,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parse the existing value to get selected asset model IDs
@@ -1225,13 +1238,13 @@ function AssetModelEnumField({
     renderItem: (item: any) => <span>{item.name}</span>,
     initialDataKey: "assetModels",
     countKey: "totalAssetModels",
-    label: "Filter by asset model",
+    label: t("advancedFilters.filterByAssetModel"),
     hideLabel: true,
     hideCounter: true,
-    placeholder: "Search asset models",
+    placeholder: t("advancedFilters.searchAssetModels"),
     withoutValueItem: {
       id: "without-model",
-      name: "No model",
+      name: t("advancedFilters.noModel"),
     },
     disabled,
   };
@@ -1252,26 +1265,26 @@ function AssetModelEnumField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {disabled
-                  ? "Select a column first"
+                  ? t("advancedFilters.selectAColumnFirst")
                   : selectedIds.length > 0
                   ? selectedIds
                       .map((id) => {
                         if (id === "without-model") {
-                          return "No model";
+                          return t("advancedFilters.noModel");
                         }
                         const models =
                           "assetModels" in data ? data.assetModels : [];
                         const model = models?.find(
-                          (m: { id: string; name: string }) => m.id === id
+                          (m: { id: string; name: string }) => m.id === id,
                         );
                         return model?.name || "";
                       })
                       .join(", ")
-                  : "Select asset model"}
+                  : t("advancedFilters.selectAssetModel")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1293,7 +1306,11 @@ function AssetModelEnumField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder={disabled ? "Select a column first" : "Select asset model"}
+      placeholder={
+        disabled
+          ? t("advancedFilters.selectAColumnFirst")
+          : t("advancedFilters.selectAssetModel")
+      }
       defaultValue={value as string}
       onChange={(selectedId) => {
         if (selectedId !== undefined) {
@@ -1303,7 +1320,7 @@ function AssetModelEnumField({
       closeOnSelect={true}
       triggerWrapperClassName="w-full text-gray-700"
       className="z-[999999]"
-      contentLabel="Asset model"
+      contentLabel={t("advancedFilters.assetModel")}
     />
   );
 }
@@ -1316,6 +1333,7 @@ function LocationEnumField({
   name,
   disabled = false,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parse the existing value to get selected Category IDs
@@ -1338,20 +1356,21 @@ function LocationEnumField({
       ...item,
       id: item.id === "without-location" ? "without-location" : item.id,
     }),
-    renderItem: (item: any) => (item.name ? item.name : "Without location"),
+    renderItem: (item: any) =>
+      item.name ? item.name : t("advancedFilters.withoutLocation"),
     initialDataKey: "locations",
     countKey: "totalLocations",
-    label: "Filter by location",
+    label: t("list.filterByLocation"),
     hideLabel: true,
     hideCounter: true,
-    placeholder: "Search locations",
+    placeholder: t("advancedFilters.searchLocations"),
     withValueItem: {
       id: "in-location",
-      name: "In a location",
+      name: t("advancedFilters.inALocation"),
     },
     withoutValueItem: {
       id: "without-location",
-      name: "Without location",
+      name: t("advancedFilters.withoutLocation"),
     },
     disabled,
   };
@@ -1372,27 +1391,27 @@ function LocationEnumField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {disabled
-                  ? "Select column first"
+                  ? t("advancedFilters.selectColumnFirst")
                   : selectedIds.length > 0
                   ? selectedIds
                       .map((id) => {
                         if (id === "in-location") {
-                          return "In a location";
+                          return t("advancedFilters.inALocation");
                         }
                         if (id === "without-location") {
-                          return "Without location";
+                          return t("advancedFilters.withoutLocation");
                         }
                         const location = data.locations?.find(
-                          (loc) => loc.id === id
+                          (loc) => loc.id === id,
                         );
                         return location?.name || "";
                       })
                       .join(", ")
-                  : "Select location"}
+                  : t("advancedFilters.selectLocation")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1407,7 +1426,7 @@ function LocationEnumField({
             newSelection,
             previousSelection,
             "in-location",
-            "without-location"
+            "without-location",
           )
         }
         onSelectionChange={(filteredIds) => {
@@ -1422,7 +1441,11 @@ function LocationEnumField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder={disabled ? "Select a column first" : "Select location"}
+      placeholder={
+        disabled
+          ? t("advancedFilters.selectAColumnFirst")
+          : t("advancedFilters.selectLocation")
+      }
       defaultValue={value as string}
       onChange={(selectedId) => {
         if (selectedId !== undefined) {
@@ -1445,6 +1468,7 @@ function KitEnumField({
   name,
   disabled,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parse the existing value to get selected Category IDs
@@ -1467,20 +1491,21 @@ function KitEnumField({
       ...item,
       id: item.id === "without-kit" ? "without-kit" : item.id,
     }),
-    renderItem: (item: any) => (item.name ? item.name : "Without kit"),
+    renderItem: (item: any) =>
+      item.name ? item.name : t("advancedFilters.withoutKit"),
     initialDataKey: "kits",
     countKey: "totalKits",
-    label: "Filter by kit",
+    label: t("advancedFilters.filterByKit"),
     hideLabel: true,
     hideCounter: true,
-    placeholder: "Search kits",
+    placeholder: t("advancedFilters.searchKits"),
     withValueItem: {
       id: "in-kit",
-      name: "In a kit",
+      name: t("advancedFilters.inAKit"),
     },
     withoutValueItem: {
       id: "without-kit",
-      name: "Without kit",
+      name: t("advancedFilters.withoutKit"),
     },
     disabled,
   };
@@ -1501,25 +1526,25 @@ function KitEnumField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {disabled
-                  ? "Select a column first"
+                  ? t("advancedFilters.selectAColumnFirst")
                   : selectedIds.length > 0 && data.kits && data.kits.length > 0
                   ? selectedIds
                       .map((id) => {
                         if (id === "in-kit") {
-                          return "In a kit";
+                          return t("advancedFilters.inAKit");
                         }
                         if (id === "without-kit") {
-                          return "Without kit";
+                          return t("advancedFilters.withoutKit");
                         }
                         const kit = data.kits?.find((kit) => kit.id === id);
                         return kit?.name || "";
                       })
                       .join(", ")
-                  : "Select kit"}
+                  : t("advancedFilters.selectKit")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1534,7 +1559,7 @@ function KitEnumField({
             newSelection,
             previousSelection,
             "in-kit",
-            "without-kit"
+            "without-kit",
           )
         }
         onSelectionChange={(filteredIds) => {
@@ -1549,7 +1574,11 @@ function KitEnumField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder={disabled ? "Select a column first" : "Select kit"}
+      placeholder={
+        disabled
+          ? t("advancedFilters.selectAColumnFirst")
+          : t("advancedFilters.selectKit")
+      }
       defaultValue={value as string}
       onChange={(selectedId) => {
         if (selectedId !== undefined) {
@@ -1572,6 +1601,7 @@ function UpcomingBookingsEnumField({
   name,
   disabled,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parse the existing value to get selected Booking IDs
@@ -1597,17 +1627,17 @@ function UpcomingBookingsEnumField({
     renderItem: (item: any) => item.name,
     initialDataKey: "bookings",
     countKey: "totalBookings",
-    label: "Filter by booking",
+    label: t("advancedFilters.filterByBooking"),
     hideLabel: true,
     hideCounter: true,
-    placeholder: "Search bookings",
+    placeholder: t("advancedFilters.searchBookings"),
     withValueItem: {
       id: "has-booking",
-      name: "Has upcoming bookings",
+      name: t("advancedFilters.hasUpcomingBookings"),
     },
     withoutValueItem: {
       id: "without-booking",
-      name: "No upcoming bookings",
+      name: t("advancedFilters.noUpcomingBookingsOption"),
     },
     disabled,
   };
@@ -1628,27 +1658,27 @@ function UpcomingBookingsEnumField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {disabled
-                  ? "Select a column first"
+                  ? t("advancedFilters.selectAColumnFirst")
                   : selectedIds.length > 0 &&
                     data.bookings &&
                     data.bookings.length > 0
                   ? selectedIds
                       .map((id) => {
                         if (id === "has-booking") {
-                          return "Has upcoming bookings";
+                          return t("advancedFilters.hasUpcomingBookings");
                         }
                         if (id === "without-booking") {
-                          return "No upcoming bookings";
+                          return t("advancedFilters.noUpcomingBookingsOption");
                         }
                         const booking = data.bookings?.find((b) => b.id === id);
                         return booking?.name || "";
                       })
                       .join(", ")
-                  : "Select booking"}
+                  : t("advancedFilters.selectBooking")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1663,7 +1693,7 @@ function UpcomingBookingsEnumField({
             newSelection,
             previousSelection,
             "has-booking",
-            "without-booking"
+            "without-booking",
           )
         }
         onSelectionChange={(filteredIds) => {
@@ -1678,7 +1708,11 @@ function UpcomingBookingsEnumField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder={disabled ? "Select a column first" : "Select booking"}
+      placeholder={
+        disabled
+          ? t("advancedFilters.selectAColumnFirst")
+          : t("advancedFilters.selectBooking")
+      }
       defaultValue={value as string}
       onChange={(selectedId) => {
         if (selectedId !== undefined) {
@@ -1701,6 +1735,7 @@ function TagsField({
   multiSelect,
   name,
 }: Omit<EnumFieldProps, "options">) {
+  const { t } = useTranslation();
   const data = useLoaderData<AssetIndexLoaderData>();
 
   // Parsing the existing value to get selected Tag Ids
@@ -1723,7 +1758,7 @@ function TagsField({
     },
     initialDataKey: "tags",
     countKey: "totalTags",
-    label: "Filter by tag",
+    label: t("list.filterByTag"),
     hideLabel: true,
     hideCounter: true,
     withoutValueItem: {
@@ -1749,11 +1784,11 @@ function TagsField({
               <span
                 className={tw(
                   "text-start",
-                  selectedIds.length <= 0 && "text-gray-500"
+                  selectedIds.length <= 0 && "text-gray-500",
                 )}
               >
                 {disabled
-                  ? "Select a column first"
+                  ? t("advancedFilters.selectAColumnFirst")
                   : selectedIds.length > 0
                   ? selectedIds
                       .map((id) => {
@@ -1764,7 +1799,7 @@ function TagsField({
                         return tag?.name || "";
                       })
                       .join(", ")
-                  : "Select Tag"}
+                  : t("advancedFilters.selectTag")}
               </span>
               <ChevronRight className="me-1 inline-block rotate-90" />
             </div>
@@ -1774,7 +1809,7 @@ function TagsField({
         className="z-[999999]"
         selectionMode="none"
         defaultValues={selectedIds}
-        placeholder="Select tags"
+        placeholder={t("advancedFilters.selectTags")}
         onSelectionChange={(selectedTagIds) => {
           handleChange(selectedTagIds.join(","));
         }}
@@ -1786,7 +1821,11 @@ function TagsField({
     <DynamicSelect
       {...commonProps}
       fieldName={name}
-      placeholder={disabled ? "Select a column first" : "Select tag"}
+      placeholder={
+        disabled
+          ? t("advancedFilters.selectAColumnFirst")
+          : t("advancedFilters.selectTag")
+      }
       defaultValue={value}
       onChange={(selectedId) => {
         if (selectedId) {
@@ -1816,17 +1855,19 @@ function TrackingTypeEnumField({
   name?: string;
   disabled?: boolean;
 }) {
+  const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   const options = [
     { id: "INDIVIDUAL", label: "Individual" },
-    { id: "QUANTITY_TRACKED", label: "Tracked by quantity" },
+    { id: "QUANTITY_TRACKED", label: t("advancedFilters.trackedByQuantity") },
   ];
 
   /** Find the label for the currently selected value */
   const selectedLabel =
-    options.find((opt) => opt.id === value)?.label || "Select type";
+    options.find((opt) => opt.id === value)?.label ||
+    t("advancedFilters.selectType");
 
   // Sync the keyboard-highlight index when the popover opens. Done in
   // the open handler (not a useEffect) so react-doctor's
@@ -1851,7 +1892,7 @@ function TrackingTypeEnumField({
       case "ArrowDown":
         event.preventDefault();
         setSelectedIndex((prev) =>
-          prev < options.length - 1 ? prev + 1 : prev
+          prev < options.length - 1 ? prev + 1 : prev,
         );
         break;
       case "ArrowUp":
@@ -1886,7 +1927,9 @@ function TrackingTypeEnumField({
           >
             <ChevronRight className="ms-[2px] inline-block rotate-90" />
             <span className="ms-2">
-              {disabled ? "Select a column first" : selectedLabel}
+              {disabled
+                ? t("advancedFilters.selectAColumnFirst")
+                : selectedLabel}
             </span>
           </Button>
         </PopoverTrigger>
@@ -1894,7 +1937,7 @@ function TrackingTypeEnumField({
           <PopoverContent
             align="start"
             className={tw(
-              "z-[999999] mt-2 max-h-[400px] min-w-[100px] overflow-scroll rounded-md border border-gray-200 bg-white"
+              "z-[999999] mt-2 max-h-[400px] min-w-[100px] overflow-scroll rounded-md border border-gray-200 bg-white",
             )}
             onKeyDown={handleKeyDown}
           >
@@ -1903,13 +1946,13 @@ function TrackingTypeEnumField({
                 key={option.id}
                 className={tw(
                   "flex items-center justify-between px-4 py-2 text-[14px] font-medium text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                  selectedIndex === index && "bg-gray-50"
+                  selectedIndex === index && "bg-gray-50",
                 )}
                 role="button"
                 tabIndex={0}
                 onClick={() => handleSelect(option.id)}
                 onKeyDown={handleActivationKeyPress(() =>
-                  handleSelect(option.id)
+                  handleSelect(option.id),
                 )}
               >
                 <span>{option.label}</span>
@@ -2120,6 +2163,7 @@ export function DateField({
   error,
   disabled = false,
 }: DateFieldProps) {
+  const { t } = useTranslation();
   const { timeZone } = useHints();
   const [localValue, setLocalValue] = useState<[string, string]>(["", ""]);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -2173,7 +2217,7 @@ export function DateField({
       const startDate = parseISO(start);
       const endDate = parseISO(end);
       if (startDate > endDate) {
-        setLocalError("Start date must be before or equal to end date");
+        setLocalError(t("advancedFilters.startBeforeEndDate"));
       } else {
         setLocalError(null);
       }
@@ -2202,7 +2246,7 @@ export function DateField({
         {...commonInputProps}
         label={""}
         type="text"
-        placeholder="Select a column first"
+        placeholder={t("advancedFilters.selectAColumnFirst")}
       />
     );
   }
@@ -2213,7 +2257,7 @@ export function DateField({
         <div className="flex max-w-full items-center justify-normal gap-[2px]">
           <Input
             {...commonInputProps}
-            label="Start Date"
+            label={t("advancedFilters.startDate")}
             type="date"
             value={localValue[0]}
             onChange={handleDateChange(0)}
@@ -2222,7 +2266,7 @@ export function DateField({
           />
           <Input
             {...commonInputProps}
-            label="End Date"
+            label={t("advancedFilters.endDate")}
             type="date"
             value={localValue[1]}
             onChange={handleDateChange(1)}
@@ -2301,7 +2345,7 @@ function MultiDateInput({
   const handleDateChange =
     (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
       const newDates = dates.map((entry, i) =>
-        i === index ? { ...entry, value: event.target.value } : entry
+        i === index ? { ...entry, value: event.target.value } : entry,
       );
       setDates(newDates);
 

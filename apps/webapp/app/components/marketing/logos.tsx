@@ -4,6 +4,15 @@ import { tw } from "~/utils/tw";
 import When from "../when/when";
 
 /**
+ * Alt text for the workspace logo.
+ *
+ * Deliberately generic: these components render inside emails and PDFs as well
+ * as the app shell, where the React i18n hook is unavailable — and the EPDA
+ * deployment must not surface the upstream vendor's brand name anywhere.
+ */
+const ALT_TEXT = "EPDA";
+
+/**
  * Logo shown in the sidebar
  * If a custom logo is used, we dynamically show that or the symbol depending on {optimisticMinimizedSidebar}
  */
@@ -15,13 +24,13 @@ export const ShelfSidebarLogo = ({ minimized }: { minimized: boolean }) => {
     return minimized ? (
       <img
         src={logoPath.symbol}
-        alt="Shelf Logo"
+        alt={ALT_TEXT}
         className="mx-1.5 inline h-[32px] transition duration-150 ease-linear"
       />
     ) : (
       <img
         src={logoPath.fullLogo}
-        alt="Shelf Logo"
+        alt={ALT_TEXT}
         className="mx-1.5 inline h-[32px] transition duration-150 ease-linear"
       />
     );
@@ -31,7 +40,7 @@ export const ShelfSidebarLogo = ({ minimized }: { minimized: boolean }) => {
     <>
       <img
         src="/static/images/shelf-symbol.png"
-        alt="Shelf Logo"
+        alt={ALT_TEXT}
         className="mx-1.5 inline h-[32px]"
       />
       <When truthy={!minimized}>
@@ -50,7 +59,7 @@ export const ShelfMobileLogo = () => {
   const { logoPath } = config;
 
   if (logoPath) {
-    return <img src={logoPath.fullLogo} alt="Shelf Logo" className="h-full" />;
+    return <img src={logoPath.fullLogo} alt={ALT_TEXT} className="h-full" />;
   }
 
   return (
@@ -70,7 +79,7 @@ export const ShelfSymbolLogo = ({ className }: { className?: string }) => {
   const classes = tw("mx-auto mb-2 size-12", className);
 
   if (logoPath) {
-    return <img src={logoPath.symbol} alt="Shelf Logo" className={classes} />;
+    return <img src={logoPath.symbol} alt={ALT_TEXT} className={classes} />;
   }
 
   return (
@@ -86,7 +95,7 @@ export const ShelfFullLogo = ({ className }: { className?: string }) => {
   const classes = tw(className);
 
   if (logoPath) {
-    return <img src={logoPath.fullLogo} alt="Shelf Logo" className={classes} />;
+    return <img src={logoPath.fullLogo} alt={ALT_TEXT} className={classes} />;
   }
 
   return (

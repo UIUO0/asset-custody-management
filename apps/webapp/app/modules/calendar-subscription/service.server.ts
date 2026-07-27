@@ -17,6 +17,7 @@ import { OrganizationRoles } from "@prisma/client";
 import { db } from "~/database/db.server";
 import { SERVER_URL } from "~/utils/env";
 import { ShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import {
   assertCanUseBookings,
   canUseBookings,
@@ -201,7 +202,7 @@ export async function getMemberCalendarFeeds({
       // The underlying UserOrganization order follows updatedAt, which changes
       // when a member generates/rotates a token — jarring to watch rows jump.
       .sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
       )
   );
 }
@@ -270,17 +271,16 @@ export function resolveCalendarVisibility({
   };
 }): { canSeeAllBookings: boolean; canSeeAllCustody: boolean } {
   const role = roles[0] ?? OrganizationRoles.BASE;
-  const isSelfServiceOrBase =
-    role === OrganizationRoles.SELF_SERVICE || role === OrganizationRoles.BASE;
+  const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
   const canSeeAllBookings =
-    !isSelfServiceOrBase ||
+    !isScopedToOwnRecords ||
     (role === OrganizationRoles.SELF_SERVICE &&
       organization.selfServiceCanSeeBookings) ||
     (role === OrganizationRoles.BASE && organization.baseUserCanSeeBookings);
 
   const canSeeAllCustody =
-    !isSelfServiceOrBase ||
+    !isScopedToOwnRecords ||
     (role === OrganizationRoles.SELF_SERVICE &&
       organization.selfServiceCanSeeCustody) ||
     (role === OrganizationRoles.BASE && organization.baseUserCanSeeCustody);

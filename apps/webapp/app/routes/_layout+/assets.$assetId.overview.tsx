@@ -1102,8 +1102,8 @@ export default function AssetOverview() {
                         // because it's mounted from the parent route.
                         to="manage-placements"
                         variant="link"
-                        aria-label="Manage placements"
-                        title="Manage placements"
+                        aria-label={t("assetActions.managePlacements")}
+                        title={t("assetActions.managePlacements")}
                         className="hidden shrink-0 rounded p-1 text-gray-500 transition-opacity hover:bg-gray-100 hover:text-gray-700 md:inline-flex md:opacity-0 md:group-hover/field:opacity-100 md:focus-visible:opacity-100"
                       >
                         <Icon icon="pen" />
@@ -1325,15 +1325,8 @@ export default function AssetOverview() {
                             <>
                               <h6>Barcodes support</h6>
                               <p>
-                                Want to know more about barcodes? Check out our
-                                knowledge base article on{" "}
-                                <Button
-                                  variant="link"
-                                  target="_blank"
-                                  to="https://www.shelf.nu/knowledge-base/alternative-barcodes"
-                                >
-                                  barcode support
-                                </Button>
+                                Alternative barcodes let you scan assets with
+                                the codes you already use.
                               </p>
                             </>
                           }
@@ -1381,7 +1374,7 @@ export default function AssetOverview() {
           (canEditAsset && allCustomFields.length > 0) ? (
             <>
               <TextualDivider
-                text="Custom fields"
+                text={t("assetOverview.customFields")}
                 className="mb-8 pt-3 lg:hidden"
               />
               <Card className="my-3 px-[-4] py-[-5] md:border">
@@ -1402,7 +1395,7 @@ export default function AssetOverview() {
                         })
                       : null;
 
-                    /* Hide "Not set" rows from view-only users */
+                    /* Hide t("assetOverview.notSet") rows from view-only users */
                     if (!hasValue && !canEditAsset) return null;
 
                     return (
@@ -1617,8 +1610,8 @@ export default function AssetOverview() {
                   <div className="min-w-0 flex-1">
                     <h3 className="mb-1 text-sm font-semibold">
                       {memberships.length > 1
-                        ? "Included in kits"
-                        : "Included in kit"}
+                        ? t("assetOverview.includedInKits")
+                        : t("assetOverview.includedInKit")}
                     </h3>
                     <ul className="space-y-1">
                       {memberships.map((m) => (
@@ -1741,8 +1734,8 @@ export default function AssetOverview() {
                     <div className="mb-1 flex items-center justify-between gap-2">
                       <h3 className="text-sm font-semibold">
                         {placements.length > 1
-                          ? "Placed at locations"
-                          : "Placed at location"}
+                          ? t("assetOverview.placedAtLocations")
+                          : t("assetOverview.placedAtLocation")}
                       </h3>
                       {isQty && canEditAsset ? (
                         <Button

@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -20,6 +21,7 @@ export const BulkAssignCustodySchema = z.object({
 });
 
 export default function BulkAssignCustodyDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkAssignCustody", BulkAssignCustodySchema);
 
   const { isSelfService } = useUserRoleHelper();
@@ -27,17 +29,23 @@ export default function BulkAssignCustodyDialog() {
 
   const selectedItems = useAtomValue(selectedBulkItemsAtom);
   const quantityTrackedCount = selectedItems.filter((item) =>
-    isQuantityTracked(item)
+    isQuantityTracked(item),
   ).length;
 
   return (
     <BulkUpdateDialogContent
       ref={zo.ref}
       type="assign-custody"
-      title={`${isSelfService ? "Take" : "Assign"} custody of assets`}
-      description={`These assets are currently available. You're about to assign custody to ${
-        isSelfService ? "yourself" : "one of your team members"
-      }.`}
+      title={
+        isSelfService
+          ? t("bulkActions.takeCustodyTitle")
+          : t("bulkActions.assignCustodyTitle")
+      }
+      description={
+        isSelfService
+          ? t("bulkActions.takeCustodyDescription")
+          : t("bulkActions.assignCustodyDescription")
+      }
       actionUrl="/api/assets/bulk-assign-custody"
       arrayFieldId="assetIds"
     >
@@ -47,9 +55,9 @@ export default function BulkAssignCustodyDialog() {
             <div className="mb-4">
               <WarningBox>
                 <span>
-                  {quantityTrackedCount} quantity-tracked asset(s) in your
-                  selection will be skipped. Quantity-tracked assets must be
-                  assigned custody individually with a specific quantity.
+                  {t("bulkActions.qtyTrackedSkippedCustody", {
+                    count: quantityTrackedCount,
+                  })}
                 </span>
               </WarningBox>
             </div>
@@ -73,10 +81,10 @@ export default function BulkAssignCustodyDialog() {
                   deletedAt: null,
                 }}
                 fieldName="custodian"
-                contentLabel="Team members"
+                contentLabel={t("bookingForm.teamMembers")}
                 initialDataKey="teamMembers"
                 countKey="totalTeamMembers"
-                placeholder="Select a team member"
+                placeholder={t("bookingForm.selectTeamMember")}
                 allowClear
                 closeOnSelect
                 transformItem={(item) => ({

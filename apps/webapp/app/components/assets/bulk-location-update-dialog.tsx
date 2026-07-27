@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { selectedBulkItemsAtom } from "~/atoms/list";
@@ -15,6 +16,7 @@ export const BulkLocationUpdateSchema = z.object({
 });
 
 export default function BulkLocationUpdateDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkLocationUpdate", BulkLocationUpdateSchema);
 
   /**
@@ -27,7 +29,7 @@ export default function BulkLocationUpdateDialog() {
    */
   const selectedItems = useAtomValue(selectedBulkItemsAtom);
   const quantityTrackedCount = selectedItems.filter((item) =>
-    isQuantityTracked(item)
+    isQuantityTracked(item),
   ).length;
 
   return (
@@ -42,10 +44,9 @@ export default function BulkLocationUpdateDialog() {
             <div className="mb-4">
               <WarningBox>
                 <span>
-                  {quantityTrackedCount} quantity-tracked asset(s) in your
-                  selection will be skipped. Quantity-tracked assets must have
-                  their placements managed individually with a per-location
-                  quantity.
+                  {t("bulkActions.qtyTrackedSkippedLocation", {
+                    count: quantityTrackedCount,
+                  })}
                 </span>
               </WarningBox>
             </div>
@@ -70,7 +71,7 @@ export default function BulkLocationUpdateDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -78,7 +79,7 @@ export default function BulkLocationUpdateDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Form, useNavigation } from "react-router";
 import { useScannerCameraId } from "~/hooks/use-scanner-camera-id";
 import { isFormProcessing } from "~/utils/form";
@@ -34,6 +35,7 @@ export function RelinkQrCodeDialog({
   itemLabel = "item",
   actionData,
 }: RelinkQrCodeDialogProps) {
+  const { t } = useTranslation();
   const [currentState, setCurrentState] = useState<CurrentState>("initial");
   const [newQrId, setNewQrId] = useState<string>();
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,7 +53,7 @@ export function RelinkQrCodeDialog({
     type,
   }: OnCodeDetectionSuccessProps) {
     if (type === "barcode") {
-      setErrorMessage("Please scan a QR code, not a barcode.");
+      setErrorMessage(t("qr.scanQrNotBarcode"));
       return;
     }
 
@@ -63,7 +65,7 @@ export function RelinkQrCodeDialog({
 
     if (currentQrId === qrId) {
       setErrorMessage(
-        `The new code you scanned is the same as the current code of the ${itemLabel}. Please scan a different code.`
+        `The new code you scanned is the same as the current code of the ${itemLabel}. Please scan a different code.`,
       );
     }
   }
@@ -81,7 +83,7 @@ export function RelinkQrCodeDialog({
         handleClose();
       }
     },
-    [actionData, handleClose]
+    [actionData, handleClose],
   );
 
   useEffect(
@@ -90,7 +92,7 @@ export function RelinkQrCodeDialog({
         setErrorMessage(actionData.error.message);
       }
     },
-    [actionData?.error]
+    [actionData?.error],
   );
 
   return (
@@ -136,9 +138,9 @@ export function RelinkQrCodeDialog({
                 <p className="uppercase text-gray-500">Current code</p>
                 <p
                   className="truncate font-medium"
-                  title={currentQrId ? currentQrId : "Not linked yet"}
+                  title={currentQrId ? currentQrId : t("qr.notLinkedYet")}
                 >
-                  {currentQrId ? currentQrId : "Not linked yet"}
+                  {currentQrId ? currentQrId : t("qr.notLinkedYet")}
                 </p>
               </div>
               <div className="flex items-center justify-center rounded-lg border border-gray-200 p-2.5 shadow-lg">
@@ -148,9 +150,9 @@ export function RelinkQrCodeDialog({
                 <p className="uppercase text-gray-500">New code</p>
                 <p
                   className="truncate font-medium"
-                  title={newQrId ? newQrId : "Scan a QR code to link..."}
+                  title={newQrId ? newQrId : t("qr.scanToLink")}
                 >
-                  {newQrId ? newQrId : "Scan a QR code to link..."}
+                  {newQrId ? newQrId : t("qr.scanToLink")}
                 </p>
               </div>
             </div>
@@ -173,7 +175,7 @@ export function RelinkQrCodeDialog({
 
                   if (document) {
                     const input = document.querySelector(
-                      ".scanner-mode-input"
+                      ".scanner-mode-input",
                     ) as HTMLInputElement;
                     if (input) {
                       input.disabled = false;

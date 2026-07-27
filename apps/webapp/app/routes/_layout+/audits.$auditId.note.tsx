@@ -35,7 +35,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       action: PermissionAction.create,
     });
 
-    const { organizationId, isSelfServiceOrBase } = permissionResult;
+    const { organizationId, isScopedToOwnRecords } = permissionResult;
 
     // Validate that the audit belongs to the user's organization.
     // Scope the lookup by organizationId so a cross-org auditId can never
@@ -64,7 +64,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     requireAuditAssigneeForBaseSelfService({
       audit,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       auditId,
     });
 
@@ -77,7 +77,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           MarkdownNoteSchema,
           {
             additionalData: { userId, auditId },
-          }
+          },
         );
 
         sendNotification({
@@ -104,7 +104,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           }),
           {
             additionalData: { userId, auditId },
-          }
+          },
         );
 
         sendNotification({

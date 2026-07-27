@@ -38,6 +38,7 @@ import { TeamMemberBadge } from "~/components/user/team-member-badge";
 import { db } from "~/database/db.server";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import {
@@ -67,8 +68,15 @@ import {
 import { requirePermission } from "~/utils/roles.server";
 import { resolveUserDisplayName } from "~/utils/user";
 
+/**
+ * English fallback for the bookings search tooltip.
+ *
+ * @deprecated Prefer the `search.bookingsText` key — every route that renders this
+ * copy now translates it in its loader via `getFixedT`. Kept only for the one
+ * remaining consumer (`calendar.tsx`) until that route is localised too.
+ */
 export const bookingsSearchFieldTooltipText = `
-Search bookings based on different fields. Separate your keywords by a comma(,) to search with OR condition. Supported fields are: 
+Search bookings based on different fields. Separate your keywords by a comma(,) to search with OR condition. Supported fields are:
 - Name
 - Description
 - Tags
@@ -84,10 +92,14 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const {
       organizationId,
       currentOrganization,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       canSeeAllBookings,
       canSeeAllCustody,
     } = await requirePermission({
@@ -188,11 +200,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       }),
 
       // team members for booking form - BASE/SELF_SERVICE users need their team member guaranteed
-      isSelfServiceOrBase
+      isScopedToOwnRecords
         ? getTeamMemberForForm({
             organizationId,
             userId,
-            isSelfServiceOrBase,
+            isScopedToOwnRecords,
             getAll:
               searchParams.has("getAll") &&
               hasGetAllValue(searchParams, "teamMember"),
@@ -349,13 +361,13 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         // For ADMIN users, reuse the filter team members
         teamMembersForForm:
           teamMembersForFormData?.teamMembers ?? teamMembersData.teamMembers,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         ...notifyData,
         tags,
         totalTags: tags.length,
         searchFieldTooltip: {
-          title: "Search your bookings",
-          text: parseMarkdownToReact(bookingsSearchFieldTooltipText),
+          title: t("search.bookingsTitle"),
+          text: parseMarkdownToReact(t("search.bookingsText")),
         },
       }),
       {
@@ -416,7 +428,7 @@ export default function BookingsIndexPage({
 }) {
   const { t } = useTranslation();
   const matches = useMatches();
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { isScopedToOwnRecords } = useUserRoleHelper();
 
   const currentRoute: RouteHandleWithName = matches[matches.length - 1];
 
@@ -464,7 +476,7 @@ export default function BookingsIndexPage({
             trigger={
               <Button
                 type="button"
-                aria-label="new booking"
+                aria-label={t("bookings.newBooking")}
                 data-test-id="createNewBooking"
                 prefetch="none"
               >
@@ -479,7 +491,7 @@ export default function BookingsIndexPage({
 
         <List
           bulkActions={
-            disableBulkActions || isBaseOrSelfService ? undefined : (
+            disableBulkActions || isScopedToOwnRecords ? undefined : (
               <BulkActionsDropdown />
             )
           }
@@ -618,6 +630,7 @@ const ListBookingsContent = ({
   // calls `groupAssets(booking.bookingAssets)` + reads
   // `booking.bookingAssets.length` in multiple places), and any future
   // additions. A scoped `?? []` on each reader would be brittle.
+  const { t } = useTranslation();
   const item = {
     ...rawItem,
     bookingAssets: rawItem.bookingAssets ?? [],
@@ -683,11 +696,9 @@ const ListBookingsContent = ({
       <Td>
         {hasUnavaiableAssets ? (
           <AvailabilityBadge
-            badgeText={"Includes unavailable assets"}
-            tooltipTitle={"Booking includes unavailable assets"}
-            tooltipContent={
-              "There are some assets within this booking that are unavailable for reservation because they are checked-out, have custody assigned or are marked as not allowed to book"
-            }
+            badgeText={t("bookings.includesUnavailableAssets")}
+            tooltipTitle={t("bookings.includesUnavailableAssetsTitle")}
+            tooltipContent={t("bookings.includesUnavailableAssetsContent")}
           />
         ) : null}
       </Td>
@@ -739,7 +750,9 @@ const ListBookingsContent = ({
           items={item.tags}
           idKey="id"
           labelKey="name"
-          emptyMessage={<div className="text-sm text-gray-500">No tags</div>}
+          emptyMessage={
+            <div className="text-sm text-gray-500">{t("bookings.noTags")}</div>
+          }
         />
       </Td>
 

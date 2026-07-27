@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   LoaderFunctionArgs,
   ActionFunctionArgs,
@@ -46,7 +47,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ bookingId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -186,7 +187,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           MarkdownNoteSchema,
           {
             additionalData: { userId, bookingId },
-          }
+          },
         );
 
         await createBookingNote({
@@ -212,7 +213,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({
             noteId: z.string(),
           }),
-          { additionalData: { userId, bookingId } }
+          { additionalData: { userId, bookingId } },
         );
 
         await deleteBookingNote({
@@ -245,6 +246,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function BookingActivity() {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const canReadBookingNotes = userHasPermission({
     roles,
@@ -256,7 +258,7 @@ export default function BookingActivity() {
     <div className="w-full">
       {canReadBookingNotes ? (
         <>
-          <TextualDivider text="Notes" className="mb-8 lg:hidden" />
+          <TextualDivider text={t("team.notes")} className="mb-8 lg:hidden" />
           <BookingNotes />
         </>
       ) : (
@@ -265,8 +267,8 @@ export default function BookingActivity() {
             <div className="mb-4 inline-flex size-8 items-center justify-center  rounded-full bg-primary-100 p-2 text-primary-600">
               <NoPermissionsIcon />
             </div>
-            <h5>Insufficient permissions</h5>
-            <p>You are not allowed to view booking notes</p>
+            <h5>{t("team.insufficientPermissions")}</h5>
+            <p>{t("bookings.cannotViewNotes")}</p>
           </div>
         </div>
       )}

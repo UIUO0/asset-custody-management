@@ -70,7 +70,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
   const { workingHours } = workingHoursData;
   const bookingSettings = useBookingSettings();
 
-  const { roles, isBaseOrSelfService, isAdministratorOrOwner } =
+  const { roles, isScopedToOwnRecords, isAdministratorOrOwner } =
     useUserRoleHelper();
 
   const { startDate: defaultStartDate, endDate: defaultEndDate } =
@@ -164,7 +164,7 @@ export function NewBookingForm({ booking, action }: NewBookingFormData) {
               <Card className="field-card m-0">
                 <CustodianField
                   defaultTeamMember={defaultTeamMember}
-                  disabled={disabled || isBaseOrSelfService}
+                  disabled={disabled || isScopedToOwnRecords}
                   userCanSeeCustodian={userCanSeeCustodian}
                   isNewBooking={true}
                   error={

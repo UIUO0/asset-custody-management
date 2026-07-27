@@ -1,6 +1,7 @@
 import type { MetaFunction } from "react-router";
 import { data, type LoaderFunctionArgs } from "react-router";
 import type { HeaderData } from "~/components/layout/header/types";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   getBookings,
   resolveCustodianScope,
@@ -19,15 +20,17 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-import BookingsIndexPage, {
-  bookingsSearchFieldTooltipText,
-} from "./bookings._index";
+import BookingsIndexPage from "./bookings._index";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
   const userId = authSession.userId;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId } = await requirePermission({
       userId,
       request,
@@ -96,10 +99,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         modelName,
         ...tagsData,
         searchFieldTooltip: {
-          title: "Search your bookings",
-          text: parseMarkdownToReact(bookingsSearchFieldTooltipText),
+          title: t("search.bookingsTitle"),
+          text: parseMarkdownToReact(t("search.bookingsText")),
         },
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

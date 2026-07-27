@@ -20,6 +20,7 @@
  */
 import { useEffect, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -54,6 +55,7 @@ export default function CalendarFeedControls({
   calendarFeedUrl,
   showHelp = true,
 }: CalendarFeedControlsProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   // Two-step confirm for "Stop sharing" so an accidental click can't silently
   // break an already-subscribed external calendar.
@@ -120,7 +122,7 @@ export default function CalendarFeedControls({
               type="button"
               variant="secondary"
               onClick={copyUrl}
-              aria-label="Copy calendar link"
+              aria-label={t("calendar.copyLink")}
             >
               {copied ? (
                 <CheckIcon className="size-4" />
@@ -144,7 +146,7 @@ export default function CalendarFeedControls({
               />
               <input type="hidden" name="intent" value="regenerate" />
               <Button type="submit" variant="secondary" disabled={disabled}>
-                {disabled ? "Working…" : "Regenerate"}
+                {disabled ? t("calendar.working") : "Regenerate"}
               </Button>
             </fetcher.Form>
             {confirmingRevoke ? (
@@ -163,7 +165,7 @@ export default function CalendarFeedControls({
                   Stop updating this link?
                 </span>
                 <Button type="submit" variant="danger" disabled={disabled}>
-                  {disabled ? "Stopping…" : "Yes, stop"}
+                  {disabled ? t("calendar.stopping") : t("calendar.yesStop")}
                 </Button>
                 <Button
                   type="button"
@@ -198,7 +200,7 @@ export default function CalendarFeedControls({
           <input type="hidden" name="organizationId" value={organizationId} />
           <input type="hidden" name="intent" value="generate" />
           <Button type="submit" variant="secondary" disabled={disabled}>
-            {disabled ? "Generating…" : "Generate calendar link"}
+            {disabled ? t("calendar.generating") : t("calendar.generateLink")}
           </Button>
         </fetcher.Form>
       )}

@@ -11,6 +11,7 @@ import {
 } from "~/modules/audit/service.server";
 import { makeShelfError } from "~/utils/error";
 import { getParams } from "~/utils/http.server";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/audits/:auditId
@@ -27,7 +28,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const organizationId = await requireOrganizationAccess(request, user.id);
     const { role, canUseAudits } = await getMobileUserContext(
       user.id,
-      organizationId
+      organizationId,
     );
     if (!canUseAudits) {
       return data(
@@ -37,13 +38,13 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
               "Audits are not enabled for this workspace. Contact your admin to enable this feature.",
           },
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const { auditId } = getParams(
       params,
-      z.object({ auditId: z.string().min(1) })
+      z.object({ auditId: z.string().min(1) }),
     );
 
     // Fetch session details and scans in parallel
@@ -58,12 +59,12 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // `canComplete` so the client never shows a "Complete Audit" CTA that
     // 403s after confirmation — e.g. an admin viewing another user's audit in
     // the all-workspace list. Mirrors the endpoint's own rule exactly.
-    const isSelfServiceOrBase = role === "SELF_SERVICE" || role === "BASE";
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
     const hasNoAssignees = session.assignments.length === 0;
     const isAssignee = session.assignments.some((a) => a.user.id === user.id);
     const canCompleteAudit =
       (session.status === "ACTIVE" || session.status === "PENDING") &&
-      (isAssignee || (!isSelfServiceOrBase && hasNoAssignees));
+      (isAssignee || (!isScopedToOwnRecords && hasNoAssignees));
 
     return data({
       audit: {
@@ -125,7 +126,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

@@ -40,8 +40,10 @@ import {
 import type { CSSProperties, ReactNode } from "react";
 import { AssetStatus } from "@prisma/client";
 import type { Booking } from "@prisma/client";
+import type { TFunction } from "i18next";
 import { useAtomValue, useSetAtom } from "jotai";
 import { ChevronDownIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { z } from "zod";
 import type { BookingExpectedAsset } from "~/atoms/qr-scanner";
@@ -180,7 +182,7 @@ type DispositionContextValue = {
   updateField: (
     bookingAssetId: string,
     field: keyof QtyDispositionState,
-    value: string
+    value: string,
   ) => void;
   /**
    * When set to a bookingAssetId, the corresponding
@@ -197,7 +199,7 @@ function useDispositionContext(): DispositionContextValue {
   const ctx = useContext(DispositionContext);
   if (!ctx) {
     throw new Error(
-      "useDispositionContext called outside of PartialCheckinDrawer"
+      "useDispositionContext called outside of PartialCheckinDrawer",
     );
   }
   return ctx;
@@ -299,7 +301,7 @@ function bookingAssetIdForScannedItem(
   item: {
     data?: { id?: string; bookingAssetId?: string } | null | undefined;
   },
-  expectedAssets: BookingExpectedAsset[]
+  expectedAssets: BookingExpectedAsset[],
 ): string | undefined {
   if (key.startsWith(QUICK_CHECKIN_QR_PREFIX)) {
     return key.slice(QUICK_CHECKIN_QR_PREFIX.length);
@@ -308,7 +310,7 @@ function bookingAssetIdForScannedItem(
   const assetId = item?.data?.id;
   if (!assetId) return undefined;
   const slice = expectedAssets.find(
-    (a) => a.kind === "QUANTITY_TRACKED" && a.id === assetId && a.remaining > 0
+    (a) => a.kind === "QUANTITY_TRACKED" && a.id === assetId && a.remaining > 0,
   );
   return slice?.bookingAssetId;
 }
@@ -402,6 +404,7 @@ export default function PartialCheckinDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   const {
     booking,
     partialCheckinProgress,
@@ -429,7 +432,7 @@ export default function PartialCheckinDrawer({
   const [recentlyAddedBookingAssetId, setRecentlyAddedBookingAssetId] =
     useState<string | null>(null);
   const recentlyAddedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
 
   // Cancel any pending clear on unmount so we don't call setState on a
@@ -440,7 +443,7 @@ export default function PartialCheckinDrawer({
         clearTimeout(recentlyAddedTimerRef.current);
       }
     },
-    []
+    [],
   );
 
   /**
@@ -455,7 +458,7 @@ export default function PartialCheckinDrawer({
     (
       bookingAssetId: string,
       field: keyof QtyDispositionState,
-      value: string
+      value: string,
     ) => {
       setDispositions((prev) => ({
         ...prev,
@@ -468,7 +471,7 @@ export default function PartialCheckinDrawer({
         },
       }));
     },
-    []
+    [],
   );
 
   // Filter and prepare data for component rendering
@@ -482,12 +485,12 @@ export default function PartialCheckinDrawer({
 
   // List of asset IDs for the form - only include assets that are actually in the booking
   const bookingAssetIds = new Set(
-    booking.bookingAssets.map((ba) => ba.assetId)
+    booking.bookingAssets.map((ba) => ba.assetId),
   );
 
   // Get assets that have already been checked in (should be excluded from count)
   const checkedInAssetIds = new Set(
-    partialCheckinProgress?.checkedInAssetIds || []
+    partialCheckinProgress?.checkedInAssetIds || [],
   );
 
   /**
@@ -538,9 +541,9 @@ export default function PartialCheckinDrawer({
         k.assetKits
           .map((ak) => ak.asset)
           .filter(isAssetCheckable)
-          .map((a) => a.id)
+          .map((a) => a.id),
       ),
-    ])
+    ]),
   );
 
   /**
@@ -578,7 +581,7 @@ export default function PartialCheckinDrawer({
       if (item.type === "asset") {
         activate(
           bookingAssetIdForScannedItem(qrId, item, expectedAssets),
-          qrId
+          qrId,
         );
         continue;
       }
@@ -659,7 +662,7 @@ export default function PartialCheckinDrawer({
 
   // Check if it's an early check-in (only relevant for final check-ins)
   const isEarlyCheckin = Boolean(
-    isFinalCheckin && isBookingEarlyCheckin(booking.to)
+    isFinalCheckin && isBookingEarlyCheckin(booking.to),
   );
 
   // Setup blockers
@@ -675,7 +678,7 @@ export default function PartialCheckinDrawer({
     .filter(
       (asset) =>
         bookingAssetIds.has(asset.id) &&
-        isAssetPartiallyCheckedIn(asset, partialCheckinDetails, booking.status)
+        isAssetPartiallyCheckedIn(asset, partialCheckinDetails, booking.status),
     )
     .map((a) => a.id);
 
@@ -742,7 +745,7 @@ export default function PartialCheckinDrawer({
       }
       if (item.type === "kit") {
         return (item?.data as any)?.assets?.some((a: { id: string }) =>
-          neverCheckedOutAssetIdSet.has(a.id)
+          neverCheckedOutAssetIdSet.has(a.id),
         );
       }
       return false;
@@ -755,7 +758,7 @@ export default function PartialCheckinDrawer({
   // Kit blockers - kits not in this booking
   const kitsNotInBooking = kits
     .filter(
-      (kit) => !kit.assetKits.some((ak) => bookingAssetIds.has(ak.asset.id))
+      (kit) => !kit.assetKits.some((ak) => bookingAssetIds.has(ak.asset.id)),
     )
     .map((kit) => kit.id);
 
@@ -781,8 +784,8 @@ export default function PartialCheckinDrawer({
           isAssetPartiallyCheckedIn(
             asset,
             partialCheckinDetails,
-            booking.status
-          )
+            booking.status,
+          ),
         )
       );
     })
@@ -817,7 +820,7 @@ export default function PartialCheckinDrawer({
       // Find the QR ID for this asset
       const assetQrId = Object.entries(items).find(
         ([, item]) =>
-          item?.type === "asset" && (item?.data as any)?.id === asset.id
+          item?.type === "asset" && (item?.data as any)?.id === asset.id,
       )?.[0];
 
       if (assetQrId) {
@@ -844,7 +847,7 @@ export default function PartialCheckinDrawer({
       return (
         parsed.primary + parsed.returned + parsed.lost + parsed.damaged === 0
       );
-    }
+    },
   );
   const qrIdsOfZeroDispositionQty = zeroDispositionQtyIds
     .map((baId) => qrIdByBookingAssetId.get(baId))
@@ -890,7 +893,7 @@ export default function PartialCheckinDrawer({
           already been checked in for this booking.
         </>
       ),
-      description: "These assets cannot be checked in again",
+      description: t("scanner.blockerCannotCheckInAgain"),
       onResolve: () => removeItemsFromList(qrIdsOfAlreadyCheckedInAssets),
     },
     {
@@ -904,8 +907,7 @@ export default function PartialCheckinDrawer({
           been checked out yet and can't be checked in.
         </>
       ),
-      description:
-        "Only assets that were checked out can be checked back in. Check these out first.",
+      description: t("scanner.blockerOnlyCheckedOutCanReturn"),
       onResolve: () => removeItemsFromList(qrIdsOfNeverCheckedOutAssets),
     },
     {
@@ -917,7 +919,7 @@ export default function PartialCheckinDrawer({
           already been checked in for this booking.
         </>
       ),
-      description: "All assets from these kits have already been checked in",
+      description: t("scanner.blockerAllKitsCheckedIn"),
       onResolve: () => removeItemsFromList(qrIdsOfAlreadyCheckedInKits),
     },
     {
@@ -964,8 +966,7 @@ export default function PartialCheckinDrawer({
           no quantity entered.
         </>
       ),
-      description:
-        "Enter a returned / consumed / lost / damaged quantity — remove the scan, or click Check in on the pending row.",
+      description: t("scanner.enterDispositionHint"),
       onResolve: () => removeItemsFromList(qrIdsOfZeroDispositionQty),
     },
     {
@@ -979,8 +980,7 @@ export default function PartialCheckinDrawer({
           the remaining quantity on this booking.
         </>
       ),
-      description:
-        "Reduce the entered values to match what's remaining — or remove the scan.",
+      description: t("scanner.reduceToRemaining"),
       onResolve: () => removeItemsFromList(qrIdsOfOverReturnQty),
     },
   ];
@@ -1032,7 +1032,7 @@ export default function PartialCheckinDrawer({
           lost: parsed.lost,
           damaged: parsed.damaged,
         };
-      }
+      },
     );
     return JSON.stringify(payload);
   }, [
@@ -1054,7 +1054,7 @@ export default function PartialCheckinDrawer({
       qtyRemainingByBookingAssetId,
       updateField,
       recentlyAddedBookingAssetId,
-    ]
+    ],
   );
 
   /**
@@ -1173,7 +1173,7 @@ export default function PartialCheckinDrawer({
       const baId = bookingAssetIdForScannedItem(
         qrId,
         item as { data?: { id?: string; bookingAssetId?: string } },
-        expectedAssets
+        expectedAssets,
       );
       const slice = baId ? expectedByBookingAssetId.get(baId) : undefined;
       if (baId && slice && slice.kind === "QUANTITY_TRACKED") {
@@ -1300,7 +1300,7 @@ export default function PartialCheckinDrawer({
         setRecentlyAddedBookingAssetId(null);
       }, 600);
     },
-    [quickCheckinQtyAsset]
+    [quickCheckinQtyAsset],
   );
 
   /**
@@ -1366,7 +1366,9 @@ export default function PartialCheckinDrawer({
             an empty drawer doesn't show a "Checked in (0)" label. */}
         {scannedCount > 0 ? (
           <SectionHeader
-            label={`Checked in this session (${scannedCount})`}
+            label={t("scanner.checkedInThisSession", {
+              count: scannedCount,
+            })}
             tone="active"
           />
         ) : null}
@@ -1386,7 +1388,7 @@ export default function PartialCheckinDrawer({
                 (a): a is QtyExpectedAsset =>
                   a.kind === "QUANTITY_TRACKED" &&
                   a.kitId === kitId &&
-                  activatedQtyBookingAssetIds.has(a.bookingAssetId)
+                  activatedQtyBookingAssetIds.has(a.bookingAssetId),
               )
             : [];
           return (
@@ -1453,7 +1455,7 @@ export default function PartialCheckinDrawer({
       <span className="block text-gray-600">
         {progress.denom > 0
           ? `${progress.num}/${progress.denom} units checked in`
-          : "No assets in this booking"}
+          : t("scanner.noAssetsInBooking")}
       </span>
       <span className="flex h-5 flex-col justify-center font-medium text-gray-900">
         <Progress
@@ -1490,7 +1492,7 @@ export default function PartialCheckinDrawer({
         defaultExpanded={defaultExpanded}
         className={tw(
           "[&_.default-base-drawer-header]:rounded-b [&_.default-base-drawer-header]:border [&_.default-base-drawer-header]:px-4 [&_thead]:hidden",
-          className
+          className,
         )}
         style={style}
         headerContent={<BookingHeader booking={booking} />}
@@ -1507,7 +1509,7 @@ export default function PartialCheckinDrawer({
 const assetTypePillClass = tw(
   "inline-block bg-gray-50 px-[6px] py-[2px]",
   "rounded-md border border-gray-200",
-  "text-xs text-gray-700"
+  "text-xs text-gray-700",
 );
 
 /**
@@ -1562,6 +1564,7 @@ function AlreadyReconciledCollapser({
     { id: string; name: string; mainImage: string | null }
   >;
 }) {
+  const { t } = useTranslation();
   // `<details>` doesn't make sense inside a <tbody>, so we fall back
   // to a button-toggled state.
   const [open, setOpen] = useState(false);
@@ -1624,7 +1627,7 @@ function AlreadyReconciledCollapser({
               assets={kitAssets}
             />
           ))}
-          {looseAssets.map((asset) => renderAlreadyReconciledAsset(asset))}
+          {looseAssets.map((asset) => renderAlreadyReconciledAsset(asset, t))}
         </>
       ) : null}
     </>
@@ -1645,6 +1648,7 @@ function ReconciledKitGroup({
   kit: { id: string; name: string; mainImage: string | null };
   assets: BookingExpectedAsset[];
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -1662,7 +1666,7 @@ function ReconciledKitGroup({
                 aria-hidden="true"
                 className={tw(
                   "size-5 shrink-0 text-gray-500 transition-transform duration-150",
-                  open ? "rotate-0" : "-rotate-90"
+                  open ? "rotate-0" : "-rotate-90",
                 )}
               />
               {kit.mainImage ? (
@@ -1690,7 +1694,7 @@ function ReconciledKitGroup({
                   <AvailabilityBadge
                     badgeText="Checked in"
                     tooltipTitle="Already checked in"
-                    tooltipContent="All of this kit's assets on the booking have been reconciled."
+                    tooltipContent={t("scanner.allKitAssetsReconciled")}
                     className="border-green-200 bg-green-50 text-green-700"
                   />
                 </div>
@@ -1727,8 +1731,8 @@ function ReconciledKitGroup({
                           tooltipTitle="Already checked in"
                           tooltipContent={
                             asset.kind === "QUANTITY_TRACKED"
-                              ? "All booked units for this quantity-tracked asset have already been reconciled on this booking."
-                              : "This asset was already checked in during a previous session."
+                              ? t("scanner.allUnitsReconciled")
+                              : t("scanner.alreadyCheckedInPreviousSession")
                           }
                           className="border-green-200 bg-green-50 text-green-700"
                         />
@@ -1759,6 +1763,7 @@ function ReconciledQtySummary({
 }: {
   asset: BookingExpectedAsset;
 }): ReactNode {
+  const { t } = useTranslation();
   if (asset.kind !== "QUANTITY_TRACKED" || asset.booked <= 0) return null;
   const { booked, logged, remaining, breakdown } = asset;
   return (
@@ -1768,7 +1773,7 @@ function ReconciledQtySummary({
           <span
             className={tw(
               "inline-flex cursor-help items-center gap-1 text-sm tabular-nums",
-              remaining === 0 ? "text-emerald-700" : "text-gray-900"
+              remaining === 0 ? "text-emerald-700" : "text-gray-900",
             )}
           >
             <span className="font-medium">{logged}</span>
@@ -1780,7 +1785,7 @@ function ReconciledQtySummary({
             <div className="font-semibold text-gray-900">
               {remaining === 0
                 ? "All units checked in"
-                : "Partially checked in"}
+                : t("scanner.partiallyCheckedIn")}
             </div>
             <div className="flex items-center justify-between gap-3">
               <span className="text-gray-600">Booked</span>
@@ -1825,7 +1830,7 @@ function ReconciledQtySummary({
                   "tabular-nums",
                   remaining === 0
                     ? "text-gray-400"
-                    : "font-medium text-amber-700"
+                    : "font-medium text-amber-700",
                 )}
               >
                 {remaining}
@@ -1843,7 +1848,10 @@ function ReconciledQtySummary({
  * (INDIVIDUAL with `alreadyCheckedIn: true`, or qty-tracked with
  * `remaining: 0`). No actions, green "Checked in" badge.
  */
-function renderAlreadyReconciledAsset(asset: BookingExpectedAsset): ReactNode {
+function renderAlreadyReconciledAsset(
+  asset: BookingExpectedAsset,
+  t: TFunction,
+): ReactNode {
   return (
     <Tr key={`reconciled-${asset.bookingAssetId}`} skipEntrance>
       <td className="w-full p-0 md:p-0">
@@ -1865,8 +1873,8 @@ function renderAlreadyReconciledAsset(asset: BookingExpectedAsset): ReactNode {
                   tooltipTitle="Already checked in"
                   tooltipContent={
                     asset.kind === "QUANTITY_TRACKED"
-                      ? "All booked units for this quantity-tracked asset have already been reconciled on this booking."
-                      : "This asset was already checked in during a previous session."
+                      ? t("scanner.allUnitsReconciled")
+                      : t("scanner.alreadyCheckedInPreviousSession")
                   }
                   className="border-green-200 bg-green-50 text-green-700"
                 />
@@ -1884,6 +1892,7 @@ function renderAlreadyReconciledAsset(asset: BookingExpectedAsset): ReactNode {
 
 // Asset row renderer
 export function AssetRow({ asset }: { asset: AssetFromQr }) {
+  const { t } = useTranslation();
   const { booking, partialCheckinDetails } = useLoaderData<typeof loader>();
   const items = useAtomValue(scannedItemsAtom);
   const expectedAssets = useAtomValue(bookingExpectedAssetsAtom);
@@ -1896,20 +1905,20 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     (asset as unknown as { bookingAssetId?: string }).bookingAssetId ??
     expectedAssets.find(
       (a) =>
-        a.kind === "QUANTITY_TRACKED" && a.id === asset.id && a.remaining > 0
+        a.kind === "QUANTITY_TRACKED" && a.id === asset.id && a.remaining > 0,
     )?.bookingAssetId ??
     null;
 
   // Check if asset is in this booking
   const isInBooking = booking.bookingAssets.some(
-    (ba) => ba.assetId === asset.id
+    (ba) => ba.assetId === asset.id,
   );
 
   // Check if asset is already checked in within this booking using centralized helper
   const isAlreadyCheckedIn = isAssetPartiallyCheckedIn(
     asset,
     partialCheckinDetails,
-    booking.status
+    booking.status,
   );
 
   // `assetKits` itself tolerates fixtures without the pivot relation.
@@ -1930,7 +1939,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     !!assetKitId &&
     (() => {
       const kitBookingAssets = booking.bookingAssets.filter(
-        (ba) => ba.asset?.assetKits[0]?.kitId === assetKitId
+        (ba) => ba.asset?.assetKits[0]?.kitId === assetKitId,
       );
       return (
         kitBookingAssets.length === 1 &&
@@ -1942,7 +1951,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
   // prefixed by `qty-checkin:` + the slice's bookingAssetId. Used below to
   // pick between the "Scanned" and "Checked in without scan" badges.
   const isQuickCheckin = Boolean(
-    bookingAssetId && items[`${QUICK_CHECKIN_QR_PREFIX}${bookingAssetId}`]
+    bookingAssetId && items[`${QUICK_CHECKIN_QR_PREFIX}${bookingAssetId}`],
   );
 
   // Use custom configurations for partial check-in context
@@ -1950,39 +1959,36 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     // Custom preset for redundant assets (highest priority - blocking issue)
     {
       condition: isRedundant && isInBooking,
-      badgeText: "Already covered by kit QR",
-      tooltipTitle: "Asset already covered",
-      tooltipContent:
-        "This asset is already covered by the scanned kit QR code. Remove this individual asset scan.",
+      badgeText: t("scanAvailability.coveredByKitQr"),
+      tooltipTitle: t("scanAvailability.coveredByKitQrTitle"),
+      tooltipContent: t("scanAvailability.coveredByKitQrContent"),
       priority: 90, // Highest priority - blocking issue
     },
     // Custom preset for already checked in assets
     {
       condition: isAlreadyCheckedIn && isInBooking,
-      badgeText: "Already checked in",
-      tooltipTitle: "Asset already checked in",
-      tooltipContent:
-        "This asset has already been checked in for this booking and cannot be checked in again.",
+      badgeText: t("scanAvailability.alreadyCheckedIn"),
+      tooltipTitle: t("scanAvailability.assetAlreadyCheckedInTitle"),
+      tooltipContent: t("scanAvailability.assetAlreadyCheckedInContent"),
       priority: 85, // High priority - blocking issue
     },
     // Custom preset for "not in this booking"
     {
       condition: !isInBooking,
-      badgeText: "Not in this booking",
-      tooltipTitle: "Asset not part of booking",
-      tooltipContent:
-        "This asset is not part of the current booking and cannot be checked in.",
+      badgeText: t("scanAvailability.notInThisBooking"),
+      tooltipTitle: t("scanAvailability.assetNotInBookingTitle"),
+      tooltipContent: t("scanAvailability.assetNotInBookingCheckinContent"),
       priority: 80,
       // Uses default warning colors (appropriate for blocking issue)
     },
     // Custom preset for kit assets - different message based on whether it's the last one
     {
       condition: !!assetKitId && !isRedundant, // Only show if not redundant
-      badgeText: "Part of kit",
-      tooltipTitle: "Asset is part of a kit",
+      badgeText: t("scanAvailability.partOfKit"),
+      tooltipTitle: t("scanAvailability.partOfKitTitle"),
       tooltipContent: isLastKitAssetInBooking
-        ? "This is the last asset from this kit in the booking. Checking it in will also mark the entire kit as available."
-        : "This asset belongs to a kit. Checking in this asset individually will not affect the kit status or other kit assets.",
+        ? t("scanAvailability.lastKitAssetCheckinContent")
+        : t("scanAvailability.kitAssetCheckinContent"),
       priority: 60, // Lower priority than blocking issues
       className: "bg-blue-50 border-blue-200 text-blue-700", // Informational blue
     },
@@ -1995,19 +2001,18 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     {
       condition:
         isInBooking && !isRedundant && !isAlreadyCheckedIn && !isQuickCheckin,
-      badgeText: "Scanned",
-      tooltipTitle: "Scanned",
-      tooltipContent: "This asset has been scanned in this check-in session.",
+      badgeText: t("scanAvailability.scanned"),
+      tooltipTitle: t("scanAvailability.scanned"),
+      tooltipContent: t("scanAvailability.scannedContent"),
       priority: 50,
       className: "bg-green-50 border-green-200 text-green-700",
     },
     {
       condition:
         isInBooking && !isRedundant && !isAlreadyCheckedIn && isQuickCheckin,
-      badgeText: "Checked in without scan",
-      tooltipTitle: "Marked in without scanning",
-      tooltipContent:
-        "This quantity-tracked asset was added via the Check in without scanning button — no QR scan required.",
+      badgeText: t("scanAvailability.checkedInWithoutScan"),
+      tooltipTitle: t("scanAvailability.markedInWithoutScanTitle"),
+      tooltipContent: t("scanAvailability.markedInWithoutScanContent"),
       priority: 50,
       className: "bg-indigo-50 border-indigo-200 text-indigo-700",
     },
@@ -2096,6 +2101,7 @@ function QuantityDispositionBlock({
   >;
   shouldFocusOnMount?: boolean;
 }) {
+  const { t } = useTranslation();
   const { dispositions, updateField } = useDispositionContext();
   const state = dispositions[bookingAssetId] ?? {
     primary: "",
@@ -2144,7 +2150,7 @@ function QuantityDispositionBlock({
     "[&::-webkit-outer-spin-button]:appearance-none",
     isOverLimit
       ? "border-error-400 text-error-600"
-      : "border-gray-200 text-gray-900"
+      : "border-gray-200 text-gray-900",
   );
 
   return (
@@ -2155,7 +2161,7 @@ function QuantityDispositionBlock({
         // column with `shrink-0` so inputs don't squish when the
         // title wraps.
         "w-full rounded-md border bg-white px-3 py-2 sm:w-64 sm:shrink-0",
-        isOverLimit ? "border-error-200 bg-error-50/40" : "border-gray-200"
+        isOverLimit ? "border-error-200 bg-error-50/40" : "border-gray-200",
       )}
     >
       {/* Primary row: Returned/Consumed [input] of N  [✓ on happy path] */}
@@ -2175,7 +2181,7 @@ function QuantityDispositionBlock({
               updateField(bookingAssetId, "primary", e.target.value)
             }
             inputMode="numeric"
-            aria-label={`${primaryLabel} quantity`}
+            aria-label={t("scanner.quantityAria", { label: primaryLabel })}
             className={numInput}
           />
           <span className="text-xs tabular-nums text-gray-500">
@@ -2209,7 +2215,7 @@ function QuantityDispositionBlock({
                   updateField(bookingAssetId, "returned", e.target.value)
                 }
                 inputMode="numeric"
-                aria-label="Returned quantity"
+                aria-label={t("scanner.returnedQuantity")}
                 className={tw(numInput, "w-12")}
               />
             </label>
@@ -2226,7 +2232,7 @@ function QuantityDispositionBlock({
                 updateField(bookingAssetId, "lost", e.target.value)
               }
               inputMode="numeric"
-              aria-label="Lost quantity"
+              aria-label={t("scanner.lostQuantity")}
               className={tw(numInput, "w-12")}
             />
           </label>
@@ -2242,13 +2248,13 @@ function QuantityDispositionBlock({
                 updateField(bookingAssetId, "damaged", e.target.value)
               }
               inputMode="numeric"
-              aria-label="Damaged quantity"
+              aria-label={t("scanner.damagedQuantity")}
               className={tw(numInput, "w-12")}
             />
           </label>
           <span
             className="ms-auto italic text-gray-500"
-            title="Units left for a future check-in session"
+            title={t("scanner.unitsLeftForFuture")}
           >
             <span className="font-medium not-italic tabular-nums text-gray-700">
               {pending}
@@ -2274,6 +2280,7 @@ function QuantityDispositionBlock({
  * operator can edit before submit.
  */
 function ScannedKitQtyMemberRow({ asset }: { asset: QtyExpectedAsset }) {
+  const { t } = useTranslation();
   const { qtyRemainingByBookingAssetId, recentlyAddedBookingAssetId } =
     useDispositionContext();
   const info = qtyRemainingByBookingAssetId[asset.bookingAssetId] ?? null;
@@ -2291,9 +2298,9 @@ function ScannedKitQtyMemberRow({ asset }: { asset: QtyExpectedAsset }) {
             <div className="flex flex-wrap items-center gap-1">
               <span className={assetTypePillClass}>asset</span>
               <AvailabilityBadge
-                badgeText="From kit"
+                badgeText={t("scanner.fromKit")}
                 tooltipTitle="Quantity-tracked kit member"
-                tooltipContent="This quantity-tracked asset is part of the scanned kit. Enter how its units are being returned / consumed / lost / damaged."
+                tooltipContent={t("scanner.kitQtyDispositionHint")}
                 className="border-indigo-200 bg-indigo-50 text-indigo-700"
               />
             </div>
@@ -2315,13 +2322,14 @@ function ScannedKitQtyMemberRow({ asset }: { asset: QtyExpectedAsset }) {
 }
 
 export function KitRow({ kit }: { kit: KitFromQr }) {
+  const { t } = useTranslation();
   const { booking, partialCheckinProgress, partialCheckinDetails } =
     useLoaderData<typeof loader>();
   const items = useAtomValue(scannedItemsAtom);
 
   // Check how many assets from this kit are in the booking
   const bookingAssetIds = new Set(
-    booking.bookingAssets.map((ba) => ba.assetId)
+    booking.bookingAssets.map((ba) => ba.assetId),
   );
   const kitAssets = kit.assetKits.map((ak) => ak.asset);
   const kitAssetsInBooking = kitAssets.filter((a) => bookingAssetIds.has(a.id));
@@ -2330,17 +2338,17 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
 
   // Calculate remaining assets that are still CHECKED_OUT
   const checkedInAssetIds = new Set(
-    partialCheckinProgress?.checkedInAssetIds || []
+    partialCheckinProgress?.checkedInAssetIds || [],
   );
 
   // Check if this kit is currently scanned
   const isKitScanned = Object.values(items).some(
-    (item) => item?.type === "kit" && (item?.data as KitFromQr)?.id === kit.id
+    (item) => item?.type === "kit" && (item?.data as KitFromQr)?.id === kit.id,
   );
 
   // Calculate remaining assets (not already checked in)
   const uncheckedKitAssetsInBooking = kitAssetsInBooking.filter(
-    (asset) => !checkedInAssetIds.has(asset.id)
+    (asset) => !checkedInAssetIds.has(asset.id),
   );
 
   const remainingKitAssetsInBooking = isKitScanned
@@ -2352,7 +2360,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
   const allKitAssetsInBookingAreCheckedIn =
     kitAssetsInBooking.length > 0 &&
     kitAssetsInBooking.every((asset) =>
-      isAssetPartiallyCheckedIn(asset, partialCheckinDetails, booking.status)
+      isAssetPartiallyCheckedIn(asset, partialCheckinDetails, booking.status),
     );
 
   // Use preset configurations to define the availability labels
@@ -2361,33 +2369,34 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
     // Custom preset for "already checked in" kits (highest priority - blocking issue)
     {
       condition: allKitAssetsInBookingAreCheckedIn,
-      badgeText: "Already checked in",
-      tooltipTitle: "Kit already checked in",
-      tooltipContent:
-        "All assets from this kit have already been checked in for this booking and cannot be checked in again.",
+      badgeText: t("scanAvailability.alreadyCheckedIn"),
+      tooltipTitle: t("scanAvailability.kitAlreadyCheckedInTitle"),
+      tooltipContent: t("scanAvailability.kitAlreadyCheckedInContent"),
       priority: 85, // High priority - blocking issue
     },
-    kitLabelPresets.inCustody(kit.status === AssetStatus.IN_CUSTODY),
+    kitLabelPresets.inCustody(t, kit.status === AssetStatus.IN_CUSTODY),
     // Removed checkedOut label - expected in check-in context
     kitLabelPresets.hasAssetsInCustody(
-      kitAssets.some((asset) => asset.status === AssetStatus.IN_CUSTODY)
+      t,
+      kitAssets.some((asset) => asset.status === AssetStatus.IN_CUSTODY),
     ),
     // Custom preset for "not in booking"
     {
       condition: noKitAssetsInBooking,
-      badgeText: "Not in this booking",
-      tooltipTitle: "Kit not part of booking",
-      tooltipContent:
-        "None of this kit's assets are part of the current booking.",
+      badgeText: t("scanAvailability.notInThisBooking"),
+      tooltipTitle: t("scanAvailability.kitNotInBookingTitle"),
+      tooltipContent: t("scanAvailability.kitNotInBookingContent"),
       priority: 80,
     },
     // Custom preset for "partially in booking" - informational only
     {
       condition: !allKitAssetsInBooking && !noKitAssetsInBooking,
-      badgeText: `${kitAssetsInBooking.length}/${kitAssets.length} assets in booking`,
-      tooltipTitle: "Kit partially in booking",
-      tooltipContent:
-        "Only some of this kit's assets are part of the current booking.",
+      badgeText: t("scanAvailability.kitPartiallyInBooking", {
+        inBooking: kitAssetsInBooking.length,
+        total: kitAssets.length,
+      }),
+      tooltipTitle: t("scanAvailability.kitPartiallyInBookingTitle"),
+      tooltipContent: t("scanAvailability.kitPartiallyInBookingContent"),
       priority: 70,
       className: "bg-blue-50 border-blue-200 text-blue-700", // Informational blue
     },
@@ -2448,6 +2457,7 @@ const CustomForm = ({
   hasBlockers,
   checkinsJson,
 }: CustomFormProps) => {
+  const { t } = useTranslation();
   /** Use state instead of ref so the component re-renders once the form
    * mounts — this guarantees portalContainer is always the real DOM node
    * when the user opens the early-checkin dialog. */
@@ -2489,7 +2499,7 @@ const CustomForm = ({
               to: booking.to,
               from: booking.from,
             }}
-            label="Check in assets"
+            label={t("scanner.checkInAssets")}
             variant="default"
             disabled={
               isLoading || hasBlockers || assetIdsForCheckin.length === 0
@@ -2506,7 +2516,7 @@ const CustomForm = ({
             }
             className="w-auto"
           >
-            Check in assets
+            {t("scanner.checkInAssets")}
           </Button>
         )}
       </div>

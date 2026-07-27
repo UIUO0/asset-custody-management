@@ -58,7 +58,7 @@ const label: ErrorLabel = "Audit";
  */
 function assertAuditNotArchived(
   status: AuditStatus,
-  details: { auditSessionId: string; organizationId: string }
+  details: { auditSessionId: string; organizationId: string },
 ) {
   if (status === AuditStatus.ARCHIVED) {
     throw new ShelfError({
@@ -228,7 +228,7 @@ export type AuditScanData = {
 };
 
 export async function createAuditSession(
-  input: CreateAuditSessionInput
+  input: CreateAuditSessionInput,
 ): Promise<CreateAuditSessionResult> {
   const {
     name,
@@ -349,7 +349,7 @@ export async function createAuditSession(
         auditSessionId: session.id,
         meta: { expectedAssetCount: assets.length },
       },
-      tx
+      tx,
     );
 
     // Fetch the created audit assets to get their IDs
@@ -366,7 +366,7 @@ export async function createAuditSession(
 
     // Create a map for quick lookup
     const auditAssetMap = new Map(
-      createdAuditAssets.map((aa) => [aa.assetId, aa.id])
+      createdAuditAssets.map((aa) => [aa.assetId, aa.id]),
     );
 
     return {
@@ -547,7 +547,7 @@ export async function updateAuditSession({
           userId,
           changes,
           tx,
-        })
+        }),
       );
     }
 
@@ -560,7 +560,7 @@ export async function updateAuditSession({
           oldDate: currentAudit.dueDate,
           newDate: data.dueDate!,
           tx,
-        })
+        }),
       );
     }
 
@@ -573,7 +573,7 @@ export async function updateAuditSession({
             userId,
             assigneeUserId: currentAssignee,
             tx,
-          })
+          }),
         );
       }
       if (newAssignee) {
@@ -583,7 +583,7 @@ export async function updateAuditSession({
             userId,
             assigneeUserId: newAssignee,
             tx,
-          })
+          }),
         );
       }
     }
@@ -610,7 +610,7 @@ export async function getAuditSessionDetails({
 }): Promise<GetAuditSessionResult> {
   try {
     const otherOrganizationIds = userOrganizations?.map(
-      (org) => org.organizationId
+      (org) => org.organizationId,
     );
 
     const session = await db.auditSession.findFirst({
@@ -741,7 +741,7 @@ export async function getAuditSessionDetails({
           id,
           model: "audit",
           organization: userOrganizations.find(
-            (org) => org.organizationId === session.organizationId
+            (org) => org.organizationId === session.organizationId,
           ),
           redirectTo,
         },
@@ -826,7 +826,7 @@ export async function scheduleNextAuditJob({
     Logger.info(
       `Scheduled audit job: ${data.eventType} for audit ${
         data.id
-      } at ${when.toISOString()}`
+      } at ${when.toISOString()}`,
     );
     return id;
   } catch (cause) {
@@ -836,7 +836,7 @@ export async function scheduleNextAuditJob({
         message: "Failed to schedule audit job",
         additionalData: { data, when },
         label: "Audit",
-      })
+      }),
     );
     throw cause;
   }
@@ -860,7 +860,7 @@ async function cancelAuditReminders(auditId: string, organizationId: string) {
 
     if (!auditSession?.activeSchedulerReference) {
       Logger.info(
-        `Skipping audit reminder cancellation for audit ${auditId} because no activeSchedulerReference was found.`
+        `Skipping audit reminder cancellation for audit ${auditId} because no activeSchedulerReference was found.`,
       );
       return;
     }
@@ -879,7 +879,7 @@ async function cancelAuditReminders(auditId: string, organizationId: string) {
         message: "Failed to cancel audit reminder jobs",
         additionalData: { auditId },
         label: "Audit",
-      })
+      }),
     );
   }
 }
@@ -979,7 +979,7 @@ export async function getAssetsForAuditSession({
           expected: aa.expected,
           auditStatus: aa.status,
         },
-      ])
+      ]),
     );
 
     if (assetIds.length === 0) {
@@ -1174,7 +1174,7 @@ function isAuditAssetFkViolation(cause: unknown): boolean {
  * @returns Scan ID and updated counts for the audit session
  */
 export async function recordAuditScan(
-  input: RecordAuditScanInput
+  input: RecordAuditScanInput,
 ): Promise<RecordAuditScanResult> {
   const { auditSessionId, qrId, assetId, isExpected, userId, organizationId } =
     input;
@@ -1307,7 +1307,7 @@ export async function recordAuditScan(
               entityId: auditSessionId,
               auditSessionId,
             },
-            tx
+            tx,
           );
         }
 
@@ -1415,7 +1415,7 @@ export async function recordAuditScan(
             assetId,
             meta: { isExpected },
           },
-          tx
+          tx,
         );
 
         return {
@@ -1425,7 +1425,7 @@ export async function recordAuditScan(
           unexpectedAssetCount: updatedSession.unexpectedAssetCount,
         };
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     return result;
@@ -1748,7 +1748,7 @@ export async function completeAuditSession({
             unexpectedCount,
           },
         },
-        tx
+        tx,
       );
     });
 
@@ -1817,7 +1817,7 @@ export async function completeAuditSession({
       if (
         completedAudit.createdBy.email &&
         !assigneesToNotify.some(
-          (assignment) => assignment.userId === completedAudit.createdBy.id
+          (assignment) => assignment.userId === completedAudit.createdBy.id,
         )
       ) {
         assigneesToNotify.push({
@@ -1863,7 +1863,7 @@ export async function completeAuditSession({
 export async function getAuditsForOrganization(params: {
   organizationId: AuditSession["organizationId"];
   userId?: string;
-  isSelfServiceOrBase?: boolean;
+  isScopedToOwnRecords?: boolean;
   /** Page number. Starts at 1 */
   page?: number;
   /** Items to be loaded per page */
@@ -1896,7 +1896,7 @@ export async function getAuditsForOrganization(params: {
   const {
     organizationId,
     userId,
-    isSelfServiceOrBase,
+    isScopedToOwnRecords,
     page = 1,
     perPage = 8,
     search,
@@ -1912,11 +1912,11 @@ export async function getAuditsForOrganization(params: {
   // predicate would silently collapse to null and leak the whole org list.
   // Fail loud — and OUTSIDE the try/catch below so the precise error reaches
   // the caller (the catch wraps everything in a generic "fetch failed").
-  if (isSelfServiceOrBase && !userId) {
+  if (isScopedToOwnRecords && !userId) {
     throw new ShelfError({
       cause: null,
       message: "Missing user context for assignment-scoped audit query.",
-      additionalData: { organizationId, isSelfServiceOrBase },
+      additionalData: { organizationId, isScopedToOwnRecords },
       label,
       status: 400,
     });
@@ -1936,7 +1936,7 @@ export async function getAuditsForOrganization(params: {
     // BASE/SELF_SERVICE branch can rely on `userId` being non-null
     // thanks to the guard above.
     const assigneeFilterUserId =
-      (isSelfServiceOrBase ? userId : null) ?? assignedToUserId ?? null;
+      (isScopedToOwnRecords ? userId : null) ?? assignedToUserId ?? null;
     if (assigneeFilterUserId) {
       where.assignments = {
         some: {
@@ -2000,7 +2000,7 @@ export async function getAuditsForOrganization(params: {
  * Validates that the user is assigned to the audit session.
  * Throws a 403 ShelfError if the user is not an assignee.
  *
- * When isSelfServiceOrBase is false (admin/owner), allows the user to perform
+ * When isScopedToOwnRecords is false (admin/owner), allows the user to perform
  * actions if the audit has no assignees.
  *
  * @throws {ShelfError} 403 error if user is not an assignee
@@ -2010,14 +2010,14 @@ export async function requireAuditAssignee({
   organizationId,
   userId,
   request,
-  isSelfServiceOrBase = true,
+  isScopedToOwnRecords = true,
 }: {
   auditSessionId: string;
   organizationId: string;
   userId: string;
   request?: Request;
   /** When true, always require assignee. When false (admin/owner), allow if no assignees. */
-  isSelfServiceOrBase?: boolean;
+  isScopedToOwnRecords?: boolean;
 }): Promise<void> {
   const { session } = await getAuditSessionDetails({
     id: auditSessionId,
@@ -2027,7 +2027,7 @@ export async function requireAuditAssignee({
   });
 
   const hasNoAssignees = session.assignments.length === 0;
-  const isAdminOrOwner = !isSelfServiceOrBase;
+  const isAdminOrOwner = !isScopedToOwnRecords;
 
   // Allow admin/owner to perform actions if audit has no assignees
   if (isAdminOrOwner && hasNoAssignees) {
@@ -2035,7 +2035,7 @@ export async function requireAuditAssignee({
   }
 
   const isAssignee = session.assignments.some(
-    (assignment) => assignment.userId === userId
+    (assignment) => assignment.userId === userId,
   );
 
   if (!isAssignee) {
@@ -2059,17 +2059,17 @@ export async function requireAuditAssignee({
 export function requireAuditAssigneeForBaseSelfService({
   audit,
   userId,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
   auditId,
 }: {
   audit: { assignments: { userId: string }[] };
   userId: string;
-  isSelfServiceOrBase: boolean;
+  isScopedToOwnRecords: boolean;
   auditId: string;
 }) {
-  if (isSelfServiceOrBase) {
+  if (isScopedToOwnRecords) {
     const isAssignee = audit.assignments.some(
-      (assignment) => assignment.userId === userId
+      (assignment) => assignment.userId === userId,
     );
 
     if (!isAssignee) {
@@ -2287,7 +2287,7 @@ export async function cancelAuditSession({
       };
     }> = auditSession.assignments
       .filter(
-        (assignment) => assignment.userId !== userId && assignment.user.email
+        (assignment) => assignment.userId !== userId && assignment.user.email,
       )
       .map((assignment) => ({
         userId: assignment.userId,
@@ -2295,7 +2295,7 @@ export async function cancelAuditSession({
       }));
 
     const creatorAlreadyNotified = assigneesToNotify.some(
-      (a) => a.userId === auditSession.createdById
+      (a) => a.userId === auditSession.createdById,
     );
     if (
       auditSession.createdById !== userId &&
@@ -2451,7 +2451,7 @@ export async function addAssetsToAudit({
       });
 
       const existingAssetIds = new Set(
-        existingAuditAssets.map((aa) => aa.assetId)
+        existingAuditAssets.map((aa) => aa.assetId),
       );
 
       // Filter out assets already in audit
@@ -2466,7 +2466,7 @@ export async function addAssetsToAudit({
         // already org-validates its assets, this is bulk parity).
         await assertAssetsBelongToOrg(
           { assetIds: newAssetIds, organizationId },
-          tx
+          tx,
         );
 
         await tx.auditAsset.createMany({
@@ -2514,7 +2514,7 @@ export async function addAssetsToAudit({
             auditSessionId: auditId,
             assetId,
           })),
-          tx
+          tx,
         );
       }
 
@@ -2638,7 +2638,7 @@ export async function removeAssetFromAudit({
           auditAssetId,
           assetId: auditAsset.assetId,
         },
-        tx
+        tx,
       );
 
       return { assetId: auditAsset.assetId, audit };
@@ -2750,7 +2750,7 @@ export async function removeAssetsFromAudit({
           auditAssetId: aa.id,
           assetId: aa.assetId,
         })),
-        tx
+        tx,
       );
 
       return { removedCount: auditAssets.length, assetIds, audit };
@@ -2845,7 +2845,7 @@ export async function archiveAuditSession({
           entityId: auditSessionId,
           auditSessionId,
         },
-        tx
+        tx,
       );
     });
   } catch (cause) {
@@ -2868,25 +2868,25 @@ export async function archiveAuditSession({
  * @param organizationId - The organization ID for scoping
  * @param currentSearchParams - Serialized URL search params from the index page
  * @param userId - The current user (used for assignment-scoped filters)
- * @param isSelfServiceOrBase - When true, restrict to audits assigned to userId
+ * @param isScopedToOwnRecords - When true, restrict to audits assigned to userId
  *   (mirrors the loader's behavior in {@link getAuditsForOrganization})
  */
 export function getAuditWhereInput({
   organizationId,
   currentSearchParams,
   userId,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
 }: {
   organizationId: Organization["id"];
   currentSearchParams?: string | null;
   userId?: string;
-  isSelfServiceOrBase?: boolean;
+  isScopedToOwnRecords?: boolean;
 }): Prisma.AuditSessionWhereInput {
   const where: Prisma.AuditSessionWhereInput = { organizationId };
 
   // Filter by assignee for BASE/SELF_SERVICE users so select-all
   // never pulls in audits outside the user's visible scope
-  if (isSelfServiceOrBase && userId) {
+  if (isScopedToOwnRecords && userId) {
     where.assignments = {
       some: {
         userId,
@@ -2943,7 +2943,7 @@ export function getAuditWhereInput({
  * @param params.organizationId - Scoping organization
  * @param params.userId - The user performing the archive (for activity notes)
  * @param params.currentSearchParams - Serialized URL params for select-all filtering
- * @param params.isSelfServiceOrBase - When true, restrict select-all resolution
+ * @param params.isScopedToOwnRecords - When true, restrict select-all resolution
  *   to audits assigned to userId (matches the index loader's assignment scope)
  * @throws {ShelfError} If the selection is empty or any selected audit is not
  *   in a terminal state
@@ -2953,24 +2953,24 @@ export async function bulkArchiveAudits({
   organizationId,
   userId,
   currentSearchParams,
-  isSelfServiceOrBase,
+  isScopedToOwnRecords,
 }: {
   auditIds: AuditSession["id"][];
   organizationId: Organization["id"];
   userId: string;
   currentSearchParams?: string | null;
-  isSelfServiceOrBase?: boolean;
+  isScopedToOwnRecords?: boolean;
 }) {
   try {
     /** When all items are selected, resolve from filters instead of IDs */
     const where: Prisma.AuditSessionWhereInput = auditIds.includes(
-      ALL_SELECTED_KEY
+      ALL_SELECTED_KEY,
     )
       ? getAuditWhereInput({
           currentSearchParams,
           organizationId,
           userId,
-          isSelfServiceOrBase,
+          isScopedToOwnRecords,
         })
       : { id: { in: auditIds }, organizationId };
 
@@ -2991,7 +2991,8 @@ export async function bulkArchiveAudits({
 
     const someNotTerminal = audits.some(
       (a) =>
-        a.status !== AuditStatus.COMPLETED && a.status !== AuditStatus.CANCELLED
+        a.status !== AuditStatus.COMPLETED &&
+        a.status !== AuditStatus.CANCELLED,
     );
 
     if (someNotTerminal) {
@@ -3068,7 +3069,7 @@ export async function bulkArchiveAudits({
           auditSessionId: a.id,
           meta: { bulk: true },
         })),
-        tx
+        tx,
       );
     });
   } catch (cause) {
@@ -3113,7 +3114,7 @@ async function safeRemoveAuditImageFiles(image: {
             cause instanceof Error ? cause.message : "Unknown storage error",
         },
         label,
-      })
+      }),
     );
   }
 
@@ -3132,7 +3133,7 @@ async function safeRemoveAuditImageFiles(image: {
               cause instanceof Error ? cause.message : "Unknown storage error",
           },
           label,
-        })
+        }),
       );
     }
   }
@@ -3267,7 +3268,7 @@ export async function deleteAuditSession({
     // Permanent deletion leaves no AuditNote trail (cascade wipes them).
     // Emit a server-side info log so we retain a trace of who deleted what.
     Logger.info(
-      `Permanently deleted audit ${auditSessionId} (org=${organizationId}, user=${userId})`
+      `Permanently deleted audit ${auditSessionId} (org=${organizationId}, user=${userId})`,
     );
 
     // DB commit succeeded — now best-effort storage cleanup. Failures are
@@ -3297,7 +3298,7 @@ export async function deleteAuditSession({
  * {@link getAuditWhereInput} AND is further narrowed to `status: ARCHIVED`
  * so non-archived audits in the filtered view can never be pulled in.
  *
- * Note: `isSelfServiceOrBase` is intentionally not a parameter here.
+ * Note: `isScopedToOwnRecords` is intentionally not a parameter here.
  * `PermissionAction.delete` on the audit entity is ADMIN/OWNER-only
  * (see `permission.data.ts`), so by the time we reach this function the
  * caller is already guaranteed not to be self-service/base. Wiring the
@@ -3400,7 +3401,7 @@ export async function bulkDeleteAudits({
     if (!selectAll) {
       const foundIds = new Set(audits.map((a) => a.id));
       const missing = auditIds.filter(
-        (id) => id !== ALL_SELECTED_KEY && !foundIds.has(id)
+        (id) => id !== ALL_SELECTED_KEY && !foundIds.has(id),
       );
       if (missing.length > 0) {
         throw new ShelfError({
@@ -3466,8 +3467,8 @@ export async function bulkDeleteAudits({
     // (cascade wipes them). Structured info log retains a trace.
     Logger.info(
       `Permanently deleted ${count} audits (org=${organizationId}, user=${userId}, ids=${targetIds.join(
-        ","
-      )})`
+        ",",
+      )})`,
     );
 
     // Transaction committed — safe to remove storage objects now.
@@ -3481,7 +3482,7 @@ export async function bulkDeleteAudits({
       await Promise.allSettled(
         images
           .slice(i, i + STORAGE_CLEANUP_BATCH_SIZE)
-          .map((image) => safeRemoveAuditImageFiles(image))
+          .map((image) => safeRemoveAuditImageFiles(image)),
       );
     }
 
@@ -3582,7 +3583,7 @@ export async function duplicateAuditSession({
     // jobs, future routes). Mirrors the pattern archive/delete enforce.
     if (
       !DUPLICATE_AUDIT_ALLOWED_STATUSES.includes(
-        originalAudit.status as (typeof DUPLICATE_AUDIT_ALLOWED_STATUSES)[number]
+        originalAudit.status as (typeof DUPLICATE_AUDIT_ALLOWED_STATUSES)[number],
       )
     ) {
       throw new ShelfError({
@@ -3602,7 +3603,7 @@ export async function duplicateAuditSession({
     const originalAssetCount = originalAudit.assets.length;
     const resolvedAssetIds = await validateExistingAssetIds(
       originalAudit.assets.map((a) => a.assetId),
-      organizationId
+      organizationId,
     );
 
     const droppedAssetCount = originalAssetCount - resolvedAssetIds.length;
@@ -3652,7 +3653,7 @@ export async function duplicateAuditSession({
  */
 async function validateExistingAssetIds(
   assetIds: string[],
-  organizationId: string
+  organizationId: string,
 ): Promise<string[]> {
   if (assetIds.length === 0) return [];
 

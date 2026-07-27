@@ -64,7 +64,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId: authSession?.userId,
       request,
       entity: PermissionEntity.booking,
@@ -75,7 +75,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       request,
       organizationId,
       userId: authSession?.userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       ids: kitId ? [kitId] : undefined,
     });
 
@@ -139,7 +139,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     // booking.
     const bookingInfo = await getExistingBookingDetails(
       bookingId,
-      organizationId
+      organizationId,
     );
 
     // Cross-user IDOR guard: `booking:create` is granted org-wide to
@@ -164,7 +164,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const existingAssetKitIds = new Set(
       bookingInfo.bookingAssets
         .map((ba) => ba.assetKitId)
-        .filter((id): id is string => id != null)
+        .filter((id): id is string => id != null),
     );
 
     // Progressive-checkout guard: a kit checked out on another active booking
@@ -228,7 +228,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     // Distinct member assets just added — used to attribute the per-asset
     // "added to booking" note below.
     const addedAssetIds = Array.from(
-      new Set(kitSlices.map((slice) => slice.assetId))
+      new Set(kitSlices.map((slice) => slice.assetId)),
     );
 
     const actor = wrapUserLinkForNote({
@@ -238,7 +238,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     });
     const bookingLink = wrapLinkForNote(
       `/bookings/${booking.id}`,
-      booking.name.trim()
+      booking.name.trim(),
     );
     await createNotes({
       content: `${actor} added asset to ${bookingLink}.`,
@@ -273,7 +273,7 @@ export default function ExistingBooking() {
   const transition = useNavigation();
   const disabled = isFormProcessing(transition.state);
   function isValidBooking(
-    booking: { status?: string | null } | null | undefined
+    booking: { status?: string | null } | null | undefined,
   ) {
     // DRAFT/RESERVED (not yet started) + ONGOING/OVERDUE (active). Kits added to
     // an active booking stay AVAILABLE until purposefully checked out

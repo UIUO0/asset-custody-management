@@ -13,6 +13,7 @@ import {
   PopoverPortal,
   PopoverContent,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { ChevronRight, HelpIcon } from "~/components/icons/library";
 import { useViewportHeight } from "~/hooks/use-viewport-height";
@@ -114,14 +115,15 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
       barcodes: incomingBarcodes,
       onBarcodesChange,
     },
-    ref
+    ref,
   ) {
+    const { t } = useTranslation();
     const [barcodes, setBarcodes] = useState<BarcodeInputWithKey[]>(() =>
-      incomingBarcodes.map((b) => ({ ...b, clientKey: makeBarcodeKey(b.id) }))
+      incomingBarcodes.map((b) => ({ ...b, clientKey: makeBarcodeKey(b.id) })),
     );
     const [touchedFields, setTouchedFields] = useState<Set<number>>(new Set());
     const [clearedServerErrors, setClearedServerErrors] = useState<Set<number>>(
-      new Set()
+      new Set(),
     );
     const { isMd } = useViewportHeight();
 
@@ -158,7 +160,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
         // Check for duplicates (normalize values for comparison)
         const normalizedValue = normalizeBarcodeValue(
           barcode.type,
-          barcode.value
+          barcode.value,
         );
         if (values.has(normalizedValue)) {
           errors[index] = "Duplicate barcode values are not allowed";
@@ -178,7 +180,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
     useEffect(() => {
       if (!onBarcodesChange) return;
       onBarcodesChange(
-        barcodes.map(({ id, type, value }) => ({ id, type, value }))
+        barcodes.map(({ id, type, value }) => ({ id, type, value })),
       );
     }, [barcodes, onBarcodesChange]);
 
@@ -193,7 +195,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
           setTouchedFields(new Set(barcodes.map((_, index) => index)));
         },
       }),
-      [validationErrors, barcodes]
+      [validationErrors, barcodes],
     );
 
     const RemoveButton = ({ i }: { i: number }) => (
@@ -273,8 +275,8 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
                           <ChevronRight className="ms-[2px] inline-block rotate-90 text-sm" />
                           <span className="ms-2 text-text-md">
                             {BARCODE_TYPE_OPTIONS.find(
-                              (opt) => opt.value === barcode.type
-                            )?.label || "Select barcode type"}
+                              (opt) => opt.value === barcode.type,
+                            )?.label || t("barcodesInput.selectType")}
                           </span>
                           <BarcodeTypeTooltip type={barcode.type} />
                         </Button>
@@ -284,7 +286,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
                       <PopoverContent
                         align="start"
                         className={tw(
-                          "z-[999999] mt-2 max-h-[400px]  max-w-[300px] rounded-md border border-gray-200 bg-white md:max-w-none"
+                          "z-[999999] mt-2 max-h-[400px]  max-w-[300px] rounded-md border border-gray-200 bg-white md:max-w-none",
                         )}
                       >
                         {BARCODE_TYPE_OPTIONS.map((option) => (
@@ -293,7 +295,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
                             className={tw(
                               "px-4 py-3 hover:cursor-pointer hover:bg-gray-50",
                               barcode.type === option.value &&
-                                "bg-gray-50 font-medium"
+                                "bg-gray-50 font-medium",
                             )}
                             role="option"
                             aria-selected={barcode.type === option.value}
@@ -336,16 +338,16 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
                 {/* Barcode Value Input */}
                 <div className="w-full md:w-auto md:flex-[2]">
                   <Input
-                    label="Barcode Value"
+                    label={t("barcodesInput.barcodeValue")}
                     hideLabel
                     disabled={disabled}
                     name={valueName(i)}
                     value={barcode.value}
-                    placeholder="Enter barcode value"
+                    placeholder={t("barcodesInput.enterValue")}
                     onChange={(e) => {
                       barcodes[i].value = normalizeBarcodeValue(
                         barcodes[i].type,
-                        e.target.value
+                        e.target.value,
                       );
                       setBarcodes([...barcodes]);
 
@@ -393,7 +395,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
         </Button>
       </div>
     );
-  }
+  },
 );
 
 export default BarcodesInput;

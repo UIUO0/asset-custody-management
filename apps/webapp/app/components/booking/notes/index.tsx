@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import type { NoteWithUser } from "~/components/assets/notes/note";
 import { Note } from "~/components/assets/notes/note";
@@ -9,6 +10,7 @@ import { BookingActionsDropdown } from "./actions-dropdown";
 import { NewBookingNote } from "./new";
 
 export const BookingNotes = () => {
+  const { t } = useTranslation();
   const { booking } = useLoaderData<typeof loader>();
 
   /* Using user data here for the BookingNote component generated for frontend only as per the optimistic UI approach */
@@ -55,7 +57,7 @@ export const BookingNotes = () => {
           download
           reloadDocument
         >
-          Export activity CSV
+          {t("bookings.exportActivityCsv")}
         </Button>
       ) : null}
       <NewBookingNote fetcher={fetcher} />
@@ -85,14 +87,11 @@ export const BookingNotes = () => {
           <div className="flex flex-col items-center justify-center p-[16px] text-center md:p-[50px]">
             <img
               src="/static/images/no-notes.svg"
-              alt="Graphic for no notes"
+              alt={t("bookings.noNotesImageAlt")}
               className="mb-6 w-[172px]"
             />
-            <h4>No Notes</h4>
-            <p>
-              Your booking `{booking?.name}` has no notes <br />
-              attached to it.
-            </p>
+            <h4>{t("bookings.noNotesTitle")}</h4>
+            <p>{t("bookings.noNotesText", { name: booking?.name })}</p>
           </div>
         </div>
       )}

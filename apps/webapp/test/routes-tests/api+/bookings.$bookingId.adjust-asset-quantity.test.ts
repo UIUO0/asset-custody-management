@@ -35,7 +35,7 @@ const dbMocks = vi.hoisted(() => ({
   $transaction: vi.fn(async (cb: any) =>
     cb({
       bookingAsset: { update: vi.fn().mockResolvedValue(undefined) },
-    })
+    }),
   ),
 }));
 
@@ -130,7 +130,7 @@ function buildRequest(quantity = 7, assetId = "asset-1") {
   formData.set("quantity", String(quantity));
   return new Request(
     "https://example.com/api/bookings/booking-1/adjust-asset-quantity",
-    { method: "POST", body: formData }
+    { method: "POST", body: formData },
   );
 }
 
@@ -153,18 +153,18 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(
       buildBookingAsset({
         creatorId: "someone-else",
         custodianUserId: "another-someone",
-      })
+      }),
     );
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(403);
@@ -175,18 +175,18 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.BASE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(
       buildBookingAsset({
         creatorId: "someone-else",
         custodianUserId: null,
-      })
+      }),
     );
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(403);
@@ -197,18 +197,18 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(
       buildBookingAsset({
         creatorId: "user-current",
         custodianUserId: null,
-      })
+      }),
     );
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);
@@ -219,18 +219,18 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(
       buildBookingAsset({
         creatorId: "admin-user",
         custodianUserId: "user-current",
-      })
+      }),
     );
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);
@@ -241,13 +241,13 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(null);
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(404);
@@ -258,18 +258,18 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.ADMIN,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(
       buildBookingAsset({
         creatorId: "another-user",
         custodianUserId: "yet-another",
-      })
+      }),
     );
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);
@@ -280,18 +280,18 @@ describe("api/bookings/:bookingId/adjust-asset-quantity — ownership guard", ()
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.OWNER,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     dbMocks.bookingAssetFindFirst.mockResolvedValue(
       buildBookingAsset({
         creatorId: "another-user",
         custodianUserId: null,
-      })
+      }),
     );
 
     const response = (await action(
-      buildArgs(buildRequest())
+      buildArgs(buildRequest()),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);

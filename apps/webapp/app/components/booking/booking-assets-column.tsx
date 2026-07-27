@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { BookingStatus } from "@prisma/client";
 import { Package as PackageIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useBookingStatusHelpers } from "~/hooks/use-booking-status";
 import { useViewportHeight } from "~/hooks/use-viewport-height";
@@ -42,6 +43,7 @@ function asEnrichedAsset<T>(asset: T): AssetWithBooking {
 }
 
 export function BookingAssetsColumn() {
+  const { t } = useTranslation();
   const {
     userId,
     booking,
@@ -62,7 +64,7 @@ export function BookingAssetsColumn() {
     (booking.modelRequests ?? []).some(
       (req: { fulfilledAt: Date | string | null }) => req.fulfilledAt === null,
     );
-  const { isBase, isSelfService, isBaseOrSelfService } = useUserRoleHelper();
+  const { isBase, isSelfService, isScopedToOwnRecords } = useUserRoleHelper();
   const { isCompleted, isArchived, isCancelled } = useBookingStatusHelpers(
     booking.status,
   );
@@ -144,17 +146,17 @@ export function BookingAssetsColumn() {
       isCompleted || isArchived || isCancelled || cantManageAssetsAsBase
         ? {
             reason: isCompleted
-              ? "Booking is completed. You cannot change the assets anymore"
+              ? t("bookings.cantManageCompleted")
               : isArchived
-              ? "Booking is archived. You cannot change the assets anymore"
+              ? t("bookings.cantManageArchived")
               : isCancelled
-              ? "Booking is cancelled. You cannot change the assets anymore"
+              ? t("bookings.cantManageCancelled")
               : cantManageAssetsAsBase
-              ? "You are unable to add assets at this point because the booking is already reserved. Cancel this booking and create another one if you need to make changes."
-              : "You need to select a start and end date and save your booking before you can add assets to your booking",
+              ? t("bookings.cantManageReserved")
+              : t("bookings.cantManageNoDates"),
           }
         : false,
-    [isCompleted, isArchived, isCancelled, cantManageAssetsAsBase],
+    [isCompleted, isArchived, isCancelled, cantManageAssetsAsBase, t],
   );
 
   /**
@@ -165,8 +167,8 @@ export function BookingAssetsColumn() {
    */
 
   const canSeeActions =
-    !isBaseOrSelfService ||
-    (isBaseOrSelfService && booking?.custodianUser?.id === userId);
+    !isScopedToOwnRecords ||
+    (isScopedToOwnRecords && booking?.custodianUser?.id === userId);
 
   function itemsGetter(data: LoaderData) {
     return data.items
@@ -201,7 +203,10 @@ export function BookingAssetsColumn() {
   return (
     <div className="flex-1">
       <div className="w-full">
-        <TextualDivider text="Assets & Kits" className="mb-8 lg:hidden" />
+        <TextualDivider
+          text={t("bookings.assetsAndKits")}
+          className="mb-8 lg:hidden"
+        />
         <div className="mb-3 flex gap-4 lg:hidden"></div>
 
         <div className="flex flex-col">
@@ -225,10 +230,10 @@ export function BookingAssetsColumn() {
               <EmptyState
                 className="py-10"
                 customContent={{
-                  title: "Start by defining a booking period",
-                  text: "Assets added to your booking will show up here. Scan tags or search for assets to add to your booking.",
+                  title: t("bookings.emptyAssetsTitle"),
+                  text: t("bookings.emptyAssetsText"),
                   newButtonRoute: manageAssetsUrl,
-                  newButtonContent: "Add assets",
+                  newButtonContent: t("bookings.addAssets"),
                   buttonProps: {
                     disabled: manageAssetsButtonDisabled,
                   },
@@ -239,36 +244,26 @@ export function BookingAssetsColumn() {
                 <Table className="border-collapse">
                   <ListHeader hideFirstColumn>
                     <BulkListHeader itemsGetter={itemsGetter} />
-                    <Th>Name</Th>
-                    <Th>Qty</Th>
+                    <Th>{t("assets.name")}</Th>
+                    <Th>{t("bookings.qtyColumn")}</Th>
                     <Th> </Th>
-                    <Th>Category</Th>
-                    <Th>Tags</Th>
-                    <Th>Location</Th>
+                    <Th>{t("assets.category")}</Th>
+                    <Th>{t("assets.tags")}</Th>
+                    <Th>{t("assets.location")}</Th>
                     {shouldShowCheckoutColumns && (
                       <>
                         <Th className="whitespace-nowrap">
-                          Checked out on{" "}
+                          {t("bookings.checkedOutOn")}{" "}
                           <InfoTooltip
                             iconClassName="size-4"
-                            content={
-                              <p>
-                                Shows the date when the asset was checked out
-                                via a partial check-out.
-                              </p>
-                            }
+                            content={<p>{t("bookings.checkedOutOnTooltip")}</p>}
                           />
                         </Th>
                         <Th className="whitespace-nowrap">
-                          Checked out by{" "}
+                          {t("bookings.checkedOutBy")}{" "}
                           <InfoTooltip
                             iconClassName="size-4"
-                            content={
-                              <p>
-                                Shows the user who checked out the asset via a
-                                partial check-out.
-                              </p>
-                            }
+                            content={<p>{t("bookings.checkedOutByTooltip")}</p>}
                           />
                         </Th>
                       </>
@@ -276,27 +271,17 @@ export function BookingAssetsColumn() {
                     {shouldShowCheckinColumns && (
                       <>
                         <Th className="whitespace-nowrap">
-                          Checked in on{" "}
+                          {t("bookings.checkedInOn")}{" "}
                           <InfoTooltip
                             iconClassName="size-4"
-                            content={
-                              <p>
-                                Shows the date when the asset was checked in via
-                                a partial check-in.
-                              </p>
-                            }
+                            content={<p>{t("bookings.checkedInOnTooltip")}</p>}
                           />
                         </Th>
                         <Th className="whitespace-nowrap">
-                          Checked in by{" "}
+                          {t("bookings.checkedInBy")}{" "}
                           <InfoTooltip
                             iconClassName="size-4"
-                            content={
-                              <p>
-                                Shows the user who checked in the asset via a
-                                partial check-in.
-                              </p>
-                            }
+                            content={<p>{t("bookings.checkedInByTooltip")}</p>}
                           />
                         </Th>
                       </>
@@ -391,6 +376,7 @@ function BookingAssetsHeader({
   manageAssetsUrl,
   manageAssetsButtonDisabled,
 }: BookingAssetsHeaderProps) {
+  const { t } = useTranslation();
   const { isMd } = useViewportHeight();
   // const [searchParams] = useSearchParams();
   // const statusFilter = searchParams.get("status");
@@ -411,7 +397,7 @@ function BookingAssetsHeader({
     return (
       <div className="flex justify-between">
         <ListTitle
-          title={"Assets & Kits"}
+          title={t("bookings.assetsAndKits")}
           titleClassName="text-transform normal-case"
           hasBulkActions
           itemsGetter={itemsGetter}
@@ -427,14 +413,14 @@ function BookingAssetsHeader({
               to="scan-assets"
               disabled={manageAssetsButtonDisabled}
             >
-              Scan to add
+              {t("bookings.scanToAdd")}
             </Button>
             <Button
               to={manageAssetsUrl}
               className="whitespace-nowrap"
               disabled={manageAssetsButtonDisabled}
             >
-              Add assets
+              {t("bookings.addAssets")}
             </Button>
           </div>
         </When>
@@ -448,7 +434,7 @@ function BookingAssetsHeader({
       {/* First row: ListTitle and ListBulkActionsDropdown */}
       <div className="flex items-start justify-between">
         <ListTitle
-          title="Assets & Kits"
+          title={t("bookings.assetsAndKits")}
           hasBulkActions
           itemsGetter={itemsGetter}
           disableSelectAllItems
@@ -468,14 +454,14 @@ function BookingAssetsHeader({
             disabled={manageAssetsButtonDisabled}
             className="flex-1"
           >
-            Scan
+            {t("bookings.scan")}
           </Button>
           <Button
             to={manageAssetsUrl}
             className="flex-1 whitespace-nowrap"
             disabled={manageAssetsButtonDisabled}
           >
-            Add assets
+            {t("bookings.addAssets")}
           </Button>
         </div>
       </When>
@@ -525,6 +511,7 @@ function ModelRequestRow({
   shouldShowCheckinColumns: boolean;
   canScanToAssign: boolean;
 }) {
+  const { t } = useTranslation();
   const remaining = Math.max(0, request.quantity - request.fulfilledQuantity);
 
   return (
@@ -556,11 +543,14 @@ function ModelRequestRow({
                 textColor={BADGE_COLORS.amber.text}
                 withDot={false}
               >
-                Reserved model
+                {t("bookings.reservedModel")}
               </Badge>
               {request.fulfilledQuantity > 0 ? (
                 <span className="text-xs text-gray-500">
-                  {request.fulfilledQuantity} of {request.quantity} fulfilled
+                  {t("bookings.fulfilledOf", {
+                    fulfilled: request.fulfilledQuantity,
+                    total: request.quantity,
+                  })}
                 </span>
               ) : null}
             </div>

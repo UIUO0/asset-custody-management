@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { CalendarDays, Clock, AlertCircle, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogPortal } from "~/components/layout/dialog";
 import { DateS } from "~/components/shared/date";
 import { TimeDisplay } from "~/components/shared/time-display";
@@ -24,7 +25,7 @@ const isUpcoming = (dateInput: string | Date): boolean => {
   const todayKey = format(now, "yyyy-MM-dd");
   const thirtyDaysOutKey = format(
     new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-    "yyyy-MM-dd"
+    "yyyy-MM-dd",
   );
   return overrideKey >= todayKey && overrideKey <= thirtyDaysOutKey;
 };
@@ -46,7 +47,7 @@ const WeeklyScheduleGrid = ({ weeklySchedule }: WeeklyScheduleGridProps) => (
             "relative overflow-hidden border transition-all duration-200",
             isOpen
               ? "border-green-200 bg-gradient-to-b from-green-50 to-green-100 shadow-sm"
-              : "border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100"
+              : "border-gray-200 bg-gradient-to-b from-gray-50 to-gray-100",
           )}
         >
           {/* Day header */}
@@ -55,7 +56,7 @@ const WeeklyScheduleGrid = ({ weeklySchedule }: WeeklyScheduleGridProps) => (
               "border-b px-3 py-2 text-center",
               isOpen
                 ? "border-green-200 bg-green-100"
-                : "border-gray-200 bg-gray-100"
+                : "border-gray-200 bg-gray-100",
             )}
           >
             <div className="text-sm font-semibold text-gray-900">
@@ -103,12 +104,13 @@ interface OverridesSectionProps {
 }
 
 const OverridesSection = ({ overrides }: OverridesSectionProps) => {
+  const { t } = useTranslation();
   const upcomingOverrides = overrides
     .filter((override) => isUpcoming(override.date))
     // YYYY-MM-DD strings sort lexicographically in calendar order, avoiding
     // the UTC parsing pitfall above.
     .sort((a, b) =>
-      getOverrideDateKey(a.date).localeCompare(getOverrideDateKey(b.date))
+      getOverrideDateKey(a.date).localeCompare(getOverrideDateKey(b.date)),
     )
     .slice(0, 5); // Show only next 5
 
@@ -130,13 +132,13 @@ const OverridesSection = ({ overrides }: OverridesSectionProps) => {
             "flex items-start rounded border p-4 py-2 transition-colors",
             override.isOpen
               ? "border border-blue-200 bg-blue-50"
-              : "border border-red-200 bg-red-50"
+              : "border border-red-200 bg-red-50",
           )}
         >
           <div
             className={tw(
               "me-3 mt-0.5 flex size-8 items-center justify-center rounded-full",
-              override.isOpen ? "bg-blue-100" : "bg-red-100"
+              override.isOpen ? "bg-blue-100" : "bg-red-100",
             )}
           >
             {override.isOpen ? (
@@ -165,10 +167,10 @@ const OverridesSection = ({ overrides }: OverridesSectionProps) => {
                   "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium",
                   override.isOpen
                     ? "bg-blue-100 text-blue-800"
-                    : "bg-red-100 text-red-800"
+                    : "bg-red-100 text-red-800",
                 )}
               >
-                {override.isOpen ? "Modified Hours" : "Closed"}
+                {override.isOpen ? t("workingHours.modifiedHours") : "Closed"}
               </span>
             </div>
 

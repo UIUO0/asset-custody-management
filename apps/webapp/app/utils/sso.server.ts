@@ -1,5 +1,6 @@
 import type { Organization, SsoDetails } from "@prisma/client";
 import type { AuthSession } from "@server/session";
+import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import {
   deleteAuthAccount,
@@ -78,8 +79,7 @@ export async function resolveUserAndOrgForSsoCallback({
         throw new ShelfError({
           cause: null,
           title: "User already exists",
-          message:
-            "It looks like the email you're using is linked to a personal account in Shelf. Please contact our support team to update your personal workspace to a different email account.",
+          message: `It looks like the email you're using is linked to a personal account in ${config.appName}. Please contact the IT department to update your personal workspace to a different email account.`,
           label: "Auth",
           shouldBeCaptured: false,
         });
@@ -169,7 +169,7 @@ export async function getConfiguredSSODomains(): Promise<SSODomainConfig[]> {
  * @param email - Email to check domain for
  */
 export async function checkDomainSSOStatus(
-  email: string
+  email: string,
 ): Promise<DomainCheckResult> {
   try {
     const domain = email.split("@")[1]?.toLowerCase();

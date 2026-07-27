@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { InviteStatuses, User } from "@prisma/client";
 import { OrganizationRoles } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import {
   PenIcon,
@@ -45,6 +46,7 @@ export function TeamUsersActionsDropdown({
   role: UserFriendlyRoles;
   roleEnum: OrganizationRoles;
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const disabled = useDisabled(fetcher);
   const { ref, open, setOpen } = useControlledDropdownMenu();
@@ -80,7 +82,7 @@ export function TeamUsersActionsDropdown({
               variant="tertiary"
               width="full"
               className="border-0 pe-0"
-              aria-label="Actions Trigger"
+              aria-label={t("team.actionsTrigger")}
             >
               {disabled ? <Spinner className="size-4" /> : <VerticalDotsIcon />}
             </Button>
@@ -145,16 +147,14 @@ export function TeamUsersActionsDropdown({
                   width="full"
                   disabled={
                     isCurrentUser
-                      ? { reason: "You cannot change your own role" }
+                      ? { reason: t("team.cannotChangeOwnRole") }
                       : isSSO
                       ? {
-                          reason:
-                            "This user is managed via SSO. Role changes must be made through your identity provider.",
+                          reason: t("team.ssoManagedRole"),
                         }
                       : isAdministrator && roleEnum === OrganizationRoles.ADMIN
                       ? {
-                          reason:
-                            "Only the workspace owner can change an Administrator's role.",
+                          reason: t("team.ownerOnlyAdminRole"),
                         }
                       : disabled
                   }
@@ -177,7 +177,7 @@ export function TeamUsersActionsDropdown({
                   disabled={
                     isCurrentUser
                       ? {
-                          reason: "You cannot revoke your own access",
+                          reason: t("team.cannotRevokeOwnAccess"),
                         }
                       : disabled
                   }

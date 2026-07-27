@@ -1021,11 +1021,28 @@ enum QrIdDisplayPreference {
   EAN13
 }
 
+/// Organization-level roles.
+///
+/// EPDA deployment adds three operational roles on top of the upstream four:
+///   - WAREHOUSE  (المستودعات) — creates/audits assets, approves & hands over requests
+///   - FINANCE    (المالية)    — adds financial coding + depreciation, financial analytics
+///   - INVENTORY  (المخزون)    — organization-wide oversight, may delete assets
+///
+/// IMPORTANT: adding a value here is not enough. Every new role MUST be
+/// explicitly listed in BOTH:
+///   1. `Role2PermissionMap` — apps/webapp/app/utils/permissions/permission.data.ts
+///   2. `ROLES_WITH_ORG_WIDE_VISIBILITY` — apps/webapp/app/utils/permissions/role-scope.ts
+/// Roles absent from (2) are scoped to their own records, which is the safe default.
+///
+/// @see {@link file://./../../../apps/docs/epda-workflow-and-roles.md}
 enum OrganizationRoles {
   ADMIN
   BASE
   OWNER
   SELF_SERVICE
+  WAREHOUSE
+  FINANCE
+  INVENTORY
 }
 
 model SsoDetails {

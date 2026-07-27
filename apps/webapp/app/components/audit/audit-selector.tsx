@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
@@ -44,13 +45,14 @@ export interface AuditSelectorProps {
 const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
   audits,
   name,
-  placeholder = "Select an audit",
+  placeholder,
   defaultValue,
   className,
   disabled,
   error,
   isLoading = false,
 }) => {
+  const { t } = useTranslation();
   // `selectedAudit` is initialized from `defaultValue` at mount using a lazy
   // initializer. Downstream callers don't currently change `defaultValue`
   // after mount, and the local selection is owned by this component once the
@@ -59,7 +61,7 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
   // Consumers needing to reset the selection can remount by passing a
   // changing `key`.
   const [selectedAudit, setSelectedAudit] = useState<string | undefined>(
-    () => defaultValue
+    () => defaultValue,
   );
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
@@ -90,7 +92,7 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
     if (!searchQuery) return audits;
 
     return audits.filter((audit) =>
-      audit.name.toLowerCase().includes(searchQuery.toLowerCase())
+      audit.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [audits, searchQuery]);
 
@@ -144,7 +146,10 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
     }
   };
 
-  const displayText = selectedAuditName || placeholder;
+  // why: the default cannot live in the destructuring above — `t` only
+  // exists after useTranslation() runs.
+  const displayText =
+    selectedAuditName || placeholder || t("audits.selectAnAudit");
 
   return (
     <div className={className}>
@@ -157,7 +162,7 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
             variant="secondary"
             className={tw(
               "w-full justify-start truncate whitespace-nowrap font-normal [&_span]:max-w-full [&_span]:truncate",
-              !selectedAuditName && "text-gray-400"
+              !selectedAuditName && "text-gray-400",
             )}
             disabled={disabled || isLoading}
           >
@@ -169,14 +174,14 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
           <PopoverContent
             align="start"
             className={tw(
-              "z-[999999] mt-2 max-h-[400px] w-[500px] overflow-scroll rounded-md border border-gray-200 bg-white shadow-lg"
+              "z-[999999] mt-2 max-h-[400px] w-[500px] overflow-scroll rounded-md border border-gray-200 bg-white shadow-lg",
             )}
           >
             <div className="flex items-center border-b">
               <Search className="ms-4 size-4 text-gray-500" />
               <input
                 ref={searchInputRef}
-                placeholder="Search audits..."
+                placeholder={t("audits.searchAudits")}
                 className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
                 value={searchQuery}
                 onChange={handleSearch}
@@ -205,14 +210,14 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
                     key={audit.id}
                     className={tw(
                       "border-b px-4 py-3 hover:cursor-pointer hover:bg-gray-50",
-                      selectedIndex === index && "bg-gray-50"
+                      selectedIndex === index && "bg-gray-50",
                     )}
                     role="option"
                     aria-selected={selectedIndex === index}
                     tabIndex={0}
                     onClick={() => handleSelect(audit.id)}
                     onKeyDown={handleActivationKeyPress(() =>
-                      handleSelect(audit.id)
+                      handleSelect(audit.id),
                     )}
                   >
                     <div className="font-semibold text-gray-900">
@@ -229,10 +234,10 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
             ) : (
               <div className="px-4 py-3 text-sm text-gray-500">
                 {isLoading
-                  ? "Loading audits..."
+                  ? t("audits.loadingAudits")
                   : searchQuery
-                  ? "No audits found"
-                  : "No pending audits found"}
+                  ? t("audits.noAuditsFound")
+                  : t("audits.noPendingAudits")}
               </div>
             )}
           </PopoverContent>

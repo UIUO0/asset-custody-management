@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useActionData, useNavigation, useLoaderData } from "react-router";
 import { Button } from "~/components/shared/button";
 import { cleanParamsForCookie, useSearchParams } from "~/hooks/search-params";
@@ -31,6 +32,7 @@ export function SaveFilterButton({
 }: {
   hasUnappliedFilters?: boolean;
 }) {
+  const { t } = useTranslation();
   const {
     savedFilterPresets: loaderPresets = [],
     savedFilterPresetLimit = MAX_SAVED_FILTER_PRESETS,
@@ -88,12 +90,12 @@ export function SaveFilterButton({
   const isDisabled = atLimit || !hasFilters || hasUnappliedFilters;
 
   const title = atLimit
-    ? `Maximum ${savedFilterPresetLimit} presets allowed`
+    ? t("assetsIndex.presetsLimitReached", { count: savedFilterPresetLimit })
     : hasUnappliedFilters
-    ? "Apply filters first before saving"
+    ? t("assetsIndex.applyFiltersFirst")
     : !hasFilters
-    ? "No filters to save"
-    : "Save current filters";
+    ? t("assetsIndex.noFiltersToSave")
+    : t("assetsIndex.saveCurrentFilters");
 
   return (
     <>

@@ -20,6 +20,7 @@ import {
   render,
   Text,
 } from "@react-email/components";
+import { config } from "~/config/shelf.config";
 import { SERVER_URL } from "~/utils/env";
 import { LogoForEmail } from "./logo";
 import { styles } from "./styles";
@@ -101,7 +102,9 @@ function LowStockAlertTemplate({
             Consider restocking to maintain adequate inventory levels.
           </Text>
 
-          <Text style={{ marginTop: "24px", ...styles.p }}>The Shelf Team</Text>
+          <Text style={{ marginTop: "24px", ...styles.p }}>
+            The {config.appName} Team
+          </Text>
         </div>
       </Container>
     </Html>
@@ -138,5 +141,5 @@ View Asset: ${SERVER_URL}/assets/${assetId}/overview
 
 Consider restocking to maintain adequate inventory levels.
 
-The Shelf Team
+The ${config.appName} Team
 `;

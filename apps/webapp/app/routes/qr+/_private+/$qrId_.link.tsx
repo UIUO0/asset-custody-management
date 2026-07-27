@@ -18,6 +18,7 @@ import { Button } from "~/components/shared/button";
 
 import { db } from "~/database/db.server";
 import { useSearchParams } from "~/hooks/search-params";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { setSelectedOrganizationIdCookie } from "~/modules/organization/context.server";
 import { claimQrCode } from "~/modules/qr/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -41,6 +42,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const { userId } = authSession;
   const { qrId } = getParams(params, z.object({ qrId: z.string() }));
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, organizations, currentOrganization } =
       await requirePermission({
         userId,
@@ -76,7 +81,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     return payload({
       header: {
-        title: "Link QR with asset",
+        title: t("qr.linkWithAssetTitle"),
       },
       qrId,
       organizations,
@@ -103,7 +108,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({
             organizationId: z.string(),
             linkTo: z.enum(["new", "existing"]),
-          })
+          }),
         );
         await claimQrCode({
           id: qrId,
@@ -120,7 +125,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             headers: [
               setCookie(await setSelectedOrganizationIdCookie(organizationId)),
             ],
-          }
+          },
         );
       }
     }
@@ -160,7 +165,7 @@ export default function QrLink() {
               <p className="text-gray-600">
                 {comesFromClaim
                   ? "Thanks for claiming the code. Now its time to link it to a kit or asset."
-                  : "This code is part of your Shelf environment but is not linked with an asset. Would you like to link it?"}
+                  : "This code is part of your workspace but is not linked with an asset. Would you like to link it?"}
               </p>
             </div>
             <div className="flex flex-col justify-center gap-2">

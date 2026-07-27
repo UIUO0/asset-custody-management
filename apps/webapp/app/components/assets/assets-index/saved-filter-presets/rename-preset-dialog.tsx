@@ -1,4 +1,5 @@
 import { type ChangeEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { Form } from "react-router";
 import { useZorm } from "react-zorm";
 
@@ -36,6 +37,7 @@ export function RenamePresetDialog({
   isSubmitting: boolean;
   validationErrors?: Partial<Record<"name", { message: string | undefined }>>;
 }) {
+  const { t } = useTranslation();
   const zo = useZorm("rename-preset", RenamePresetFormSchema);
 
   /** Ref for the rename input — focuses the field whenever the dialog opens. */
@@ -53,7 +55,7 @@ export function RenamePresetDialog({
         onClose={() => onOpenChange(false)}
         title={
           <div className="-mb-3 w-full pb-6">
-            <h3>Rename filter preset</h3>
+            <h3>{t("assetsIndex.renamePreset")}</h3>
             <p className="text-gray-500">
               Update the name of your saved filter preset.
             </p>
@@ -70,7 +72,7 @@ export function RenamePresetDialog({
               name="name"
               value={name}
               onChange={onNameChange}
-              placeholder="Enter new name"
+              placeholder={t("assetsIndex.enterNewName")}
               maxLength={60}
               error={nameError}
             />

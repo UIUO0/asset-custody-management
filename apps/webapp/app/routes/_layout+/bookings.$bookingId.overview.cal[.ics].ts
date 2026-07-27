@@ -1,5 +1,6 @@
 import { data, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
+import { config } from "~/config/shelf.config";
 import { getBooking } from "~/modules/booking/service.server";
 import { validateBookingOwnership } from "~/utils/booking-authorization.server";
 import { SERVER_URL } from "~/utils/env";
@@ -22,7 +23,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
 
   try {
     /** Check if the current user is allowed to read booking */
-    const { organizationId, role, isSelfServiceOrBase } =
+    const { organizationId, role, isScopedToOwnRecords } =
       await requirePermission({
         userId: authSession.userId,
         request,
@@ -37,7 +38,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     });
 
     /** For self service & base users, we only allow them to read their own bookings */
-    if (isSelfServiceOrBase) {
+    if (isScopedToOwnRecords) {
       validateBookingOwnership({
         booking,
         userId: authSession.userId,
@@ -77,9 +78,9 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     // RFC 5987 filename* for non-ASCII booking names (e.g. Thai, Chinese)
     const safeFilename = `${booking.name
       .replace(/[^\x20-\x7E]/g, "_")
-      .replace(/["\\]/g, "_")} - shelf.nu.ics`;
+      .replace(/["\\]/g, "_")} - ${config.appIdentifier}.ics`;
     const encodedFilename = `UTF-8''${encodeURIComponent(
-      `${booking.name} - shelf.nu.ics`
+      `${booking.name} - ${config.appIdentifier}.ics`,
     )}`;
 
     return new Response(ics, {

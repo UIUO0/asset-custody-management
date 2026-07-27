@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -14,6 +15,7 @@ import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { useSearchParams } from "~/hooks/search-params";
 import { useDisabled } from "~/hooks/use-disabled";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getSupabaseAdmin } from "~/integrations/supabase/client";
 
 import {
@@ -61,14 +63,17 @@ const OtpSchema = z
     return { password, confirmPassword, otp, email };
   });
 
-export function loader({ context, request }: LoaderFunctionArgs) {
+export async function loader({ context, request }: LoaderFunctionArgs) {
   const searchParams = getCurrentSearchParams(request);
 
-  const title = "Forgot password?";
+  // why: loaders run outside React, so `useTranslation` is unavailable —
+  // `getFixedT` gives the same `t` bound to the request's locale.
+  const t = await getFixedT(getLocale(request));
+  const title = t("auth.forgotPasswordTitle");
   const subHeading =
     searchParams.has("email") && searchParams.get("email") !== ""
-      ? "Step 2 of 2: Enter OTP and your new password"
-      : "Step 1 of 2: Enter your email";
+      ? t("auth.step2EnterOtp")
+      : t("auth.step1EnterEmail");
 
   if (context.isAuthenticated) {
     return redirect("/assets");
@@ -86,7 +91,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         message:
           "Invalid request. Please try again. If the issue persists, contact support.",
         shouldBeCaptured: false,
-      }
+      },
     );
 
     switch (intent) {
@@ -94,7 +99,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         const { email } = parseData(
           await readFormData(request),
           ForgotPasswordSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
 
         /** We are going to get the user to make sure it exists and is confirmed
@@ -138,7 +143,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         const { email, otp, password } = parseData(
           await readFormData(request.clone()),
           OtpSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
 
         // Attempt to verify the OTP
@@ -162,7 +167,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         await updateAccountPassword(
           otpData.user.id,
           password,
-          otpData.session.access_token
+          otpData.session.access_token,
         );
 
         context.destroySession();
@@ -180,6 +185,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function ForgotPassword() {
+  const { t } = useTranslation();
   const zo = useZorm("ForgotPasswordForm", ForgotPasswordSchema);
   const actionData = useActionData<typeof action>();
   const [searchParams] = useSearchParams();
@@ -201,13 +207,13 @@ export default function ForgotPassword() {
               <input type="hidden" name="intent" value="request-otp" />
               <div>
                 <Input
-                  label="Email address"
+                  label={t("auth.email")}
                   data-test-id="email"
                   name={zo.fields.email()}
                   type="email"
                   autoComplete="email"
                   inputClassName="w-full"
-                  placeholder="zaans@huisje.com"
+                  placeholder={t("auth.emailSample")}
                   disabled={disabled}
                   error={emailError}
                 />
@@ -219,7 +225,7 @@ export default function ForgotPassword() {
                 type="submit"
                 disabled={disabled}
               >
-                {!disabled ? "Reset password" : "Sending code..."}
+                {!disabled ? t("auth.resetPassword") : t("auth.sendingCode")}
               </Button>
             </Form>
             <p className="mt-2 text-center text-gray-500">
@@ -258,6 +264,7 @@ export default function ForgotPassword() {
 }
 
 function PasswordResetForm({ email }: { email: string }) {
+  const { t } = useTranslation();
   const zoReset = useZorm("ResetPasswordForm", OtpSchema);
   const disabled = useDisabled();
   const actionData = useActionData<typeof action>();
@@ -279,7 +286,7 @@ function PasswordResetForm({ email }: { email: string }) {
         required
       />
       <PasswordInput
-        label="Confirm new password"
+        label={t("auth.confirmNewPassword")}
         data-test-id="confirmPassword"
         name={zoReset.fields.confirmPassword()}
         type="password"

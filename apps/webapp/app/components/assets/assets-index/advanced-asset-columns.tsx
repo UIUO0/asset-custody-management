@@ -9,6 +9,7 @@ import {
   PopoverPortal,
   PopoverContent,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { EventCardContent } from "~/components/calendar/event-card";
 import LineBreakText from "~/components/layout/line-break-text";
@@ -92,7 +93,7 @@ export function AdvancedIndexColumn({
   if (isCustomField) {
     const fieldName = column.replace("cf_", "");
     const field = item.customFields?.find(
-      (customFieldValue) => customFieldValue.customField.name === fieldName
+      (customFieldValue) => customFieldValue.customField.name === fieldName,
     );
 
     const fieldValue =
@@ -122,7 +123,7 @@ export function AdvancedIndexColumn({
               <PopoverContent
                 align="end"
                 className={tw(
-                  "z-[999999] mt-1 min-w-[300px] rounded-md border border-gray-300 bg-white p-4"
+                  "z-[999999] mt-1 min-w-[300px] rounded-md border border-gray-300 bg-white p-4",
                 )}
               >
                 <MarkdownViewer
@@ -159,7 +160,7 @@ export function AdvancedIndexColumn({
         <TextColumn
           className={tw(
             "min-w-[300px] max-w-[450px] whitespace-normal",
-            modeIsAdvanced && freezeColumn ? freezeColumnClassNames.name : ""
+            modeIsAdvanced && freezeColumn ? freezeColumnClassNames.name : "",
           )}
           value={
             <div className="flex items-center gap-2">
@@ -375,7 +376,7 @@ function TextColumn({
     <Td
       className={tw(
         "w-full max-w-none !overflow-visible whitespace-nowrap",
-        className
+        className,
       )}
       {...rest}
     >
@@ -428,6 +429,7 @@ function StatusColumn({
  * Description column component - exported for reuse in other index pages
  */
 export function DescriptionColumn({ value }: { value: string }) {
+  const { t } = useTranslation();
   const plainPreview = cleanMarkdownFormatting(value ?? "");
   const hasContent = Boolean(value && value.trim().length > 0);
   const previewText = plainPreview.length > 0 ? plainPreview : value.trim();
@@ -444,7 +446,7 @@ export function DescriptionColumn({ value }: { value: string }) {
             </TooltipTrigger>
 
             <TooltipContent side="top" className="max-w-[400px]">
-              <h5>Asset description</h5>
+              <h5>{t("advancedFilters.assetDescription")}</h5>
               <MarkdownViewer content={value} className="mt-2 text-sm" />
             </TooltipContent>
           </Tooltip>
@@ -767,8 +769,10 @@ function UpcomingReminderColumn({
   assetId: string;
   upcomingReminder: AdvancedIndexAsset["upcomingReminder"];
 }) {
+  const { t } = useTranslation();
+
   if (!upcomingReminder) {
-    return <Td>No upcoming reminder</Td>;
+    return <Td>{t("advancedFilters.noUpcomingReminder")}</Td>;
   }
 
   return (
@@ -910,6 +914,7 @@ function UpcomingBookingsColumn({
 }: {
   bookings: AdvancedIndexAsset["bookings"];
 }) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const organization = useCurrentOrganization();
   const canSeeAllCustody = userHasCustodyViewPermission({
@@ -918,7 +923,7 @@ function UpcomingBookingsColumn({
   });
 
   if (!bookings || bookings.length === 0) {
-    return <Td>No upcoming bookings</Td>;
+    return <Td>{t("advancedFilters.noUpcomingBookings")}</Td>;
   }
 
   return (
@@ -937,7 +942,9 @@ function UpcomingBookingsColumn({
             align="start"
             className="flex max-h-64 w-auto max-w-full flex-col gap-1 overflow-auto rounded-md border bg-white p-4"
           >
-            <h5 className="mb-1 border-b pb-2 text-sm">Upcoming Bookings</h5>
+            <h5 className="mb-1 border-b pb-2 text-sm">
+              {t("advancedFilters.upcomingBookings")}
+            </h5>
             {bookings.map((booking) => {
               const custodianName = booking?.custodianUser
                 ? resolveUserDisplayName(booking.custodianUser)
@@ -954,9 +961,9 @@ function UpcomingBookingsColumn({
                     className={tw(
                       getStatusClasses(
                         booking.status,
-                        isOneDayEvent(booking.from, booking.to)
+                        isOneDayEvent(booking.from, booking.to),
                       ),
-                      "min-w-48 border px-2 py-1 text-start"
+                      "min-w-48 border px-2 py-1 text-start",
                     )}
                   >
                     <DateS

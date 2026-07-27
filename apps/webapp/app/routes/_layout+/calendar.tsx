@@ -102,7 +102,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
 
   try {
     const {
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       currentOrganization,
       organizationId,
       canSeeAllBookings,
@@ -149,11 +149,11 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
         userId,
       }),
       // Team members for CreateBookingDialog - BASE/SELF_SERVICE always get their team member
-      isSelfServiceOrBase
+      isScopedToOwnRecords
         ? getTeamMemberForForm({
             organizationId,
             userId,
-            isSelfServiceOrBase,
+            isScopedToOwnRecords,
             getAll:
               searchParams.has("getAll") &&
               hasGetAllValue(searchParams, "teamMember"),
@@ -189,7 +189,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
       currentOrganization,
       ...tagsData,
       modelName,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       userId,
       calendarFeedUrl,
       searchFieldTooltip: {
@@ -225,7 +225,7 @@ export default function Calendar() {
   });
 
   const [calendarView, setCalendarView] = useState(
-    isMd ? "dayGridMonth" : "listWeek"
+    isMd ? "dayGridMonth" : "listWeek",
   );
 
   // Get initial date from URL params if available
@@ -385,12 +385,12 @@ export default function Calendar() {
                 const viewType = eventInfo.view.type;
                 const isOneDay = isOneDayEvent(
                   eventInfo.event.start,
-                  eventInfo.event.end
+                  eventInfo.event.end,
                 );
                 return getStatusClasses(
                   eventInfo.event.extendedProps.status,
                   isOneDay,
-                  viewType
+                  viewType,
                 );
               }}
             />

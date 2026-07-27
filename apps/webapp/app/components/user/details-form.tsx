@@ -1,4 +1,5 @@
 import { useAtom, useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -34,6 +35,7 @@ export function UserDetailsForm({
 }: {
   user: ReturnType<typeof getUserWithContact>;
 }) {
+  const { t } = useTranslation();
   const zo = useZorm("NewQuestionWizardScreen", UserDetailsFormSchema);
   const data = useActionData<UserPageActionData>();
   const usernameError =
@@ -46,7 +48,7 @@ export function UserDetailsForm({
   const isDisabled =
     disabled ||
     (user.sso && {
-      reason: "You cannot edit your details when using SSO.",
+      reason: t("userForm.ssoCannotEdit"),
     });
 
   const profilePictureError =
@@ -70,42 +72,42 @@ export function UserDetailsForm({
         encType="multipart/form-data"
       >
         <FormRow
-          rowLabel={"Full name"}
+          rowLabel={t("userForm.fullName")}
           className="border-t"
           required={zodFieldIsRequired(UserDetailsFormSchema.shape.firstName)}
         >
           <div className="flex gap-6">
             <Input
-              label="First name"
+              label={t("userForm.firstName")}
               autoComplete="given-name"
               type="text"
               name={zo.fields.firstName()}
               defaultValue={user?.firstName || undefined}
               error={zo.errors.firstName()?.message}
               required={zodFieldIsRequired(
-                UserDetailsFormSchema.shape.firstName
+                UserDetailsFormSchema.shape.firstName,
               )}
               disabled={isDisabled}
             />
             <Input
-              label="Last name"
+              label={t("userForm.lastName")}
               autoComplete="family-name"
               type="text"
               name={zo.fields.lastName()}
               defaultValue={user?.lastName || undefined}
               error={zo.errors.lastName()?.message}
               required={zodFieldIsRequired(
-                UserDetailsFormSchema.shape.lastName
+                UserDetailsFormSchema.shape.lastName,
               )}
               disabled={isDisabled}
             />
           </div>
         </FormRow>
         <FormRow
-          rowLabel="Email address"
+          rowLabel={t("auth.email")}
           className="relative"
           required={zodFieldIsRequired(
-            UserDetailsFormSchema.shape.email._def.schema
+            UserDetailsFormSchema.shape.email._def.schema,
           )}
         >
           {/* Actial field used for resetting pwd and updating user */}
@@ -121,14 +123,14 @@ export function UserDetailsForm({
             autoComplete="email"
             icon="mail"
             hideLabel={true}
-            placeholder="zaans@huisje.com"
+            placeholder={t("auth.emailSample")}
             type="text"
             value={user?.email}
             className="w-full"
             disabled={true}
-            title="To change your email address, please contact support."
+            title={t("userForm.contactSupportForEmail")}
             required={zodFieldIsRequired(
-              UserDetailsFormSchema.shape.email._def.schema
+              UserDetailsFormSchema.shape.email._def.schema,
             )}
           />
           <ChangeEmailForm currentEmail={user?.email} />
@@ -140,7 +142,7 @@ export function UserDetailsForm({
           <Input
             label="Username"
             hideLabel={true}
-            addOn="shelf.nu/"
+            addOn="@"
             type="text"
             name={zo.fields.username()}
             defaultValue={user?.username || undefined}
@@ -152,7 +154,7 @@ export function UserDetailsForm({
           />
         </FormRow>
         <FormRow
-          rowLabel="Profile picture"
+          rowLabel={t("userForm.profilePicture")}
           // subHeading="This will be displayed on your profile."
           className="border-b-0"
         >

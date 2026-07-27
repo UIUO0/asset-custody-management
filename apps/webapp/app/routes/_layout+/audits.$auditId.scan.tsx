@@ -85,7 +85,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   });
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.audit,
@@ -124,7 +124,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       organizationId,
       userId,
       request,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
     });
 
     const formData = await request.clone().formData();
@@ -291,7 +291,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       action: PermissionAction.update,
     });
 
-    const { organizationId, userOrganizations, isSelfServiceOrBase } =
+    const { organizationId, userOrganizations, isScopedToOwnRecords } =
       permissionResult;
 
     const { session, expectedAssets } = await getAuditSessionDetails({
@@ -309,12 +309,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // - If audit has assignees: only assignees can scan
     // - If audit has NO assignees: admins/owners can scan, BASE/SELF_SERVICE cannot
     const hasNoAssignees = session.assignments.length === 0;
-    const shouldForceAssigneeCheck = isSelfServiceOrBase || !hasNoAssignees;
+    const shouldForceAssigneeCheck = isScopedToOwnRecords || !hasNoAssignees;
 
     requireAuditAssigneeForBaseSelfService({
       audit: session,
       userId,
-      isSelfServiceOrBase: shouldForceAssigneeCheck,
+      isScopedToOwnRecords: shouldForceAssigneeCheck,
       auditId,
     });
 
@@ -330,7 +330,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     };
 
     return data(
-      payload({ title, header, session, expectedAssets, existingScans })
+      payload({ title, header, session, expectedAssets, existingScans }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause);
@@ -377,9 +377,9 @@ export default function AuditSessionRoute() {
             mainImage: asset.mainImage,
             thumbnailImage: asset.thumbnailImage,
             locationName: asset.locationName,
-          }) as AuditScannedItem
+          }) as AuditScannedItem,
       ),
-    [expectedAssets]
+    [expectedAssets],
   );
 
   // Initialize audit session and restore existing scans
@@ -419,7 +419,7 @@ export default function AuditSessionRoute() {
     (item) =>
       item?.data?.id &&
       !item.error &&
-      !persistedItemsRef.current.has(item.data.id)
+      !persistedItemsRef.current.has(item.data.id),
   ).length;
 
   const scopeMeta =

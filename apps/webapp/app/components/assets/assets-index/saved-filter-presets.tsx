@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { Search, BookMarked, BookOpen, Save } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   useActionData,
   useLoaderData,
@@ -141,7 +142,7 @@ type PresetsUIAction =
  */
 function presetsUIReducer(
   state: PresetsUIState,
-  action: PresetsUIAction
+  action: PresetsUIAction,
 ): PresetsUIState {
   switch (action.type) {
     case "openPopoverAtIndex":
@@ -196,6 +197,7 @@ function presetsUIReducer(
  */
 // react-doctor:no-giant-component — deferred for follow-up refactor
 export function SavedFilterPresetsControls() {
+  const { t } = useTranslation();
   const loaderData = useLoaderData<LoaderData>();
   const {
     savedFilterPresets: loaderPresets = [],
@@ -219,9 +221,9 @@ export function SavedFilterPresetsControls() {
         fetchers
           .filter((f) => f.formData?.get("intent") === "delete-preset")
           .map((f) => f.formData?.get("presetId"))
-          .filter((id): id is string => typeof id === "string")
+          .filter((id): id is string => typeof id === "string"),
       ),
-    [fetchers]
+    [fetchers],
   );
 
   // Extract validation errors from action data
@@ -275,7 +277,7 @@ export function SavedFilterPresetsControls() {
       actionData.data &&
       "savedFilterPresets" in actionData.data
       ? actionData.data.savedFilterPresets
-      : loaderPresets
+      : loaderPresets,
   );
 
   // Build optimistic presets list that includes pending star toggles
@@ -283,7 +285,7 @@ export function SavedFilterPresetsControls() {
     // Apply optimistic updates for all pending star toggles
     // Find all fetchers submitting star toggles
     const starFetchers = fetchers.filter(
-      (f) => f.formData?.get("intent") === "toggle-star-preset"
+      (f) => f.formData?.get("intent") === "toggle-star-preset",
     );
 
     if (starFetchers.length === 0) {
@@ -297,7 +299,7 @@ export function SavedFilterPresetsControls() {
       .filter((preset) => !deletingPresetIds.has(preset.id))
       .map((preset) => {
         const pendingStarChange = starFetchers.find(
-          (f) => f.formData?.get("presetId") === preset.id
+          (f) => f.formData?.get("presetId") === preset.id,
         );
 
         if (pendingStarChange?.formData) {
@@ -318,29 +320,29 @@ export function SavedFilterPresetsControls() {
   const filteredStarredPresets = useMemo(
     () =>
       starredPresets.filter((preset) =>
-        preset.name.toLowerCase().includes(searchQuery.toLowerCase())
+        preset.name.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
-    [starredPresets, searchQuery]
+    [starredPresets, searchQuery],
   );
 
   const filteredRegularPresets = useMemo(
     () =>
       regularPresets.filter((preset) =>
-        preset.name.toLowerCase().includes(searchQuery.toLowerCase())
+        preset.name.toLowerCase().includes(searchQuery.toLowerCase()),
       ),
-    [regularPresets, searchQuery]
+    [regularPresets, searchQuery],
   );
 
   // All filtered presets for keyboard navigation
   const allFilteredPresets = useMemo(
     () => [...filteredStarredPresets, ...filteredRegularPresets],
-    [filteredStarredPresets, filteredRegularPresets]
+    [filteredStarredPresets, filteredRegularPresets],
   );
 
   // Determine which preset is currently active (matches current URL query)
   const activePreset = useMemo(
     () => allFilteredPresets.find((p) => p.query === queryString),
-    [allFilteredPresets, queryString]
+    [allFilteredPresets, queryString],
   );
 
   const handleSearch = (event: ChangeEvent<HTMLInputElement>) => {
@@ -484,8 +486,8 @@ export function SavedFilterPresetsControls() {
               <BookOpen className="size-4" />
               <span className="hidden whitespace-nowrap md:inline">
                 {presets.length > 0
-                  ? `Saved Filters (${presets.length})`
-                  : "Saved Filters"}
+                  ? `${t("assetsIndex.savedFilters")} (${presets.length})`
+                  : t("assetsIndex.savedFilters")}
               </span>
             </div>
           </Button>
@@ -533,7 +535,7 @@ export function SavedFilterPresetsControls() {
                   <Search className="ms-4 size-4 text-gray-500" />
                   <input
                     ref={searchInputRef}
-                    placeholder="Search presets..."
+                    placeholder={t("assetsIndex.searchPresets")}
                     className="w-full border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
                     value={searchQuery}
                     onChange={handleSearch}

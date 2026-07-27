@@ -122,7 +122,7 @@ export function getBestBackCamera(devices: MediaDeviceInfo[]) {
 
   for (const preference of preferenceOrder) {
     const match = backCameras.find((device) =>
-      device.label.toLowerCase().includes(preference)
+      device.label.toLowerCase().includes(preference),
     );
     if (match) {
       return match;
@@ -185,7 +185,7 @@ function isValidBarcode(value: string): {
 
 export const drawDetectionBox = (
   ctx: CanvasRenderingContext2D,
-  position: ReadResult["position"]
+  position: ReadResult["position"],
 ) => {
   if (!position) return;
 
@@ -259,7 +259,7 @@ export const processFrame = async ({
           onCodeDetectionSuccess,
           allowNonShelfCodes,
           setError,
-        })
+        }),
       );
       return;
     }
@@ -337,8 +337,8 @@ export const processFrame = async ({
         await onCodeDetectionSuccess({
           value: result.text,
           type: "barcode",
-          error: `We detected a ${detectedFormat} barcode, but Shelf currently works with ${SUPPORTED_BARCODE_FORMATS.join(
-            ", "
+          error: `We detected a ${detectedFormat} barcode, but only the following formats are supported: ${SUPPORTED_BARCODE_FORMATS.join(
+            ", ",
           )} barcodes only.`,
         });
       }
@@ -348,7 +348,7 @@ export const processFrame = async ({
     setError(
       `Frame processing error: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 
@@ -364,7 +364,7 @@ export const processFrame = async ({
         onCodeDetectionSuccess,
         allowNonShelfCodes,
         setError,
-      })
+      }),
     );
   }
 };
@@ -452,7 +452,7 @@ export const handleDetection = async ({
   // Not a valid QR code or barcode
   await onCodeDetectionSuccess?.({
     value: result,
-    error: "Scanned code is not a valid Shelf QR code or barcode.",
+    error: "Scanned code is not a valid QR code or barcode.",
   });
 };
 

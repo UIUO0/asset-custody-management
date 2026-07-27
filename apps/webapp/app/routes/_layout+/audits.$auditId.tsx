@@ -70,7 +70,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         ? PermissionAction.delete
         : PermissionAction.update;
 
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.audit,
@@ -123,7 +123,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         organizationId,
         userId,
         request,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
       });
 
       await completeAuditWithImages({
@@ -145,7 +145,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         // Admin/owner is the inverse of self-service/base in this codebase.
         // Passing it through lets the service allow non-creator admin/owners
         // to cancel — matches archive/delete permissions.
-        isAdminOrOwner: !isSelfServiceOrBase,
+        isAdminOrOwner: !isScopedToOwnRecords,
         hints,
       });
 
@@ -164,7 +164,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
       // Only admin/owner can archive — UI gates this, but enforce server-side
       // to prevent direct POST bypass by self-service/base roles
-      if (isSelfServiceOrBase) {
+      if (isScopedToOwnRecords) {
         throw new ShelfError({
           cause: null,
           message: "You do not have permission to archive audits.",
@@ -189,7 +189,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
       // UI hides the button for self-service/base, but enforce server-side
       // to prevent direct POST bypass.
-      if (isSelfServiceOrBase) {
+      if (isScopedToOwnRecords) {
         throw new ShelfError({
           cause: null,
           message: "You do not have permission to delete audits.",
@@ -201,7 +201,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
       const { confirmation } = parseData(
         formData,
-        z.object({ confirmation: z.string().min(1) })
+        z.object({ confirmation: z.string().min(1) }),
       );
 
       // Name-match verification lives inside deleteAuditSession — it
@@ -281,7 +281,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     };
 
     const rolesForOrg = userOrganizations.find(
-      (org) => org.organization.id === organizationId
+      (org) => org.organization.id === organizationId,
     )?.roles;
 
     const isAdminOrOwner = rolesForOrg
@@ -291,7 +291,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     if (!isAdminOrOwner) {
       const isAssignee = session.assignments.some(
-        (assignment) => assignment.userId === userId
+        (assignment) => assignment.userId === userId,
       );
 
       if (!isAssignee) {
@@ -331,7 +331,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         stats,
         userId,
         teamMembers,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, auditId });
@@ -350,7 +350,7 @@ export default function AuditDetailsPage() {
 
   // Check if current user is assigned to this audit
   const isAssignee = session.assignments.some(
-    (assignment) => assignment.userId === userId
+    (assignment) => assignment.userId === userId,
   );
 
   // Allow admin/owner to scan/complete if audit has no assignees
@@ -372,7 +372,7 @@ export default function AuditDetailsPage() {
    */
   const isInAuditScanRoute = matches.some(
     (match): match is typeof match & { handle: { name: string } } =>
-      (match as RouteHandleWithName)?.handle?.name === "audit.scan"
+      (match as RouteHandleWithName)?.handle?.name === "audit.scan",
   );
 
   return isInAuditScanRoute ? (

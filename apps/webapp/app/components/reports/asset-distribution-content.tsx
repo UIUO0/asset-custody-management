@@ -9,6 +9,7 @@
  * @see {@link file://../../routes/_layout+/reports.$reportId.tsx}
  */
 
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 import { DistributionDonut } from "~/components/reports/distribution-donut";
@@ -38,6 +39,7 @@ export function AssetDistributionContent({
   kpis,
   distributionBreakdown,
 }: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const currentOrganization = useCurrentOrganization();
   const { locale } = useHints();
@@ -91,7 +93,9 @@ export function AssetDistributionContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Total Value</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.totalValue")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {totalValue > 0
                   ? formatCurrency({
@@ -110,23 +114,23 @@ export function AssetDistributionContent({
       {distributionBreakdown && (
         <div className="grid gap-6 lg:grid-cols-3">
           <DistributionDonut
-            title="By Category"
+            title={t("reports.byCategory")}
             data={distributionBreakdown.byCategory}
-            emptyMessage="No categories defined"
+            emptyMessage={t("reports.noCategoriesDefined")}
             maxLegendItems={5}
             onItemClick={handleCategoryClick}
           />
           <DistributionDonut
-            title="By Location"
+            title={t("reports.byLocation")}
             data={distributionBreakdown.byLocation}
-            emptyMessage="No locations defined"
+            emptyMessage={t("reports.noLocationsDefined")}
             maxLegendItems={5}
             onItemClick={handleLocationClick}
           />
           <DistributionDonut
-            title="By Status"
+            title={t("reports.byStatus")}
             data={distributionBreakdown.byStatus}
-            emptyMessage="No status data"
+            emptyMessage={t("reports.noStatusData")}
             maxLegendItems={5}
             onItemClick={handleStatusClick}
           />

@@ -35,6 +35,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { requirePermission } from "~/utils/roles.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -108,7 +109,14 @@ export const meta: MetaFunction<typeof loader> = ({ matches }) => {
 
 export default function LocationsIndexPage() {
   const { t } = useTranslation();
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
+  // WAREHOUSE may add and view locations but not delete them, so this hides
+  // for them exactly as the permission matrix requires.
+  const canBulkManage = userHasPermission({
+    roles,
+    entity: PermissionEntity.location,
+    action: PermissionAction.delete,
+  });
 
   /** Sorting labels follow the active locale; keys stay the DB columns. */
   const sortingOptions = {
@@ -142,9 +150,7 @@ export default function LocationsIndexPage() {
           }}
         />
         <List
-          bulkActions={
-            isBaseOrSelfService ? undefined : <BulkActionsDropdown />
-          }
+          bulkActions={canBulkManage ? <BulkActionsDropdown /> : undefined}
           customEmptyStateContent={{
             title: t("locations.emptyTitle"),
             text: t("locations.emptyText"),

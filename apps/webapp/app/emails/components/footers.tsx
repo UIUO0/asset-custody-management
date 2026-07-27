@@ -1,4 +1,5 @@
 import { Text } from "@react-email/components";
+import { config } from "~/config/shelf.config";
 import type { BookingForEmail } from "../types";
 
 /** Footer used when sending normal user emails */
@@ -16,7 +17,7 @@ export const UserFooter = ({ booking }: { booking: BookingForEmail }) => (
     </Text>
     <Text style={{ marginBottom: "32px", fontSize: "14px", color: "#344054" }}>
       {" "}
-      © {new Date().getFullYear()} Shelf.nu
+      © {new Date().getFullYear()} {config.appName}
     </Text>
   </>
 );
@@ -35,7 +36,7 @@ export const AdminFooter = ({ booking }: { booking: BookingForEmail }) => (
     </Text>
     <Text style={{ marginBottom: "32px", fontSize: "14px", color: "#344054" }}>
       {" "}
-      © {new Date().getFullYear()} Shelf.nu
+      © {new Date().getFullYear()} {config.appName}
     </Text>
   </>
 );
@@ -92,7 +93,7 @@ export const NotificationReasonFooter = ({
         style={{ marginBottom: "32px", fontSize: "14px", color: "#344054" }}
       >
         {" "}
-        © {new Date().getFullYear()} Shelf.nu
+        © {new Date().getFullYear()} {config.appName}
       </Text>
     </>
   );

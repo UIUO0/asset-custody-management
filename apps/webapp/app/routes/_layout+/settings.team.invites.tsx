@@ -160,17 +160,7 @@ export default function UserInvitesSetting() {
     <div>
       <ContextualModal />
 
-      <p className="mb-6 text-xs text-gray-600">
-        {t("team.usersIntro")}{" "}
-        <Link
-          to="https://www.shelf.nu/knowledge-base/user-roles-and-their-permissions"
-          target="_blank"
-          className="underline"
-        >
-          {t("team.permissionsHere")}
-        </Link>
-        .
-      </p>
+      <p className="mb-6 text-xs text-gray-600">{t("team.usersIntro")}</p>
 
       <ListContentWrapper>
         <Filters>

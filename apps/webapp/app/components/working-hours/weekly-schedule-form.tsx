@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useDisabled } from "~/hooks/use-disabled";
 import {
@@ -31,6 +32,7 @@ type WeeklyScheduleState = {
 export const WeeklyScheduleForm = ({
   weeklySchedule,
 }: WeeklyScheduleFormProps) => {
+  const { t } = useTranslation();
   const fetcher = useFetcher({ key: "weeklySchedule" });
   const disabled = useDisabled(fetcher);
   const [validationErrors, setValidationErrors] = useState<
@@ -54,7 +56,7 @@ export const WeeklyScheduleForm = ({
       });
 
       return initialState as WeeklyScheduleState;
-    }
+    },
   );
 
   const handleDayToggle = (dayNumber: string, isOpen: boolean) => {
@@ -79,7 +81,7 @@ export const WeeklyScheduleForm = ({
   const handleTimeChange = (
     dayNumber: string,
     timeType: "openTime" | "closeTime",
-    value: string
+    value: string,
   ) => {
     setScheduleState((prev) => ({
       ...prev,
@@ -268,7 +270,7 @@ export const WeeklyScheduleForm = ({
 
         <div className="mt-6 text-end">
           <Button type="submit" disabled={disabled}>
-            {disabled ? <Spinner /> : "Save Schedule"}
+            {disabled ? <Spinner /> : t("workingHours.saveSchedule")}
           </Button>
         </div>
       </fetcher.Form>

@@ -55,6 +55,7 @@ import { useMemo, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { ChevronDownIcon, Package as PackageIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
   clearScannedItemsAtom,
@@ -105,7 +106,7 @@ export const fulfilAndCheckoutSchema = z.object({
 const assetTypePillClass = tw(
   "inline-block bg-gray-50 px-[6px] py-[2px]",
   "rounded-md border border-gray-200",
-  "text-xs text-gray-700"
+  "text-xs text-gray-700",
 );
 
 /**
@@ -162,6 +163,7 @@ export default function FulfilReservationsDrawer({
   isLoading,
   defaultExpanded = false,
 }: FulfilReservationsDrawerProps) {
+  const { t } = useTranslation();
   const session = useAtomValue(fulfilSessionAtom);
   const expectedModelRequests = useAtomValue(expectedModelRequestsAtom);
   const items = useAtomValue(scannedItemsAtom);
@@ -274,7 +276,7 @@ export default function FulfilReservationsDrawer({
           matched,
         };
       }),
-    [expectedModelRequests, scannedBuckets.matchedCountByModel]
+    [expectedModelRequests, scannedBuckets.matchedCountByModel],
   );
 
   /**
@@ -287,9 +289,9 @@ export default function FulfilReservationsDrawer({
     () =>
       progressByModel.reduce(
         (sum, model) => sum + Math.max(0, model.remaining - model.matched),
-        0
+        0,
       ),
-    [progressByModel]
+    [progressByModel],
   );
 
   /**
@@ -387,10 +389,10 @@ export default function FulfilReservationsDrawer({
   const customRenderAllItems = (): ReactNode => {
     const matched = scannedBuckets.rows.filter((r) => r.bucket === "matched");
     const duplicate = scannedBuckets.rows.filter(
-      (r) => r.bucket === "duplicate"
+      (r) => r.bucket === "duplicate",
     );
     const unmatched = scannedBuckets.rows.filter(
-      (r) => r.bucket === "unmatched"
+      (r) => r.bucket === "unmatched",
     );
 
     return (
@@ -432,7 +434,7 @@ export default function FulfilReservationsDrawer({
       schema={fulfilAndCheckoutSchema}
       items={items}
       onClearItems={clearList}
-      title="Fulfil reservations & check out"
+      title={t("scanner.fulfilAndCheckout")}
       isLoading={isLoading}
       customRenderAllItems={customRenderAllItems}
       // Render body even when nothing has been scanned yet — pending
@@ -442,7 +444,7 @@ export default function FulfilReservationsDrawer({
       defaultExpanded={defaultExpanded}
       className={tw(
         "[&_.default-base-drawer-header]:rounded-b [&_.default-base-drawer-header]:border [&_.default-base-drawer-header]:px-4 [&_thead]:hidden",
-        className
+        className,
       )}
       style={style}
       headerContent={headerContent}
@@ -687,7 +689,7 @@ function AlreadyIncludedCollapser({
               aria-hidden="true"
               className={tw(
                 "size-4 shrink-0 text-gray-500 transition-transform duration-150",
-                open ? "rotate-0" : "-rotate-90"
+                open ? "rotate-0" : "-rotate-90",
               )}
             />
             <span>Already included ({assets.length})</span>

@@ -56,8 +56,8 @@ export default function SsoPendingAssignment() {
       <h1 className="mb-2 text-[24px] font-semibold">No workspace assigned</h1>
 
       <p className="mx-auto mb-6 max-w-md text-gray-600">
-        You don&apos;t currently have access to any workspace in Shelf. This
-        usually means your administrator hasn&apos;t assigned you to one yet.
+        You don&apos;t currently have access to any workspace. This usually
+        means your administrator hasn&apos;t assigned you to one yet.
       </p>
 
       <p className="mx-auto mb-8 max-w-md text-sm text-gray-500">

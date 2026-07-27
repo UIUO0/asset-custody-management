@@ -1,3 +1,4 @@
+import { config } from "~/config/shelf.config";
 import type { AuditForEmail } from "~/emails/audit-updates-template";
 import { auditUpdatesTemplateString } from "~/emails/audit-updates-template";
 import { sendEmail } from "~/emails/mail.server";
@@ -56,7 +57,7 @@ To view the audit, follow the link below:
 ${SERVER_URL}/audits/${auditId}/overview${orgQuery}
 ${customEmailFooter ? `\n---\n${customEmailFooter}\n` : ""}
 Thanks,
-The Shelf Team
+The ${config.appName} Team
 `;
 };
 
@@ -83,7 +84,7 @@ export const auditAssignedEmailContent = (args: BasicAuditEmailContentArgs) =>
  *   {@link baseAuditTextEmailContent}.
  */
 export const auditCancelledEmailContent = (
-  args: BasicAuditEmailContentArgs & { cancelledByName: string }
+  args: BasicAuditEmailContentArgs & { cancelledByName: string },
 ) =>
   baseAuditTextEmailContent({
     ...args,
@@ -97,7 +98,7 @@ export const auditCompletedEmailContent = (
   args: BasicAuditEmailContentArgs & {
     completedAt: Date;
     wasOverdue: boolean;
-  }
+  },
 ) => {
   const orgQuery = args.organizationId ? `?orgId=${args.organizationId}` : "";
   const receiptQuery = orgQuery ? `${orgQuery}&receipt=1` : "?receipt=1";
@@ -137,7 +138,7 @@ export const auditCompletedEmailContent = (
  * @param timeframe - Human-readable timeframe (e.g., "24 hours", "4 hours", "1 hour")
  */
 export const auditReminderEmailContent = (
-  args: BasicAuditEmailContentArgs & { timeframe: string }
+  args: BasicAuditEmailContentArgs & { timeframe: string },
 ) =>
   baseAuditTextEmailContent({
     ...args,
@@ -180,7 +181,7 @@ export async function sendAuditAssignedEmail({
 
     sendEmail({
       to: assigneeEmail,
-      subject: `🔍 You've been assigned to audit: "${audit.name}" - shelf.nu`,
+      subject: `🔍 You've been assigned to audit: "${audit.name}" - ${config.appName}`,
       text: auditAssignedEmailContent({
         auditName: audit.name,
         assetsCount: assetCount,
@@ -195,7 +196,7 @@ export async function sendAuditAssignedEmail({
     });
 
     Logger.info(
-      `Audit assignment email sent to ${assigneeName} (${assigneeEmail}) for audit: ${audit.name}`
+      `Audit assignment email sent to ${assigneeName} (${assigneeEmail}) for audit: ${audit.name}`,
     );
   } catch (emailError) {
     Logger.error(
@@ -208,7 +209,7 @@ export async function sendAuditAssignedEmail({
           assigneeName,
         },
         label: "Audit",
-      })
+      }),
     );
   }
 }
@@ -276,7 +277,7 @@ export function sendAuditCancelledEmails({
 
       sendEmail({
         to: assignment.user.email,
-        subject: `❌ Audit cancelled: "${audit.name}" - shelf.nu`,
+        subject: `❌ Audit cancelled: "${audit.name}" - ${config.appName}`,
         text: auditCancelledEmailContent({
           auditName: audit.name,
           assetsCount: assetCount,
@@ -294,7 +295,7 @@ export function sendAuditCancelledEmails({
       const assigneeName =
         resolveUserDisplayName(assignment.user) || "Unknown User";
       Logger.info(
-        `Audit cancellation email sent to ${assigneeName} (${assignment.user.email})`
+        `Audit cancellation email sent to ${assigneeName} (${assignment.user.email})`,
       );
     } catch (emailError) {
       Logger.error(
@@ -307,7 +308,7 @@ export function sendAuditCancelledEmails({
             email: assignment.user.email,
           },
           label: "Audit",
-        })
+        }),
       );
     }
   });
@@ -357,7 +358,7 @@ export function sendAuditCompletedEmail({
 
       sendEmail({
         to: assignment.user.email,
-        subject: `✅ Audit completed: "${audit.name}" - shelf.nu`,
+        subject: `✅ Audit completed: "${audit.name}" - ${config.appName}`,
         text: auditCompletedEmailContent({
           auditName: audit.name,
           assetsCount: assetCount,
@@ -377,7 +378,7 @@ export function sendAuditCompletedEmail({
       const assigneeName =
         resolveUserDisplayName(assignment.user) || "Unknown User";
       Logger.info(
-        `Audit completion email sent to ${assigneeName} (${assignment.user.email})`
+        `Audit completion email sent to ${assigneeName} (${assignment.user.email})`,
       );
     } catch (emailError) {
       Logger.error(
@@ -390,7 +391,7 @@ export function sendAuditCompletedEmail({
             email: assignment.user.email,
           },
           label: "Audit",
-        })
+        }),
       );
     }
   });
@@ -436,7 +437,7 @@ export function sendAuditReminderEmail({
 
       sendEmail({
         to: assignment.user.email,
-        subject: `${heading}: "${audit.name}" - shelf.nu`,
+        subject: `${heading}: "${audit.name}" - ${config.appName}`,
         text: auditReminderEmailContent({
           auditName: audit.name,
           assetsCount: assetCount,
@@ -454,7 +455,7 @@ export function sendAuditReminderEmail({
       const assigneeName =
         resolveUserDisplayName(assignment.user) || "Unknown User";
       Logger.info(
-        `${timeframe} reminder email sent to ${assigneeName} (${assignment.user.email})`
+        `${timeframe} reminder email sent to ${assigneeName} (${assignment.user.email})`,
       );
     } catch (emailError) {
       Logger.error(
@@ -467,7 +468,7 @@ export function sendAuditReminderEmail({
             email: assignment.user.email,
           },
           label: "Audit",
-        })
+        }),
       );
     }
   });
@@ -504,7 +505,7 @@ export function sendAuditOverdueEmail({
 
       sendEmail({
         to: recipient.email,
-        subject: `⚠️ Audit overdue: "${audit.name}" - shelf.nu`,
+        subject: `⚠️ Audit overdue: "${audit.name}" - ${config.appName}`,
         text: auditOverdueEmailContent({
           auditName: audit.name,
           assetsCount: assetCount,
@@ -520,7 +521,7 @@ export function sendAuditOverdueEmail({
 
       const recipientName = resolveUserDisplayName(recipient) || "Unknown User";
       Logger.info(
-        `Overdue notice email sent to ${recipientName} (${recipient.email})`
+        `Overdue notice email sent to ${recipientName} (${recipient.email})`,
       );
     } catch (emailError) {
       Logger.error(
@@ -532,7 +533,7 @@ export function sendAuditOverdueEmail({
             email: recipient.email,
           },
           label: "Audit",
-        })
+        }),
       );
     }
   });

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { InfoIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import type Stripe from "stripe";
 import type { loader as layoutLoader } from "~/routes/_layout+/_layout";
@@ -9,7 +10,6 @@ import { tw } from "~/utils/tw";
 import { CustomerPortalForm } from "./customer-portal-form";
 import type { PriceWithProduct } from "./prices";
 import { HelpIcon } from "../icons/library";
-import { Button } from "../shared/button";
 import { DateS } from "../shared/date";
 import {
   Tooltip,
@@ -186,6 +186,7 @@ function Item({
   };
   organizations?: { id: string; name: string }[];
 }) {
+  const { t } = useTranslation();
   const interval = item.price?.recurring?.interval;
   const isLegacyPricing = item?.price?.metadata?.legacy === "true";
   const subscriptionPrice = findPriceById(prices, item.price.id);
@@ -212,7 +213,7 @@ function Item({
   // Prefer explicit organizations prop (used in admin context for the viewed user's orgs),
   // fall back to layout data (used when viewing own subscriptions).
   const layoutData = useRouteLoaderData<typeof layoutLoader>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   );
   const workspaceName = useMemo(() => {
     const orgId = subscription.metadata?.organizationId;
@@ -240,9 +241,9 @@ function Item({
     // Determine the display name based on tier or product name
     const displayName =
       planTier === "tier_2"
-        ? "Team plan"
+        ? t("subscription.teamPlan")
         : planTier === "tier_1"
-        ? "Plus plan"
+        ? t("subscription.plusPlan")
         : productName;
 
     const arr: { id: string; content: string | ReactNode }[] = [
@@ -253,7 +254,10 @@ function Item({
       },
       {
         id: "billing",
-        content: interval === "year" ? "Yearly billing" : "Monthly billing",
+        content:
+          interval === "year"
+            ? t("subscription.yearlyBilling")
+            : t("subscription.monthlyBilling"),
       },
     ];
     if (workspaceName) {
@@ -452,15 +456,8 @@ function LegacyPricingTooltip() {
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[300px]">
           <p>
-            You are on a{" "}
-            <Button
-              to="https://www.shelf.nu/legacy-plan-faq"
-              target="_blank"
-              variant="link"
-            >
-              legacy pricing plan
-            </Button>
-            . We have since updated our pricing plans. <br />
+            You are on a legacy pricing plan. We have since updated our pricing
+            plans. <br />
             You can view the new pricing plans in the customer portal. If you
             cancel your subscription, you will not be able to renew it. For any
             questions - get in touch with support
@@ -479,7 +476,7 @@ function LegacyPricingTooltip() {
  */
 export function findPriceById(
   prices: { [key: string]: PriceWithProduct[] },
-  targetId: string
+  targetId: string,
 ): PriceWithProduct | null {
   // Iterate through all interval groups (month, year, etc.)
   for (const interval of Object.values(prices)) {

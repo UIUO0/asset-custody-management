@@ -10,6 +10,7 @@
 import type React from "react";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useReducer, useRef } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useDisabled } from "~/hooks/use-disabled";
 import useFetcherWithReset from "~/hooks/use-fetcher-with-reset";
 import type { action } from "~/routes/_layout+/assets.import-update";
@@ -95,6 +96,7 @@ export function UpdateImportForm({
   /** Called when the form transitions between stages (upload/preview/results) */
   onStageChange?: (stage: Stage) => void;
 }) {
+  const { t } = useTranslation();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewFetcher = useFetcherWithReset<typeof action>();
@@ -129,7 +131,7 @@ export function UpdateImportForm({
       // Read enough to get headers + a few rows
       reader.readAsText(file.slice(0, 50_000));
     },
-    [previewFetcher, applyFetcher]
+    [previewFetcher, applyFetcher],
   );
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
@@ -159,7 +161,7 @@ export function UpdateImportForm({
 
       processFile(file);
     },
-    [processFile, isPreviewLoading, isApplyLoading]
+    [processFile, isPreviewLoading, isApplyLoading],
   );
 
   // Handle preview response — use optional chaining instead of type casts.
@@ -239,11 +241,15 @@ export function UpdateImportForm({
         >
           <div className="text-center">
             <p className="mb-2 text-sm text-gray-600">
-              <span className="font-medium text-gray-900">Click to upload</span>{" "}
-              or paste CSV content here
+              <Trans
+                i18nKey="assetUpdate.clickToUpload"
+                components={{
+                  1: <span className="font-medium text-gray-900" />,
+                }}
+              />
             </p>
             <p className="text-xs text-gray-500">
-              CSV file exported from Asset Index (.csv)
+              {t("assetUpdate.csvFromIndexHint")}
             </p>
           </div>
 
@@ -251,7 +257,7 @@ export function UpdateImportForm({
             <Input
               type="file"
               name="file"
-              label="CSV file"
+              label={t("assetUpdate.csvFileLabel")}
               hideLabel
               required
               onChange={handleFileSelect}
@@ -278,13 +284,14 @@ export function UpdateImportForm({
         <When truthy={!!previewFetcher.data?.error}>
           <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
             <h5 className="text-red-500">
-              {previewFetcher.data?.error?.title || "Import Error"}
+              {previewFetcher.data?.error?.title ||
+                t("assetUpdate.importError")}
             </h5>
             <p className="text-red-500">
               {previewFetcher.data?.error?.message}
             </p>
             {Array.isArray(
-              previewFetcher.data?.error?.additionalData?.defectedHeaders
+              previewFetcher.data?.error?.additionalData?.defectedHeaders,
             ) ? (
               <DefectedHeadersTable
                 data={
@@ -300,7 +307,9 @@ export function UpdateImportForm({
 
         {stage === "upload" && (
           <Button type="submit" disabled={!canAnalyze} className="my-4">
-            {isPreviewLoading ? "Analyzing..." : "Analyze file"}
+            {isPreviewLoading
+              ? t("assetUpdate.analyzing")
+              : t("assetUpdate.analyzeFile")}
           </Button>
         )}
       </previewFetcher.Form>
@@ -332,7 +341,7 @@ export function UpdateImportForm({
       <When truthy={stage === "preview" && !!applyFetcher.data?.error}>
         <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4">
           <h5 className="text-red-500">
-            {applyFetcher.data?.error?.title || "Update Error"}
+            {applyFetcher.data?.error?.title || t("assetUpdate.updateError")}
           </h5>
           <p className="text-red-500">{applyFetcher.data?.error?.message}</p>
         </div>

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 
 import {
@@ -9,9 +10,13 @@ import {
   SelectValue,
 } from "../forms/select";
 
-export function AvailabilitySelect({ label = "assets" }: { label?: string }) {
+export function AvailabilitySelect({ label }: { label?: string }) {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const hideUnavailable = searchParams.get("hideUnavailable");
+
+  /** Localized entity name shown in the "All …" option (defaults to assets). */
+  const resolvedLabel = label ?? t("entities.asset_plural");
 
   /**
    * Logic:
@@ -38,9 +43,9 @@ export function AvailabilitySelect({ label = "assets" }: { label?: string }) {
     >
       <SelectTrigger
         className="text-start text-base text-gray-500 md:mt-0 md:max-w-fit"
-        aria-label="Select availability"
+        aria-label={t("bookings.selectAvailability")}
       >
-        <SelectValue placeholder="Select availability" />
+        <SelectValue placeholder={t("bookings.selectAvailability")} />
       </SelectTrigger>
 
       <SelectContent
@@ -56,7 +61,7 @@ export function AvailabilitySelect({ label = "assets" }: { label?: string }) {
             className="rounded-none border-b border-gray-200 px-6 py-4 pe-[5px]"
           >
             <span className="me-4 block lowercase text-gray-700 first-letter:uppercase">
-              All {label}
+              {t("bookings.allOfLabel", { label: resolvedLabel })}
             </span>
           </SelectItem>
           <SelectItem
@@ -65,7 +70,7 @@ export function AvailabilitySelect({ label = "assets" }: { label?: string }) {
             className="rounded-none border-b border-gray-200 px-6 py-4 pe-[5px]"
           >
             <span className="me-4 block lowercase text-gray-700 first-letter:uppercase">
-              Hide unavailable
+              {t("bookings.hideUnavailable")}
             </span>
           </SelectItem>
         </div>

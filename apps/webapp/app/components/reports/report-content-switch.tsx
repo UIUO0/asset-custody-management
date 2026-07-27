@@ -13,6 +13,7 @@
  * @see {@link file://./../../routes/_layout+/reports.$reportId.tsx}
  */
 
+import { useTranslation } from "react-i18next";
 import type {
   AssetActivityRow,
   AssetInventoryRow,
@@ -90,6 +91,7 @@ export function ReportContentSwitch({
   chartSeries,
   handlers,
 }: Props) {
+  const { t } = useTranslation();
   // Distribution is the one report with no row table — it's purely
   // donut-driven, so `hasData` is meaningless there. Always render it
   // and let `AssetDistributionContent` handle its own empty state.
@@ -109,8 +111,8 @@ export function ReportContentSwitch({
       <div className="rounded border border-gray-200 bg-white">
         <ReportEmptyState
           reason="no_data"
-          title={getEmptyStateTitle(reportId)}
-          description={getEmptyStateDescription(reportId)}
+          title={t(getEmptyStateTitle(reportId))}
+          description={t(getEmptyStateDescription(reportId))}
           ctaTo={getEmptyStateCta(reportId)?.to}
           ctaLabel={getEmptyStateCta(reportId)?.label}
         />
@@ -229,8 +231,8 @@ export function ReportContentSwitch({
       return (
         <ReportEmptyState
           reason="error"
-          title="Report not implemented"
-          description="This report type is not yet supported."
+          title={t("reports.notImplemented")}
+          description={t("reports.notImplementedBody")}
         />
       );
   }
@@ -244,64 +246,74 @@ export function ReportContentSwitch({
 // necessarily create new data.
 // -----------------------------------------------------------------------------
 
+/**
+ * Empty-state heading for a report.
+ *
+ * Returns an **i18n key**, not copy — this helper is module-scope and the
+ * caller (a component) resolves it with `t()`.
+ */
 function getEmptyStateTitle(reportId: string): string {
   switch (reportId) {
     case "booking-compliance":
-      return "No bookings to analyze";
+      return "reports.noBookingsToAnalyze";
     case "overdue-items":
-      return "No overdue bookings";
+      return "reports.noOverdueBookings";
     case "idle-assets":
-      return "No idle assets";
+      return "reports.noIdleAssets";
     case "custody-snapshot":
-      return "No assets in custody";
+      return "reports.noAssetsInCustody";
     case "top-booked-assets":
-      return "No booking activity";
+      return "reports.noBookingActivity";
     case "top-booked-kits":
-      return "No kit booking activity";
+      return "reports.noKitBookingActivity";
     case "distribution":
-      return "No assets";
+      return "reports.noAssets";
     case "asset-inventory":
-      return "No assets in inventory";
+      return "reports.noAssetsInInventory";
     case "monthly-booking-trends":
-      return "No booking data";
+      return "reports.noBookingData";
     case "asset-utilization":
-      return "No utilization data";
+      return "reports.noUtilizationData";
     case "asset-activity":
-      return "No activity recorded";
+      return "reports.noActivityRecorded";
     default:
-      return "No data in this timeframe";
+      return "reports.noDataInTimeframe";
   }
 }
 
+/**
+ * Empty-state body copy for a report. Returns an **i18n key** — see
+ * {@link getEmptyStateTitle}.
+ */
 function getEmptyStateDescription(reportId: string): string {
   switch (reportId) {
     case "booking-compliance":
       // This is an analytics report - focus on finding data, not creating it.
       // The report analyzes check-out/check-in compliance for bookings that
       // fall within the selected timeframe.
-      return "This report tracks whether bookings were checked out and returned on time. Try selecting a longer timeframe to see compliance metrics for past bookings.";
+      return "reports.noBookingsToAnalyzeBody";
     case "overdue-items":
-      return "Great news! All bookings are on track. No items are currently overdue.";
+      return "reports.noOverdueBookingsBody";
     case "idle-assets":
-      return "All your assets have been actively used within the selected timeframe. Consider adjusting the idle threshold to find assets with lower utilization.";
+      return "reports.noIdleAssetsBody";
     case "custody-snapshot":
-      return "No team members currently have assets assigned to them. Assets appear here when custody is assigned.";
+      return "reports.noAssetsInCustodyBody";
     case "top-booked-assets":
-      return "No assets have been booked within the selected timeframe. Try selecting a longer period to see booking activity.";
+      return "reports.noBookingActivityBody";
     case "top-booked-kits":
-      return "No kits have been booked within the selected timeframe. Try selecting a longer period to see booking activity.";
+      return "reports.noKitBookingActivityBody";
     case "distribution":
-      return "Add assets to your inventory to see distribution breakdowns by category, location, and status.";
+      return "reports.noDistributionBody";
     case "asset-inventory":
-      return "Your inventory is empty. Add assets to see them listed here with filtering and export options.";
+      return "reports.noAssetsInInventoryBody";
     case "monthly-booking-trends":
-      return "No bookings have been created within the selected timeframe. Try selecting a longer period to see trends.";
+      return "reports.noBookingDataBody";
     case "asset-utilization":
-      return "No booking activity within the selected timeframe. Assets need bookings to calculate utilization rates.";
+      return "reports.noUtilizationDataBody";
     case "asset-activity":
-      return "No activity has been recorded for your assets in this timeframe. Activity appears when assets are updated, booked, or custody changes.";
+      return "reports.noActivityRecordedBody";
     default:
-      return "Try selecting a different timeframe to find data for this report.";
+      return "reports.noDataInTimeframeBody";
   }
 }
 
@@ -312,7 +324,7 @@ function getEmptyStateDescription(reportId: string): string {
  * to analyze, not to create.
  */
 function getEmptyStateCta(
-  _reportId: string
+  _reportId: string,
 ): { to: string; label: string } | null {
   // For now, no reports have a CTA in their empty state.
   // The appropriate action is to adjust the timeframe, which is

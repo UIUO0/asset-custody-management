@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { useSearchParams } from "~/hooks/search-params";
 import { ALL_SELECTED_KEY, isSelectingAllItems } from "~/utils/list";
@@ -7,15 +8,21 @@ import { Button } from "../shared/button";
 import { Spinner } from "../shared/spinner";
 
 export function ExportBookingsButton() {
+  const { t } = useTranslation();
   const selectedBookings = useAtomValue(selectedBulkItemsAtom);
   const disabled = selectedBookings.length === 0;
   const [isDownloading, setIsDownloading] = useState(false);
   const [searchParams] = useSearchParams();
 
   const allSelected = isSelectingAllItems(selectedBookings);
-  const title = `Export selection ${
-    disabled ? "" : allSelected ? "(All)" : `(${selectedBookings.length})`
-  }`;
+  // The count suffix stays outside the translated string so both locales share
+  // one label and only the parenthesised counter changes.
+  const countSuffix = disabled
+    ? ""
+    : allSelected
+    ? t("list.allParens")
+    : `(${selectedBookings.length})`;
+  const title = `${t("list.exportSelection")} ${countSuffix}`;
 
   /** Get the bookingsIds from the atom and add them to bookingsIds search param */
   const bookingsIds = selectedBookings.map((booking) => booking.id);
@@ -70,7 +77,7 @@ export function ExportBookingsButton() {
       title={title}
       disabled={
         disabled
-          ? { reason: "You must select at least 1 booking to export" }
+          ? { reason: t("bookings.exportSelectionRequirement") }
           : isDownloading
       }
     >

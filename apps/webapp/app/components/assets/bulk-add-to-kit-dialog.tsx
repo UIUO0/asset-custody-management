@@ -1,5 +1,6 @@
 import type { Kit } from "@prisma/client";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import z from "zod";
 import { bulkDialogAtom } from "~/atoms/bulk-update-dialog";
@@ -20,6 +21,7 @@ export const BulkAddToKitSchema = z.object({
 });
 
 export default function BulkAddToKitDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkAddToKit", BulkAddToKitSchema);
 
   const selectedAssets = useAtomValue(selectedBulkItemsCountAtom);
@@ -29,7 +31,7 @@ export default function BulkAddToKitDialog() {
   // bulk-update-location pattern — see `bulkUpdateAssetLocation`). Surfacing
   // the count here lets the user know up-front how many rows will be skipped.
   const quantityTrackedCount = selectedItems.filter((item) =>
-    isQuantityTracked(item)
+    isQuantityTracked(item),
   ).length;
   const bulkDialogOpenState = useAtomValue(bulkDialogAtom);
 
@@ -46,10 +48,10 @@ export default function BulkAddToKitDialog() {
     <BulkUpdateDialogContent
       ref={zo.ref}
       type="add-to-kit"
-      title="Add assets to a kit"
-      description={`${selectedAssets} asset${
-        selectedAssets > 1 ? "s" : ""
-      } will be added to the kit. Please select a kit to add the assets to`}
+      title={t("bulkActions.addToKitTitle")}
+      description={t("bulkActions.addToKitDescription", {
+        count: selectedAssets,
+      })}
       actionUrl="/api/assets/bulk-add-to-kit"
       arrayFieldId="assetIds"
     >
@@ -59,10 +61,9 @@ export default function BulkAddToKitDialog() {
             <div className="mb-4">
               <WarningBox>
                 <span>
-                  {quantityTrackedCount} quantity-tracked asset(s) in your
-                  selection will be skipped. Quantity-tracked assets must be
-                  added to a kit individually with a specific quantity from the
-                  kit's manage-assets page.
+                  {t("bulkActions.qtyTrackedSkippedKit", {
+                    count: quantityTrackedCount,
+                  })}
                 </span>
               </WarningBox>
             </div>
@@ -71,7 +72,9 @@ export default function BulkAddToKitDialog() {
             <KitSelector
               name={zo.fields.kit()}
               kits={data?.kits || []}
-              placeholder={isLoading ? "Loading..." : "Select a kit"}
+              placeholder={
+                isLoading ? t("common.loading") : t("bulkActions.selectAKit")
+              }
               isLoading={isLoading}
               error={zo.errors.kit()?.message || error || fetcherError}
             />
@@ -85,7 +88,7 @@ export default function BulkAddToKitDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -93,7 +96,7 @@ export default function BulkAddToKitDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher, useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -46,6 +47,7 @@ export function AutoArchiveSettings({
   defaultAutoArchiveExpiredReservations: boolean;
   defaultAutoArchiveDays: number;
 }) {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const toggleDisabled = useDisabled(fetcher);
   const expiredFetcher = useFetcher();
@@ -57,19 +59,19 @@ export function AutoArchiveSettings({
   // fetcher revalidates).
   const [isEnabled, setIsEnabled] = useState(() => defaultAutoArchiveBookings);
   const [isExpiredEnabled, setIsExpiredEnabled] = useState(
-    () => defaultAutoArchiveExpiredReservations
+    () => defaultAutoArchiveExpiredReservations,
   );
 
   const toggleZo = useZorm("AutoArchiveToggleForm", AutoArchiveToggleSchema);
   const expiredToggleZo = useZorm(
     "AutoArchiveExpiredToggleForm",
-    AutoArchiveExpiredToggleSchema
+    AutoArchiveExpiredToggleSchema,
   );
   const daysZo = useZorm("AutoArchiveDaysForm", AutoArchiveDaysSchema);
 
   const actionData = useActionData<BookingSettingsActionData>();
   const validationErrors = getValidationErrors<typeof AutoArchiveDaysSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   return (
@@ -86,7 +88,7 @@ export function AutoArchiveSettings({
           onChange={(e) => {
             const form = e.currentTarget;
             const checkbox = form.elements.namedItem(
-              toggleZo.fields.autoArchiveBookings()
+              toggleZo.fields.autoArchiveBookings(),
             ) as HTMLInputElement;
             if (checkbox) {
               setIsEnabled(checkbox.checked);
@@ -95,12 +97,9 @@ export function AutoArchiveSettings({
           }}
         >
           <FormRow
-            rowLabel="Auto-archive completed bookings"
+            rowLabel={t("bookingSettings.autoArchiveCompletedLabel")}
             subHeading={
-              <div>
-                Automatically move completed bookings to Archived after they've
-                been completed for the specified number of days.
-              </div>
+              <div>{t("bookingSettings.autoArchiveCompletedHint")}</div>
             }
             className="border-b-0 pb-[10px] pt-0"
           >
@@ -109,8 +108,8 @@ export function AutoArchiveSettings({
                 name={toggleZo.fields.autoArchiveBookings()}
                 disabled={toggleDisabled}
                 defaultChecked={defaultAutoArchiveBookings}
-                aria-label="Auto-archive completed bookings"
-                title="Auto-archive completed bookings"
+                aria-label={t("bookingSettings.autoArchiveCompletedLabel")}
+                title={t("bookingSettings.autoArchiveCompletedLabel")}
               />
             </div>
           </FormRow>
@@ -124,7 +123,7 @@ export function AutoArchiveSettings({
           onChange={(e) => {
             const form = e.currentTarget;
             const checkbox = form.elements.namedItem(
-              expiredToggleZo.fields.autoArchiveExpiredReservations()
+              expiredToggleZo.fields.autoArchiveExpiredReservations(),
             ) as HTMLInputElement;
             if (checkbox) {
               setIsExpiredEnabled(checkbox.checked);
@@ -133,13 +132,9 @@ export function AutoArchiveSettings({
           }}
         >
           <FormRow
-            rowLabel="Auto-archive reserved bookings after their end date"
+            rowLabel={t("bookingSettings.autoArchiveExpiredLabel")}
             subHeading={
-              <div>
-                Automatically move reserved bookings to Archived once their end
-                date has passed without ever being checked out — for teams that
-                use bookings as a reservation calendar.
-              </div>
+              <div>{t("bookingSettings.autoArchiveExpiredHint")}</div>
             }
             className="border-b-0 pb-[10px] pt-0"
           >
@@ -148,8 +143,8 @@ export function AutoArchiveSettings({
                 name={expiredToggleZo.fields.autoArchiveExpiredReservations()}
                 disabled={expiredToggleDisabled}
                 defaultChecked={defaultAutoArchiveExpiredReservations}
-                aria-label="Auto-archive reserved bookings after their end date"
-                title="Auto-archive reserved bookings after their end date"
+                aria-label={t("bookingSettings.autoArchiveExpiredLabel")}
+                title={t("bookingSettings.autoArchiveExpiredLabel")}
               />
             </div>
           </FormRow>
@@ -164,26 +159,20 @@ export function AutoArchiveSettings({
         {(isEnabled || isExpiredEnabled) && (
           <Form ref={daysZo.ref} method="post">
             <FormRow
-              rowLabel="Days before auto-archiving"
-              subHeading={
-                <div>
-                  Number of days to wait after a booking is completed (or its
-                  reservation's end date has passed) before automatically
-                  archiving it.
-                </div>
-              }
+              rowLabel={t("bookingSettings.autoArchiveDaysLabel")}
+              subHeading={<div>{t("bookingSettings.autoArchiveDaysHint")}</div>}
               className="border-b-0 pb-[10px]"
               required
             >
               <Input
-                label="Days before auto-archiving"
+                label={t("bookingSettings.autoArchiveDaysLabel")}
                 hideLabel
                 type="number"
                 name={daysZo.fields.autoArchiveDays()}
                 disabled={daysDisabled}
                 defaultValue={defaultAutoArchiveDays}
                 required
-                title="Days before auto-archiving"
+                title={t("bookingSettings.autoArchiveDaysLabel")}
                 min={1}
                 max={365}
                 step={1}
@@ -202,7 +191,7 @@ export function AutoArchiveSettings({
                 value="updateAutoArchiveDays"
                 name="intent"
               >
-                {daysDisabled ? <Spinner /> : "Save settings"}
+                {daysDisabled ? <Spinner /> : t("bookingSettings.saveSettings")}
               </Button>
             </div>
           </Form>

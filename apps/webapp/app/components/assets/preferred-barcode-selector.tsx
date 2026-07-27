@@ -22,6 +22,8 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import type { BarcodeType, QrIdDisplayPreference } from "@prisma/client";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { labelForPreference } from "~/modules/barcode/display";
 import { tw } from "~/utils/tw";
@@ -49,7 +51,7 @@ type PreferredBarcodeSelectorProps = {
 
 /** True when the preference is one of the BarcodeType-derived values. */
 function isBarcodeTypePreference(
-  pref: QrIdDisplayPreference
+  pref: QrIdDisplayPreference,
 ): pref is Extract<QrIdDisplayPreference, BarcodeType> {
   return pref !== "QR_ID" && pref !== "SAM_ID";
 }
@@ -61,10 +63,11 @@ function isBarcodeTypePreference(
  */
 function buildWorkspaceDefaultSecondary(
   workspacePreference: QrIdDisplayPreference | undefined,
-  barcodes: BarcodeChoice[]
+  barcodes: BarcodeChoice[],
+  t: TFunction,
 ): string {
   if (!workspacePreference) {
-    return "Follow the workspace's preferred display code setting.";
+    return t("barcodePreference.followWorkspaceSetting");
   }
 
   const prefLabel = labelForPreference(workspacePreference);
@@ -72,12 +75,12 @@ function buildWorkspaceDefaultSecondary(
   // For QR_ID / SAM_ID, every asset has the necessary data (or sequentialId
   // falls back to QR automatically) — no warning needed.
   if (!isBarcodeTypePreference(workspacePreference)) {
-    return `Currently set to ${prefLabel} for this workspace.`;
+    return t("barcodePreference.currentlySetTo", { label: prefLabel });
   }
 
   // For barcode-type preferences, check whether this asset has one.
   const assetHasMatchingBarcode = barcodes.some(
-    (b) => b.type === workspacePreference
+    (b) => b.type === workspacePreference,
   );
 
   if (assetHasMatchingBarcode) {
@@ -101,6 +104,7 @@ export function PreferredBarcodeSelector({
   defaultValue,
   workspacePreference,
 }: PreferredBarcodeSelectorProps) {
+  const { t } = useTranslation();
   // Controlled selection: a single source of truth for both the row
   // highlighting (the parent `<label>` className conditional) and the
   // underlying radio inputs' `checked` state. Previously the radios used
@@ -143,20 +147,22 @@ export function PreferredBarcodeSelector({
     // with one source of truth.
     const emptyStateSecondary = buildWorkspaceDefaultSecondary(
       workspacePreference,
-      barcodes
+      barcodes,
+      t,
     );
     return (
       <p className="text-sm text-gray-500">
-        This asset has no barcodes yet, so there's nothing to override.{" "}
-        {emptyStateSecondary} Add a barcode in the section above and save the
-        asset — it will become selectable here on your next edit.
+        {t("barcodePreference.noBarcodesYet", {
+          explanation: emptyStateSecondary,
+        })}
       </p>
     );
   }
 
   const workspaceDefaultSecondary = buildWorkspaceDefaultSecondary(
     workspacePreference,
-    barcodes
+    barcodes,
+    t,
   );
 
   // Build the live preview chip for the "Workspace default" row. Only
@@ -168,21 +174,21 @@ export function PreferredBarcodeSelector({
   // so we deliberately omit the chip rather than render a misleading one.
   const workspaceDefaultPreview = buildWorkspaceDefaultPreview(
     workspacePreference,
-    barcodes
+    barcodes,
   );
 
   return (
     <div
       className="flex flex-col gap-2"
       role="radiogroup"
-      aria-label="Preferred display code for this asset"
+      aria-label={t("barcodePreference.ariaLabel")}
     >
       <Option
         name={name}
         value=""
         checked={selectedId === ""}
         onSelect={setSelectedId}
-        primary="Workspace default"
+        primary={t("barcodePreference.workspaceDefault")}
         secondary={workspaceDefaultSecondary}
         preview={workspaceDefaultPreview}
       />
@@ -196,7 +202,7 @@ export function PreferredBarcodeSelector({
           onSelect={setSelectedId}
           primary={bc.value}
           secondary={`${labelForPreference(
-            bc.type
+            bc.type,
           )} — overrides the workspace default for this asset`}
           // Override rows: chip preview is unambiguous — it's literally the
           // barcode that will render. workspacePreference is passed so the
@@ -228,7 +234,7 @@ export function PreferredBarcodeSelector({
  */
 function buildWorkspaceDefaultPreview(
   workspacePreference: QrIdDisplayPreference | undefined,
-  barcodes: BarcodeChoice[]
+  barcodes: BarcodeChoice[],
 ): ReactNode {
   if (!workspacePreference) return null;
   if (!isBarcodeTypePreference(workspacePreference)) return null;
@@ -286,7 +292,7 @@ function Option({
       aria-label={`${primary} — ${secondary}`}
       className={tw(
         "flex cursor-pointer items-start gap-2 rounded-md border p-3 text-sm",
-        checked ? "border-primary-500 bg-primary-50/40" : "border-gray-200"
+        checked ? "border-primary-500 bg-primary-50/40" : "border-gray-200",
       )}
     >
       <input

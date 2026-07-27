@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { CheckCircle2, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Form } from "react-router";
 import { AuditImageUploadSection } from "~/components/audit/audit-image-upload-box";
 import { Button } from "~/components/shared/button";
@@ -46,6 +47,7 @@ export default function CompleteAuditDialog({
   portalContainer,
   stats,
 }: CompleteAuditDialogProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const formDisabled = useDisabled();
@@ -156,7 +158,7 @@ export default function CompleteAuditDialog({
               </Button>
             </AlertDialogCancel>
             <Button type="submit" variant="primary" disabled={formDisabled}>
-              {formDisabled ? "Completing..." : "Complete Audit"}
+              {formDisabled ? "Completing..." : t("audits.completeAudit")}
             </Button>
           </AlertDialogFooter>
         </Form>

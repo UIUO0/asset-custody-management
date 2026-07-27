@@ -1,7 +1,7 @@
 /**
  * Android Asset Links (Digital Asset Links)
  *
- * Served at `https://app.shelf.nu/.well-known/assetlinks.json` so Android can
+ * Served at `https://<SERVER_URL>/.well-known/assetlinks.json` so Android can
  * verify the Shelf Companion app's claim over this domain and route matching
  * `https://` links into the native app (verified App Links) instead of Chrome.
  *

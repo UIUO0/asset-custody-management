@@ -16,6 +16,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { UpgradeMessage } from "~/components/marketing/upgrade-message";
@@ -112,6 +113,7 @@ function RadioRow({
  * Falls back to a disabled upgrade-prompt button on the free tier.
  */
 export function ExportAssetsButton() {
+  const { t } = useTranslation();
   const selectedAssets = useAtomValue(selectedBulkItemsAtom);
   const { canImportAssets } = useLoaderData<AssetIndexLoaderData>();
   const [searchParams] = useSearchParams();
@@ -123,9 +125,12 @@ export function ExportAssetsButton() {
 
   const disabled = selectedAssets.length === 0;
   const allSelected = isSelectingAllItems(selectedAssets);
-  const title = `Export selection ${
-    disabled ? "" : allSelected ? "(All)" : `(${selectedAssets.length})`
-  }`;
+  const countSuffix = disabled
+    ? ""
+    : allSelected
+    ? t("list.allParens")
+    : `(${selectedAssets.length})`;
+  const title = `${t("list.exportSelection")} ${countSuffix}`;
 
   /** Flip the scope default when the format changes (import → all columns). */
   const handleFormatChange = (next: ExportFormat) => {
@@ -152,7 +157,7 @@ export function ExportAssetsButton() {
       const response = await fetch(`/assets/export/${fileName}?${qs}`);
       // Don't save an error/auth payload under a .csv filename — surface it.
       if (!response.ok) {
-        setExportError("Export failed. Please try again.");
+        setExportError(t("assets.exportFailed"));
         return;
       }
       const blob = await response.blob();
@@ -167,7 +172,7 @@ export function ExportAssetsButton() {
       window.URL.revokeObjectURL(downloadUrl);
       setOpen(false);
     } catch {
-      setExportError("Export failed. Please try again.");
+      setExportError(t("assets.exportFailed"));
     } finally {
       setIsDownloading(false);
     }
@@ -210,7 +215,7 @@ export function ExportAssetsButton() {
           title={title}
           disabled={
             disabled
-              ? { reason: "You must select at least 1 asset to export" }
+              ? { reason: t("assets.exportSelectionRequirement") }
               : isDownloading
           }
         >
@@ -232,46 +237,45 @@ export function ExportAssetsButton() {
         >
           <fieldset className="mb-4">
             <legend className="mb-2 text-sm font-semibold text-gray-900">
-              Format
+              {t("assets.exportFormatLegend")}
             </legend>
             <RadioRow
               name="export-format"
               checked={format === "standard"}
               onChange={() => handleFormatChange("standard")}
-              label="Standard"
-              hint="Readable spreadsheet, matches your columns"
+              label={t("assets.exportFormatStandard")}
+              hint={t("assets.exportReadableSpreadsheet")}
             />
             <RadioRow
               name="export-format"
               checked={format === "import"}
               onChange={() => handleFormatChange("import")}
-              label="Import-ready"
-              hint="Re-import into another workspace"
+              label={t("assets.exportFormatImport")}
+              hint={t("assets.exportFormatImportHint")}
             />
           </fieldset>
 
           <fieldset className="mb-4">
             <legend className="mb-2 text-sm font-semibold text-gray-900">
-              Columns
+              {t("assets.exportColumnsLegend")}
             </legend>
             <RadioRow
               name="export-scope"
               checked={columnScope === "visible"}
               onChange={() => setColumnScope("visible")}
-              label="Visible columns"
+              label={t("assets.exportVisibleColumns")}
             />
             <RadioRow
               name="export-scope"
               checked={columnScope === "all"}
               onChange={() => setColumnScope("all")}
-              label="All columns"
+              label={t("assets.exportAllColumns")}
             />
           </fieldset>
 
           {format === "import" ? (
             <p className="mb-4 text-xs text-gray-500">
-              Import-ready always includes the fields required to recreate
-              assets.
+              {t("assets.exportImportReadyNote")}
             </p>
           ) : null}
 
@@ -287,7 +291,9 @@ export function ExportAssetsButton() {
             onClick={handleExport}
             disabled={isDownloading}
           >
-            {isDownloading ? "Preparing…" : "Download CSV"}
+            {isDownloading
+              ? t("assets.exportPreparing")
+              : t("assets.exportDownloadCsv")}
           </Button>
         </PopoverContent>
       </PopoverPortal>

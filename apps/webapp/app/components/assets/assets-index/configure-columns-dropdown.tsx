@@ -7,6 +7,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { Reorder } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { FakeCheckbox } from "~/components/forms/fake-checkbox";
 import { ChevronRight, HandleIcon } from "~/components/icons/library";
@@ -21,6 +22,7 @@ import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
 import { tw } from "~/utils/tw";
 
 export function ConfigureColumnsDropdown() {
+  const { t } = useTranslation();
   const fetcher = useFetcher({
     key: "asset-index-settings-columns",
   });
@@ -28,7 +30,7 @@ export function ConfigureColumnsDropdown() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const { settings } = useLoaderData<AssetIndexLoaderData>();
   const initialColumns = (settings?.columns as Column[])?.sort(
-    (a, b) => a.position - b.position
+    (a, b) => a.position - b.position,
   );
 
   const [currentColumns, setCurrentColumns] = useState(initialColumns);
@@ -52,7 +54,7 @@ export function ConfigureColumnsDropdown() {
   const handleCheckboxChange = (index: number) => {
     setCurrentColumns((prevColumns) => {
       const newColumns = prevColumns.map((column, i) =>
-        i === index ? { ...column, visible: !column.visible } : column
+        i === index ? { ...column, visible: !column.visible } : column,
       );
       return newColumns;
     });
@@ -61,14 +63,14 @@ export function ConfigureColumnsDropdown() {
   /** Handle selecting all columns */
   const handleSelectAll = () => {
     setCurrentColumns((prevColumns) =>
-      prevColumns.map((column) => ({ ...column, visible: true }))
+      prevColumns.map((column) => ({ ...column, visible: true })),
     );
   };
 
   /** Handle deselecting all columns */
   const handleDeselectAll = () => {
     setCurrentColumns((prevColumns) =>
-      prevColumns.map((column) => ({ ...column, visible: false }))
+      prevColumns.map((column) => ({ ...column, visible: false })),
     );
   };
 
@@ -86,15 +88,15 @@ export function ConfigureColumnsDropdown() {
           icon="columns"
           className="mt-2 font-normal text-gray-500 md:mt-0"
           width="full"
-          title="Columns configuration"
-          aria-label={"Columns configuration"}
+          title={t("assetsIndex.columnsConfiguration")}
+          aria-label={t("assetsIndex.columnsConfiguration")}
         />
       </PopoverTrigger>
       <PopoverPortal>
         <PopoverContent
           align="end"
           className={tw(
-            "z-20 mt-1  w-[240px] rounded-md border border-gray-300 bg-white p-0"
+            "z-20 mt-1  w-[240px] rounded-md border border-gray-300 bg-white p-0",
           )}
         >
           <fetcher.Form action="/api/asset-index-settings" method="post">
@@ -147,7 +149,7 @@ export function ConfigureColumnsDropdown() {
                   onReorder={setCurrentColumns}
                   as="ul"
                   role="list"
-                  aria-label="Reorderable columns list"
+                  aria-label={t("assetsIndex.reorderableColumnsList")}
                   aria-describedby="reorder-instructions"
                 >
                   {currentColumns.map((column, index) => (
@@ -202,14 +204,14 @@ export function ConfigureColumnsDropdown() {
                               }
                             }}
                             className="flex flex-1 items-center text-[14px] font-medium text-gray-700 hover:cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
-                            title="Custom field"
+                            title={t("assetsIndex.customField")}
                           >
                             {" "}
                             <FakeCheckbox
                               checked={column.visible}
                               className={tw(
                                 "me-1 text-static-white",
-                                column.visible ? "text-primary" : ""
+                                column.visible ? "text-primary" : "",
                               )}
                             />
                             <span>{parseColumnName(column.name)}</span>
@@ -228,11 +230,11 @@ export function ConfigureColumnsDropdown() {
                             onKeyDown={(e) => handleKeyDown(e, index)}
                             className="flex h-auto cursor-move items-center p-1 text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
                             aria-label={`Reorder ${parseColumnName(
-                              column.name
+                              column.name,
                             )}`}
                             aria-describedby="reorder-instructions"
                             aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
-                            title="Drag to reorder or use Alt+Arrow keys"
+                            title={t("assetsIndex.dragToReorder")}
                             tabIndex={0}
                           >
                             <div className="h-auto w-2">
@@ -290,7 +292,7 @@ function ColumnsBulkActions({
         <PopoverContent
           align="end"
           className={tw(
-            "z-20 mt-2 w-[200px] rounded-md border border-gray-300 bg-white p-0"
+            "z-20 mt-2 w-[200px] rounded-md border border-gray-300 bg-white p-0",
           )}
         >
           <Button

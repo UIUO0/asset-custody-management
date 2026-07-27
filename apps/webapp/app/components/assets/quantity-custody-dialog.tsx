@@ -14,6 +14,7 @@
 
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import DynamicSelect from "~/components/dynamic-select/dynamic-select";
 import Input from "~/components/forms/input";
@@ -89,7 +90,7 @@ export function QuantityCustodyDialog({
         setInternalOpen(v);
       }
     },
-    [isControlled, controlledOnOpenChange]
+    [isControlled, controlledOnOpenChange],
   );
   /** Track the selected team member ID for the hidden input */
   const [selectedTeamMemberId, setSelectedTeamMemberId] = useState<
@@ -97,9 +98,10 @@ export function QuantityCustodyDialog({
   >(null);
   const fetcher = useFetcher({ key: "assign-quantity-custody" });
   const disabled = useDisabled(fetcher);
+  const { t } = useTranslation();
   const formRef = useRef<HTMLFormElement>(null);
 
-  const unitLabel = unitOfMeasure || "units";
+  const unitLabel = unitOfMeasure || t("quantity.units");
   const isSubmitting = isFormProcessing(fetcher.state);
 
   /** Close the dialog and reset state after a successful submission */
@@ -119,22 +121,29 @@ export function QuantityCustodyDialog({
 
       <AlertDialogContent onEscapeKeyDown={() => setOpen(false)}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Assign Quantity Custody</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("quantity.assignQuantityCustody")}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Assign a quantity of this asset to a team member. Select who
-            receives custody and how many {unitLabel} to assign.
+            {t("quantity.assignCustodyDescription", { unit: unitLabel })}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {inKit ? (
           <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
             <p>
-              This asset is part of kit{" "}
-              <Link to={`/kits/${inKit.id}`} className="font-medium underline">
-                {inKit.name}
-              </Link>
-              . Operator custody you assign here is tracked separately from the
-              kit's allocation — the kit's "in kit" count is unaffected.
+              <Trans
+                i18nKey="quantity.partOfKitNotice"
+                values={{ name: inKit.name }}
+                components={{
+                  1: (
+                    <Link
+                      to={`/kits/${inKit.id}`}
+                      className="font-medium underline"
+                    />
+                  ),
+                }}
+              />
             </p>
           </div>
         ) : null}
@@ -162,10 +171,10 @@ export function QuantityCustodyDialog({
                   deletedAt: null,
                 }}
                 fieldName="teamMemberSelect"
-                contentLabel="Team members"
+                contentLabel={t("bookingForm.teamMembers")}
                 initialDataKey="teamMembers"
                 countKey="totalTeamMembers"
-                placeholder="Select a team member"
+                placeholder={t("bookingForm.selectTeamMember")}
                 allowClear
                 closeOnSelect
                 transformItem={(item) => ({
@@ -183,11 +192,11 @@ export function QuantityCustodyDialog({
             <Input
               name="quantity"
               type="number"
-              label={`Quantity (${unitLabel})`}
+              label={t("quantity.quantityWithUnit", { unit: unitLabel })}
               placeholder={
                 availableQuantity != null
-                  ? `Max: ${availableQuantity}`
-                  : "Enter quantity"
+                  ? t("quantity.maxPlaceholder", { count: availableQuantity })
+                  : t("quantity.enterQuantity")
               }
               min={1}
               max={availableQuantity ?? undefined}
@@ -198,8 +207,8 @@ export function QuantityCustodyDialog({
             <Input
               name="note"
               inputType="textarea"
-              label="Note (optional)"
-              placeholder="Reason for assignment..."
+              label={t("quantity.noteOptional")}
+              placeholder={t("quantity.assignReasonPlaceholder")}
               rows={2}
             />
           </div>
@@ -207,12 +216,12 @@ export function QuantityCustodyDialog({
           <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={isSubmitting}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
             <Button type="submit" variant="primary" disabled={disabled}>
-              {isSubmitting ? "Assigning..." : "Assign"}
+              {isSubmitting ? t("quantity.assigning") : t("quantity.assign")}
             </Button>
           </AlertDialogFooter>
         </fetcher.Form>

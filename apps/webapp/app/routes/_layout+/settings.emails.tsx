@@ -14,6 +14,7 @@ import { ErrorContent } from "~/components/errors";
 import type { HeaderData } from "~/components/layout/header/types";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { EMAIL_FOOTER_MAX_LENGTH } from "~/modules/email-footer/constants";
@@ -58,8 +59,12 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       });
     }
 
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const header: HeaderData = {
-      title: "Email settings",
+      title: t("emailSettings.title"),
     };
 
     return payload({

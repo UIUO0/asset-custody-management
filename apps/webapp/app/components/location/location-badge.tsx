@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Location } from "@prisma/client";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { ListTree } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import useApiQuery from "~/hooks/use-api-query";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import type { LocationTreePayload } from "~/routes/api+/locations.$locationId.tree";
@@ -33,6 +34,7 @@ type LocationBadgeProps = {
 };
 
 export function LocationBadge({ location, className }: LocationBadgeProps) {
+  const { t } = useTranslation();
   const [shouldFetch, setShouldFetch] = useState(false);
 
   useEffect(() => {
@@ -89,7 +91,7 @@ export function LocationBadge({ location, className }: LocationBadgeProps) {
     if (error) {
       return (
         <p className="text-sm text-red-600">
-          {error || "Unable to load location hierarchy."}
+          {error || t("locations.hierarchyLoadFailed")}
         </p>
       );
     }
@@ -148,7 +150,7 @@ export function LocationBadge({ location, className }: LocationBadgeProps) {
         <Tag
           className={tw(
             "ms-2 inline-flex items-center gap-1 text-gray-700",
-            className
+            className,
           )}
           onMouseEnter={handleMouseEnter}
         >
@@ -172,7 +174,7 @@ export function LocationBadge({ location, className }: LocationBadgeProps) {
 
 function buildParentChainTree(
   ancestors: LocationTreePayload["ancestors"],
-  current: Pick<LocationTreePayload["location"], "id" | "name">
+  current: Pick<LocationTreePayload["location"], "id" | "name">,
 ): LocationTreeNode[] {
   if (!ancestors.length) {
     return [{ id: current.id, name: current.name, children: [] }];

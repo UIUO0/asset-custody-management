@@ -122,7 +122,7 @@ const mockGetTeamMember = teamMemberServiceMocks.getTeamMember;
 const mockBookingCreate = dbMocks.booking.create;
 
 function createActionArgs(
-  overrides: Partial<ActionFunctionArgs> = {}
+  overrides: Partial<ActionFunctionArgs> = {},
 ): ActionFunctionArgs {
   return {
     context: {
@@ -148,7 +148,7 @@ describe("bookings/new - custodian assignment", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.ADMIN,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     // Custodian not found due to org filter
@@ -163,7 +163,7 @@ describe("bookings/new - custodian assignment", () => {
       JSON.stringify({
         id: "foreign-team-member-123",
         name: "Foreign Team Member",
-      })
+      }),
     );
 
     const request = new Request("https://example.com/bookings/new", {
@@ -188,7 +188,7 @@ describe("bookings/new - custodian assignment", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.ADMIN,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     // Valid team member from same org
@@ -206,7 +206,7 @@ describe("bookings/new - custodian assignment", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Valid Team Member",
-      })
+      }),
     );
 
     const request = new Request("https://example.com/bookings/new", {
@@ -229,7 +229,7 @@ describe("bookings/new - custodian assignment", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.ADMIN,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     mockGetTeamMember.mockResolvedValue({
@@ -246,7 +246,7 @@ describe("bookings/new - custodian assignment", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Valid Team Member",
-      })
+      }),
     );
     formData.set("intent", "scan");
 
@@ -259,7 +259,7 @@ describe("bookings/new - custodian assignment", () => {
 
     expect((response as Response).status).toBe(302);
     expect(vi.mocked(redirect)).toHaveBeenCalledWith(
-      "/bookings/booking-123/overview/scan-assets"
+      "/bookings/booking-123/overview/scan-assets",
     );
   });
 
@@ -267,7 +267,7 @@ describe("bookings/new - custodian assignment", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     // Valid team member from same org, but different user
@@ -285,7 +285,7 @@ describe("bookings/new - custodian assignment", () => {
       JSON.stringify({
         id: "team-member-456",
         name: "Other Team Member",
-      })
+      }),
     );
 
     const request = new Request("https://example.com/bookings/new", {
@@ -304,7 +304,7 @@ describe("bookings/new - custodian assignment", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     // Valid team member from same org, same user
@@ -322,7 +322,7 @@ describe("bookings/new - custodian assignment", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Self User",
-      })
+      }),
     );
 
     const request = new Request("https://example.com/bookings/new", {
@@ -339,7 +339,7 @@ describe("bookings/new - custodian assignment", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.BASE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     // Valid team member from same org, but different user (should fail for BASE role)
@@ -357,7 +357,7 @@ describe("bookings/new - custodian assignment", () => {
       JSON.stringify({
         id: "team-member-456",
         name: "Other Team Member",
-      })
+      }),
     );
 
     const request = new Request("https://example.com/bookings/new", {

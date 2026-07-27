@@ -6,10 +6,12 @@ import {
   type Prisma,
 } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   LinksFunction,
   LoaderFunctionArgs,
   ActionFunctionArgs,
+  MetaFunction,
 } from "react-router";
 import {
   data,
@@ -56,6 +58,9 @@ import UnsavedChangesAlert from "~/components/unsaved-changes-alert";
 import When from "~/components/when/when";
 import { db } from "~/database/db.server";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
 import { isQuantityTracked } from "~/modules/asset/utils";
 import { resolveDisplayCode } from "~/modules/barcode/display";
@@ -96,7 +101,14 @@ import {
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 
-export const meta = () => [{ title: appendToMetaTitle("Manage kits") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.bookings.manageKitsTitle) }];
+};
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
@@ -151,7 +163,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
-    const { organizationId, userOrganizations, isSelfServiceOrBase } =
+    const { organizationId, userOrganizations, isScopedToOwnRecords } =
       await requirePermission({
         userId,
         request,
@@ -173,7 +185,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     /** Self service can only manage kits for bookings that are DRAFT */
     const cantManageAssetsAsBase =
-      isSelfServiceOrBase && booking.status !== BookingStatus.DRAFT;
+      isScopedToOwnRecords && booking.status !== BookingStatus.DRAFT;
 
     /** Changing kits is not allowed at this stage */
     const notAllowedStatus: BookingStatus[] = [
@@ -186,7 +198,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       throw new ShelfError({
         cause: null,
         label: "Booking",
-        message: isSelfServiceOrBase
+        message: isScopedToOwnRecords
           ? "You are unable to manage kits at this point because the booking is already reserved. Cancel this booking and create another one if you need to make changes."
           : "Changing of kits is not allowed for current status of booking.",
         shouldBeCaptured: false,
@@ -194,7 +206,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     }
 
     const bookingKitIds = getKitIdsByAssets(
-      booking.bookingAssets.map((ba) => ba.asset)
+      booking.bookingAssets.map((ba) => ba.asset),
     );
 
     /**
@@ -271,15 +283,19 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         },
       });
 
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     return payload({
       header: {
-        title: `Manage kits for '${booking?.name}'`,
-        subHeading: "Fill up the booking with the kits of your choice",
+        title: t("bookings.manageKitsForTitle", { name: booking?.name }),
+        subHeading: t("bookings.manageKitsSubHeading"),
       },
-      searchFieldLabel: "Search kits",
+      searchFieldLabel: t("search.kitsLabel"),
       searchFieldTooltip: {
-        title: "Search your kit database",
-        text: "Search kits based on name or description",
+        title: t("search.kitsTitle"),
+        text: t("search.kitsText"),
       },
       showSidebar: true,
       noScroll: true,
@@ -308,7 +324,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   });
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.booking,
@@ -322,7 +338,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         removedKitIds: z.array(z.string()).optional().default([]),
         redirectTo: z.string().optional().nullable(),
       }),
-      { additionalData: { userId, bookingId } }
+      { additionalData: { userId, bookingId } },
     );
 
     const booking = await db.booking
@@ -359,7 +375,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     /** Self service can only manage kits for bookings that are DRAFT */
     const cantManageAssetsAsBase =
-      isSelfServiceOrBase && booking.status !== BookingStatus.DRAFT;
+      isScopedToOwnRecords && booking.status !== BookingStatus.DRAFT;
 
     /** Changing kits is not allowed at this stage */
     const notAllowedStatus: BookingStatus[] = [
@@ -372,7 +388,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       throw new ShelfError({
         cause: null,
         label: "Booking",
-        message: isSelfServiceOrBase
+        message: isScopedToOwnRecords
           ? "You are unable to manage kits at this point because the booking is already reserved. Cancel this booking and create another one if you need to make changes."
           : "Changing of kits is not allowed for current status of booking.",
         shouldBeCaptured: false,
@@ -431,7 +447,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const existingAssetKitIds = new Set(
       booking.bookingAssets
         .map((ba) => ba.assetKitId)
-        .filter((v): v is string => v != null)
+        .filter((v): v is string => v != null),
     );
 
     // Build the kit-driven slice specs — one element per `AssetKit`
@@ -467,7 +483,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     // represented). Kits whose AssetKits are all already present in the
     // booking are no-ops here.
     const newlyAddedKits = selectedKits.filter((kit) =>
-      kit.assetKits.some((ak) => !existingAssetKitIds.has(ak.id))
+      kit.assetKits.some((ak) => !existingAssetKitIds.has(ak.id)),
     );
 
     // Get partial check-in details to determine actual availability using context-aware status
@@ -475,7 +491,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       await getDetailedPartialCheckinData(bookingId);
 
     const bookingAssetIds = new Set<string>(
-      booking.bookingAssets.map((ba) => ba.asset.id)
+      booking.bookingAssets.map((ba) => ba.asset.id),
     );
 
     // Filter kits that are truly unavailable (using centralized helper for consistency)
@@ -489,7 +505,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         kit,
         partialCheckinDetails,
         bookingAssetIds,
-        booking.status
+        booking.status,
       );
     });
 
@@ -596,7 +612,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           const content = isQuantityTracked(assetMeta)
             ? `${actor} added ${wrapAssetWithCountForNote(
                 assetMeta,
-                slice.quantity
+                slice.quantity,
               )} via ${kitLink} to ${bookingLink}.`
             : `${actor} added asset via ${kitLink} to ${bookingLink}.`;
           await createNotes({
@@ -606,7 +622,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             assetIds: [slice.assetId],
             organizationId,
           });
-        })
+        }),
       );
     }
 
@@ -623,7 +639,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         },
       });
       const allRemovedAssetIds = removedKits.flatMap((k) =>
-        k.assetKits.map((ak) => ak.asset.id)
+        k.assetKits.map((ak) => ak.asset.id),
       );
 
       await removeAssets({
@@ -674,6 +690,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function AddKitsToBooking() {
+  const { t } = useTranslation();
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -709,9 +726,9 @@ export default function AddKitsToBooking() {
     () =>
       bookingKitIds.filter(
         (kitId) =>
-          !selectedBulkItems.some((selectedItem) => selectedItem.id === kitId)
+          !selectedBulkItems.some((selectedItem) => selectedItem.id === kitId),
       ),
-    [bookingKitIds, selectedBulkItems]
+    [bookingKitIds, selectedBulkItems],
   );
 
   const manageAssetsUrl = `/bookings/${
@@ -725,7 +742,7 @@ export default function AddKitsToBooking() {
   })}`;
 
   const totalAssetsSelected = booking.bookingAssets.filter(
-    (ba) => ba.asset.assetKits.length === 0
+    (ba) => ba.asset.assetKits.length === 0,
   ).length;
   const hasUnsavedChanges = selectedBulkItems.length !== bookingKitIds.length;
 
@@ -736,7 +753,7 @@ export default function AddKitsToBooking() {
    */
   const totalModelRequestUnits = useMemo(
     () => modelRequests.reduce((acc, req) => acc + req.quantity, 0),
-    [modelRequests]
+    [modelRequests],
   );
 
   /**
@@ -761,7 +778,7 @@ export default function AddKitsToBooking() {
     const _disabledBulkItems = items.reduce<ListItemData[]>((acc, kit) => {
       const { isKitUnavailable } = getKitAvailabilityStatus(
         kit as unknown as KitForBooking,
-        booking.id
+        booking.id,
       );
       if (isKitUnavailable) {
         acc.push(kit);
@@ -797,16 +814,36 @@ export default function AddKitsToBooking() {
     >
       <div className="border-b px-6 py-2">
         <TabsList className="w-full">
-          <TabsTrigger className="flex-1 gap-x-2" value="assets">
-            Assets{" "}
+          <TabsTrigger
+            className="flex-1 gap-x-2"
+            value="assets"
+            aria-label={
+              totalAssetsSelected > 0
+                ? t("bookings.assetsTabAriaSelected", {
+                    count: totalAssetsSelected,
+                  })
+                : t("bookings.assetsTabAria")
+            }
+          >
+            {t("nav.assets")}{" "}
             {totalAssetsSelected > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {totalAssetsSelected}
               </GrayBadge>
             ) : null}
           </TabsTrigger>
-          <TabsTrigger className="flex-1 gap-x-2" value="kits">
-            Kits
+          <TabsTrigger
+            className="flex-1 gap-x-2"
+            value="kits"
+            aria-label={
+              selectedBulkItemsCount > 0
+                ? t("bookings.kitsTabAriaSelected", {
+                    count: selectedBulkItemsCount,
+                  })
+                : t("bookings.kitsTabAria")
+            }
+          >
+            {t("nav.kits")}
             {selectedBulkItemsCount > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {selectedBulkItemsCount}
@@ -817,13 +854,15 @@ export default function AddKitsToBooking() {
             <TabsTrigger
               className="flex-1 gap-x-2"
               value="models"
-              aria-label={`Models tab${
+              aria-label={
                 totalModelRequestUnits > 0
-                  ? ` (${totalModelRequestUnits} reserved)`
-                  : ""
-              }`}
+                  ? t("bookings.modelsTabAriaReserved", {
+                      count: totalModelRequestUnits,
+                    })
+                  : t("bookings.modelsTabAria")
+              }
             >
-              Models
+              {t("bookings.tabModels")}
               {totalModelRequestUnits > 0 ? (
                 <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                   {totalModelRequestUnits}
@@ -841,7 +880,11 @@ export default function AddKitsToBooking() {
        */}
       {activeTab === "kits" ? (
         <Filters
-          slots={{ "right-of-search": <AvailabilitySelect label="kits" /> }}
+          slots={{
+            "right-of-search": (
+              <AvailabilitySelect label={t("entities.kit_plural")} />
+            ),
+          }}
           innerWrapperClassName="justify-between"
           className="justify-between !border-t-0 border-b px-6 md:flex"
         />
@@ -854,7 +897,7 @@ export default function AddKitsToBooking() {
           navigate={(_kitId, kit) => {
             const { isKitUnavailable } = getKitAvailabilityStatus(
               kit as KitForBooking,
-              booking.id
+              booking.id,
             );
             if (isKitUnavailable) {
               return;
@@ -863,10 +906,10 @@ export default function AddKitsToBooking() {
           }}
           emptyStateClassName="py-10"
           customEmptyStateContent={{
-            title: "You haven't created any kits yet.",
-            text: "What are you waiting for? Create your first kit now!",
+            title: t("kits.pickerEmptyTitle"),
+            text: t("kits.pickerEmptyText"),
             newButtonRoute: "/kits/new",
-            newButtonContent: "New kit",
+            newButtonContent: t("kits.newKit"),
           }}
           hideFirstHeaderColumn
           bulkActions={<> </>}
@@ -874,9 +917,9 @@ export default function AddKitsToBooking() {
           headerChildren={
             <>
               <Th></Th>
-              <Th>Description</Th>
-              <Th>Location</Th>
-              <Th>Assets</Th>
+              <Th>{t("assets.description")}</Th>
+              <Th>{t("assets.location")}</Th>
+              <Th>{t("nav.assets")}</Th>
             </>
           }
         />
@@ -908,17 +951,19 @@ export default function AddKitsToBooking() {
       <footer
         className={tw(
           "mt-auto flex shrink-0 items-center border-t px-6 py-3",
-          activeTab === "kits" ? "justify-between" : "justify-end"
+          activeTab === "kits" ? "justify-between" : "justify-end",
         )}
       >
         {activeTab === "kits" ? (
           <div className="flex flex-col justify-center gap-1">
-            {selectedBulkItems.length} kits selected
+            {t("bookings.kitsSelectedCount", {
+              count: selectedBulkItems.length,
+            })}
           </div>
         ) : null}
         <div className="flex gap-3">
           <Button variant="secondary" to={".."}>
-            Close
+            {t("common.close")}
           </Button>
           <Form method="post" ref={formRef}>
             {/* We create inputs for both the removed and selected assets, so we can compare and easily add/remove */}
@@ -951,7 +996,7 @@ export default function AddKitsToBooking() {
                 value="addKits"
                 disabled={isSearching}
               >
-                Confirm
+                {t("common.confirm")}
               </Button>
             ) : null}
           </Form>
@@ -968,8 +1013,7 @@ export default function AddKitsToBooking() {
           void submit(formRef.current);
         }}
       >
-        You have added some kits to the booking but haven't saved it yet. Do you
-        want to confirm adding those kits?
+        {t("bookings.unsavedKitsAlert")}
       </UnsavedChangesAlert>
     </Tabs>
   );
@@ -991,8 +1035,8 @@ function Row({ item: kit }: { item: KitForBooking }) {
       ak.asset.bookingAssets.some(
         (ba) =>
           ba.booking.id === booking.id &&
-          ["ONGOING", "OVERDUE"].includes(ba.booking.status)
-      )
+          ["ONGOING", "OVERDUE"].includes(ba.booking.status),
+      ),
     );
 
   return (

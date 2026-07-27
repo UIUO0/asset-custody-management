@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Prisma } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { z } from "zod";
 import {
@@ -68,6 +69,7 @@ export default function AddAssetsKitsToLocationDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   const { location } = useLoaderData<LoaderData>();
   // Get the scanned items from jotai
   const items = useAtomValue(scannedItemsAtom);
@@ -100,9 +102,9 @@ export default function AddAssetsKitsToLocationDrawer({
   const assetQuantitiesJson = JSON.stringify(
     Object.fromEntries(
       Object.entries(assetQuantities).filter(([assetId]) =>
-        assetIdsForLocation.includes(assetId)
-      )
-    )
+        assetIdsForLocation.includes(assetId),
+      ),
+    ),
   );
 
   // Setup blockers
@@ -243,7 +245,7 @@ export default function AddAssetsKitsToLocationDrawer({
       }}
       items={items}
       onClearItems={clearList}
-      title="Items scanned"
+      title={t("scanner.itemsScanned")}
       isLoading={isLoading}
       renderItem={renderItemRow}
       Blockers={Blockers}
@@ -270,6 +272,7 @@ export function AssetRow({
     assetLocations: { asset: { id: string } }[];
   };
 }) {
+  const { t } = useTranslation();
   const primaryLocation = getPrimaryLocation(asset);
 
   // Use a combination of standard presets and custom configurations
@@ -277,20 +280,20 @@ export function AssetRow({
     // Custom preset for "already in this kit"
     {
       condition: location.assetLocations.some(
-        (al) => al?.asset?.id === asset.id
+        (al) => al?.asset?.id === asset.id,
       ),
-      badgeText: "Already added to this location",
-      tooltipTitle: "Asset is part of location",
-      tooltipContent: "This asset is already added to the current location.",
+      badgeText: t("scanAvailability.alreadyAddedToLocation"),
+      tooltipTitle: t("scanAvailability.assetPartOfLocationTitle"),
+      tooltipContent: t("scanAvailability.assetInLocationContent"),
       priority: 70,
     },
     {
       condition: !!primaryLocation && primaryLocation.id !== location.id,
-      badgeText: "Part of another location",
-      tooltipTitle: "Asset is part of another location",
+      badgeText: t("scanAvailability.partOfAnotherLocation"),
+      tooltipTitle: t("scanAvailability.assetPartOfAnotherLocationTitle"),
       tooltipContent: (
         <>
-          This asset is currently part of another kit
+          {t("scanAvailability.assetInAnotherLocationPrefix")}
           {primaryLocation ? (
             <>
               :{" "}
@@ -305,8 +308,7 @@ export function AssetRow({
               <br />
             </>
           ) : undefined}
-          You will still be able to add this asset to replace it's current
-          location.
+          {t("scanAvailability.stillCanReplaceAssetLocation")}
         </>
       ),
       priority: 70,
@@ -316,7 +318,7 @@ export function AssetRow({
   // Create the availability labels component
   const [, AssetAvailabilityLabels] = createAvailabilityLabels(
     availabilityConfigs,
-    { maxLabels: 5 }
+    { maxLabels: 5 },
   );
 
   const qtyTracked = isQuantityTracked(asset) && asset.quantity != null;
@@ -352,7 +354,7 @@ export function AssetRow({
             className={tw(
               "inline-block bg-gray-50 px-[6px] py-[2px]",
               "rounded-md border border-gray-200",
-              "text-xs text-gray-700"
+              "text-xs text-gray-700",
             )}
           >
             asset
@@ -386,23 +388,24 @@ export function KitRow({
     "id" | "kits"
   >;
 }) {
+  const { t } = useTranslation();
   // Use a combination of standard presets and custom configurations
   const availabilityConfigs = [
     // Custom preset for "already in this kit"
     {
       condition: location.kits.some((a: any) => a?.id === kit.id),
-      badgeText: "Already added to this location",
-      tooltipTitle: "Kit is part of location",
-      tooltipContent: "This kit is already added to the current location.",
+      badgeText: t("scanAvailability.alreadyAddedToLocation"),
+      tooltipTitle: t("scanAvailability.kitPartOfLocationTitle"),
+      tooltipContent: t("scanAvailability.kitInLocationContent"),
       priority: 70,
     },
     {
       condition: !!kit.locationId && kit.locationId !== location.id,
-      badgeText: "Part of another location",
-      tooltipTitle: "Kit is part of another location",
+      badgeText: t("scanAvailability.partOfAnotherLocation"),
+      tooltipTitle: t("scanAvailability.kitPartOfAnotherLocationTitle"),
       tooltipContent: (
         <>
-          This kit is currently part of another location
+          {t("scanAvailability.kitInAnotherLocationPrefix")}
           {kit?.location ? (
             <>
               :{" "}
@@ -417,8 +420,7 @@ export function KitRow({
               <br />
             </>
           ) : undefined}
-          You will still be able to add this kit to replace it's current
-          location.
+          {t("scanAvailability.stillCanReplaceKitLocation")}
         </>
       ),
       priority: 70,
@@ -428,7 +430,7 @@ export function KitRow({
   // Create the availability labels component
   const [, KitAvailabilityLabels] = createAvailabilityLabels(
     availabilityConfigs,
-    { maxLabels: 5 }
+    { maxLabels: 5 },
   );
 
   return (
@@ -445,7 +447,7 @@ export function KitRow({
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit

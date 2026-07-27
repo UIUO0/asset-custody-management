@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CustomFieldType, type CustomField } from "@prisma/client";
 import { useAtom } from "jotai";
 import { useTranslation } from "react-i18next";
-import { Link, useActionData, useNavigation } from "react-router";
+import { useActionData, useNavigation } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { updateDynamicTitleAtom } from "~/atoms/dynamic-title-atom";
@@ -250,17 +250,7 @@ export const CustomFieldForm = ({
         <div>
           <FormRow
             rowLabel={t("customFields.category")}
-            subHeading={
-              <p>
-                {t("customFields.categorySubheading")}{" "}
-                <Link
-                  to="https://www.shelf.nu/knowledge-base/linking-custom-fields-to-categories"
-                  target="_blank"
-                >
-                  {t("customFields.readMore")}
-                </Link>
-              </p>
-            }
+            subHeading={<p>{t("customFields.categorySubheading")}</p>}
           >
             <div className="mb-3 flex gap-3">
               <Switch

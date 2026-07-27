@@ -9,6 +9,7 @@
  * @see {@link file://./../../routes/_layout+/reports.$reportId.tsx}
  */
 
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import type { ResolvedTimeframe } from "~/modules/reports/types";
 
@@ -48,6 +49,7 @@ export function ReportExportActions({
   isExporting,
   onCsvExport,
 }: Props) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
       {/* PDF Export — primary for B2B (booking-compliance, asset-inventory,
@@ -74,9 +76,13 @@ export function ReportExportActions({
         variant="secondary"
         onClick={onCsvExport}
         disabled={!hasData || isExporting}
-        title={!hasData ? "No data to export" : "Export report as CSV"}
+        title={
+          !hasData
+            ? t("reports.noDataToExport")
+            : t("reports.exportReportAsCsv")
+        }
       >
-        {isExporting ? "Exporting..." : "Export CSV"}
+        {isExporting ? "Exporting..." : t("reports.exportCsv")}
       </Button>
     </div>
   );

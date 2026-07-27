@@ -160,7 +160,7 @@ describe("manage-kits route validation", () => {
     // Setup default mocks
     vi.mocked(rolesServer.requirePermission).mockResolvedValue({
       organizationId: "org123",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       organizations: [],
       currentOrganization: {} as any,
       role: {} as any,
@@ -187,7 +187,7 @@ describe("manage-kits route validation", () => {
       status: BookingStatus.ONGOING,
     });
     vi.mocked(bookingService.createKitBookingNote).mockResolvedValue(
-      undefined as any
+      undefined as any,
     );
     vi.mocked(noteService.createNotes).mockResolvedValue({ count: 0 });
   });
@@ -243,7 +243,7 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Should return error response for checked out kits
@@ -263,13 +263,13 @@ describe("manage-kits route validation", () => {
         mockKits[0],
         {},
         new Set(["asset1", "asset2"]),
-        "ONGOING"
+        "ONGOING",
       );
       expect(bookingAssets.isKitPartiallyCheckedIn).toHaveBeenCalledWith(
         mockKits[1],
         {},
         new Set(["asset1", "asset2"]),
-        "ONGOING"
+        "ONGOING",
       );
     });
 
@@ -331,7 +331,7 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // A pure kit-add passes `assetIds: []` — the kit members travel ONLY
@@ -353,7 +353,7 @@ describe("manage-kits route validation", () => {
               quantity: 5,
             },
           ],
-        })
+        }),
       );
     });
 
@@ -414,8 +414,8 @@ describe("manage-kits route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
 
       // Should not call validation helper since no newly added kits
@@ -460,7 +460,7 @@ describe("manage-kits route validation", () => {
         {
           checkedInAssetIds: ["asset3"],
           partialCheckinDetails: mockPartialCheckinDetails,
-        }
+        },
       );
 
       // Mock that kit is partially checked in (available for other bookings)
@@ -477,15 +477,15 @@ describe("manage-kits route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
 
       expect(bookingAssets.isKitPartiallyCheckedIn).toHaveBeenCalledWith(
         mockKits[0],
         mockPartialCheckinDetails,
         new Set(["asset1", "asset2"]),
-        "ONGOING"
+        "ONGOING",
       );
     });
 
@@ -523,7 +523,7 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       assertIsDataWithResponseInit(response);
@@ -562,8 +562,8 @@ describe("manage-kits route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
 
       // Should not call validation helper since kit is available
@@ -605,8 +605,8 @@ describe("manage-kits route validation", () => {
             context: mockContext,
             request: mockRequest,
             params: mockParams,
-          })
-        )
+          }),
+        ),
       ).resolves.not.toThrow();
     });
   });
@@ -648,7 +648,7 @@ describe("manage-kits route validation", () => {
         {
           checkedInAssetIds: ["asset3"],
           partialCheckinDetails: mockPartialCheckinDetails,
-        }
+        },
       );
       vi.mocked(bookingAssets.isKitPartiallyCheckedIn).mockReturnValue(true);
 
@@ -657,7 +657,7 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // Verify helper is called with correct parameters
@@ -665,7 +665,7 @@ describe("manage-kits route validation", () => {
         mockKits[0],
         mockPartialCheckinDetails,
         new Set(["asset1", "asset2"]), // existing booking asset IDs
-        "ONGOING"
+        "ONGOING",
       );
     });
   });
@@ -740,7 +740,7 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       // updateBookingAssets must be called exactly once with ONLY kit1
@@ -760,7 +760,7 @@ describe("manage-kits route validation", () => {
               quantity: 1,
             },
           ],
-        })
+        }),
       );
     });
   });
@@ -801,13 +801,13 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(response).toBeInstanceOf(Response);
       expect((response as Response).status).toBe(302);
       expect((response as Response).headers.get("Location")).toBe(
-        manageAssetsUrl
+        manageAssetsUrl,
       );
     });
 
@@ -829,13 +829,13 @@ describe("manage-kits route validation", () => {
           context: mockContext,
           request: mockRequest,
           params: mockParams,
-        })
+        }),
       );
 
       expect(response).toBeInstanceOf(Response);
       expect((response as Response).status).toBe(302);
       expect((response as Response).headers.get("Location")).toBe(
-        "/bookings/booking123"
+        "/bookings/booking123",
       );
     });
   });
@@ -894,7 +894,7 @@ describe("manage-kits loader — Models tab payload", () => {
     vi.mocked(rolesServer.requirePermission).mockResolvedValue({
       organizationId: "org123",
       userOrganizations: [],
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
       organizations: [],
       currentOrganization: {} as any,
       role: {} as any,
@@ -911,7 +911,7 @@ describe("manage-kits loader — Models tab payload", () => {
     vi.mocked(bookingService.getBooking).mockResolvedValue(mockLoaderBooking);
     vi.mocked(bookingService.getKitIdsByAssets).mockReturnValue([]);
     vi.mocked(kitService.getPaginatedAndFilterableKits).mockResolvedValue(
-      mockPaginatedKits as any
+      mockPaginatedKits as any,
     );
   });
 
@@ -925,7 +925,7 @@ describe("manage-kits loader — Models tab payload", () => {
     });
 
     const result = await loader(
-      createLoaderArgs({ context: mockContext, params: mockParams })
+      createLoaderArgs({ context: mockContext, params: mockParams }),
     );
 
     expect(result).toMatchObject({
@@ -981,11 +981,11 @@ describe("manage-kits loader — Models tab payload", () => {
       ],
     };
     vi.mocked(modelRequestService.getBookingModelTabData).mockResolvedValue(
-      mockModelTabData as any
+      mockModelTabData as any,
     );
 
     const result = await loader(
-      createLoaderArgs({ context: mockContext, params: mockParams })
+      createLoaderArgs({ context: mockContext, params: mockParams }),
     );
 
     expect(result).toHaveProperty("initialAssetModels");
@@ -1015,7 +1015,7 @@ describe("manage-kits loader — Models tab payload", () => {
     });
 
     await loader(
-      createLoaderArgs({ context: mockContext, params: mockParams })
+      createLoaderArgs({ context: mockContext, params: mockParams }),
     );
 
     expect(modelRequestService.getBookingModelTabData).toHaveBeenCalledWith({

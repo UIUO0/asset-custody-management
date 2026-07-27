@@ -9,6 +9,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 import { tw } from "~/utils/tw";
 
@@ -35,6 +36,7 @@ export function ReportPagination({
   totalRows,
   className,
 }: ReportPaginationProps) {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const totalPages = Math.ceil(totalRows / pageSize);
@@ -63,9 +65,9 @@ export function ReportPagination({
           "text-gray-600 transition-colors",
           "hover:bg-gray-50 hover:text-gray-900",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white",
         )}
-        aria-label="Go to previous page"
+        aria-label={t("list.goToPreviousPage")}
       >
         <ChevronLeft className="size-4" />
       </button>
@@ -84,9 +86,9 @@ export function ReportPagination({
           "text-gray-600 transition-colors",
           "hover:bg-gray-50 hover:text-gray-900",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white",
         )}
-        aria-label="Go to next page"
+        aria-label={t("list.goToNextPage")}
       >
         <ChevronRight className="size-4" />
       </button>

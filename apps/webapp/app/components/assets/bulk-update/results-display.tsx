@@ -5,6 +5,7 @@
  *
  * @see {@link file://./form.tsx} Parent orchestration component
  */
+import { useTranslation } from "react-i18next";
 import type { BulkUpdateResult } from "~/utils/import-update.server";
 import { escapeCsvValue } from "./helpers";
 import { SummaryPill } from "./shared";
@@ -27,6 +28,7 @@ export function ResultsDisplay({
   result: BulkUpdateResult;
   onReset: () => void;
 }) {
+  const { t } = useTranslation();
   const handleDownloadReport = () => {
     const lines: string[] = ["Status,Row,Asset ID,Asset Name,Details"];
 
@@ -34,30 +36,30 @@ export function ResultsDisplay({
       lines.push(
         `Updated,,${escapeCsvValue(asset.id)},${escapeCsvValue(asset.title)},${
           asset.changesApplied
-        } fields changed`
+        } fields changed`,
       );
     }
     for (const asset of result.skipped) {
       lines.push(
         `Skipped,,${escapeCsvValue(asset.id)},${escapeCsvValue(
-          asset.title
-        )},${escapeCsvValue(asset.reason)}`
+          asset.title,
+        )},${escapeCsvValue(asset.reason)}`,
       );
     }
     for (const row of result.failed) {
       lines.push(
         `Failed,${row.rowNumber || ""},${escapeCsvValue(
-          row.id || "(unknown)"
+          row.id || "(unknown)",
         )},${escapeCsvValue(
-          row.title || row.id || "(unknown)"
-        )},${escapeCsvValue(row.error)}`
+          row.title || row.id || "(unknown)",
+        )},${escapeCsvValue(row.error)}`,
       );
     }
     for (const warning of result.warnings) {
       lines.push(
         `Warning,${warning.rowNumber || ""},${escapeCsvValue(
-          warning.id || "(unknown)"
-        )},,${escapeCsvValue(warning.message)}`
+          warning.id || "(unknown)",
+        )},,${escapeCsvValue(warning.message)}`,
       );
     }
 
@@ -75,25 +77,29 @@ export function ResultsDisplay({
 
   return (
     <div className="mt-4 w-full">
-      <h4 className="mb-3">Update complete</h4>
+      <h4 className="mb-3">{t("assetUpdate.updateComplete")}</h4>
 
       {/* Summary */}
       <div className="mb-4 flex gap-4 rounded-md border bg-gray-50 p-4 text-sm">
         <SummaryPill
           count={result.summary.updated}
-          label="updated"
+          label={t("assetUpdate.pillUpdated")}
           color="green"
         />
         <SummaryPill
           count={result.summary.skipped}
-          label="unchanged"
+          label={t("assetUpdate.pillUnchanged")}
           color="gray"
         />
-        <SummaryPill count={result.summary.failed} label="failed" color="red" />
+        <SummaryPill
+          count={result.summary.failed}
+          label={t("assetUpdate.pillFailed")}
+          color="red"
+        />
         {result.warnings.length > 0 ? (
           <SummaryPill
             count={result.warnings.length}
-            label="warnings"
+            label={t("assetUpdate.pillWarnings")}
             color="yellow"
           />
         ) : null}
@@ -103,15 +109,16 @@ export function ResultsDisplay({
       {result.updated.length > 0 && (
         <details className="mb-3" open>
           <summary className="cursor-pointer font-medium text-green-600">
-            {result.updated.length} asset
-            {result.updated.length !== 1 ? "s" : ""} updated successfully
+            {t("assetUpdate.updatedSuccessfully", {
+              count: result.updated.length,
+            })}
           </summary>
           <div className="mt-2 max-h-[200px] overflow-y-auto rounded-md border">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-green-50">
                 <Tr>
-                  <Th>Asset</Th>
-                  <Th>Fields changed</Th>
+                  <Th>{t("assetUpdate.colAsset")}</Th>
+                  <Th>{t("assetUpdate.colFieldsChanged")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -132,14 +139,14 @@ export function ResultsDisplay({
         <details className="mb-3">
           <summary className="cursor-pointer text-sm text-gray-500">
             {result.skipped.length} asset
-            {result.skipped.length !== 1 ? "s" : ""} unchanged
+            {t("assetUpdate.unchangedCount", { count: result.skipped.length })}
           </summary>
           <div className="mt-2 max-h-[200px] overflow-y-auto rounded-md border">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-gray-50">
                 <Tr>
-                  <Th>Asset</Th>
-                  <Th>Reason</Th>
+                  <Th>{t("assetUpdate.colAsset")}</Th>
+                  <Th>{t("assetUpdate.colReason")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -163,16 +170,17 @@ export function ResultsDisplay({
       {result.warnings.length > 0 && (
         <details className="mb-3" open>
           <summary className="cursor-pointer font-medium text-yellow-700">
-            {result.warnings.length} warning
-            {result.warnings.length !== 1 ? "s" : ""}
+            {t("assetUpdate.warningsCount", {
+              count: result.warnings.length,
+            })}
           </summary>
           <div className="mt-2 max-h-[200px] overflow-y-auto rounded-md border border-yellow-200">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-yellow-50">
                 <Tr>
-                  <Th>Row</Th>
-                  <Th>Asset</Th>
-                  <Th>Warning</Th>
+                  <Th>{t("assetUpdate.colRow")}</Th>
+                  <Th>{t("assetUpdate.colAsset")}</Th>
+                  <Th>{t("assetUpdate.colWarning")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -193,16 +201,15 @@ export function ResultsDisplay({
       {result.failed.length > 0 && (
         <div className="mb-3">
           <h5 className="mb-1 font-medium text-red-600">
-            {result.failed.length} row
-            {result.failed.length !== 1 ? "s" : ""} failed
+            {t("assetUpdate.failedRowsCount", { count: result.failed.length })}
           </h5>
           <div className="max-h-[200px] overflow-y-auto rounded-md border border-red-200">
             <Table className="[&_td]:px-2 [&_td]:py-1.5 [&_th]:px-2 [&_th]:py-1.5">
               <thead className="sticky top-0 bg-red-50">
                 <Tr>
-                  <Th>Row</Th>
-                  <Th>Asset</Th>
-                  <Th>Error</Th>
+                  <Th>{t("assetUpdate.colRow")}</Th>
+                  <Th>{t("assetUpdate.colAsset")}</Th>
+                  <Th>{t("assetUpdate.colError")}</Th>
                 </Tr>
               </thead>
               <tbody>
@@ -222,16 +229,16 @@ export function ResultsDisplay({
       {/* Actions */}
       <div className="mt-4 flex gap-2">
         <Button type="button" variant="secondary" onClick={onReset}>
-          Import another file
+          {t("assetUpdate.importAnotherFile")}
         </Button>
         <Button
           type="button"
           variant="secondary"
           onClick={handleDownloadReport}
         >
-          Download report
+          {t("assetUpdate.downloadReport")}
         </Button>
-        <Button to="/assets">View assets</Button>
+        <Button to="/assets">{t("assetUpdate.viewAssets")}</Button>
       </div>
     </div>
   );

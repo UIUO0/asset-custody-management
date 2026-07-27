@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from "react";
 import type { Prisma } from "@prisma/client";
 import { m } from "framer-motion";
 import { useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import type { ScanListItem } from "~/atoms/qr-scanner";
 import { updateScannedItemAtom } from "~/atoms/qr-scanner";
 import { Button } from "~/components/shared/button";
@@ -91,6 +92,7 @@ export function GenericItemRow<T>({
   searchParams: additionalSearchParams,
   className: rowClassName,
 }: GenericItemRowProps<T>) {
+  const { t } = useTranslation();
   const setItem = useSetAtom(updateScannedItemAtom);
 
   // Track if item had data on initial mount (restored from DB)
@@ -163,7 +165,7 @@ export function GenericItemRow<T>({
         }
       }
     },
-    [isBarcode, qrId, setItem]
+    [isBarcode, qrId, setItem],
   );
 
   /**
@@ -173,9 +175,9 @@ export function GenericItemRow<T>({
   const handleApiError = useCallback(() => {
     setItem({
       qrId,
-      item: { error: "Failed to fetch item" },
+      item: { error: t("scanner.failedToFetchItem") },
     });
-  }, [qrId, setItem]);
+  }, [qrId, setItem, t]);
 
   // Use the API hook to fetch item data
   const { error: fetchError } = useApiQuery<ApiResponse>({
@@ -192,7 +194,7 @@ export function GenericItemRow<T>({
 
   // Determine the current state for better loading UX
   const currentError =
-    item?.error || (fetchError ? "Failed to fetch item" : undefined);
+    item?.error || (fetchError ? t("scanner.failedToFetchItem") : undefined);
 
   return (
     <Tr skipEntrance={hadDataOnMountRef.current} className={rowClassName}>
@@ -212,10 +214,10 @@ export function GenericItemRow<T>({
           onClick={() => onRemove(qrId)}
           aria-label={
             item?.data && "title" in item.data
-              ? `Remove scanned item: ${item.data.title}`
+              ? t("scanner.removeScannedItemNamed", { name: item.data.title })
               : item?.data && "name" in item.data
-              ? `Remove scanned item: ${item.data.name}`
-              : "Remove scanned item"
+              ? t("scanner.removeScannedItemNamed", { name: item.data.name })
+              : t("scanner.removeScannedItem")
           }
         />
       </Td>
@@ -262,7 +264,7 @@ export function Tr({
       onAnimationComplete={() => setIsAnimating(false)}
       className={tw(
         "h-[80px] items-center border-b hover:bg-gray-50 [&_td]:border-b-0",
-        className
+        className,
       )}
       style={style}
     >
@@ -289,16 +291,17 @@ export function DefaultLoadingState({
   qrId: string;
   error?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="max-w-full">
       <p>
-        Code: <span className="font-semibold">{qrId}</span>
+        {t("scanner.codeLabel")} <span className="font-semibold">{qrId}</span>
       </p>{" "}
       {error ? (
         <p className="whitespace-normal text-[12px] text-error-500">{error}</p>
       ) : (
         <TextLoader
-          text="Fetching item"
+          text={t("scanner.fetchingItem")}
           className="text-[10px] text-gray-500"
         />
       )}

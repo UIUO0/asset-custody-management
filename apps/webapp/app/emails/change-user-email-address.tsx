@@ -1,4 +1,5 @@
 import { Container, Head, Html, render, Text } from "@react-email/components";
+import { config } from "~/config/shelf.config";
 import { resolveUserDisplayName } from "~/utils/user";
 import { styles } from "./styles";
 
@@ -24,7 +25,7 @@ Don't share this OTP with anyone. Our customer service team will never ask you f
 This code will expire in 1 hour. If you have not requested this change, please ignore the email and contact support immediately.
 
 Kind regards,
-the Shelf team`;
+the ${config.appName} team`;
 
 function ChangeEmailAddressHtmlEmailTemplate({
   otp,
@@ -66,7 +67,7 @@ function ChangeEmailAddressHtmlEmailTemplate({
             <br />
             Kind regards,
             <br />
-            the Shelf team
+            the {config.appName} team
           </Text>
         </div>
       </Container>
@@ -85,5 +86,5 @@ export const changeEmailAddressHtmlEmail = (
     lastName?: string | null;
     displayName?: string | null;
     email: string;
-  }
+  },
 ) => render(<ChangeEmailAddressHtmlEmailTemplate otp={otp} user={user} />);

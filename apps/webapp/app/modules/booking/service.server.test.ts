@@ -90,7 +90,7 @@ vitest.mock("~/database/db.server", () => ({
       .mockImplementation((callbackOrArray) =>
         typeof callbackOrArray === "function"
           ? callbackOrArray(db)
-          : Promise.all(callbackOrArray)
+          : Promise.all(callbackOrArray),
       ),
     $executeRaw: vitest.fn().mockResolvedValue(0),
     booking: {
@@ -113,7 +113,7 @@ vitest.mock("~/database/db.server", () => ({
       findMany: vitest.fn().mockImplementation((args?: any) => {
         const ids = args?.where?.id?.in;
         return Promise.resolve(
-          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : []
+          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : [],
         );
       }),
       updateMany: vitest.fn().mockResolvedValue({ count: 0 }),
@@ -127,7 +127,7 @@ vitest.mock("~/database/db.server", () => ({
       findMany: vitest.fn().mockImplementation((args?: any) => {
         const ids = args?.where?.id?.in;
         return Promise.resolve(
-          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : []
+          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : [],
         );
       }),
     },
@@ -140,7 +140,7 @@ vitest.mock("~/database/db.server", () => ({
       findMany: vitest.fn().mockImplementation((args?: any) => {
         const ids = args?.where?.id?.in;
         return Promise.resolve(
-          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : []
+          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : [],
         );
       }),
     },
@@ -286,7 +286,7 @@ vitest.mock(
       ...actual,
       createConsumptionLog: vitest.fn().mockResolvedValue({}),
     };
-  }
+  },
 );
 
 // why: booking service writes activity events from main's transactional
@@ -357,7 +357,7 @@ const HOURS_BETWEEN_FROM_AND_TO = 8;
 const futureFromDate = new Date();
 futureFromDate.setDate(futureFromDate.getDate() + 30);
 const futureToDate = new Date(
-  futureFromDate.getTime() + HOURS_BETWEEN_FROM_AND_TO * 60 * 60 * 1000
+  futureFromDate.getTime() + HOURS_BETWEEN_FROM_AND_TO * 60 * 60 * 1000,
 );
 const futureCreatedAt = new Date(futureFromDate.getTime() - 60 * 60 * 1000);
 
@@ -428,11 +428,11 @@ describe("createBooking", () => {
     // echo back exactly the requested ids (deduped) for the guards to pass.
     (db.asset.findMany as ReturnType<typeof vitest.fn>).mockImplementation(
       ({ where }: { where: { id: { in: string[] } } }) =>
-        where.id.in.map((id) => ({ id }))
+        where.id.in.map((id) => ({ id })),
     );
     (db.tag.findMany as ReturnType<typeof vitest.fn>).mockImplementation(
       ({ where }: { where: { id: { in: string[] } } }) =>
-        where.id.in.map((id) => ({ id }))
+        where.id.in.map((id) => ({ id })),
     );
   });
 
@@ -502,7 +502,7 @@ describe("createBooking", () => {
             create: [{ assetId: "asset-1", quantity: 1, assetKitId: "ak-1" }],
           },
         }),
-      })
+      }),
     );
   });
 
@@ -524,7 +524,7 @@ describe("createBooking", () => {
         data: expect.objectContaining({
           bookingAssets: { create: [{ assetId: "asset-1" }] },
         }),
-      })
+      }),
     );
   });
 
@@ -582,7 +582,7 @@ describe("createBooking", () => {
     db.booking.create.mockRejectedValue(error);
 
     await expect(createBooking(mockCreateBookingParams)).rejects.toThrow(
-      ShelfError
+      ShelfError,
     );
   });
 });
@@ -747,7 +747,7 @@ describe("partialCheckinBooking", () => {
     ]);
 
     await expect(
-      partialCheckinBooking(mockPartialCheckinParams)
+      partialCheckinBooking(mockPartialCheckinParams),
     ).rejects.toThrow(/never checked out/i);
   });
 
@@ -880,7 +880,7 @@ describe("partialCheckinBooking", () => {
       partialCheckinBooking({
         ...mockPartialCheckinParams,
         assetIds: ["asset-2", "asset-unrelated"],
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     // Must not have completed or recorded anything.
@@ -911,7 +911,7 @@ describe("partialCheckinBooking", () => {
     ]);
 
     await expect(
-      partialCheckinBooking(mockPartialCheckinParams)
+      partialCheckinBooking(mockPartialCheckinParams),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -1270,7 +1270,7 @@ describe("updateBasicBooking", () => {
     });
 
     await expect(updateBasicBooking(mockUpdateBookingParams)).rejects.toThrow(
-      ShelfError
+      ShelfError,
     );
   });
 
@@ -1286,7 +1286,7 @@ describe("updateBasicBooking", () => {
     });
 
     await expect(updateBasicBooking(mockUpdateBookingParams)).rejects.toThrow(
-      ShelfError
+      ShelfError,
     );
   });
 
@@ -1302,7 +1302,7 @@ describe("updateBasicBooking", () => {
     });
 
     await expect(updateBasicBooking(mockUpdateBookingParams)).rejects.toThrow(
-      ShelfError
+      ShelfError,
     );
   });
 
@@ -1312,11 +1312,11 @@ describe("updateBasicBooking", () => {
     // Mock booking not found
     //@ts-expect-error missing vitest type
     db.booking.findUniqueOrThrow.mockRejectedValue(
-      new Error("Booking not found")
+      new Error("Booking not found"),
     );
 
     await expect(updateBasicBooking(mockUpdateBookingParams)).rejects.toThrow(
-      ShelfError
+      ShelfError,
     );
   });
 
@@ -1365,7 +1365,7 @@ describe("updateBasicBooking", () => {
         changes: expect.arrayContaining([
           expect.stringContaining("Booking name changed"),
         ]),
-      })
+      }),
     );
   });
 
@@ -1499,7 +1499,7 @@ describe("updateBasicBooking", () => {
     expect(sendBookingUpdatedEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         oldCustodianEmail: "old-custodian@example.com",
-      })
+      }),
     );
   });
 
@@ -1551,7 +1551,7 @@ describe("updateBasicBooking", () => {
         field: "from",
         fromValue: oldFrom.toISOString(),
         toValue: newFrom.toISOString(),
-      })
+      }),
     );
     expect(activityEventService.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1560,7 +1560,7 @@ describe("updateBasicBooking", () => {
         field: "to",
         fromValue: oldTo.toISOString(),
         toValue: newTo.toISOString(),
-      })
+      }),
     );
   });
 });
@@ -1710,7 +1710,7 @@ describe("updateBookingAssets", () => {
     db.booking.findUniqueOrThrow.mockRejectedValue(new Error("Database error"));
 
     await expect(
-      updateBookingAssets(mockUpdateBookingAssetsParams)
+      updateBookingAssets(mockUpdateBookingAssetsParams),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -1730,13 +1730,13 @@ describe("updateBookingAssets", () => {
     db.asset.findMany.mockResolvedValue([]);
 
     await expect(
-      updateBookingAssets(mockUpdateBookingAssetsParams)
+      updateBookingAssets(mockUpdateBookingAssetsParams),
     ).rejects.toThrow(
       expect.objectContaining({
         message:
           "None of the selected assets exist. They may have been deleted.",
         status: 400,
-      })
+      }),
     );
 
     expect(db.$executeRaw).not.toHaveBeenCalled();
@@ -1758,13 +1758,13 @@ describe("updateBookingAssets", () => {
     db.asset.findMany.mockResolvedValue([{ id: "asset-1" }]);
 
     await expect(
-      updateBookingAssets(mockUpdateBookingAssetsParams)
+      updateBookingAssets(mockUpdateBookingAssetsParams),
     ).rejects.toThrow(
       expect.objectContaining({
         message:
           "Some of the selected assets no longer exist. Please reload and try again.",
         status: 400,
-      })
+      }),
     );
 
     expect(db.$executeRaw).not.toHaveBeenCalled();
@@ -1851,8 +1851,8 @@ describe("updateBookingAssets", () => {
         (arg) =>
           Array.isArray(arg) &&
           arg.includes("ak-kit-1") &&
-          arg.includes("ak-kit-2")
-      )
+          arg.includes("ak-kit-2"),
+      ),
     );
     expect(kitDrivenCall).toBeDefined();
 
@@ -1860,7 +1860,7 @@ describe("updateBookingAssets", () => {
     const sharedAssetIdArray = kitDrivenCall?.find(
       (arg: unknown) =>
         Array.isArray(arg) &&
-        arg.filter((v) => v === "asset-shared").length === 2
+        arg.filter((v) => v === "asset-shared").length === 2,
     );
     expect(sharedAssetIdArray).toBeDefined();
   });
@@ -1898,7 +1898,7 @@ describe("updateBookingAssets", () => {
     const kitInsertCall = (
       db.$executeRaw as unknown as ReturnType<typeof vitest.fn>
     ).mock.calls.find((call: unknown[]) =>
-      call.some((arg) => Array.isArray(arg) && arg.includes("ak-1"))
+      call.some((arg) => Array.isArray(arg) && arg.includes("ak-1")),
     );
     expect(kitInsertCall).toBeUndefined();
     expect(db.booking.findUniqueOrThrow).toHaveBeenCalled();
@@ -1966,7 +1966,7 @@ describe("buildKitSlicesForBooking", () => {
     // scoped by organizationId — the only thing stopping a foreign-org kit id
     // from leaking another org's membership into the caller's booking.
     (db.assetKit.findMany as ReturnType<typeof vitest.fn>).mockResolvedValue(
-      []
+      [],
     );
 
     await buildKitSlicesForBooking({
@@ -1977,7 +1977,7 @@ describe("buildKitSlicesForBooking", () => {
     expect(db.assetKit.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { kitId: { in: ["kit-1", "kit-2"] }, organizationId: "org-1" },
-      })
+      }),
     );
   });
 
@@ -2009,7 +2009,7 @@ describe("reserveBooking", () => {
     to: futureToDate,
     description: "Reserved booking description",
     hints: mockClientHints,
-    isSelfServiceOrBase: false,
+    isScopedToOwnRecords: false,
     tags: [],
   };
 
@@ -2067,7 +2067,7 @@ describe("reserveBooking", () => {
           to: futureToDate,
           description: "Reserved booking description",
         }),
-      })
+      }),
     );
     expect(result).toEqual(reservedBooking);
   });
@@ -2105,7 +2105,7 @@ describe("reserveBooking", () => {
     db.booking.findUniqueOrThrow.mockResolvedValue(mockBooking);
 
     await expect(reserveBooking(mockReserveParams)).rejects.toThrow(
-      "Cannot reserve booking. Some assets are already booked or checked out: Asset 1. Please remove conflicted assets and try again."
+      "Cannot reserve booking. Some assets are already booked or checked out: Asset 1. Please remove conflicted assets and try again.",
     );
   });
 
@@ -2128,7 +2128,7 @@ describe("reserveBooking", () => {
     db.booking.findUniqueOrThrow.mockResolvedValue(mockBooking);
 
     await expect(reserveBooking(mockReserveParams)).rejects.toThrow(
-      /only DRAFT bookings can be reserved/i
+      /only DRAFT bookings can be reserved/i,
     );
     // The guard fires before any write happens — no status flip, no
     // booking.update call.
@@ -2148,9 +2148,9 @@ describe("checkoutBooking", () => {
       (args?: any) => {
         const ids = args?.where?.id?.in;
         return Promise.resolve(
-          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : []
+          Array.isArray(ids) ? ids.map((id: string) => ({ id })) : [],
         );
-      }
+      },
     );
   });
 
@@ -2193,7 +2193,7 @@ describe("checkoutBooking", () => {
     db.asset.findMany.mockResolvedValue([{ id: "asset-1" }]);
 
     await expect(checkoutBooking(mockCheckoutParams)).rejects.toThrow(
-      "Some of the selected assets do not exist in your workspace"
+      "Some of the selected assets do not exist in your workspace",
     );
     // fail-safe: no status transition, no booking write
     expect(db.asset.updateMany).not.toHaveBeenCalled();
@@ -2291,7 +2291,7 @@ describe("checkoutBooking", () => {
     db.booking.findUniqueOrThrow.mockResolvedValue(mockBooking);
 
     await expect(checkoutBooking(mockCheckoutParams)).rejects.toThrow(
-      "Cannot check out booking. Some assets are already booked or checked out: Asset 1. Please remove conflicted assets and try again."
+      "Cannot check out booking. Some assets are already booked or checked out: Asset 1. Please remove conflicted assets and try again.",
     );
   });
 
@@ -2355,7 +2355,7 @@ describe("checkoutBooking", () => {
     ]);
 
     await expect(checkoutBooking(mockCheckoutParams)).rejects.toThrow(
-      ShelfError
+      ShelfError,
     );
 
     // Re-run to inspect the thrown ShelfError shape.
@@ -2473,7 +2473,7 @@ describe("fulfilModelRequestsAndCheckout", () => {
       .find(
         (arg) =>
           arg?.data?.status === BookingStatus.ONGOING ||
-          arg?.data?.status === BookingStatus.OVERDUE
+          arg?.data?.status === BookingStatus.OVERDUE,
       );
   }
 
@@ -2624,7 +2624,7 @@ describe("fulfilModelRequestsAndCheckout", () => {
           assetId: "dell-1",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -2669,7 +2669,7 @@ describe("fulfilModelRequestsAndCheckout", () => {
       fulfilModelRequestsAndCheckout({
         ...mockFulfilParams,
         assetIds: ["dell-1"],
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     // Rollback semantics: the callback-style `$transaction` mock doesn't
@@ -2706,7 +2706,7 @@ describe("fulfilModelRequestsAndCheckout", () => {
       .mockResolvedValueOnce(mockBooking)
       .mockResolvedValueOnce(hydratedBooking);
     (db.asset.findMany as ReturnType<typeof vitest.fn>).mockResolvedValueOnce(
-      []
+      [],
     );
     (
       db.bookingAsset.findMany as ReturnType<typeof vitest.fn>
@@ -2745,7 +2745,7 @@ describe("fulfilModelRequestsAndCheckout", () => {
     // original" and "not absurdly wrong".
     expect(rewrittenFrom.getTime()).toBeLessThan(futureFromDate.getTime());
     expect(Math.abs(rewrittenFrom.getTime() - nowBeforeCall)).toBeLessThan(
-      5 * 60 * 1000
+      5 * 60 * 1000,
     );
     expect(updateCall?.data?.status).toBe(BookingStatus.ONGOING);
   });
@@ -2775,7 +2775,7 @@ describe("fulfilModelRequestsAndCheckout", () => {
       .mockResolvedValueOnce(mockBooking)
       .mockResolvedValueOnce(hydratedBooking);
     (db.asset.findMany as ReturnType<typeof vitest.fn>).mockResolvedValueOnce(
-      []
+      [],
     );
     (
       db.bookingAsset.findMany as ReturnType<typeof vitest.fn>
@@ -3278,7 +3278,7 @@ describe("checkinBooking", () => {
         eventType: "booking-auto-archive-handler",
       }),
       expect.any(Object),
-      expect.any(Date)
+      expect.any(Date),
     );
   });
 
@@ -3325,7 +3325,7 @@ describe("checkinBooking", () => {
         eventType: "booking-auto-archive-handler",
       }),
       expect.any(Object),
-      expect.any(Date)
+      expect.any(Date),
     );
   });
 
@@ -3369,7 +3369,7 @@ describe("checkinBooking", () => {
         eventType: "booking-auto-archive-handler",
       }),
       expect.any(Object),
-      expect.any(Date)
+      expect.any(Date),
     );
   });
 });
@@ -3410,7 +3410,7 @@ describe("archiveBooking", () => {
     db.booking.findUniqueOrThrow.mockResolvedValue(mockBooking);
 
     await expect(
-      archiveBooking({ id: "booking-1", organizationId: "org-1" })
+      archiveBooking({ id: "booking-1", organizationId: "org-1" }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -3493,7 +3493,7 @@ describe("archiveBooking", () => {
     db.booking.findUniqueOrThrow.mockResolvedValue(mockBooking);
 
     await expect(
-      archiveBooking({ id: "booking-1", organizationId: "org-1" })
+      archiveBooking({ id: "booking-1", organizationId: "org-1" }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -3554,7 +3554,7 @@ describe("cancelBooking", () => {
         id: "booking-1",
         organizationId: "org-1",
         hints: mockClientHints,
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -3581,7 +3581,7 @@ describe("cancelBooking", () => {
      */
     function mockReconciliationCounts(
       otherActiveBookingsByAssetId: Record<string, number>,
-      custodyByAssetId: Record<string, number>
+      custodyByAssetId: Record<string, number>,
     ) {
       (
         db.bookingAsset.count as ReturnType<typeof vitest.fn>
@@ -3593,7 +3593,7 @@ describe("cancelBooking", () => {
         (args?: { where?: { assetId?: string } }) => {
           const assetId = args?.where?.assetId ?? "";
           return Promise.resolve(custodyByAssetId[assetId] ?? 0);
-        }
+        },
       );
     }
 
@@ -3757,7 +3757,7 @@ describe("deleteBooking", () => {
     await deleteBooking(
       { id: "booking-1", organizationId: "org-1" },
       mockClientHints,
-      "user-1"
+      "user-1",
     );
 
     expect(db.booking.findUnique).toHaveBeenCalled();
@@ -3772,7 +3772,7 @@ describe("deleteBooking", () => {
     /** See cancelBooking equivalent above — same per-asset count-mock shim. */
     function mockReconciliationCounts(
       otherActiveBookingsByAssetId: Record<string, number>,
-      custodyByAssetId: Record<string, number>
+      custodyByAssetId: Record<string, number>,
     ) {
       (
         db.bookingAsset.count as ReturnType<typeof vitest.fn>
@@ -3784,7 +3784,7 @@ describe("deleteBooking", () => {
         (args?: { where?: { assetId?: string } }) => {
           const assetId = args?.where?.assetId ?? "";
           return Promise.resolve(custodyByAssetId[assetId] ?? 0);
-        }
+        },
       );
     }
 
@@ -3823,7 +3823,7 @@ describe("deleteBooking", () => {
       await deleteBooking(
         { id: "booking-1", organizationId: "org-1" },
         mockClientHints,
-        "user-1"
+        "user-1",
       );
 
       expect(db.asset.updateMany).toHaveBeenCalledWith({
@@ -3872,7 +3872,7 @@ describe("deleteBooking", () => {
       await deleteBooking(
         { id: "booking-1", organizationId: "org-1" },
         mockClientHints,
-        "user-1"
+        "user-1",
       );
 
       expect(db.asset.updateMany).toHaveBeenCalledWith({
@@ -3916,7 +3916,7 @@ describe("deleteBooking", () => {
       await deleteBooking(
         { id: "booking-1", organizationId: "org-1" },
         mockClientHints,
-        "user-1"
+        "user-1",
       );
 
       expect(db.asset.updateMany).toHaveBeenCalledWith({
@@ -4035,7 +4035,7 @@ describe("duplicateBooking", () => {
           from,
           to,
         }),
-      })
+      }),
     );
     expect(result).toEqual(duplicatedBooking);
 
@@ -4046,7 +4046,7 @@ describe("duplicateBooking", () => {
         action: "BOOKING_CREATED",
         bookingId: "booking-2",
       }),
-      expect.anything()
+      expect.anything(),
     );
 
     // One BOOKING_ASSETS_ADDED per copied asset.
@@ -4063,7 +4063,7 @@ describe("duplicateBooking", () => {
           assetId: "asset-2",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -4160,7 +4160,7 @@ describe("duplicateBooking", () => {
             ],
           },
         }),
-      })
+      }),
     );
 
     // Sanity: the two copied rows are distinct on assetKitId so they
@@ -4316,7 +4316,7 @@ describe("duplicateBooking", () => {
     expect(createdSlices).toEqual(
       expect.arrayContaining([
         { assetId: "asset-standalone", quantity: 1, assetKitId: null },
-      ])
+      ]),
     );
 
     // Kit-driven slice for the newly-added QT carries AssetKit.quantity (5),
@@ -4324,7 +4324,7 @@ describe("duplicateBooking", () => {
     expect(createdSlices).toEqual(
       expect.arrayContaining([
         { assetId: "qt-gloves", quantity: 5, assetKitId: "ak-qt" },
-      ])
+      ]),
     );
 
     // BOOKING_CREATED lifecycle event reflects the NEW slice count (5),
@@ -4334,7 +4334,7 @@ describe("duplicateBooking", () => {
         action: "BOOKING_CREATED",
         meta: expect.objectContaining({ assetCount: 5 }),
       }),
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -4386,7 +4386,7 @@ describe("revertBookingToDraft", () => {
     db.booking.findUniqueOrThrow.mockResolvedValue(mockBooking);
 
     await expect(
-      revertBookingToDraft({ id: "booking-1", organizationId: "org-1" })
+      revertBookingToDraft({ id: "booking-1", organizationId: "org-1" }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -4444,7 +4444,7 @@ describe("extendBooking", () => {
           to: expect.any(Date),
         }),
         include: expect.any(Object),
-      })
+      }),
     );
     expect(result).toEqual(extendedBooking);
 
@@ -4454,7 +4454,7 @@ describe("extendBooking", () => {
         action: "BOOKING_DATES_CHANGED",
         bookingId: "booking-1",
         field: "to",
-      })
+      }),
     );
   });
 
@@ -4473,7 +4473,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.ADMIN,
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -4512,7 +4512,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.SELF_SERVICE,
-      })
+      }),
     ).resolves.toBeDefined();
   });
 
@@ -4537,7 +4537,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.SELF_SERVICE,
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -4560,7 +4560,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.BASE,
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -4601,7 +4601,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1", // Different user (OWNER)
         role: OrganizationRoles.OWNER,
-      })
+      }),
     ).resolves.toBeDefined();
   });
 
@@ -4642,7 +4642,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.SELF_SERVICE,
-      })
+      }),
     ).resolves.toBeDefined();
   });
 
@@ -4683,7 +4683,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.SELF_SERVICE,
-      })
+      }),
     ).resolves.toBeDefined();
   });
 
@@ -4729,9 +4729,9 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.ADMIN,
-      })
+      }),
     ).rejects.toThrow(
-      "Cannot extend booking because the extended period is overlapping"
+      "Cannot extend booking because the extended period is overlapping",
     );
   });
 
@@ -4770,7 +4770,7 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.ADMIN,
-      })
+      }),
     ).resolves.toBeDefined();
   });
 
@@ -4820,7 +4820,7 @@ describe("extendBooking", () => {
           status: BookingStatus.ONGOING,
           to: expect.any(Date),
         }),
-      })
+      }),
     );
     expect(result.status).toBe(BookingStatus.ONGOING);
 
@@ -4834,7 +4834,7 @@ describe("extendBooking", () => {
         field: "status",
         fromValue: BookingStatus.OVERDUE,
         toValue: BookingStatus.ONGOING,
-      })
+      }),
     );
   });
 
@@ -4895,7 +4895,7 @@ describe("extendBooking", () => {
         where: expect.objectContaining({
           bookingAssets: { some: { assetId: { in: ["asset-2", "asset-3"] } } },
         }),
-      })
+      }),
     );
 
     expect(db.booking.update).toHaveBeenCalled();
@@ -4996,9 +4996,9 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.ADMIN,
-      })
+      }),
     ).rejects.toThrow(
-      "Cannot extend booking because the extended period is overlapping"
+      "Cannot extend booking because the extended period is overlapping",
     );
   });
 
@@ -5043,9 +5043,9 @@ describe("extendBooking", () => {
         hints: mockClientHints,
         userId: "user-1",
         role: OrganizationRoles.ADMIN,
-      })
+      }),
     ).rejects.toThrow(
-      "Cannot extend booking. All assets have been returned. Please complete the booking instead."
+      "Cannot extend booking. All assets have been returned. Please complete the booking instead.",
     );
   });
 });
@@ -5109,7 +5109,7 @@ describe("removeAssets", () => {
     /** See cancelBooking equivalent above — same per-asset count-mock shim. */
     function mockReconciliationCounts(
       otherActiveBookingsByAssetId: Record<string, number>,
-      custodyByAssetId: Record<string, number>
+      custodyByAssetId: Record<string, number>,
     ) {
       (
         db.bookingAsset.count as ReturnType<typeof vitest.fn>
@@ -5121,7 +5121,7 @@ describe("removeAssets", () => {
         (args?: { where?: { assetId?: string } }) => {
           const assetId = args?.where?.assetId ?? "";
           return Promise.resolve(custodyByAssetId[assetId] ?? 0);
-        }
+        },
       );
     }
 
@@ -5243,7 +5243,7 @@ describe("wrapBookingStatusForNote", () => {
   it("should wrap booking status with custodianUserId", () => {
     const result = wrapBookingStatusForNote("RESERVED", "user-123");
     expect(result).toBe(
-      '{% booking_status status="RESERVED" custodianUserId="user-123" /%}'
+      '{% booking_status status="RESERVED" custodianUserId="user-123" /%}',
     );
   });
 
@@ -5279,7 +5279,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for DRAFT->RESERVED transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.DRAFT,
-      BookingStatus.RESERVED
+      BookingStatus.RESERVED,
     );
     expect(result).toBe("reserved the booking");
   });
@@ -5287,7 +5287,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for RESERVED->ONGOING transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.RESERVED,
-      BookingStatus.ONGOING
+      BookingStatus.ONGOING,
     );
     expect(result).toBe("checked-out the booking");
   });
@@ -5295,7 +5295,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for ONGOING->COMPLETE transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.ONGOING,
-      BookingStatus.COMPLETE
+      BookingStatus.COMPLETE,
     );
     expect(result).toBe("checked-in the booking");
   });
@@ -5303,7 +5303,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for RESERVED->CANCELLED transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.RESERVED,
-      BookingStatus.CANCELLED
+      BookingStatus.CANCELLED,
     );
     expect(result).toBe("cancelled the booking");
   });
@@ -5311,7 +5311,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for ONGOING->CANCELLED transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.ONGOING,
-      BookingStatus.CANCELLED
+      BookingStatus.CANCELLED,
     );
     expect(result).toBe("cancelled the booking");
   });
@@ -5319,7 +5319,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for OVERDUE->CANCELLED transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.OVERDUE,
-      BookingStatus.CANCELLED
+      BookingStatus.CANCELLED,
     );
     expect(result).toBe("cancelled the booking");
   });
@@ -5327,7 +5327,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for COMPLETE->ARCHIVED transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.COMPLETE,
-      BookingStatus.ARCHIVED
+      BookingStatus.ARCHIVED,
     );
     expect(result).toBe("archived the booking");
   });
@@ -5335,7 +5335,7 @@ describe("getActionTextFromTransition", () => {
   it("should return correct action text for RESERVED->DRAFT transition", () => {
     const result = getActionTextFromTransition(
       BookingStatus.RESERVED,
-      BookingStatus.DRAFT
+      BookingStatus.DRAFT,
     );
     expect(result).toBe("reverted booking to draft");
   });
@@ -5343,7 +5343,7 @@ describe("getActionTextFromTransition", () => {
   it("should return fallback action text for unknown transitions", () => {
     const result = getActionTextFromTransition(
       BookingStatus.DRAFT,
-      BookingStatus.COMPLETE
+      BookingStatus.COMPLETE,
     );
     expect(result).toBe("changed the booking status");
   });
@@ -5353,7 +5353,7 @@ describe("getSystemActionText", () => {
   it("should return correct system action text for ONGOING->OVERDUE transition", () => {
     const result = getSystemActionText(
       BookingStatus.ONGOING,
-      BookingStatus.OVERDUE
+      BookingStatus.OVERDUE,
     );
     expect(result).toBe("Booking became overdue");
   });
@@ -5361,7 +5361,7 @@ describe("getSystemActionText", () => {
   it("should return fallback system action text for unknown transitions", () => {
     const result = getSystemActionText(
       BookingStatus.DRAFT,
-      BookingStatus.RESERVED
+      BookingStatus.RESERVED,
     );
     expect(result).toBe("Booking status changed");
   });
@@ -5557,7 +5557,7 @@ describe("getOngoingBookingForAsset", () => {
       getOngoingBookingForAsset({
         assetId: "asset-7",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -5620,7 +5620,7 @@ describe("computeBookingAssetRemaining", () => {
     const remaining = await computeBookingAssetRemaining(
       db,
       "booking-1",
-      "asset-1"
+      "asset-1",
     );
 
     expect(remaining).toBe(7);
@@ -5637,7 +5637,7 @@ describe("computeBookingAssetRemaining", () => {
     const remaining = await computeBookingAssetRemaining(
       db,
       "booking-1",
-      "asset-1"
+      "asset-1",
     );
 
     expect(remaining).toBe(0);
@@ -5658,7 +5658,7 @@ describe("computeBookingAssetRemaining", () => {
     const remaining = await computeBookingAssetRemaining(
       db,
       "booking-1",
-      "asset-1"
+      "asset-1",
     );
 
     expect(remaining).toBe(10);
@@ -5676,7 +5676,7 @@ describe("computeBookingAssetRemaining", () => {
     const remaining = await computeBookingAssetRemaining(
       db,
       "booking-1",
-      "asset-1"
+      "asset-1",
     );
 
     expect(remaining).toBe(0);
@@ -5709,7 +5709,7 @@ describe("computeBookingAssetSliceRemaining", () => {
     const remaining = await computeBookingAssetSliceRemaining(
       db,
       "booking-1",
-      "ba-slice-1"
+      "ba-slice-1",
     );
 
     expect(remaining).toBe(38);
@@ -5722,7 +5722,7 @@ describe("computeBookingAssetSliceRemaining", () => {
     const remaining = await computeBookingAssetSliceRemaining(
       db,
       "booking-1",
-      "ba-missing"
+      "ba-missing",
     );
 
     expect(remaining).toBe(0);
@@ -5981,7 +5981,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
       pool?: number;
       logged?: number;
       custodySum?: number;
-    } = {}
+    } = {},
   ) {
     const pool = overrides.pool ?? 100;
     const logged = overrides.logged ?? 0;
@@ -6050,19 +6050,19 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         category: "RETURN",
         quantity: 10,
         bookingId: mockQtyBookingId,
-      })
+      }),
     );
     // RETURN never touches Asset.quantity (pool stays put).
     expect(db.asset.update).not.toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ quantity: expect.anything() }),
-      })
+      }),
     );
     // Booking flipped to COMPLETE because remaining hit zero.
     expect(db.booking.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: BookingStatus.COMPLETE }),
-      })
+      }),
     );
   });
 
@@ -6124,7 +6124,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         category: "RETURN",
         quantity: 10,
         bookingId: mockQtyBookingId,
-      })
+      }),
     );
   });
 
@@ -6185,7 +6185,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         category: "CONSUME",
         quantity: 10,
         bookingId: mockQtyBookingId,
-      })
+      }),
     );
   });
 
@@ -6234,7 +6234,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
       partialCheckinBooking({
         ...baseParams,
         assetIds: [mockQtyAssetId],
-      })
+      }),
     ).rejects.toThrow(/no units remain to check in/);
   });
 
@@ -6279,13 +6279,13 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
     });
 
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
-      expect.objectContaining({ category: "RETURN", quantity: 5 })
+      expect.objectContaining({ category: "RETURN", quantity: 5 }),
     );
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
-      expect.objectContaining({ category: "LOSS", quantity: 3 })
+      expect.objectContaining({ category: "LOSS", quantity: 3 }),
     );
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
-      expect.objectContaining({ category: "DAMAGE", quantity: 2 })
+      expect.objectContaining({ category: "DAMAGE", quantity: 2 }),
     );
     // Pool decrement = lost (3) + damaged (2) = 5. RETURN is excluded.
     expect(db.asset.update).toHaveBeenCalledWith({
@@ -6295,7 +6295,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
     expect(db.booking.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: BookingStatus.COMPLETE }),
-      })
+      }),
     );
   });
 
@@ -6343,7 +6343,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
       db.booking.update as ReturnType<typeof vitest.fn>
     ).mock.calls;
     const flippedToComplete = bookingUpdateCalls.some(
-      (callArgs) => callArgs[0]?.data?.status === BookingStatus.COMPLETE
+      (callArgs) => callArgs[0]?.data?.status === BookingStatus.COMPLETE,
     );
     expect(flippedToComplete).toBe(false);
 
@@ -6362,7 +6362,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
     });
 
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
-      expect.objectContaining({ category: "CONSUME", quantity: 10 })
+      expect.objectContaining({ category: "CONSUME", quantity: 10 }),
     );
     expect(db.asset.update).toHaveBeenCalledWith({
       where: { id: mockQtyAssetId },
@@ -6371,7 +6371,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
     expect(db.booking.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: BookingStatus.COMPLETE }),
-      })
+      }),
     );
   });
 
@@ -6385,7 +6385,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
       partialCheckinBooking({
         ...baseParams,
         checkins: [{ assetId: mockQtyAssetId, returned: 12 }],
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     // No log writes and no pool decrement on rejection.
@@ -6404,7 +6404,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
       partialCheckinBooking({
         ...baseParams,
         checkins: [{ assetId: mockQtyAssetId, lost: 5 }],
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     expect(consumptionLogService.createConsumptionLog).not.toHaveBeenCalled();
@@ -6421,7 +6421,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         ...baseParams,
         checkins: [],
         assetIds: [],
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -6452,14 +6452,14 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         category: "RETURN",
         quantity: 5,
         bookingAssetId: "ba-A",
-      })
+      }),
     );
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
       expect.objectContaining({
         category: "RETURN",
         quantity: 3,
         bookingAssetId: "ba-B",
-      })
+      }),
     );
   });
 
@@ -6480,7 +6480,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         checkins: [
           { assetId: mockQtyAssetId, bookingAssetId: "ba-A", returned: 8 },
         ],
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     expect(consumptionLogService.createConsumptionLog).not.toHaveBeenCalled();
@@ -6505,7 +6505,7 @@ describe("partialCheckinBooking — qty-tracked dispositions", () => {
         category: "RETURN",
         quantity: 10,
         bookingAssetId: null,
-      })
+      }),
     );
   });
 });
@@ -6645,7 +6645,7 @@ describe("checkinBooking — qty-tracked auto-default", () => {
         // Bug 2 fix: auto-default tags the log with the slice's bookingAssetId
         // (not NULL) so future reads attribute it to the right slice.
         bookingAssetId: "ba-pens-standalone",
-      })
+      }),
     );
     expect(db.asset.update).toHaveBeenCalledWith({
       where: { id: mockQtyAssetId },
@@ -6654,7 +6654,7 @@ describe("checkinBooking — qty-tracked auto-default", () => {
     expect(db.booking.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: BookingStatus.COMPLETE }),
-      })
+      }),
     );
   });
 
@@ -6672,18 +6672,18 @@ describe("checkinBooking — qty-tracked auto-default", () => {
         quantity: 10,
         // Bug 2 fix: auto-default RETURN is tagged with the slice id too.
         bookingAssetId: "ba-pens-standalone",
-      })
+      }),
     );
     // RETURN must NOT decrement Asset.quantity.
     expect(db.asset.update).not.toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ quantity: expect.anything() }),
-      })
+      }),
     );
     expect(db.booking.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: BookingStatus.COMPLETE }),
-      })
+      }),
     );
   });
 
@@ -6699,13 +6699,13 @@ describe("checkinBooking — qty-tracked auto-default", () => {
 
     // Only a LOSS log — no RETURN or CONSUME auto-fill.
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
-      expect.objectContaining({ category: "LOSS", quantity: 10 })
+      expect.objectContaining({ category: "LOSS", quantity: 10 }),
     );
     const calls = (
       consumptionLogService.createConsumptionLog as ReturnType<typeof vitest.fn>
     ).mock.calls;
     const categoriesLogged = calls.map(
-      (callArgs) => callArgs[0]?.category as string | undefined
+      (callArgs) => callArgs[0]?.category as string | undefined,
     );
     expect(categoriesLogged).not.toContain("RETURN");
     // Pool decrement = lost (10).
@@ -6801,8 +6801,8 @@ describe("checkinBooking — qty-tracked auto-default", () => {
           ? { quantity: 33 }
           : where.id === kitSliceId
           ? { quantity: 22 }
-          : null
-      )
+          : null,
+      ),
     );
     // why: no logs written yet on either slice or the asset.
     //@ts-expect-error missing vitest type
@@ -6830,7 +6830,7 @@ describe("checkinBooking — qty-tracked auto-default", () => {
         category: "RETURN",
         quantity: 33,
         bookingAssetId: standaloneSliceId,
-      })
+      }),
     );
     expect(consumptionLogService.createConsumptionLog).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -6838,7 +6838,7 @@ describe("checkinBooking — qty-tracked auto-default", () => {
         category: "RETURN",
         quantity: 22,
         bookingAssetId: kitSliceId,
-      })
+      }),
     );
 
     // None of the logs are NULL-tagged (the bug).
@@ -6900,7 +6900,7 @@ describe("bulkArchiveBookings", () => {
           action: "BOOKING_ARCHIVED",
           bookingId: "bk-arch-2",
         }),
-      ])
+      ]),
     );
   });
 
@@ -6949,10 +6949,10 @@ describe("bulkArchiveBookings", () => {
     // suite stubs for booking notes (it forwards to db.bookingNote.create), so
     // we assert per-booking payload here rather than just a call count.
     expect(bookingNoteService.createSystemBookingNote).toHaveBeenCalledWith(
-      expect.objectContaining({ bookingId: "b1", organizationId: "org-1" })
+      expect.objectContaining({ bookingId: "b1", organizationId: "org-1" }),
     );
     expect(bookingNoteService.createSystemBookingNote).toHaveBeenCalledWith(
-      expect.objectContaining({ bookingId: "b2", organizationId: "org-1" })
+      expect.objectContaining({ bookingId: "b2", organizationId: "org-1" }),
     );
   });
 
@@ -6974,7 +6974,7 @@ describe("bulkArchiveBookings", () => {
         bookingIds: ["b1"],
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -7028,7 +7028,7 @@ describe("bulkArchiveBookings", () => {
         bookingIds: ["r1"],
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
     expect(db.booking.updateMany).not.toHaveBeenCalled();
   });
@@ -7051,7 +7051,7 @@ describe("bulkArchiveBookings", () => {
         bookingIds: ["o1"],
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -7140,7 +7140,7 @@ describe("bulkArchiveBookings", () => {
           action: "BOOKING_ARCHIVED",
           bookingId: "b2",
         }),
-      ])
+      ]),
     );
   });
 
@@ -7196,11 +7196,11 @@ describe("bulkArchiveBookings", () => {
     ]);
     // Status note for the archived booking …
     expect(bookingNoteService.createSystemBookingNote).toHaveBeenCalledWith(
-      expect.objectContaining({ bookingId: "b1" })
+      expect.objectContaining({ bookingId: "b1" }),
     );
     // … but never for the concurrently-skipped one.
     expect(bookingNoteService.createSystemBookingNote).not.toHaveBeenCalledWith(
-      expect.objectContaining({ bookingId: "r1" })
+      expect.objectContaining({ bookingId: "r1" }),
     );
   });
 });
@@ -7265,7 +7265,7 @@ describe("bulkCancelBookings", () => {
           bookingId: "bk-canc-2",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -7313,7 +7313,7 @@ describe("addScannedAssetsToBooking", () => {
         bookingId: "booking-1",
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(/already booked or checked out/i);
 
     // The conflicting asset must never be connected to the booking — the guard
@@ -7370,7 +7370,7 @@ describe("addScannedAssetsToBooking", () => {
           assetId: "asset-scan-2",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -7410,7 +7410,7 @@ describe("getExistingBookingDetails — addable statuses", () => {
     });
 
     await expect(
-      getExistingBookingDetails("booking-1", "org-1")
+      getExistingBookingDetails("booking-1", "org-1"),
     ).rejects.toThrow(/Draft, Reserved, Ongoing or Overdue/i);
   });
 });
@@ -7427,7 +7427,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
    *  2. the guard — filters `status: CHECKED_OUT`; returns the offending rows.
    */
   function mockAssets(
-    rows: Array<{ id: string; title?: string; status: AssetStatus }>
+    rows: Array<{ id: string; title?: string; status: AssetStatus }>,
   ) {
     (db.asset.findMany as ReturnType<typeof vitest.fn>).mockImplementation(
       (args?: any) => {
@@ -7441,17 +7441,17 @@ describe("processBooking — checked-out guard for active bookings", () => {
           return Promise.resolve(
             rows
               .filter(
-                (r) => r.status === AssetStatus.CHECKED_OUT && inScope(r.id)
+                (r) => r.status === AssetStatus.CHECKED_OUT && inScope(r.id),
               )
-              .map((r) => ({ id: r.id, title: r.title ?? r.id }))
+              .map((r) => ({ id: r.id, title: r.title ?? r.id })),
           );
         }
         return Promise.resolve(
           rows
             .filter((r) => inScope(r.id))
-            .map((r) => ({ id: r.id, status: r.status, assetKits: [] }))
+            .map((r) => ({ id: r.id, status: r.status, assetKits: [] })),
         );
-      }
+      },
     );
   }
 
@@ -7468,7 +7468,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
     ownership: {
       creatorId?: string | null;
       custodianUserId?: string | null;
-    } = {}
+    } = {},
   ) {
     (db.booking.findFirst as ReturnType<typeof vitest.fn>).mockResolvedValue({
       id: "booking-1",
@@ -7490,7 +7490,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
     ]);
 
     await expect(
-      processBooking("booking-1", ["asset-1"], "org-1", OWNER_AUTH)
+      processBooking("booking-1", ["asset-1"], "org-1", OWNER_AUTH),
     ).rejects.toThrow(/already checked out/i);
   });
 
@@ -7506,7 +7506,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
       processBooking("booking-1", ["asset-1"], "org-1", {
         userId: "attacker",
         role: OrganizationRoles.SELF_SERVICE,
-      })
+      }),
     ).rejects.toThrow(/not authorized/i);
   });
 
@@ -7518,7 +7518,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
       "booking-1",
       ["asset-1"],
       "org-1",
-      { userId: "owner-user", role: OrganizationRoles.SELF_SERVICE }
+      { userId: "owner-user", role: OrganizationRoles.SELF_SERVICE },
     );
     expect(finalAssetIds).toEqual(["asset-1"]);
   });
@@ -7531,7 +7531,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
       "booking-1",
       ["asset-1"],
       "org-1",
-      OWNER_AUTH
+      OWNER_AUTH,
     );
     expect(finalAssetIds).toEqual(["asset-1"]);
   });
@@ -7546,7 +7546,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
       "booking-1",
       ["asset-1"],
       "org-1",
-      OWNER_AUTH
+      OWNER_AUTH,
     );
     expect(finalAssetIds).toEqual(["asset-1"]);
   });
@@ -7564,7 +7564,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
       "booking-1",
       ["asset-1"],
       "org-1",
-      OWNER_AUTH
+      OWNER_AUTH,
     );
     expect(finalAssetIds).toEqual(["asset-1"]);
   });
@@ -7582,7 +7582,7 @@ describe("processBooking — checked-out guard for active bookings", () => {
       "booking-1",
       ["asset-1", "asset-2"],
       "org-1",
-      OWNER_AUTH
+      OWNER_AUTH,
     );
     expect(finalAssetIds).toEqual(["asset-1", "asset-2"]);
   });
@@ -7596,7 +7596,7 @@ describe("assertKitsAddableToActiveBooking", () => {
   /** Kits already on the booking, resolved from existingAssetKitIds. */
   function mockKitsAlreadyOnBooking(kitIds: string[]) {
     (db.assetKit.findMany as ReturnType<typeof vitest.fn>).mockResolvedValue(
-      kitIds.map((kitId) => ({ kitId }))
+      kitIds.map((kitId) => ({ kitId })),
     );
   }
 
@@ -7618,7 +7618,7 @@ describe("assertKitsAddableToActiveBooking", () => {
 
       expect(db.assetKit.findMany).not.toHaveBeenCalled();
       expect(db.kit.findMany).not.toHaveBeenCalled();
-    }
+    },
   );
 
   it.each([BookingStatus.ONGOING, BookingStatus.OVERDUE])(
@@ -7634,9 +7634,9 @@ describe("assertKitsAddableToActiveBooking", () => {
           bookingStatus,
           bookingId: "booking-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(/already checked out/i);
-    }
+    },
   );
 
   it("does NOT throw for a checked-out kit that is already on this booking", async () => {
@@ -7689,7 +7689,7 @@ describe("booking notes + events — qty-tracked axis", () => {
     // Default echo mock used by the org-validation guards.
     (db.asset.findMany as ReturnType<typeof vitest.fn>).mockImplementation(
       ({ where }: { where: { id: { in: string[] } } }) =>
-        where.id.in.map((id) => ({ id }))
+        where.id.in.map((id) => ({ id })),
     );
   });
 
@@ -7718,7 +7718,7 @@ describe("booking notes + events — qty-tracked axis", () => {
           title: "Pens",
           type: AssetType.QUANTITY_TRACKED,
           unitOfMeasure: "boxes",
-        }))
+        })),
     );
 
     await updateBookingAssets({
@@ -7739,7 +7739,7 @@ describe("booking notes + events — qty-tracked axis", () => {
           meta: { quantity: 50 },
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
 
     // Booking-level summary note prefixes "50 boxes of {asset link}".
@@ -7748,7 +7748,7 @@ describe("booking notes + events — qty-tracked axis", () => {
         bookingId: "booking-qty",
         organizationId: "org-1",
         content: expect.stringContaining("added 50 boxes of"),
-      })
+      }),
     );
   });
 
@@ -7771,7 +7771,7 @@ describe("booking notes + events — qty-tracked axis", () => {
           title: "Camera",
           type: AssetType.INDIVIDUAL,
           unitOfMeasure: null,
-        }))
+        })),
     );
 
     await updateBookingAssets({
@@ -7791,7 +7791,7 @@ describe("booking notes + events — qty-tracked axis", () => {
           meta: {},
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
 
     // Legacy phrasing — bare asset link, no "N units of" prefix.
@@ -7800,9 +7800,9 @@ describe("booking notes + events — qty-tracked axis", () => {
         bookingId: "booking-ind",
         organizationId: "org-1",
         content: expect.stringMatching(
-          /added \{% link to="\/assets\/asset-camera" text="Camera" \/%\} to the booking\.$/
+          /added \{% link to="\/assets\/asset-camera" text="Camera" \/%\} to the booking\.$/,
         ),
-      })
+      }),
     );
   });
 
@@ -7841,7 +7841,7 @@ describe("booking notes + events — qty-tracked axis", () => {
           title: "Pens",
           type: AssetType.QUANTITY_TRACKED,
           unitOfMeasure: null,
-        }))
+        })),
     );
 
     await removeAssets({
@@ -7861,7 +7861,7 @@ describe("booking notes + events — qty-tracked axis", () => {
           bookingId: "booking-1",
           meta: { quantity: 80 },
         }),
-      ])
+      ]),
     );
 
     // Asset-timeline note phrasing: "removed 80 units of {asset} from {booking}".
@@ -7871,7 +7871,7 @@ describe("booking notes + events — qty-tracked axis", () => {
         organizationId: "org-1",
         type: "UPDATE",
         content: expect.stringContaining("removed 80 units of"),
-      })
+      }),
     );
   });
 });

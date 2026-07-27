@@ -44,7 +44,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const { organizationId, userOrganizations, isSelfServiceOrBase } =
+    const { organizationId, userOrganizations, isScopedToOwnRecords } =
       permissionResult;
 
     const { session } = await getAuditSessionDetails({
@@ -57,7 +57,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     requireAuditAssigneeForBaseSelfService({
       audit: session,
       userId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       auditId,
     });
 
@@ -72,7 +72,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       payload({
         session: { ...session, notes },
         header,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, auditId, label: "Audit" });

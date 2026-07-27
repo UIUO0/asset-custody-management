@@ -3,6 +3,7 @@ import { toBlob } from "html-to-image";
 import { useAtomValue } from "jotai";
 import JSZip from "jszip";
 import { DownloadIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { useSearchParams } from "~/hooks/search-params";
@@ -33,6 +34,7 @@ export default function BulkDownloadQrDialog({
   isDialogOpen,
   onClose,
 }: BulkDownloadQrDialogProps) {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<{ totalItems: number }>();
 
   const [downloadState, setDownloadState] = useState<DownloadState>({
@@ -118,8 +120,8 @@ export default function BulkDownloadQrDialog({
               qrIdDisplayPreference={qrIdDisplayPreference}
               sequentialId={asset.sequentialId}
               showShelfBranding={showShelfBranding}
-            />
-          )
+            />,
+          ),
         );
 
         const toBlobOptions = {
@@ -142,7 +144,7 @@ export default function BulkDownloadQrDialog({
 
         /* Converting all qr nodes into images */
         const qrImages = await Promise.all(
-          qrNodes.slice(1).map((qrNode) => toBlob(qrNode, toBlobOptions))
+          qrNodes.slice(1).map((qrNode) => toBlob(qrNode, toBlobOptions)),
         );
 
         /* Appending qr code image to zip file */
@@ -153,7 +155,7 @@ export default function BulkDownloadQrDialog({
           let filename: string;
           if (qrIdDisplayPreference === "SAM_ID" && asset.sequentialId) {
             filename = `${asset.sequentialId}_${sanitizeFilename(
-              asset.title
+              asset.title,
             )}_${asset.qr.id}.jpg`;
           } else {
             filename = `${sanitizeFilename(asset.title)}_${asset.qr.id}.jpg`;
@@ -194,11 +196,13 @@ export default function BulkDownloadQrDialog({
         setDownloadState({
           status: "error",
           error:
-            error instanceof Error ? error.message : "Something went wrong.",
+            error instanceof Error
+              ? error.message
+              : t("common.somethingWentWrong"),
         });
       }
     },
-    []
+    [t],
   );
 
   /**
@@ -228,7 +232,7 @@ export default function BulkDownloadQrDialog({
     try {
       const response = await fetch(
         `/api/assets/get-assets-for-bulk-qr-download?${apiSearchParams.toString()}`,
-        { signal: controller.signal }
+        { signal: controller.signal },
       );
       const data = (await response.json()) as BulkQrDownloadLoaderData;
 
@@ -246,7 +250,10 @@ export default function BulkDownloadQrDialog({
       }
       setDownloadState({
         status: "error",
-        error: error instanceof Error ? error.message : "Something went wrong.",
+        error:
+          error instanceof Error
+            ? error.message
+            : t("common.somethingWentWrong"),
       });
     }
   }
@@ -267,32 +274,35 @@ export default function BulkDownloadQrDialog({
           {downloadState.status === "loading" ? (
             <div className="mb-6 flex flex-col items-center gap-4">
               <Spinner />
-              <h3>Generating Zip file ...</h3>
+              <h3>{t("bulkActions.generatingZip")}</h3>
             </div>
           ) : (
             <>
               <When
                 truthy={!isSelectingMoreThan100}
                 fallback={
-                  <p className="mb-4">
-                    Bulk downloading QR codes is only available for maximum 100
-                    codes at a time. Please select less codes to download.
-                  </p>
+                  <p className="mb-4">{t("bulkActions.qrLimitWarning")}</p>
                 }
               >
                 <h4 className="mb-1">
-                  Download qr codes for{" "}
-                  {allAssetsSelected ? "all" : selectedAssets.length} asset(s).
+                  {allAssetsSelected
+                    ? t("bulkActions.downloadQrForAll")
+                    : t("bulkActions.downloadQrForCount", {
+                        count: selectedAssets.length,
+                      })}
                 </h4>
                 <p className="mb-4">
-                  {allAssetsSelected ? "All" : selectedAssets.length} qr code(s)
-                  will be downloaded in a zip file.
+                  {allAssetsSelected
+                    ? t("bulkActions.qrZipNoticeAll")
+                    : t("bulkActions.qrZipNoticeCount", {
+                        count: selectedAssets.length,
+                      })}
                 </p>
               </When>
 
               <When truthy={downloadState.status === "success"}>
                 <p className="mb-4 text-success-500">
-                  Successfully downloaded qr codes.
+                  {t("bulkActions.qrDownloadSuccess")}
                 </p>
               </When>
 
@@ -308,7 +318,7 @@ export default function BulkDownloadQrDialog({
                   onClick={handleClose}
                   disabled={disabled}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
 
                 <When truthy={downloadState.status !== "success"}>
@@ -318,7 +328,7 @@ export default function BulkDownloadQrDialog({
                     onClick={() => void handleBulkDownloadQr()}
                     disabled={disabled || isSelectingMoreThan100}
                   >
-                    Download
+                    {t("common.download")}
                   </Button>
                 </When>
               </div>

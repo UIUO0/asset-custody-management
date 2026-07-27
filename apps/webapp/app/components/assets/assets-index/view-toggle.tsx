@@ -1,4 +1,5 @@
 import { CalendarIcon } from "@radix-ui/react-icons";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { ButtonGroup } from "~/components/shared/button-group";
 import { useSearchParams } from "~/hooks/search-params";
@@ -10,6 +11,7 @@ export function AvailabilityViewToggle({
 }: {
   modeIsSimple?: boolean;
 }) {
+  const { t } = useTranslation();
   const [, setSearchParams] = useSearchParams();
   const disabledButtonStyles =
     "cursor-not-allowed pointer-events-none bg-gray-50 text-gray-800";
@@ -25,7 +27,7 @@ export function AvailabilityViewToggle({
             "px-[14px]  hover:cursor-pointer",
             "font-normal text-gray-600",
             !isAvailabilityView ? disabledButtonStyles : "",
-            modeIsSimple ? "py-[10px]" : ""
+            modeIsSimple ? "py-[10px]" : "",
           )}
           disabled={!isAvailabilityView}
           type="button"
@@ -36,9 +38,9 @@ export function AvailabilityViewToggle({
               return newParams;
             });
           }}
-          title="Switch to list view"
-          tooltip="List view"
-          aria-label="Switch to list view"
+          title={t("assetsIndex.switchToListView")}
+          tooltip={t("assetsIndex.listView")}
+          aria-label={t("assetsIndex.switchToListView")}
           icon="sort"
         />
         <Button
@@ -47,7 +49,7 @@ export function AvailabilityViewToggle({
             "px-[14px] hover:cursor-pointer",
             "font-normal text-gray-600",
             isAvailabilityView ? disabledButtonStyles : "",
-            modeIsSimple ? "py-[10px]" : ""
+            modeIsSimple ? "py-[10px]" : "",
           )}
           disabled={isAvailabilityView}
           type={"button"}
@@ -58,9 +60,9 @@ export function AvailabilityViewToggle({
               return newParams;
             });
           }}
-          title={"Switch to availability view"}
-          tooltip="Availability view"
-          aria-label="Switch to availability view"
+          title={t("assetsIndex.switchToAvailabilityView")}
+          tooltip={t("assetsIndex.availabilityView")}
+          aria-label={t("assetsIndex.switchToAvailabilityView")}
         >
           <CalendarIcon className="size-5" />
         </Button>

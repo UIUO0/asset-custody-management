@@ -20,7 +20,12 @@
  */
 import { useRef, useState } from "react";
 import { AssetType } from "@prisma/client";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { Trans, useTranslation } from "react-i18next";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import {
   data,
   redirect,
@@ -40,6 +45,8 @@ import { useBookingSettings } from "~/hooks/use-booking-settings";
 import { useDisabled } from "~/hooks/use-disabled";
 import { useWorkingHours } from "~/hooks/use-working-hours";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   computeBookingKitDrift,
   duplicateBooking,
@@ -68,7 +75,14 @@ import { requirePermission } from "~/utils/roles.server";
 
 const paramsSchema = z.object({ bookingId: z.string() });
 
-export const meta = () => [{ title: appendToMetaTitle("Duplicate booking") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.bookings.duplicateBooking) }];
+};
 
 /**
  * Loads the source booking (for the modal heading and the duplicate copy) plus
@@ -133,7 +147,7 @@ export async function action({ request, context, params }: ActionFunctionArgs) {
   const { bookingId } = getParams(params, paramsSchema);
 
   try {
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.booking,
@@ -147,7 +161,7 @@ export async function action({ request, context, params }: ActionFunctionArgs) {
       await getBookingSettingsForOrganization(organizationId);
 
     // ADMIN/OWNER users bypass time restrictions (bufferStartTime, maxBookingLength)
-    const isAdminOrOwner = !isSelfServiceOrBase;
+    const isAdminOrOwner = !isScopedToOwnRecords;
 
     // `coerceLocalDate` (inside the schema) parses the `datetime-local` wire
     // strings into absolute instants in the user's timezone via `fromISO`,
@@ -168,7 +182,7 @@ export async function action({ request, context, params }: ActionFunctionArgs) {
         // hours from now") — a 400, not a server error. Don't capture to Sentry.
         shouldBeCaptured: false,
         additionalData: { userId, organizationId, bookingId },
-      }
+      },
     );
 
     const newBooking = await duplicateBooking({
@@ -222,6 +236,7 @@ function formatDriftAssetLabel(item: {
  * kit-membership changes before confirming.
  */
 export default function DuplicateBooking() {
+  const { t } = useTranslation();
   const { booking, kitDrift } = useLoaderData<typeof loader>();
   const actionData = useActionData<DataOrErrorResponse>();
 
@@ -242,7 +257,7 @@ export default function DuplicateBooking() {
     getBookingDefaultStartEndTimes(
       workingHours,
       bookingSettings.bufferStartTime,
-      isAdministratorOrOwner
+      isAdministratorOrOwner,
     );
 
   const [startDate, setStartDate] = useState(defaultStartDate);
@@ -264,30 +279,31 @@ export default function DuplicateBooking() {
       workingHours,
       bookingSettings,
       isAdminOrOwner: isAdministratorOrOwner,
-    })
+    }),
   );
 
   /** This handles server side errors in case client side validation fails */
   const validationErrors = getValidationErrors<DuplicateBookingSchemaType>(
-    actionData?.error
+    actionData?.error,
   );
 
   const hasDrift = kitDrift.length > 0;
 
   return (
     <div>
-      <h3 className="mb-2">Duplicate Booking: {booking.name}</h3>
+      <h3 className="mb-2">
+        {t("bookings.duplicateBookingTitle", { name: booking.name })}
+      </h3>
 
       <div className="mb-4 text-sm text-gray-500">
         <p className="mb-2">
-          You're about to duplicate the booking{" "}
-          <strong className="text-black">{booking.name}</strong>.
+          <Trans
+            i18nKey="bookings.duplicateBookingIntro"
+            values={{ name: booking.name }}
+            components={{ 1: <strong className="text-black" /> }}
+          />
         </p>
-        <p>
-          All current booking details will be copied. Choose the start and end
-          dates for the new booking below — you can review and edit everything
-          else later.
-        </p>
+        <p>{t("bookings.duplicateBookingHint")}</p>
       </div>
 
       {hasDrift && (

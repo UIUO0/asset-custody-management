@@ -15,6 +15,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 import type { BookingComplianceSortColumn } from "~/modules/reports/helpers.server";
 import type { BookingComplianceRow } from "~/modules/reports/types";
@@ -31,14 +32,14 @@ import { ReportTable, StatusCell, DateCell, NumberCell } from "./report-table";
 const BOOKING_COMPLIANCE_COLUMNS: ColumnDef<BookingComplianceRow>[] = [
   {
     accessorKey: "bookingName",
-    header: "Booking",
+    header: "reports.colBooking",
     cell: ({ row }) => (
       <span className="font-medium">{row.original.bookingName}</span>
     ),
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: "reports.colStatus",
     cell: ({ row }) => {
       const status = row.original.status;
       const variant = getStatusVariant(status);
@@ -47,23 +48,23 @@ const BOOKING_COMPLIANCE_COLUMNS: ColumnDef<BookingComplianceRow>[] = [
   },
   {
     accessorKey: "custodian",
-    header: "Booked by",
+    header: "reports.bookedBy",
     cell: ({ row }) =>
       row.original.custodian || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "assetCount",
-    header: "Assets",
+    header: "reports.colAssets",
     cell: ({ row }) => <NumberCell value={row.original.assetCount} />,
   },
   {
     accessorKey: "scheduledEnd",
-    header: "Due Date",
+    header: "reports.dueDate",
     cell: ({ row }) => <DateCell date={row.original.scheduledEnd} />,
   },
   {
     accessorKey: "latenessMs",
-    header: "Return Status",
+    header: "reports.returnStatus",
     cell: ({ row }) => {
       const { isOnTime, latenessMs } = row.original;
       if (isOnTime) {
@@ -117,6 +118,7 @@ export function BookingComplianceContent({
   timeframeLabel,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Map column accessorKey to server sort column
@@ -193,8 +195,8 @@ export function BookingComplianceContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No bookings found"
-              description="No bookings match the current filters."
+              title={t("reports.noBookingsFound")}
+              description={t("reports.noBookingsMatchFilters")}
             />
           }
         />
@@ -225,7 +227,7 @@ function formatStatus(status: string): string {
  * `OVERDUE` is the only "error" state; everything else is neutral or success.
  */
 function getStatusVariant(
-  status: string
+  status: string,
 ): "success" | "warning" | "error" | "neutral" {
   switch (status) {
     case "COMPLETE":

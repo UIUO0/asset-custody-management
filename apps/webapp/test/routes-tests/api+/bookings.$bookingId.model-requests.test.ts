@@ -50,7 +50,7 @@ vi.mock("~/database/db.server", () => ({
 }));
 
 // why: we never want the real permission machinery to run — each test
-// supplies the (organizationId, role, isSelfServiceOrBase) it needs.
+// supplies the (organizationId, role, isScopedToOwnRecords) it needs.
 vi.mock("~/utils/roles.server", () => ({
   requirePermission: vi.fn(),
 }));
@@ -85,7 +85,7 @@ function buildRequest(method: "POST" | "DELETE", body: Record<string, string>) {
   }
   return new Request(
     "https://example.com/api/bookings/booking-1/model-requests",
-    { method, body: formData }
+    { method, body: formData },
   );
 }
 
@@ -108,7 +108,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingFindFirst.mockResolvedValue({
@@ -121,8 +121,8 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
         buildRequest("POST", {
           assetModelId: "model-1",
           quantity: "3",
-        })
-      )
+        }),
+      ),
     )) as unknown as Response;
 
     expect(response.status).toBe(403);
@@ -133,7 +133,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingFindFirst.mockResolvedValue({
@@ -142,7 +142,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     });
 
     const response = (await action(
-      buildArgs(buildRequest("DELETE", { assetModelId: "model-1" }))
+      buildArgs(buildRequest("DELETE", { assetModelId: "model-1" })),
     )) as unknown as Response;
 
     expect(response.status).toBe(403);
@@ -153,7 +153,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingFindFirst.mockResolvedValue(null);
@@ -163,8 +163,8 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
         buildRequest("POST", {
           assetModelId: "model-1",
           quantity: "1",
-        })
-      )
+        }),
+      ),
     )) as unknown as Response;
 
     expect(response.status).toBe(404);
@@ -175,7 +175,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingFindFirst.mockResolvedValue({
@@ -194,8 +194,8 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
         buildRequest("POST", {
           assetModelId: "model-1",
           quantity: "2",
-        })
-      )
+        }),
+      ),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);
@@ -206,7 +206,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.SELF_SERVICE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingFindFirst.mockResolvedValue({
@@ -216,7 +216,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     serviceMocks.removeBookingModelRequest.mockResolvedValue(undefined);
 
     const response = (await action(
-      buildArgs(buildRequest("DELETE", { assetModelId: "model-1" }))
+      buildArgs(buildRequest("DELETE", { assetModelId: "model-1" })),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);
@@ -227,7 +227,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.BASE,
-      isSelfServiceOrBase: true,
+      isScopedToOwnRecords: true,
     } as any);
 
     dbMocks.bookingFindFirst.mockResolvedValue({
@@ -240,8 +240,8 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
         buildRequest("POST", {
           assetModelId: "model-1",
           quantity: "1",
-        })
-      )
+        }),
+      ),
     )) as unknown as Response;
 
     expect(response.status).toBe(403);
@@ -252,7 +252,7 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.ADMIN,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     serviceMocks.upsertBookingModelRequest.mockResolvedValue({
@@ -267,8 +267,8 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
         buildRequest("POST", {
           assetModelId: "model-1",
           quantity: "5",
-        })
-      )
+        }),
+      ),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);
@@ -281,13 +281,13 @@ describe("api/bookings/:bookingId/model-requests — ownership guard", () => {
     requirePermissionMock.mockResolvedValue({
       organizationId: "org-1",
       role: OrganizationRoles.OWNER,
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
 
     serviceMocks.removeBookingModelRequest.mockResolvedValue(undefined);
 
     const response = (await action(
-      buildArgs(buildRequest("DELETE", { assetModelId: "model-1" }))
+      buildArgs(buildRequest("DELETE", { assetModelId: "model-1" })),
     )) as unknown as Response;
 
     expect(response.status).toBe(200);

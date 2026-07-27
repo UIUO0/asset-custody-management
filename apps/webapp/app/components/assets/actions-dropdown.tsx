@@ -182,8 +182,7 @@ const ConditionalActionsDropdown = () => {
                         custodyActionDisabled ||
                         (noneAvailable
                           ? {
-                              reason:
-                                "All units are currently in custody. Release some before assigning more.",
+                              reason: t("quantity.allUnitsInCustody"),
                             }
                           : false)
                       }
@@ -289,7 +288,9 @@ const ConditionalActionsDropdown = () => {
                   >
                     <span className="flex items-center gap-2">
                       <Icon icon="location" />{" "}
-                      {isQtyTracked ? "Manage placements" : "Update location"}
+                      {isQtyTracked
+                        ? t("assetActions.managePlacements")
+                        : t("assetActions.updateLocation")}
                     </span>
                   </Button>
                 </div>

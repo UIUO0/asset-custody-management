@@ -7,6 +7,7 @@
  */
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { useDisabled } from "~/hooks/use-disabled";
 import useFetcherWithReset from "~/hooks/use-fetcher-with-reset";
@@ -36,11 +37,12 @@ import When from "../when/when";
  * Displays instructions, rules, and embeds the FileForm for upload.
  */
 export const ImportContent = () => {
+  const { t } = useTranslation();
   const { canUseBarcodes } = useBarcodePermissions();
 
   return (
     <div className="w-full text-start">
-      <h3>Import assets</h3>
+      <h3>{t("assetImport.title")}</h3>
 
       {/* Intent fork */}
       <div className="my-4 flex gap-3 rounded-md border border-gray-200 bg-gray-50 p-4">
@@ -50,39 +52,39 @@ export const ImportContent = () => {
           className="mt-0.5 shrink-0 text-gray-500"
         />
         <p className="text-[14px] text-gray-600">
-          <b>Want to update existing assets instead?</b> If you've exported
-          assets from the Asset Index and made changes in Excel, you can
-          re-import them to bulk update.{" "}
-          <Button variant="link" to="/assets/import-update">
-            Go to bulk update →
-          </Button>
+          <Trans
+            i18nKey="assetImport.updateForkText"
+            components={{
+              1: <b />,
+              3: <Button variant="link" to="/assets/import-update" />,
+            }}
+          />
         </p>
       </div>
 
-      <h4>Create new assets from CSV</h4>
+      <h4>{t("assetImport.createHeading")}</h4>
       <p>
-        Upload a CSV file to create new assets. Start with our{" "}
-        <Button
-          variant="link"
-          to={
-            canUseBarcodes
-              ? "/static/shelf.nu-example-asset-import-from-content-with-barcodes.csv"
-              : "/static/shelf.nu-example-asset-import-from-content.csv"
-          }
-          target="_blank"
-          download
-        >
-          CSV template
-        </Button>{" "}
-        — each row becomes a new asset.
+        <Trans
+          i18nKey="assetImport.createIntro"
+          components={{
+            1: (
+              <Button
+                variant="link"
+                to={
+                  canUseBarcodes
+                    ? "/static/epda-example-asset-import-from-content-with-barcodes.csv"
+                    : "/static/epda-example-asset-import-from-content.csv"
+                }
+                target="_blank"
+                download
+              />
+            ),
+          }}
+        />
       </p>
 
       <WarningBox className="my-4">
-        <>
-          <strong>IMPORTANT</strong>: Do not use data exported from asset backup
-          to import assets. You must use the template provided above or you will
-          get corrupted data.
-        </>
+        <Trans i18nKey="assetImport.warning" components={{ 1: <strong /> }} />
       </WarningBox>
 
       <div className="my-5 flex flex-col gap-4">
@@ -94,28 +96,37 @@ export const ImportContent = () => {
             className="mt-0.5 shrink-0 text-gray-500"
           />
           <div>
-            <h5 className="font-semibold">Base rules</h5>
+            <h5 className="font-semibold">{t("assetImport.baseRulesTitle")}</h5>
             <ul className="list-inside list-disc text-[14px] text-gray-600">
               <li>
-                Use <b>, (comma)</b> or <b>; (semicolon)</b> as delimiter
+                <Trans
+                  i18nKey="assetImport.baseRuleDelimiter"
+                  components={{ 1: <b />, 3: <b /> }}
+                />
               </li>
               <li>
-                Columns like <b>kit, category, location & custodian</b>{" "}
-                represent the name of the related entry — if it doesn't exist,
-                we'll create it
+                <Trans
+                  i18nKey="assetImport.baseRuleRelations"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                <b>Tags</b> can be comma-separated — missing tags will be
-                created automatically
+                <Trans
+                  i18nKey="assetImport.baseRuleTags"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                Each row creates a <b>new</b> asset — existing assets will not
-                be merged or overwritten
+                <Trans
+                  i18nKey="assetImport.baseRuleNewOnly"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                To onboard stock-room consumables (boxes, batteries, fasteners),
-                or to link items to a reusable asset model, see{" "}
-                <b>"Quantity-tracked assets"</b> below
+                <Trans
+                  i18nKey="assetImport.baseRuleQtyPointer"
+                  components={{ 1: <b /> }}
+                />
               </li>
             </ul>
           </div>
@@ -129,28 +140,46 @@ export const ImportContent = () => {
             className="mt-0.5 shrink-0 text-gray-500"
           />
           <div>
-            <h5 className="font-semibold">Custom fields</h5>
+            <h5 className="font-semibold">
+              {t("assetImport.customFieldsTitle")}
+            </h5>
             <p className="text-[14px] text-gray-600">
-              Prefix your column heading with <b>"cf: "</b> and add the type
-              after a comma. Supported types:
+              <Trans
+                i18nKey="assetImport.customFieldsIntro"
+                components={{ 1: <b /> }}
+              />
             </p>
             <ul className="list-inside list-disc ps-2 text-[14px] text-gray-600">
               <li>
-                <b>text</b> (default), <b>boolean</b>, <b>option</b>,{" "}
-                <b>multiline text</b>
+                <Trans
+                  i18nKey="assetImport.customFieldTypesBasic"
+                  components={{ 1: <b />, 3: <b />, 5: <b />, 7: <b /> }}
+                />
               </li>
               <li>
-                <b>date</b> — must be YYYY-MM-DD
+                <Trans
+                  i18nKey="assetImport.customFieldDate"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                <b>amount</b> — currency values, no symbols (e.g., 1234.56)
+                <Trans
+                  i18nKey="assetImport.customFieldAmount"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                <b>number</b> — numeric values including negatives
+                <Trans
+                  i18nKey="assetImport.customFieldNumber"
+                  components={{ 1: <b /> }}
+                />
               </li>
             </ul>
             <p className="mt-1 text-[14px] text-gray-600">
-              Example header: <b>"cf:purchase date, type:date"</b>
+              <Trans
+                i18nKey="assetImport.customFieldExample"
+                components={{ 1: <b /> }}
+              />
             </p>
           </div>
         </div>
@@ -163,32 +192,41 @@ export const ImportContent = () => {
             className="mt-0.5 shrink-0 text-gray-500"
           />
           <div>
-            <h5 className="font-semibold">QR codes</h5>
+            <h5 className="font-semibold">{t("assetImport.qrTitle")}</h5>
             <p className="text-[14px] text-gray-600">
-              You can link a Shelf QR code to each asset. This is useful if you
-              already have QR codes printed and want to connect them to the
-              assets you're importing. Limitations:
+              {t("assetImport.qrIntro")}
             </p>
             <ul className="list-inside list-disc ps-2 text-[14px] text-gray-600">
               <li>
-                <b>Existing code</b> — the QR code must already exist in Shelf
+                <Trans
+                  i18nKey="assetImport.qrRuleExisting"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                <b>No duplicates</b> — each qrId must be unique per asset
+                <Trans
+                  i18nKey="assetImport.qrRuleNoDuplicates"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                <b>No linked codes</b> — the qrId must not already be linked to
-                another asset or kit
+                <Trans
+                  i18nKey="assetImport.qrRuleNotLinked"
+                  components={{ 1: <b /> }}
+                />
               </li>
               <li>
-                <b>QR ownership</b> — the code must be unclaimed or belong to
-                your organization
+                <Trans
+                  i18nKey="assetImport.qrRuleOwnership"
+                  components={{ 1: <b /> }}
+                />
               </li>
             </ul>
             <p className="mt-1 text-[14px] text-gray-600">
-              If no <b>"qrId"</b> is provided, a new QR code will be generated.
-              Need unclaimed or unlinked codes? Contact support and we can
-              provide them.
+              <Trans
+                i18nKey="assetImport.qrFallback"
+                components={{ 1: <b /> }}
+              />
             </p>
           </div>
         </div>
@@ -202,36 +240,49 @@ export const ImportContent = () => {
               className="mt-0.5 shrink-0 text-gray-500"
             />
             <div>
-              <h5 className="font-semibold">Barcodes</h5>
+              <h5 className="font-semibold">
+                {t("assetImport.barcodesTitle")}
+              </h5>
               <p className="text-[14px] text-gray-600">
-                Import assets with barcodes using these columns:
+                {t("assetImport.barcodesIntro")}
               </p>
               <ul className="list-inside list-disc ps-2 text-[14px] text-gray-600">
                 <li>
-                  <b>barcode_Code128</b> — 4-40 characters, supports letters,
-                  numbers, and symbols
+                  <Trans
+                    i18nKey="assetImport.barcodeCode128"
+                    components={{ 1: <b /> }}
+                  />
                 </li>
                 <li>
-                  <b>barcode_Code39</b> — 4-43 characters
+                  <Trans
+                    i18nKey="assetImport.barcodeCode39"
+                    components={{ 1: <b /> }}
+                  />
                 </li>
                 <li>
-                  <b>barcode_DataMatrix</b> — 4-100 characters
+                  <Trans
+                    i18nKey="assetImport.barcodeDataMatrix"
+                    components={{ 1: <b /> }}
+                  />
                 </li>
                 <li>
-                  <b>barcode_ExternalQR</b> — 1-2048 characters (URLs, text, or
-                  any external QR content)
+                  <Trans
+                    i18nKey="assetImport.barcodeExternalQR"
+                    components={{ 1: <b /> }}
+                  />
                 </li>
                 <li>
-                  <b>barcode_EAN13</b> — 13-digit product identification codes
+                  <Trans
+                    i18nKey="assetImport.barcodeEAN13"
+                    components={{ 1: <b /> }}
+                  />
                 </li>
               </ul>
               <p className="mt-1 text-[14px] text-gray-600">
-                <b>Rules:</b> Use comma separation for multiple barcodes of the
-                same type (e.g., "ABC123,DEF456"). Each value must be unique in
-                your organization. Code39 and DataMatrix allow only letters and
-                numbers; Code128 supports most symbols. Values are automatically
-                converted to uppercase. Leave barcode columns empty if you don't
-                want to assign barcodes.
+                <Trans
+                  i18nKey="assetImport.barcodeRules"
+                  components={{ 1: <b /> }}
+                />
               </p>
             </div>
           </div>
@@ -245,56 +296,76 @@ export const ImportContent = () => {
             className="mt-0.5 shrink-0 text-gray-500"
           />
           <div>
-            <h5 className="font-semibold">Quantity-tracked assets</h5>
+            <h5 className="font-semibold">{t("assetImport.qtyTitle")}</h5>
             <p className="text-[14px] text-gray-600">
-              Six optional columns let you onboard stock-room consumables
-              (boxes, batteries, fasteners) and link individually-tracked assets
-              to a reusable asset model:
+              {t("assetImport.qtyIntro")}
             </p>
             <ul className="list-inside list-disc ps-2 text-[14px] text-gray-600">
               <li>
-                <b>type</b> — <code>INDIVIDUAL</code> (the default if the column
-                is missing or the cell is blank) or{" "}
-                <code>QUANTITY_TRACKED</code>. On <b>update</b> imports, the
-                cell is silently ignored — type cannot be changed once an asset
-                exists.
+                <Trans
+                  i18nKey="assetImport.qtyColType"
+                  components={{
+                    1: <b />,
+                    3: <code />,
+                    5: <code />,
+                    7: <b />,
+                  }}
+                />
               </li>
               <li>
-                <b>quantity</b> — required, must be a positive integer when{" "}
-                <code>type = QUANTITY_TRACKED</code>. Ignored on{" "}
-                <code>INDIVIDUAL</code> rows.
+                <Trans
+                  i18nKey="assetImport.qtyColQuantity"
+                  components={{ 1: <b />, 3: <code />, 5: <code /> }}
+                />
               </li>
               <li>
-                <b>minQuantity</b> — optional non-negative integer; sets the
-                low-stock alert threshold. Ignored on <code>INDIVIDUAL</code>{" "}
-                rows.
+                <Trans
+                  i18nKey="assetImport.qtyColMinQuantity"
+                  components={{ 1: <b />, 3: <code /> }}
+                />
               </li>
               <li>
-                <b>unitOfMeasure</b> — optional free-text label (e.g.{" "}
-                <code>boxes</code>, <code>liters</code>, <code>kg</code>).
-                Markdoc injection characters (<code>{"{"}</code>, <code>%</code>
-                , <code>{"}"}</code>) are stripped.
+                <Trans
+                  i18nKey="assetImport.qtyColUnitOfMeasure"
+                  components={{
+                    1: <b />,
+                    3: <code />,
+                    5: <code />,
+                    7: <code />,
+                  }}
+                />
               </li>
               <li>
-                <b>consumptionType</b> — required when{" "}
-                <code>type = QUANTITY_TRACKED</code>. <code>ONE_WAY</code>{" "}
-                (consumed on checkout, no return) or <code>TWO_WAY</code>{" "}
-                (returned with a consumption report). Ignored on{" "}
-                <code>INDIVIDUAL</code> rows.
+                <Trans
+                  i18nKey="assetImport.qtyColConsumptionType"
+                  components={{
+                    1: <b />,
+                    3: <code />,
+                    5: <code />,
+                    7: <code />,
+                    9: <code />,
+                  }}
+                />
               </li>
               <li>
-                <b>assetModel</b> — optional asset model name; created
-                automatically (case-insensitive lookup) if it doesn't exist yet.{" "}
-                <b>INDIVIDUAL rows only</b> — on a <code>QUANTITY_TRACKED</code>{" "}
-                row during update, the cell is skipped with a warning and the
-                rest of the row still applies.
+                <Trans
+                  i18nKey="assetImport.qtyColAssetModel"
+                  components={{ 1: <b />, 3: <b />, 5: <code /> }}
+                />
               </li>
             </ul>
             <p className="mt-1 text-[14px] text-gray-600">
-              <b>Tip:</b> the downloaded template above already contains one{" "}
-              <code>INDIVIDUAL</code> example with an <code>assetModel</code>{" "}
-              and one <code>QUANTITY_TRACKED</code> example with{" "}
-              <code>quantity</code> and <code>consumptionType</code> filled in.
+              <Trans
+                i18nKey="assetImport.qtyTip"
+                components={{
+                  1: <b />,
+                  3: <code />,
+                  5: <code />,
+                  7: <code />,
+                  9: <code />,
+                  11: <code />,
+                }}
+              />
             </p>
           </div>
         </div>
@@ -307,30 +378,16 @@ export const ImportContent = () => {
             className="mt-0.5 shrink-0 text-gray-500"
           />
           <div>
-            <h5 className="font-semibold">Good to know</h5>
+            <h5 className="font-semibold">
+              {t("assetImport.goodToKnowTitle")}
+            </h5>
             <ul className="list-inside list-disc text-[14px] text-gray-600">
-              <li>
-                The first row is used as column headers — it won't be imported
-              </li>
-              <li>
-                If any data in the file is invalid, the whole import will fail
-              </li>
+              <li>{t("assetImport.goodToKnowHeaders")}</li>
+              <li>{t("assetImport.goodToKnowAllOrNothing")}</li>
             </ul>
           </div>
         </div>
       </div>
-
-      <p className="text-[14px] text-gray-500">
-        Need help preparing your file? Try our{" "}
-        <Button
-          variant="link"
-          to="https://www.shelf.nu/csv-helper"
-          target="_blank"
-        >
-          CSV Helper Tool
-        </Button>
-        .
-      </p>
 
       <FileForm intent={"content"} />
     </div>
@@ -346,6 +403,7 @@ export const ImportContent = () => {
  * @param url - Optional custom action URL for the form
  */
 export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
+  const { t } = useTranslation();
   // Widened to `string` so toUpperCase() doesn't need a cast.
   // The "I AGREE" check happens at submit time.
   const [agreed, setAgreed] = useState("");
@@ -388,7 +446,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
       <Input
         type="file"
         name="file"
-        label="Select a csv file"
+        label={t("assetImport.selectCsvFile")}
         required
         onChange={handleFileSelect}
         accept=".csv"
@@ -408,27 +466,27 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
         <AlertDialogTrigger asChild>
           <Button
             type="button"
-            title={"Confirm asset import"}
+            title={t("assetImport.confirmTitle")}
             disabled={!selectedFile}
             className="my-4"
           >
-            Confirm asset import
+            {t("assetImport.confirmTitle")}
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent className="max-w-[600px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm asset import</AlertDialogTitle>
+            <AlertDialogTitle>{t("assetImport.confirmTitle")}</AlertDialogTitle>
             {!isSuccessful ? (
               <>
                 <AlertDialogDescription>
-                  You need to type: <b>"I AGREE"</b> in the field below to
-                  accept the import. By doing this you agree that you have read
-                  the requirements and you understand the limitations and
-                  consequences of using this feature.
+                  <Trans
+                    i18nKey="assetImport.agreeText"
+                    components={{ 1: <b /> }}
+                  />
                 </AlertDialogDescription>
                 <Input
                   type="text"
-                  label={"Confirmation"}
+                  label={t("assetImport.confirmationLabel")}
                   ref={agreeInputRef}
                   name="agree"
                   value={agreed}
@@ -456,7 +514,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
               <p className="text-red-500">{data?.error?.message}</p>
               {data?.error?.additionalData?.duplicateCodes ? (
                 <BrokenQrCodesTable
-                  title="Duplicate codes"
+                  title={t("assetImport.duplicateCodes")}
                   data={
                     data.error.additionalData
                       .duplicateCodes as QRCodePerImportedAsset[]
@@ -465,7 +523,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
               ) : null}
               {data?.error?.additionalData?.nonExistentCodes ? (
                 <BrokenQrCodesTable
-                  title="Non existent codes"
+                  title={t("assetImport.nonExistentCodes")}
                   data={
                     data.error.additionalData
                       .nonExistentCodes as QRCodePerImportedAsset[]
@@ -474,7 +532,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
               ) : null}
               {data?.error?.additionalData?.linkedCodes ? (
                 <BrokenQrCodesTable
-                  title="Already linked codes"
+                  title={t("assetImport.alreadyLinkedCodes")}
                   data={
                     data.error.additionalData
                       .linkedCodes as QRCodePerImportedAsset[]
@@ -483,7 +541,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
               ) : null}
               {data?.error?.additionalData?.connectedToOtherOrgs ? (
                 <BrokenQrCodesTable
-                  title="Some codes do not belong to this organization"
+                  title={t("assetImport.foreignOrgCodes")}
                   data={
                     data.error.additionalData
                       .connectedToOtherOrgs as QRCodePerImportedAsset[]
@@ -505,16 +563,16 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                   <thead className="bg-error-100 text-xs">
                     <tr>
                       <th scope="col" className="px-2 py-1">
-                        Asset
+                        {t("assetImport.colAsset")}
                       </th>
                       <th scope="col" className="px-2 py-1">
-                        Custodian
+                        {t("assetImport.colCustodian")}
                       </th>
                       <th scope="col" className="px-2 py-1">
-                        Kit
+                        {t("assetImport.colKit")}
                       </th>
                       <th scope="col" className="px-2 py-1">
-                        Issue
+                        {t("assetImport.colIssue")}
                       </th>
                     </tr>
                   </thead>
@@ -549,10 +607,10 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                   <thead className="bg-error-100 text-xs">
                     <tr>
                       <th scope="col" className="px-2 py-1">
-                        Incorrect Header
+                        {t("assetImport.colIncorrectHeader")}
                       </th>
                       <th scope="col" className="px-2 py-1">
-                        Error
+                        {t("assetImport.colError")}
                       </th>
                     </tr>
                   </thead>
@@ -566,23 +624,20 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                           <td className="px-2 py-1">{data.incorrectHeader}</td>
                           <td className="px-2 py-1">{data.errorMessage}</td>
                         </tr>
-                      )
+                      ),
                     )}
                   </tbody>
                 </table>
               ) : null}
 
-              <p className="mt-2">
-                Please fix your CSV file and try again. If the issue persists,
-                don't hesitate to get in touch with us.
-              </p>
+              <p className="mt-2">{t("assetImport.fixAndRetry")}</p>
             </div>
           </When>
 
           <When truthy={isSuccessful}>
             <div>
-              <b className="text-green-500">Success!</b>
-              <p>Your assets have been imported.</p>
+              <b className="text-green-500">{t("assetImport.success")}</b>
+              <p>{t("assetImport.successBody")}</p>
             </div>
           </When>
 
@@ -591,18 +646,18 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
               <div className="flex gap-2">
                 <AlertDialogCancel asChild>
                   <Button type="button" variant="secondary" width="full">
-                    Close
+                    {t("common.close")}
                   </Button>
                 </AlertDialogCancel>
                 <Button to="/assets" width="full" className="whitespace-nowrap">
-                  View new assets
+                  {t("assetImport.viewNewAssets")}
                 </Button>
               </div>
             ) : (
               <>
                 <AlertDialogCancel asChild>
                   <Button type="button" variant="secondary">
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </AlertDialogCancel>
                 <Button
@@ -613,7 +668,9 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                   }}
                   disabled={disabled}
                 >
-                  {isSubmitting ? "Importing..." : "Import"}
+                  {isSubmitting
+                    ? t("assetImport.importing")
+                    : t("common.import")}
                 </Button>
               </>
             )}
@@ -631,14 +688,16 @@ function BrokenQrCodesTable({
   title: string;
   data: QRCodePerImportedAsset[];
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="mt-3">
       <h5>{title}</h5>
       <Table className="mt-1 [&_td]:p-1 [&_th]:p-1">
         <thead>
           <Tr>
-            <Th>Asset title</Th>
-            <Th>QR ID</Th>
+            <Th>{t("assetImport.assetTitle")}</Th>
+            <Th>{t("assetImport.qrId")}</Th>
           </Tr>
         </thead>
         <tbody>
@@ -655,14 +714,16 @@ function BrokenQrCodesTable({
 }
 
 function DuplicateBarcodesTable({ data }: { data: DuplicateBarcode[] }) {
+  const { t } = useTranslation();
+
   return (
     <div className="mt-3">
-      <h5>Duplicate barcodes</h5>
+      <h5>{t("assetImport.duplicateBarcodes")}</h5>
       <Table className="mt-1 [&_td]:p-1 [&_th]:p-1">
         <thead>
           <Tr>
-            <Th>Barcode</Th>
-            <Th>Used by assets</Th>
+            <Th>{t("assetImport.barcode")}</Th>
+            <Th>{t("assetImport.usedByAssets")}</Th>
           </Tr>
         </thead>
         <tbody>
@@ -677,7 +738,11 @@ function DuplicateBarcodesTable({ data }: { data: DuplicateBarcode[] }) {
                     // key (include title+type to be extra safe if the
                     // same row ever surfaces under multiple barcodes).
                     <li key={`${asset.row}-${asset.type}-${asset.title}`}>
-                      {asset.title} ({asset.type}): Line {asset.row}
+                      {t("assetImport.barcodeAssetLine", {
+                        title: asset.title,
+                        type: asset.type,
+                        row: asset.row,
+                      })}
                     </li>
                   ))}
                 </ul>

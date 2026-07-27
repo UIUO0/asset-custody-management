@@ -11,6 +11,7 @@
  */
 
 import { AlertTriangle, Clock, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { DateS } from "~/components/shared/date";
@@ -33,13 +34,14 @@ export interface AtRiskBookingsProps {
  * Actionable: Users can click through to send reminders or extend bookings.
  */
 export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
+  const { t } = useTranslation();
   // Group by urgency
   const critical = bookings.filter((b) => b.hoursUntilDue <= 24);
   const warning = bookings.filter(
-    (b) => b.hoursUntilDue > 24 && b.hoursUntilDue <= 48
+    (b) => b.hoursUntilDue > 24 && b.hoursUntilDue <= 48,
   );
   const caution = bookings.filter(
-    (b) => b.hoursUntilDue > 48 && b.hoursUntilDue <= 72
+    (b) => b.hoursUntilDue > 48 && b.hoursUntilDue <= 72,
   );
 
   const totalAtRisk = bookings.length;
@@ -48,7 +50,7 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
     <div
       className={tw(
         "flex flex-col rounded border border-gray-200 bg-white",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -58,10 +60,12 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
             <AlertTriangle
               className={tw(
                 "size-4",
-                totalAtRisk > 0 ? "text-orange-500" : "text-gray-400"
+                totalAtRisk > 0 ? "text-orange-500" : "text-gray-400",
               )}
             />
-            <h3 className="text-sm font-semibold text-gray-900">Due Soon</h3>
+            <h3 className="text-sm font-semibold text-gray-900">
+              {t("reports.dueSoon")}
+            </h3>
             {totalAtRisk > 0 && (
               <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">
                 {totalAtRisk}
@@ -81,7 +85,9 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
             <div className="flex size-10 items-center justify-center rounded-full bg-green-50">
               <Clock className="size-5 text-green-600" />
             </div>
-            <p className="text-sm font-medium text-gray-900">All clear!</p>
+            <p className="text-sm font-medium text-gray-900">
+              {t("reports.allClear")}
+            </p>
             <p className="text-xs text-gray-500">
               No bookings at risk of becoming overdue
             </p>
@@ -91,7 +97,7 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
             {/* Critical - Ending Today */}
             {critical.length > 0 && (
               <RiskGroup
-                label="Ending Today"
+                label={t("reports.endingToday")}
                 bookings={critical}
                 variant="critical"
               />
@@ -100,7 +106,7 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
             {/* Warning - Ending Tomorrow */}
             {warning.length > 0 && (
               <RiskGroup
-                label="Ending Tomorrow"
+                label={t("reports.endingTomorrow")}
                 bookings={warning}
                 variant="warning"
               />
@@ -109,7 +115,7 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
             {/* Caution - Ending Soon */}
             {caution.length > 0 && (
               <RiskGroup
-                label="Ending in 2-3 Days"
+                label={t("reports.endingIn2to3Days")}
                 bookings={caution}
                 variant="caution"
               />
@@ -130,6 +136,7 @@ function RiskGroup({
   bookings: AtRiskBooking[];
   variant: "critical" | "warning" | "caution";
 }) {
+  const { t } = useTranslation();
   // Use darker text colors for better WCAG AA contrast (4.5:1 minimum)
   const variantStyles = {
     critical: {
@@ -157,7 +164,7 @@ function RiskGroup({
         <span
           className={tw(
             "rounded-full px-1.5 py-0.5 text-xs font-medium",
-            styles.badge
+            styles.badge,
           )}
         >
           {bookings.length}
@@ -177,7 +184,7 @@ function RiskGroup({
                   {booking.name}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {booking.custodian || "No custodian"}
+                  {booking.custodian || t("reports.noCustodian")}
                   {booking.assetCount > 0 && (
                     <span>
                       {" "}

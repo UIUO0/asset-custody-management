@@ -44,7 +44,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         .object({
           intent: z.enum(["bulk-archive", "bulk-delete"]),
         })
-        .and(CurrentSearchParamsSchema)
+        .and(CurrentSearchParamsSchema),
     );
 
     const intentToActionMap: Record<typeof intent, PermissionAction> = {
@@ -52,7 +52,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       "bulk-delete": PermissionAction.delete,
     };
 
-    const { organizationId, isSelfServiceOrBase } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.audit,
@@ -68,7 +68,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
           organizationId,
           userId,
           currentSearchParams,
-          isSelfServiceOrBase,
+          isScopedToOwnRecords,
         });
 
         sendNotification({

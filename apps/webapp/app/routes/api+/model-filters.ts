@@ -5,6 +5,7 @@ import { db } from "~/database/db.server";
 import { getSelectedOrganization } from "~/modules/organization/context.server";
 import { makeShelfError } from "~/utils/error";
 import { payload, error, parseData } from "~/utils/http.server";
+import { ROLES_WITH_ORG_WIDE_VISIBILITY } from "~/utils/permissions/role-scope";
 
 const BasicModelFilters = z.object({
   /** key of field for which we have to filter values */
@@ -95,7 +96,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         { name: { contains: queryValue, mode: "insensitive" } },
         { user: { firstName: { contains: queryValue, mode: "insensitive" } } },
         { user: { firstName: { contains: queryValue, mode: "insensitive" } } },
-        { user: { email: { contains: queryValue, mode: "insensitive" } } }
+        { user: { email: { contains: queryValue, mode: "insensitive" } } },
       );
 
       where.deletedAt = modelFilters.deletedAt;
@@ -108,7 +109,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
                 some: {
                   AND: [
                     { organizationId },
-                    { roles: { hasSome: ["ADMIN", "OWNER"] } },
+                    // why: the recipient list is "people who see the whole
+                    // organization", which is exactly the visibility allow-list.
+                    // Hardcoding ADMIN/OWNER silently excluded every EPDA
+                    // operational role from being picked.
+                    { roles: { hasSome: [...ROLES_WITH_ORG_WIDE_VISIBILITY] } },
                   ],
                 },
               },
@@ -172,7 +177,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           metadata: item,
           user: item?.user as any,
         })),
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { AssetStatus, AssetType, type Prisma } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -46,6 +47,7 @@ import {
 import { Td, Th } from "~/components/table";
 import UnsavedChangesAlert from "~/components/unsaved-changes-alert";
 import { db } from "~/database/db.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import type { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
 import { getPaginatedAndFilterableAssets } from "~/modules/asset/service.server";
 import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
@@ -159,10 +161,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       singular: "asset",
       plural: "assets",
     };
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const header = {
-      title: `Move assets to ‘${location?.name}’ location`,
-      subHeading:
-        "Search your database for assets that you would like to move to this location.",
+      title: t("locations.moveAssetsTitle", { name: location?.name }),
+      subHeading: t("locations.moveAssetsSubHeading"),
     };
 
     return payload({
@@ -249,6 +254,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function AddAssetsToLocation() {
+  const { t } = useTranslation();
   const assetSortingOptions = useAssetSortingOptions();
   const { location, totalItems } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
@@ -399,8 +405,8 @@ export default function AddAssetsToLocation() {
             </div>
           }
           model={{ name: "category", queryKey: "name" }}
-          label="Filter by category"
-          placeholder="Search categories"
+          label={t("list.filterByCategory")}
+          placeholder={t("list.searchCategories")}
           initialDataKey="categories"
           countKey="totalCategories"
         />
@@ -411,7 +417,7 @@ export default function AddAssetsToLocation() {
             </div>
           }
           model={{ name: "tag", queryKey: "name" }}
-          label="Filter by tag"
+          label={t("list.filterByTag")}
           initialDataKey="tags"
           countKey="totalTags"
         />
@@ -422,7 +428,7 @@ export default function AddAssetsToLocation() {
             </div>
           }
           model={{ name: "location", queryKey: "name" }}
-          label="Filter by location"
+          label={t("list.filterByLocation")}
           initialDataKey="locations"
           countKey="totalLocations"
           renderItem={({ metadata }) => (
@@ -464,8 +470,8 @@ export default function AddAssetsToLocation() {
             updateItem(item);
           }}
           customEmptyStateContent={{
-            title: "You haven't added any assets yet.",
-            text: "What are you waiting for? Create your first asset now!",
+            title: t("assets.pickerEmptyTitle"),
+            text: t("assets.pickerEmptyText"),
             newButtonRoute: "/assets/new",
             newButtonContent: "New asset",
           }}

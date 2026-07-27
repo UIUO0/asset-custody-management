@@ -49,7 +49,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
   } = useBookingStatusHelpers(booking.status);
 
   const submit = useSubmit();
-  const { isBaseOrSelfService, roles } = useUserRoleHelper();
+  const { isScopedToOwnRecords, roles } = useUserRoleHelper();
 
   const canArchiveBooking = userHasPermission({
     roles,
@@ -148,7 +148,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
 
           <When
             truthy={
-              !isBaseOrSelfService &&
+              !isScopedToOwnRecords &&
               !isCompleted &&
               !isArchived &&
               !isCancelled
@@ -160,7 +160,7 @@ export const ActionsDropdown = ({ fullWidth }: Props) => {
           {/* Because SELF_SERVICE and BASE can only delete bookings they own and are in draft, we need to handle it like this, rather than with userHasPermission */}
 
           <When
-            truthy={(isBaseOrSelfService && isDraft) || !isBaseOrSelfService}
+            truthy={(isScopedToOwnRecords && isDraft) || !isScopedToOwnRecords}
           >
             <DeleteBooking booking={booking} />
           </When>

@@ -38,7 +38,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       throw new ShelfError({
         cause: null,
         message:
-          "Your workspace does not support scanning barcodes. Contact your workspace owner to activate this feature or try scanning a Shelf QR code.",
+          "Your workspace does not support scanning barcodes. Contact your workspace owner to activate this feature or try scanning a QR code.",
         additionalData: { value, shouldSendNotification: false },
         label: "Barcode",
         shouldBeCaptured: false,
@@ -74,7 +74,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const organizations = userOrganizations.map((uo) => uo.organization);
     const organizationsIds = organizations.map((org) => org.id);
     const personalOrganization = organizations.find(
-      (org) => org.type === "PERSONAL"
+      (org) => org.type === "PERSONAL",
     ) as Pick<Organization, "id">;
 
     if (!organizationsIds.includes(barcode.organizationId)) {
@@ -91,8 +91,8 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       setCookie(
         await setSelectedOrganizationIdCookie(
           organizationsIds.find((orgId) => orgId === barcode.organizationId) ||
-            personalOrganization.id
-        )
+            personalOrganization.id,
+        ),
       ),
     ];
 
@@ -116,7 +116,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         `/assets/${barcode.assetId}/overview?ref=barcode&barcodeValue=${value}`,
         {
           headers,
-        }
+        },
       );
     } else if (barcode.kitId) {
       /** If its linked to a kit, redirect to the kit */
@@ -124,7 +124,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         `/kits/${barcode.kitId}?ref=barcode&barcodeValue=${value}`,
         {
           headers,
-        }
+        },
       );
     } else {
       throw new ShelfError({

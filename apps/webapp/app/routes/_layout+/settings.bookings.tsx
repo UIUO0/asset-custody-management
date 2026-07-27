@@ -34,6 +34,7 @@ import type { HeaderData } from "~/components/layout/header/types";
 import { Overrides } from "~/components/working-hours/overrides/overrides";
 import { EnableWorkingHoursForm } from "~/components/working-hours/toggle-working-hours-form";
 import { WeeklyScheduleForm } from "~/components/working-hours/weekly-schedule-form";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { scheduleExpiryArchiveForExistingReservations } from "~/modules/booking/service.server";
@@ -98,8 +99,12 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       getTeamMembersForNotify({ organizationId }),
     ]);
 
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const header: HeaderData = {
-      title: "Bookings settings",
+      title: t("bookingSettings.pageTitle"),
     };
 
     return payload({

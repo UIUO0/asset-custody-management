@@ -66,7 +66,7 @@ vi.mock("~/database/db.server", () => ({
           findUnique: vi.fn(),
           update: vi.fn(),
         },
-      })
+      }),
     ),
     auditNote: {
       findUnique: vi.fn(),
@@ -146,7 +146,7 @@ function makeUploadImageRequest(opts: {
 
   return new Request(
     "http://localhost/audits/session-1/scan/audit-asset-1/details",
-    { method: "POST", body: form }
+    { method: "POST", body: form },
   );
 }
 
@@ -155,7 +155,7 @@ describe("audits.$auditId.scan.$auditAssetId.details action — upload-image inj
     vi.clearAllMocks();
     vi.mocked(requirePermission).mockResolvedValue({
       organizationId: "org-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     } as any);
     (uploadAuditImage as any).mockResolvedValue({ id: "img-1" });
   });
@@ -172,7 +172,7 @@ describe("audits.$auditId.scan.$auditAssetId.details action — upload-image inj
         }),
         params: { auditId: "session-1", auditAssetId: "audit-asset-1" },
         context: mockContext,
-      })
+      }),
     );
 
     // Action should succeed (2xx) — the route delegated, not crashed.
@@ -193,7 +193,7 @@ describe("audits.$auditId.scan.$auditAssetId.details action — upload-image inj
         userId: "user-1",
         imageIds: ["img-1"],
         content: maliciousContent,
-      })
+      }),
     );
 
     // The raw concat path must NOT be taken.
@@ -214,7 +214,7 @@ describe("audits.$auditId.scan.$auditAssetId.details action — upload-image inj
         }),
         params: { auditId: "session-1", auditAssetId: "audit-asset-1" },
         context: mockContext,
-      })
+      }),
     );
 
     // Old path would call tx.auditNote.create directly; new path calls the helper.
@@ -240,11 +240,11 @@ describe("audits.$auditId.scan.$auditAssetId.details action — upload-image inj
       createActionArgs({
         request: new Request(
           "http://localhost/audits/session-1/scan/audit-asset-1/details",
-          { method: "POST", body: form }
+          { method: "POST", body: form },
         ),
         params: { auditId: "session-1", auditAssetId: "audit-asset-1" },
         context: mockContext,
-      })
+      }),
     );
 
     // stripMarkdocDelimiters must have been called on the user-authored text

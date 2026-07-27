@@ -37,7 +37,7 @@ export const Pagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(1)}
           disabled={prevDisabled}
           className="rounded-none border-y-0 border-l-0 border-r border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to page 1"
+          aria-label={t("list.goToFirstPage")}
         >
           <ChevronLeftDoubleIcon />
         </Button>
@@ -49,7 +49,7 @@ export const Pagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(page - 1)}
           disabled={prevDisabled}
           className="h-8 w-10 rotate-180 rounded-none border-y-0 border-l border-r-0 border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to previous page"
+          aria-label={t("list.goToPreviousPage")}
         >
           <ChevronRight />
         </Button>
@@ -76,7 +76,7 @@ export const Pagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(page + 1)}
           disabled={nextDisabled}
           className="h-8 w-10 rounded-none border-y-0 border-l border-r-0 border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to next page"
+          aria-label={t("list.goToNextPage")}
         >
           <ChevronRight />
         </Button>
@@ -88,7 +88,7 @@ export const Pagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(totalPages)}
           disabled={nextDisabled}
           className="rotate-180 rounded-none border-y-0 border-l-0 border-r border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to last page"
+          aria-label={t("list.goToLastPage")}
         >
           <ChevronLeftDoubleIcon />
         </Button>

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { m } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 
 // Generic blocker configuration type
@@ -52,11 +53,13 @@ export function createBlockers({
   // Calculate total unresolved conflicts
   const totalUnresolvedConflicts = activeBlockers.reduce(
     (sum, { blocker }) => sum + blocker.count,
-    0
+    0,
   );
 
   // Create the blockers component
   function Blockers() {
+    const { t } = useTranslation();
+
     if (!hasBlockers) return null;
 
     return (
@@ -68,12 +71,11 @@ export function createBlockers({
         <div className="flex items-start justify-between">
           <div>
             <p className="text-[14px] font-semibold">
-              ⚠️ Unresolved blockers ({totalUnresolvedConflicts})
+              {t("scanner.unresolvedBlockers", {
+                count: totalUnresolvedConflicts,
+              })}
             </p>
-            <p className="leading-4">
-              Resolve the issues below to continue. They are currently blocking
-              you from being able to confirm.
-            </p>
+            <p className="leading-4">{t("scanner.resolveToContinue")}</p>
           </div>
 
           <Button
@@ -82,9 +84,9 @@ export function createBlockers({
             size="xs"
             className="whitespace-nowrap text-[12px] leading-3"
             onClick={onResolveAll}
-            title="Removes all conflicting items from the list"
+            title={t("scanner.removesConflictingItems")}
           >
-            Resolve all ({totalUnresolvedConflicts})
+            {t("scanner.resolveAll", { count: totalUnresolvedConflicts })}
           </Button>
         </div>
 
@@ -103,7 +105,7 @@ export function createBlockers({
                 className="text-gray inline text-[12px] font-normal underline"
                 onClick={blocker.onResolve}
               >
-                Remove from list
+                {t("scanner.removeFromList")}
               </Button>
               {blocker.description && (
                 <p className="text-[10px]">{blocker.description}</p>

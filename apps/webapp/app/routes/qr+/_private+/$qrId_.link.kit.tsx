@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Kit } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -37,6 +38,7 @@ import { db } from "~/database/db.server";
 
 import { useViewportHeight } from "~/hooks/use-viewport-height";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   getPaginatedAndFilterableKits,
   updateKitQrCode,
@@ -74,6 +76,10 @@ export const loader = async ({
   const { qrId } = getParams(params, z.object({ qrId: z.string() }));
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const qr = await getQr({ id: qrId });
     if (qr?.assetId || qr?.kitId) {
       throw new ShelfError({
@@ -142,8 +148,8 @@ export const loader = async ({
 
     return payload({
       header: {
-        title: "Link with existing asset",
-        subHeading: "Choose an asset to link with this QR tag.",
+        title: t("qr.linkExistingKitTitle"),
+        subHeading: t("qr.linkExistingKitSubHeading"),
       },
       qrId,
       items: kits,
@@ -153,10 +159,10 @@ export const loader = async ({
       perPage,
       totalPages,
       modelName,
-      searchFieldLabel: "Search kits",
+      searchFieldLabel: t("search.kitsLabel"),
       searchFieldTooltip: {
-        title: "Search your kits database",
-        text: "Search kits based on name or description.",
+        title: t("search.kitsTitle"),
+        text: t("search.kitsText"),
       },
       teamMembers,
       totalTeamMembers,
@@ -187,7 +193,7 @@ export const action = async ({
     });
     const { kitId } = parseData(
       await request.formData(),
-      z.object({ kitId: z.string() })
+      z.object({ kitId: z.string() }),
     );
 
     await updateKitQrCode({
@@ -210,6 +216,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: css }];
 
 export default function QrLinkExisting() {
+  const { t } = useTranslation();
   const { header } = useLoaderData<typeof loader>();
   const { qrId } = useParams();
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
@@ -248,8 +255,8 @@ export default function QrLinkExisting() {
                 </div>
               }
               model={{ name: "teamMember", queryKey: "name", deletedAt: null }}
-              label="Filter by custodian"
-              placeholder="Search team members"
+              label={t("list.filterByCustodian")}
+              placeholder={t("list.searchTeamMembers")}
               countKey="totalTeamMembers"
               initialDataKey="teamMembers"
               transformItem={(item) => ({

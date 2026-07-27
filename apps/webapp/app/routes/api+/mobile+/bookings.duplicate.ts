@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/database/db.server";
@@ -16,6 +15,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { enforceUserRateLimit } from "~/utils/rate-limit.server";
 
 /**
@@ -82,7 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (!source) {
       return data(
         { error: { message: "Booking not found in this workspace." } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -98,10 +98,8 @@ export async function action({ request }: ActionFunctionArgs) {
     // guard above isn't enough for restricted roles: a caller who is only the
     // creator would mint a new draft assigned to someone else's custody. Require
     // them to be the custodian so the clone is owned by themselves.
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
-    if (isSelfServiceOrBase && source.custodianUserId !== user.id) {
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+    if (isScopedToOwnRecords && source.custodianUserId !== user.id) {
       throw new ShelfError({
         cause: null,
         message: "You can only duplicate bookings assigned to you.",
@@ -134,7 +132,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause, { userId });
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

@@ -40,6 +40,7 @@ vi.mock("~/database/db.server", () => ({
 }));
 
 // Import after mocking
+import { config } from "~/config/shelf.config";
 import {
   getCustomerNotificationData,
   getInvoiceNotificationData,
@@ -293,7 +294,7 @@ describe("getInvoiceNotificationData", () => {
       user: baseUser,
     });
 
-    expect(result.subscriptionName).toBe("Shelf Subscription");
+    expect(result.subscriptionName).toBe(`${config.appName} Subscription`);
   });
 
   it("should use fallback subscription name when lines data is empty", async () => {
@@ -315,7 +316,7 @@ describe("getInvoiceNotificationData", () => {
       user: baseUser,
     });
 
-    expect(result.subscriptionName).toBe("Shelf Subscription");
+    expect(result.subscriptionName).toBe(`${config.appName} Subscription`);
   });
 
   it("should include customer notification data", async () => {

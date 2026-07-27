@@ -1,4 +1,4 @@
-import { BookingStatus, OrganizationRoles } from "@prisma/client";
+import { BookingStatus } from "@prisma/client";
 import { data, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/database/db.server";
 import {
@@ -7,6 +7,7 @@ import {
   requireOrganizationAccess,
 } from "~/modules/api/mobile-auth.server";
 import { makeShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/bookings
@@ -28,11 +29,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const search = (url.searchParams.get("search") || "").trim().slice(0, 100);
     const page = Math.max(
       1,
-      parseInt(url.searchParams.get("page") || "1", 10) || 1
+      parseInt(url.searchParams.get("page") || "1", 10) || 1,
     );
     const perPage = Math.min(
       50,
-      Math.max(1, parseInt(url.searchParams.get("perPage") || "20", 10) || 20)
+      Math.max(1, parseInt(url.searchParams.get("perPage") || "20", 10) || 20),
     );
 
     // Sort: allowlisted column + direction (mirrors the web list's sortable
@@ -52,7 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (statusParam) {
       const requested = statusParam.split(",").map((s) => s.trim());
       const valid = requested.filter((s) =>
-        validStatuses.includes(s as BookingStatus)
+        validStatuses.includes(s as BookingStatus),
       ) as BookingStatus[];
       if (valid.length > 0) {
         statusFilter = valid;
@@ -72,17 +73,15 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     // Scope to the caller's own bookings for self-service / base users, who
     // can only see the bookings they are the custodian of (web parity — see
-    // getBookings' `isSelfServiceOrBase` branch). Owners/admins see all. This
+    // getBookings' `isScopedToOwnRecords` branch). Owners/admins see all. This
     // matters especially now that DRAFT bookings appear in the default view.
     const { role } = await getMobileUserContext(user.id, organizationId);
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
     const where = {
       organizationId,
       status: { in: statusFilter },
-      ...(isSelfServiceOrBase && { custodianUserId: user.id }),
+      ...(isScopedToOwnRecords && { custodianUserId: user.id }),
       // Keyword search over booking name + description (the field-tech "find my
       // booking" case). Web also searches tags/custodian/asset names; name +
       // description covers the common case without a heavier query.
@@ -169,7 +168,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

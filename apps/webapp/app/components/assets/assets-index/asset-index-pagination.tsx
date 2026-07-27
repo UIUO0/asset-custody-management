@@ -48,8 +48,8 @@ export function AssetIndexPagination() {
     <div
       className={tw(
         "asset-index-pagination flex flex-col items-center justify-between border-t border-gray-200 bg-white transition-all delay-75 ease-in-out md:flex-row",
-        isMd ? "fixed bottom-0 right-0 z-[12]" : "",
-        state === "collapsed" ? "lg:left-[48px]" : "lg:left-[256px]",
+        isMd ? "fixed bottom-0 end-0 z-[12]" : "",
+        state === "collapsed" ? "lg:start-[48px]" : "lg:start-[256px]",
       )}
     >
       <Pagination className="px-4 py-[6px]" />
@@ -61,8 +61,8 @@ export function AssetIndexPagination() {
             type="button"
             onClick={handleScrollToTop}
             variant="secondary"
-            title="Scroll to top"
-            aria-label="Scroll to top"
+            title={t("list.scrollToTop")}
+            aria-label={t("list.scrollToTop")}
             className="h-[34px]"
           >
             <ChevronRight className="chev -rotate-90" />
@@ -94,7 +94,7 @@ export function AssetIndexPagination() {
                   )}
                   name="mode"
                   value="SIMPLE"
-                  aria-label="Switch to simple mode"
+                  aria-label={t("list.switchToSimpleMode")}
                 >
                   {t("list.simple")}
                 </Button>
@@ -107,7 +107,7 @@ export function AssetIndexPagination() {
                   )}
                   name="mode"
                   value="ADVANCED"
-                  aria-label="Switch to advanced mode"
+                  aria-label={t("list.switchToAdvancedMode")}
                 >
                   {t("list.advanced")}
                 </Button>

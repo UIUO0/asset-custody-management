@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DateTime } from "luxon";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useNavigation } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -42,7 +43,7 @@ const StartAuditFromContextFormSchema = z.object({
         const parsed = DateTime.fromFormat(value, DATE_TIME_FORMAT);
         return parsed.isValid && parsed > DateTime.now();
       },
-      { message: "Due date must be in the future" }
+      { message: "Due date must be in the future" },
     ),
   assignee: z.string().optional(),
 });
@@ -89,6 +90,7 @@ export function StartAuditFromContextDialog({
   onClose,
   showTrigger = true,
 }: StartAuditFromContextDialogProps) {
+  const { t } = useTranslation();
   const [isUncontrolledOpen, setIsUncontrolledOpen] = useState(false);
   const navigate = useNavigate();
   const navigation = useNavigation();
@@ -112,7 +114,7 @@ export function StartAuditFromContextDialog({
 
   // Need both states: fetcher submission + route navigation (redirect).
   const shouldRedirect = Boolean(
-    fetcher.data?.success && fetcher.data.redirectTo
+    fetcher.data?.success && fetcher.data.redirectTo,
   );
   const isSubmitting =
     // Need both states: fetcher submission + route navigation (redirect).
@@ -124,7 +126,7 @@ export function StartAuditFromContextDialog({
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       setDescriptionLength(event.currentTarget.value.length);
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -207,8 +209,8 @@ export function StartAuditFromContextDialog({
               <div className="py-4 pe-6">
                 <Input
                   name={zo.fields.name()}
-                  label="Audit name"
-                  placeholder="Quarterly warehouse audit"
+                  label={t("audits.auditName")}
+                  placeholder={t("audits.auditNamePlaceholder")}
                   error={zo.errors.name()?.message}
                   required
                   disabled={isSubmitting}
@@ -219,7 +221,7 @@ export function StartAuditFromContextDialog({
                 <Input
                   name={zo.fields.description()}
                   label="Description"
-                  placeholder="Add context that will help auditors (optional)."
+                  placeholder={t("audits.descriptionHint")}
                   inputType="textarea"
                   rows={5}
                   maxLength={AUDIT_DESCRIPTION_MAX_LENGTH}
@@ -290,7 +292,7 @@ export function StartAuditFromContextDialog({
                 Cancel
               </Button>
               <Button type="submit" variant="primary" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create audit"}
+                {isSubmitting ? "Creating..." : t("audits.createAudit")}
               </Button>
             </div>
           </fetcher.Form>

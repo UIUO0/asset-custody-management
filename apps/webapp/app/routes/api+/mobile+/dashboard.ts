@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { data, type LoaderFunctionArgs } from "react-router";
 import { db } from "~/database/db.server";
 import {
@@ -8,6 +7,7 @@ import {
 } from "~/modules/api/mobile-auth.server";
 import { getBookings } from "~/modules/booking/service.server";
 import { makeShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/dashboard
@@ -35,7 +35,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // visibility below.
     const { canUseAudits, role } = await getMobileUserContext(
       user.id,
-      organizationId
+      organizationId,
     );
 
     // Scope the booking sections to the caller's own bookings for
@@ -55,10 +55,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // empty for both). The companion's Home tab is the app's landing screen
     // for every role, not an admin analytics surface — denying it would leave
     // those users on a permanent error state rather than a scoped dashboard.
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
-    const custodianScope = isSelfServiceOrBase ? { userId: user.id } : null;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+    const custodianScope = isScopedToOwnRecords ? { userId: user.id } : null;
 
     // Run all queries in parallel for speed
     const [
@@ -275,7 +273,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

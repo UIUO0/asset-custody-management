@@ -22,6 +22,7 @@
 import { useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { ReportEmptyState } from "~/components/reports/report-empty-state";
 import {
   AssetCell,
@@ -62,6 +63,7 @@ export function CustodySnapshotContent({
   totalRows,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   const currentOrganization = useCurrentOrganization();
   const { locale } = useHints();
 
@@ -78,7 +80,7 @@ export function CustodySnapshotContent({
     () => [
       {
         accessorKey: "assetName",
-        header: "Asset",
+        header: "reports.colAsset",
         cell: ({ row }) => (
           <AssetCell
             name={row.original.assetName}
@@ -89,12 +91,12 @@ export function CustodySnapshotContent({
       },
       {
         accessorKey: "custodianName",
-        header: "Assigned to",
+        header: "reports.assignedTo",
         cell: ({ row }) => row.original.custodianName,
       },
       {
         accessorKey: "daysInCustody",
-        header: "Days Held",
+        header: "reports.daysHeld",
         cell: ({ row }) => {
           const days = row.original.daysInCustody;
           const percentage = Math.min((days / maxDays) * 100, 100);
@@ -117,24 +119,24 @@ export function CustodySnapshotContent({
       },
       {
         accessorKey: "assignedAt",
-        header: "Assigned",
+        header: "reports.colAssigned",
         cell: ({ row }) => <DateCell date={row.original.assignedAt} />,
       },
       {
         accessorKey: "category",
-        header: "Category",
+        header: "reports.colCategory",
         cell: ({ row }) =>
           row.original.category || <span className="text-gray-400">—</span>,
       },
       {
         accessorKey: "location",
-        header: "Location",
+        header: "reports.colLocation",
         cell: ({ row }) =>
           row.original.location || <span className="text-gray-400">—</span>,
       },
       {
         accessorKey: "valuation",
-        header: "Value",
+        header: "reports.colValue",
         // Asset-aware: shows TOTAL (valuation × quantity) for QT assets,
         // with a "<unit price> × N <unit>" subtext. See {@link CurrencyCell}.
         cell: ({ row }) => (
@@ -142,7 +144,7 @@ export function CustodySnapshotContent({
         ),
       },
     ],
-    [maxDays]
+    [maxDays],
   );
 
   // Extract KPI values
@@ -181,7 +183,9 @@ export function CustodySnapshotContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Total Value</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.totalValue")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {totalCustodyValue > 0
                   ? formatCurrency({
@@ -193,7 +197,9 @@ export function CustodySnapshotContent({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Avg. Tenure</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.avgTenure")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {avgDaysInCustody > 0
                   ? `${Math.round(avgDaysInCustody)} days`
@@ -221,8 +227,8 @@ export function CustodySnapshotContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No assets assigned"
-              description="No assets are currently assigned to team members."
+              title={t("reports.noAssetsAssigned")}
+              description={t("reports.noAssetsAssignedBody")}
             />
           }
         />

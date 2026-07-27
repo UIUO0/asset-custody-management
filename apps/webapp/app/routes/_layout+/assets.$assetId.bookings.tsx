@@ -3,6 +3,7 @@ import { data, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { z } from "zod";
 import type { HeaderData } from "~/components/layout/header/types";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   getBookings,
   getBookingsFilterData,
@@ -31,9 +32,7 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-import BookingsIndexPage, {
-  bookingsSearchFieldTooltipText,
-} from "./bookings._index";
+import BookingsIndexPage from "./bookings._index";
 
 const BOOKING_STATUS_TO_SHOW = [
   BookingStatus.DRAFT,
@@ -56,6 +55,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, canSeeAllBookings, canSeeAllCustody } =
       await requirePermission({
         userId,
@@ -142,8 +145,8 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         ...teamMembersData,
         ...tagsData,
         searchFieldTooltip: {
-          title: "Search your bookings",
-          text: parseMarkdownToReact(bookingsSearchFieldTooltipText),
+          title: t("search.bookingsTitle"),
+          text: parseMarkdownToReact(t("search.bookingsText")),
         },
       }),
       {
@@ -151,7 +154,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           setCookie(await userPrefs.serialize(cookie)),
           setCookie(await setSelectedOrganizationIdCookie(organizationId)),
         ],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

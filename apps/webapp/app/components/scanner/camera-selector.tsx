@@ -6,6 +6,7 @@ import {
   PopoverContent,
 } from "@radix-ui/react-popover";
 import { Check, SwitchCamera } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { tw } from "~/utils/tw";
 
@@ -25,6 +26,7 @@ export function CameraSelector({
   disabled = false,
   showLabel = false,
 }: CameraSelectorProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   // Don't render if only one camera
@@ -46,12 +48,12 @@ export function CameraSelector({
           disabled={disabled}
           className={tw(
             "gap-2 py-[7px] text-[12px] font-normal",
-            open ? "bg-gray-50" : ""
+            open ? "bg-gray-50" : "",
           )}
-          aria-label="Switch camera"
+          aria-label={t("scanner.switchCamera")}
         >
           <SwitchCamera className="size-4" />
-          {showLabel && <span>Switch camera</span>}
+          {showLabel && <span>{t("scanner.switchCamera")}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverPortal>
@@ -59,10 +61,14 @@ export function CameraSelector({
           align="end"
           onOpenAutoFocus={(e) => e.preventDefault()}
           className={tw(
-            "z-[999999] mt-2 min-w-[200px] max-w-[300px] rounded-md border border-gray-200 bg-white shadow-md"
+            "z-[999999] mt-2 min-w-[200px] max-w-[300px] rounded-md border border-gray-200 bg-white shadow-md",
           )}
         >
-          <div className="p-1" role="listbox" aria-label="Camera selection">
+          <div
+            className="p-1"
+            role="listbox"
+            aria-label={t("scanner.cameraSelection")}
+          >
             {devices.map((device, index) => (
               <button
                 key={device.deviceId}
@@ -71,7 +77,7 @@ export function CameraSelector({
                 className={tw(
                   "flex w-full items-center justify-between gap-2 rounded px-3 py-2 text-start text-sm",
                   "hover:bg-gray-50 focus:bg-gray-50 focus:outline-none",
-                  currentDeviceId === device.deviceId && "bg-gray-50"
+                  currentDeviceId === device.deviceId && "bg-gray-50",
                 )}
                 onClick={() => handleSelect(device.deviceId)}
               >

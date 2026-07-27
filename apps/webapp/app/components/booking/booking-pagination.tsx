@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import {
   ChevronRight,
@@ -9,7 +10,8 @@ import { tw } from "~/utils/tw";
 import PerPageItemsSelect from "../list/pagination/per-page-items-select";
 
 export const BookingPagination = ({ className }: { className?: string }) => {
-  const { modelName, totalPaginationItems } = useLoaderData<{
+  const { t } = useTranslation();
+  const { totalPaginationItems } = useLoaderData<{
     modelName: { singular: string; plural: string };
     totalPaginationItems: number;
   }>();
@@ -26,7 +28,7 @@ export const BookingPagination = ({ className }: { className?: string }) => {
     <div
       className={tw(
         "flex flex-wrap items-center justify-center gap-3 px-1 pb-4 pt-3 md:px-4",
-        className
+        className,
       )}
     >
       <div className="inline-flex items-center rounded border border-gray-300 shadow-[0px_1px_2px_0px_rgba(16,24,40,0.05)]">
@@ -37,7 +39,7 @@ export const BookingPagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(1)}
           disabled={prevDisabled}
           className="rounded-none border-y-0 border-l-0 border-r border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to page 1"
+          aria-label={t("list.goToFirstPage")}
         >
           <ChevronLeftDoubleIcon />
         </Button>
@@ -49,20 +51,20 @@ export const BookingPagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(page - 1)}
           disabled={prevDisabled}
           className="h-8 w-10 rotate-180 rounded-none border-y-0 border-l border-r-0 border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to previous page"
+          aria-label={t("list.goToPreviousPage")}
         >
           <ChevronRight />
         </Button>
 
         <div className="flex items-center gap-2 px-2.5 py-[4px] leading-none text-gray-400">
           <span className="whitespace-nowrap text-[14px] font-medium text-gray-500">
-            Page
+            {t("list.page")}
           </span>
           <span className="whitespace-nowrap text-[14px] font-semibold text-gray-700">
             {page}
           </span>
           <span className="whitespace-nowrap text-[14px] font-medium text-gray-500">
-            of
+            {t("list.of")}
           </span>
           <span className="whitespace-nowrap text-[14px] font-semibold text-gray-700">
             {totalPages === 0 ? 1 : totalPages}
@@ -76,7 +78,7 @@ export const BookingPagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(page + 1)}
           disabled={customNextDisabled}
           className="h-8 w-10 rounded-none border-y-0 border-l border-r-0 border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to next page"
+          aria-label={t("list.goToNextPage")}
         >
           <ChevronRight />
         </Button>
@@ -88,15 +90,15 @@ export const BookingPagination = ({ className }: { className?: string }) => {
           onClick={() => goToPage(totalPages)}
           disabled={customNextDisabled}
           className="rotate-180 rounded-none border-y-0 border-l-0 border-r border-gray-300 bg-transparent px-3 py-[4px] hover:bg-transparent"
-          aria-label="Go to last page"
+          aria-label={t("list.goToLastPage")}
         >
           <ChevronLeftDoubleIcon />
         </Button>
       </div>
       <div className="flex items-center gap-2">
         <PerPageItemsSelect />
-        <p className="hidden text-[14px] font-medium text-gray-500 lg:block">
-          <span className="capitalize">{modelName.plural}</span> per page
+        <p className="hidden whitespace-nowrap text-[14px] font-medium text-gray-500 lg:block">
+          {t("list.perPage")}
         </p>
       </div>
     </div>

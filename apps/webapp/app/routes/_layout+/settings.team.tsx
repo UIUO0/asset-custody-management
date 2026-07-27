@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, Outlet, useLoaderData, useParams } from "react-router";
@@ -17,11 +16,15 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export type UserFriendlyRoles =
-  | "Administrator"
-  | "Owner"
-  | "Base"
-  | "Self service";
+/**
+ * Re-exported from `~/utils/roles` so the many existing importers of this route
+ * keep working. New code should import from `~/utils/roles` directly — a route
+ * module is the wrong home for shared data, and server modules importing it was
+ * already pulling a whole route into the server bundle.
+ */
+export type { UserFriendlyRoles } from "~/utils/roles";
+export { organizationRolesMap } from "~/utils/roles";
+
 export const meta = ({
   matches,
 }: {
@@ -53,13 +56,6 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     const reason = makeShelfError(cause);
     throw data(error(reason), { status: reason.status });
   }
-};
-
-export const organizationRolesMap: Record<string, UserFriendlyRoles> = {
-  [OrganizationRoles.ADMIN]: "Administrator",
-  [OrganizationRoles.OWNER]: "Owner",
-  [OrganizationRoles.BASE]: "Base",
-  [OrganizationRoles.SELF_SERVICE]: "Self service",
 };
 
 export default function TeamSettings() {

@@ -2,6 +2,7 @@ import type React from "react";
 import { useState, useRef, useEffect } from "react";
 import { useAtom } from "jotai";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import { fileErrorAtom } from "~/atoms/file";
 import { Button } from "~/components/shared/button";
@@ -66,6 +67,7 @@ export function AuditImageUploadDialog({
   maxCount,
   existingImagesCount,
 }: AuditImageUploadDialogProps) {
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputsRef = useRef<Map<string, HTMLInputElement>>(new Map());
   const [noteContent, setNoteContent] = useState("");
@@ -159,7 +161,9 @@ export function AuditImageUploadDialog({
 
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {existingNoteId ? "Attach Images to Note" : "Upload Images"}
+              {existingNoteId
+                ? t("audits.attachImagesToNote")
+                : t("audits.uploadImages")}
             </AlertDialogTitle>
             <button
               type="button"
@@ -244,7 +248,7 @@ export function AuditImageUploadDialog({
                     name="content"
                     value={noteContent}
                     onChange={(e) => setNoteContent(e.target.value)}
-                    placeholder="Add a note about these images..."
+                    placeholder={t("audits.imageNotePlaceholder")}
                     className="min-h-[100px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-300/20"
                     rows={4}
                     disabled={isSubmitting}
@@ -270,7 +274,7 @@ export function AuditImageUploadDialog({
               variant="primary"
               disabled={isSubmitting || selectedImages.length === 0}
             >
-              {isSubmitting ? "Uploading..." : "Upload Images"}
+              {isSubmitting ? "Uploading..." : t("audits.uploadImages")}
             </Button>
           </AlertDialogFooter>
 

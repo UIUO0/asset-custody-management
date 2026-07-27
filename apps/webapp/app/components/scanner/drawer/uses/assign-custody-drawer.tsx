@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { AssetStatus, AssetType } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CircleX } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -85,6 +86,7 @@ export default function AssignCustodyDrawer({
   isLoading?: boolean;
   defaultExpanded?: boolean;
 }) {
+  const { t } = useTranslation();
   // Get the scanned items from jotai
   const items = useAtomValue(scannedItemsAtom);
   const clearList = useSetAtom(clearScannedItemsAtom);
@@ -124,7 +126,7 @@ export default function AssignCustodyDrawer({
         !!asset &&
         asset.type === AssetType.INDIVIDUAL &&
         asset.assetKits.length > 0 &&
-        asset.id
+        asset.id,
     )
     .map((asset) => asset.id);
 
@@ -137,7 +139,7 @@ export default function AssignCustodyDrawer({
   // Kit has assets inside that that are in custody
   const kitsWithAssetsInCustody = kits
     .filter((kit) =>
-      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY)
+      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY),
     )
     .map((kit) => kit.id);
   // Kit is checked out
@@ -158,7 +160,7 @@ export default function AssignCustodyDrawer({
   // Get the QR IDs for each type of kit blocker
   const qrIdsOfKitsInCustody = getQrIdsForKitIds(kitsIsAlreadyInCustody);
   const qrIdsOfKitsWithAssetsInCustody = getQrIdsForKitIds(
-    kitsWithAssetsInCustody
+    kitsWithAssetsInCustody,
   );
   const qrIdsOfKitsCheckedOut = getQrIdsForKitIds(kitsAreCheckedOut);
 
@@ -184,7 +186,7 @@ export default function AssignCustodyDrawer({
           checked out.
         </>
       ),
-      description: "Note: Checked out assets cannot be assigned custody.",
+      description: t("scanner.noteCheckedOutNoCustody"),
       onResolve: () => removeAssetsFromList(assetsAreCheckedOut),
     },
     {
@@ -196,7 +198,7 @@ export default function AssignCustodyDrawer({
           of a kit.
         </>
       ),
-      description: "Note: Scan Kit QR to add the full kit",
+      description: t("scanner.noteScanKitQrToAdd"),
       onResolve: () => removeAssetsFromList(assetsArePartOfKit),
     },
     {
@@ -231,7 +233,7 @@ export default function AssignCustodyDrawer({
         </>
       ),
       onResolve: () => removeItemsFromList(qrIdsOfKitsCheckedOut),
-      description: "Note: Checked out kits cannot be assigned custody.",
+      description: t("scanner.noteCheckedOutKitsNoCustody"),
     },
     {
       condition: errors.length > 0,
@@ -289,7 +291,7 @@ export default function AssignCustodyDrawer({
       schema={AssignCustodyToSignedItemsSchema}
       items={items}
       onClearItems={clearList}
-      title="Items scanned"
+      title={t("scanner.itemsScanned")}
       isLoading={isLoading}
       renderItem={renderItemRow}
       Blockers={Blockers}
@@ -310,6 +312,7 @@ type CustodyState = {
 };
 
 function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
+  const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [custodyState, setCustodyState] = useState<CustodyState>({
     assetStatus: "processing",
@@ -362,7 +365,7 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
               assetErrorMessage:
                 error instanceof ShelfError
                   ? error.message
-                  : "Something went wrong while assigning custody. Please try again.",
+                  : t("scanner.assignCustodyFailed"),
             }));
           });
       } else {
@@ -407,7 +410,7 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
               kitErrorMessage:
                 error instanceof ShelfError
                   ? error.message
-                  : "Something went wrong while assigning custody. Please try again.",
+                  : t("scanner.assignCustodyFailed"),
             }));
           });
       } else {
@@ -462,7 +465,7 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
 
         <div className="px-4 md:ps-0">
           <div className="relative z-50 my-8 ">
-            <h5 className="mb-1">Assign custody to:</h5>
+            <h5 className="mb-1">{t("scanner.assignCustodyTo")}</h5>
             <DynamicSelect
               defaultValue={
                 isSelfService && teamMembers?.length > 0
@@ -479,10 +482,10 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
                 deletedAt: null,
               }}
               fieldName="custodian"
-              contentLabel="Team members"
+              contentLabel={t("bookingForm.teamMembers")}
               initialDataKey="teamMembers"
               countKey="totalTeamMembers"
-              placeholder="Select a team member"
+              placeholder={t("bookingForm.selectTeamMember")}
               allowClear
               closeOnSelect
               transformItem={(item) => ({
@@ -523,13 +526,15 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
 
 // Implement item renderers if they're not already defined elsewhere
 export function AssetRow({ asset }: { asset: AssetFromQr }) {
+  const { t } = useTranslation();
   // Use predefined presets to create label configurations
   const availabilityConfigs = [
-    assetLabelPresets.inCustody(asset.status === AssetStatus.IN_CUSTODY),
-    assetLabelPresets.checkedOut(asset.status === AssetStatus.CHECKED_OUT),
+    assetLabelPresets.inCustody(t, asset.status === AssetStatus.IN_CUSTODY),
+    assetLabelPresets.checkedOut(t, asset.status === AssetStatus.CHECKED_OUT),
     assetLabelPresets.partOfKit(
+      t,
       asset.assetKits.length > 0,
-      isQuantityTracked(asset)
+      isQuantityTracked(asset),
     ),
   ];
 
@@ -538,7 +543,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     availabilityConfigs,
     {
       maxLabels: 3,
-    }
+    },
   );
   return (
     <div className="flex flex-col gap-1">
@@ -551,7 +556,7 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           asset
@@ -563,12 +568,14 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
 }
 
 export function KitRow({ kit }: { kit: KitFromQr }) {
+  const { t } = useTranslation();
   // Use predefined presets to create label configurations
   const availabilityConfigs = [
-    kitLabelPresets.inCustody(kit.status === AssetStatus.IN_CUSTODY),
-    kitLabelPresets.checkedOut(kit.status === AssetStatus.CHECKED_OUT),
+    kitLabelPresets.inCustody(t, kit.status === AssetStatus.IN_CUSTODY),
+    kitLabelPresets.checkedOut(t, kit.status === AssetStatus.CHECKED_OUT),
     kitLabelPresets.hasAssetsInCustody(
-      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY)
+      t,
+      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY),
     ),
   ];
 
@@ -577,7 +584,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
     availabilityConfigs,
     {
       maxLabels: 3,
-    }
+    },
   );
 
   return (
@@ -594,7 +601,7 @@ export function KitRow({ kit }: { kit: KitFromQr }) {
           className={tw(
             "inline-block bg-gray-50 px-[6px] py-[2px]",
             "rounded-md border border-gray-200",
-            "text-xs text-gray-700"
+            "text-xs text-gray-700",
           )}
         >
           kit
@@ -616,6 +623,7 @@ function SubmittingDialog({
   custodyState: CustodyState;
   cleanupState: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <AlertDialog
       open={open}
@@ -626,7 +634,7 @@ function SubmittingDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Assigning custody</AlertDialogTitle>
+          <AlertDialogTitle>{t("scanner.assigningCustody")}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="flex flex-col gap-4">
               <SubmissionState
@@ -670,6 +678,7 @@ function SubmissionState({
   errorMessage?: string;
   custodianName?: string;
 }) {
+  const { t } = useTranslation();
   // Return null for skipped status to hide the component entirely
   if (status === "skipped") {
     return null;
@@ -679,7 +688,7 @@ function SubmissionState({
     return (
       <div className="flex flex-row gap-2">
         <Spinner />
-        <TextLoader text={`Assigning custody to ${type}s`} />
+        <TextLoader text={t("scanner.assigningCustodyTo", { type })} />
       </div>
     );
   } else if (status === "success") {
@@ -703,7 +712,7 @@ function SubmissionState({
         </div>
         {errorMessage && (
           <span className="text-[12px] text-error-500">
-            <strong>Error:</strong> {errorMessage}
+            <strong>{t("scanner.errorPrefix")}</strong> {errorMessage}
           </span>
         )}
       </div>

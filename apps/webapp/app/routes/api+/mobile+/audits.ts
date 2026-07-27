@@ -7,6 +7,7 @@ import {
 } from "~/modules/api/mobile-auth.server";
 import { getAuditsForOrganization } from "~/modules/audit/service.server";
 import { makeShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/audits
@@ -43,7 +44,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // sees the whole org. Mirrors how `audits.complete.ts` does it.
     const { role, canUseAudits } = await getMobileUserContext(
       user.id,
-      organizationId
+      organizationId,
     );
     if (!canUseAudits) {
       return data(
@@ -53,10 +54,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
               "Audits are not enabled for this workspace. Contact your admin to enable this feature.",
           },
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
-    const isSelfServiceOrBase = role === "SELF_SERVICE" || role === "BASE";
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
     const url = new URL(request.url);
     const statusParam = url.searchParams.get("status");
@@ -64,11 +65,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const assignedToMe = url.searchParams.get("assignedToMe") === "true";
     const page = Math.max(
       1,
-      parseInt(url.searchParams.get("page") || "1", 10) || 1
+      parseInt(url.searchParams.get("page") || "1", 10) || 1,
     );
     const perPage = Math.min(
       50,
-      Math.max(1, parseInt(url.searchParams.get("perPage") || "20", 10) || 20)
+      Math.max(1, parseInt(url.searchParams.get("perPage") || "20", 10) || 20),
     );
 
     // Parse and validate status filters
@@ -78,7 +79,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           .split(",")
           .map((s) => s.trim())
           .filter((s): s is AuditStatus =>
-            validStatuses.includes(s as AuditStatus)
+            validStatuses.includes(s as AuditStatus),
           )
       : [];
 
@@ -94,7 +95,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       await getAuditsForOrganization({
         organizationId,
         userId: user.id,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         page: isSingleStatus || isAllOrNone ? page : 1,
         perPage: isSingleStatus || isAllOrNone ? perPage : 200,
         search: searchParam || null,
@@ -145,7 +146,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

@@ -14,6 +14,7 @@
 
 import type { ReactNode } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { useSearchParams } from "~/hooks/search-params";
@@ -86,6 +87,7 @@ export function ReportShell({
   loading = false,
   className,
 }: ReportShellProps) {
+  const { t } = useTranslation();
   return (
     <div className={tw("flex flex-col", className)}>
       {/* Header - matches app header pattern */}
@@ -97,7 +99,7 @@ export function ReportShell({
             className={tw(
               "flex items-center gap-1.5 text-sm text-gray-600",
               "hover:text-gray-900",
-              "rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+              "rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2",
             )}
           >
             <ArrowLeft className="size-4" />
@@ -114,12 +116,12 @@ export function ReportShell({
               "border border-gray-200 bg-white text-gray-700",
               "hover:bg-gray-50 hover:text-gray-900",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-              "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+              "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white",
             )}
-            title={!exportable ? "No data to export" : undefined}
+            title={!exportable ? t("reports.noDataToExport") : undefined}
           >
             <Download className="size-4" />
-            <span>{exporting ? "Exporting..." : "Export CSV"}</span>
+            <span>{exporting ? "Exporting..." : t("reports.exportCsv")}</span>
           </button>
         </div>
 
@@ -160,7 +162,7 @@ export function ReportShell({
         <div
           className={tw(
             "rounded border border-gray-200 bg-white transition-opacity",
-            loading && "opacity-60"
+            loading && "opacity-60",
           )}
         >
           {children}
@@ -194,6 +196,7 @@ export function ReportFooter({
   /** Hide row count for visualization-only reports (e.g., distribution) */
   hideRowCount?: boolean;
 }) {
+  const { t } = useTranslation();
   const start = totalRows > 0 ? (page - 1) * pageSize + 1 : 0;
   const end = Math.min(page * pageSize, totalRows);
   const totalPages = Math.ceil(totalRows / pageSize);
@@ -206,7 +209,7 @@ export function ReportFooter({
       ) : (
         <span>
           {totalRows === 0
-            ? "No results for selected timeframe"
+            ? t("reports.noResultsForTimeframe")
             : `Showing ${start}–${end} of ${totalRows.toLocaleString()} results`}
         </span>
       )}
@@ -232,6 +235,7 @@ function ReportPaginationInline({
   page: number;
   totalPages: number;
 }) {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const canGoPrev = page > 1;
@@ -254,9 +258,9 @@ function ReportPaginationInline({
           "text-gray-500 transition-colors",
           "hover:bg-gray-50 hover:text-gray-700",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-          "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+          "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white",
         )}
-        aria-label="Previous page"
+        aria-label={t("reports.previousPage")}
       >
         <ChevronLeft className="size-3.5" />
       </button>
@@ -274,9 +278,9 @@ function ReportPaginationInline({
           "text-gray-500 transition-colors",
           "hover:bg-gray-50 hover:text-gray-700",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-          "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white"
+          "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white",
         )}
-        aria-label="Next page"
+        aria-label={t("reports.nextPage")}
       >
         <ChevronRight className="size-3.5" />
       </button>

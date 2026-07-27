@@ -1,4 +1,3 @@
-import { OrganizationRoles } from "@prisma/client";
 import { data, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/database/db.server";
@@ -11,6 +10,7 @@ import {
 import { getBookingModelTabData } from "~/modules/booking-model-request/service.server";
 import { makeShelfError } from "~/utils/error";
 import { getParams } from "~/utils/http.server";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/bookings/available-models?bookingId=…&orgId=…
@@ -47,7 +47,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const url = new URL(request.url);
     const { bookingId } = getParams(
       { bookingId: url.searchParams.get("bookingId") ?? undefined },
-      z.object({ bookingId: z.string().min(1) })
+      z.object({ bookingId: z.string().min(1) }),
     );
     // Optional server-side model name search (`s`), so orgs with more than
     // MODEL_PICKER_LIMIT models can still reach a model that sorts past the
@@ -58,15 +58,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // lookup by custodian exactly like the booking detail read, so a booking
     // they don't own 404s instead of leaking its models/reservations.
     const { role } = await getMobileUserContext(user.id, organizationId);
-    const isSelfServiceOrBase =
-      role === OrganizationRoles.SELF_SERVICE ||
-      role === OrganizationRoles.BASE;
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
     const booking = await db.booking.findFirst({
       where: {
         id: bookingId,
         organizationId,
-        ...(isSelfServiceOrBase && { custodianUserId: user.id }),
+        ...(isScopedToOwnRecords && { custodianUserId: user.id }),
       },
       select: {
         id: true,
@@ -89,7 +87,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (!booking) {
       return data(
         { error: { message: "Booking not found in this workspace." } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -126,7 +124,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

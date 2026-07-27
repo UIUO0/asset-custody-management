@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import type { Organization, Currency } from "@prisma/client";
 import { useAtom, useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useActionData, useNavigation } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export const WorkspaceForm = ({ name, currency, children }: Props) => {
+  const { t } = useTranslation();
   const actionData = useActionData<{ error?: any }>();
   const [searchParams] = useSearchParams();
   const navigation = useNavigation();
@@ -72,9 +74,7 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
       >
         <FormRow
           rowLabel={"Name"}
-          subHeading={
-            "Choose a name that represents your Organization. Make it easily recognizable for your team members."
-          }
+          subHeading={t("workspaceForm2.nameHint")}
           className="border-b-0 pb-[10px] pt-0"
           required={zodFieldIsRequired(NewWorkspaceFormSchema.shape.name)}
         >
@@ -94,11 +94,9 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
         </FormRow>
 
         <FormRow
-          rowLabel={"Main image"}
+          rowLabel={t("workspaceForm2.mainImage")}
           className="border-b-0"
-          subHeading={
-            "Used to place your organization's logo or symbol. For best results, use a square image."
-          }
+          subHeading={t("workspaceForm2.imageHint")}
         >
           <div>
             <p className="hidden lg:block">
@@ -110,7 +108,7 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
               name="image"
               type="file"
               onChange={validateFile}
-              label={"Main image"}
+              label={t("workspaceForm2.mainImage")}
               hideLabel
               error={imageError}
               className="mt-2"
@@ -126,7 +124,7 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
           <FormRow
             rowLabel={"Currency"}
             className={children ? "border-b-0" : ""}
-            subHeading="Choose the currency for your workspace. All ISO 4217 currencies are supported."
+            subHeading={t("workspaceForm2.currencyHint")}
           >
             <InnerLabel hideLg>Currency</InnerLabel>
 
@@ -136,7 +134,7 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
               name={zo.fields.currency()}
             >
               <SelectTrigger className="px-3.5 py-3">
-                <SelectValue placeholder="Choose a currency" />
+                <SelectValue placeholder={t("workspaceForm2.chooseCurrency")} />
               </SelectTrigger>
               <SelectContent
                 position="popper"

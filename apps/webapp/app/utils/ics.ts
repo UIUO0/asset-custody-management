@@ -9,6 +9,7 @@
  *
  * @see {@link https://datatracker.ietf.org/doc/html/rfc5545}
  */
+import { config } from "~/config/shelf.config";
 import { formatDateForICal } from "~/utils/date-fns";
 
 /** Escapes text for ICS property values per RFC 5545 §3.3.11 */
@@ -99,7 +100,7 @@ export function buildBookingVEvent(booking: ICalBookingInput): string[] {
   const summary = escapeICalText(
     assetCount > 0
       ? `${booking.name} (${assetCount} ${assetLabel})`
-      : booking.name
+      : booking.name,
   );
 
   // The custodian line is omitted when `custodianName` is empty (the feed passes
@@ -112,7 +113,7 @@ export function buildBookingVEvent(booking: ICalBookingInput): string[] {
   detailLines.push(`Assets (${assetCount}): ${assetList}`);
 
   const description = escapeICalText(
-    `${detailLines.join("\n")}\n\nView booking: ${booking.bookingUrl}`
+    `${detailLines.join("\n")}\n\nView booking: ${booking.bookingUrl}`,
   );
 
   return [
@@ -126,7 +127,7 @@ export function buildBookingVEvent(booking: ICalBookingInput): string[] {
     `DTEND:${formatDateForICal(booking.to)}`,
     // Booking-derived (not fetch time) so a subscribed feed is stable per poll.
     `DTSTAMP:${formatDateForICal(booking.updatedAt)}`,
-    "CATEGORIES:Shelf.nu booking",
+    `CATEGORIES:${config.appName} booking`,
     `DESCRIPTION:${description}`,
     `URL:${booking.bookingUrl}`,
     "BEGIN:VALARM",
@@ -150,12 +151,12 @@ export function buildBookingVEvent(booking: ICalBookingInput): string[] {
  */
 export function buildBookingICalendar(
   events: string[][],
-  options?: { calendarName?: string }
+  options?: { calendarName?: string },
 ): string {
   const header = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Shelf.nu//Shelf Calendar 1.0//EN",
+    `PRODID:-//${config.appIdentifier}//${config.appIdentifier} Calendar 1.0//EN`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ];

@@ -35,6 +35,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator.client";
 import { requirePermission } from "~/utils/roles.server";
 import { canCreateMoreCustomFields } from "~/utils/subscription.server";
 
@@ -115,7 +116,13 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 export default function CustomFieldsIndexPage() {
   const { t } = useTranslation();
   const { canCreateMoreCustomFields } = useLoaderData<typeof loader>();
-  const { isBaseOrSelfService } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
+  // INVENTORY may create custom fields but not delete them.
+  const canBulkManage = userHasPermission({
+    roles,
+    entity: PermissionEntity.customField,
+    action: PermissionAction.delete,
+  });
 
   return (
     <>
@@ -141,7 +148,7 @@ export default function CustomFieldsIndexPage() {
         </Button>
       </div>
       <List
-        bulkActions={isBaseOrSelfService ? undefined : <BulkActionsDropdown />}
+        bulkActions={canBulkManage ? <BulkActionsDropdown /> : undefined}
         ItemComponent={CustomFieldRow}
         headerChildren={
           <>

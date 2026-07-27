@@ -139,7 +139,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   try {
     const {
       organizationId,
-      isSelfServiceOrBase,
+      isScopedToOwnRecords,
       currentOrganization,
       userOrganizations,
       canSeeAllBookings,
@@ -170,7 +170,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           // Only include notification recipients for admin/owner users.
           // Self-service/base users don't need this data (they can't see or
           // manage notification settings).
-          ...(isSelfServiceOrBase
+          ...(isScopedToOwnRecords
             ? {}
             : {
                 notificationRecipients: {
@@ -201,7 +201,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         orderBy: { name: "asc" },
       }),
       // Only fetch notification team members for admin/owner users
-      isSelfServiceOrBase
+      isScopedToOwnRecords
         ? Promise.resolve({
             teamMembersForNotify: [],
             totalTeamMembersForNotify: 0,
@@ -213,7 +213,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // the custodian is always notified and doesn't need to be added
     if (booking.custodianTeamMemberId) {
       notifyData.teamMembersForNotify = notifyData.teamMembersForNotify.filter(
-        (tm) => tm.id !== booking.custodianTeamMemberId
+        (tm) => tm.id !== booking.custodianTeamMemberId,
       );
       notifyData.totalTeamMembersForNotify =
         notifyData.teamMembersForNotify.length;
@@ -306,10 +306,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     });
 
     const hasAvailableAssets = bookingAssets.some(
-      (asset) => asset.status === "AVAILABLE"
+      (asset) => asset.status === "AVAILABLE",
     );
     const canHavePartialCheckins = ["ONGOING", "OVERDUE"].includes(
-      booking.status
+      booking.status,
     );
 
     // Fetch partial check-in data if there are already partial check-ins OR if the booking could have them
@@ -329,7 +329,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // probe from `booking.bookingAssets` (whose `asset.status` is selected via
     // BOOKING_WITH_ASSETS_INCLUDE).
     const hasCheckedOutAssets = booking.bookingAssets.some(
-      (ba) => ba.asset.status === "CHECKED_OUT"
+      (ba) => ba.asset.status === "CHECKED_OUT",
     );
     const canHavePartialCheckouts = [
       "RESERVED",
@@ -366,7 +366,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
               null
             );
           })
-          .filter((id): id is string => id !== null)
+          .filter((id): id is string => id !== null),
       ),
     ];
 
@@ -401,7 +401,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         selectedTeamMembers: booking.custodianTeamMemberId
           ? [booking.custodianTeamMemberId]
           : [],
-        filterByUserId: isSelfServiceOrBase,
+        filterByUserId: isScopedToOwnRecords,
         userId,
       }),
 
@@ -409,7 +409,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       getTeamMemberForForm({
         organizationId,
         userId,
-        isSelfServiceOrBase,
+        isScopedToOwnRecords,
         custodianUserId: booking.custodianUserId || undefined,
         custodianTeamMemberId: booking.custodianTeamMemberId || undefined,
         bookingStatus: booking.status,
@@ -574,7 +574,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       const base = detail ?? ba.asset;
       const matchedAssetKit = ba.assetKitId
         ? (detail ?? ba.asset).assetKits.find(
-            (ak) => ak.id === ba.assetKitId
+            (ak) => ak.id === ba.assetKitId,
           ) ?? null
         : null;
       return {
@@ -708,7 +708,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         breakdownByBookingAsset.set(bookingAssetId, b);
         dispositionedByBookingAsset.set(
           bookingAssetId,
-          b.returned + b.consumed + b.lost + b.damaged
+          b.returned + b.consumed + b.lost + b.damaged,
         );
       }
     }
@@ -760,7 +760,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // qty-tracked here iff it has BookingAsset rows in `bookingAssetRowsByAsset`.
     const checkoutLogsByAsset = checkoutSessionsToLogsByAsset(
       checkoutSessions,
-      (assetId) => bookingAssetRowsByAsset.has(assetId)
+      (assetId) => bookingAssetRowsByAsset.has(assetId),
     );
 
     // Initialize every qty-tracked row to 0 so downstream lookups never
@@ -867,7 +867,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       }
       remainingToCheckOutByAsset[assetId] = Math.max(
         0,
-        totalBooked - totalCheckedOut
+        totalBooked - totalCheckedOut,
       );
     }
 
@@ -956,7 +956,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           ?.quantity ?? 0;
       availableUnitsByAsset[asset.id] = Math.max(
         0,
-        total - inCustody - reserved - checkedOut
+        total - inCustody - reserved - checkedOut,
       );
     }
 
@@ -994,7 +994,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       .filter(
         (category, index, self) =>
           // Find the index of the first occurrence of this category ID
-          index === self.findIndex((c) => c.id === category.id)
+          index === self.findIndex((c) => c.id === category.id),
       );
     // Kit categories derived from all rawKits (all kits, not just current page).
     const kitCategories = rawKits
@@ -1003,7 +1003,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       .filter(
         (category, index, self) =>
           // Find the index of the first occurrence of this category ID
-          index === self.findIndex((c) => c.id === category.id)
+          index === self.findIndex((c) => c.id === category.id),
       );
 
     const allCategories = [...assetCategories, ...kitCategories];
@@ -1037,12 +1037,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       ? calculateUnitCheckinProgress(
           bookingAssetsForProgress,
           checkedInAssetIds,
-          booking.status
+          booking.status,
         )
       : calculatePartialCheckinProgress(
           totalBookingAssets,
           checkedInAssetIds,
-          booking.status
+          booking.status,
         );
 
     // Segmented lifecycle progress (Booked / Checked out / Returned) backing
@@ -1115,7 +1115,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         totalItems:
           view.totalPaginationItems +
           (booking.modelRequests ?? []).filter(
-            (req) => req.fulfilledAt === null
+            (req) => req.fulfilledAt === null,
           ).length,
         totalPaginationItems: view.totalPaginationItems,
         perPage,
@@ -1182,7 +1182,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, bookingId });
@@ -1283,7 +1283,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ bookingId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -1319,7 +1319,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       }),
       {
         additionalData: { userId },
-      }
+      },
     );
 
     const intent2ActionMap: { [K in typeof intent]: PermissionAction } = {
@@ -1341,7 +1341,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       updateNotificationRecipients: PermissionAction.update,
     };
 
-    const { organizationId, role, isSelfServiceOrBase } =
+    const { organizationId, role, isScopedToOwnRecords } =
       await requirePermission({
         userId,
         request,
@@ -1350,7 +1350,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       });
 
     // ADMIN/OWNER users bypass time restrictions (bufferStartTime, maxBookingLength)
-    const isAdminOrOwner = !isSelfServiceOrBase;
+    const isAdminOrOwner = !isScopedToOwnRecords;
 
     const user = await getUserByID(userId, {
       select: {
@@ -1371,7 +1371,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
      * so we must not call findUniqueOrThrow before this.
      */
     if (intent === "delete") {
-      if (isSelfServiceOrBase) {
+      if (isScopedToOwnRecords) {
         /**
          * When user is self_service we need to check if the booking belongs to them and only then allow them to delete it.
          * They have delete permissions but shouldnt be able to delete other people's bookings
@@ -1403,7 +1403,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       const deletedBooking = await deleteBooking(
         { id, organizationId },
         getClientHint(request),
-        userId
+        userId,
       );
 
       const actor = wrapUserLinkForNote({
@@ -1413,7 +1413,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       });
       const deletedBookingLink = wrapLinkForNote(
         `/bookings/${deletedBooking.id}`,
-        deletedBooking.name.trim()
+        deletedBooking.name.trim(),
       );
       await createNotes({
         content: `${actor} deleted booking ${deletedBookingLink}.`,
@@ -1422,8 +1422,8 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         assetIds: [
           ...new Set(
             deletedBooking.bookingAssets.map(
-              (ba: { asset: { id: string } }) => ba.asset.id
-            )
+              (ba: { asset: { id: string } }) => ba.asset.id,
+            ),
           ),
         ],
         organizationId,
@@ -1451,7 +1451,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         }),
         getWorkingHoursForOrganization(organizationId),
         getBookingSettingsForOrganization(organizationId),
-      ]
+      ],
     );
     switch (intent) {
       case "save": {
@@ -1468,7 +1468,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           }),
           {
             additionalData: { userId, id, organizationId, role },
-          }
+          },
         );
 
         const from = formData.get("startDate");
@@ -1528,7 +1528,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           }),
           {
             additionalData: { userId, id, organizationId, role },
-          }
+          },
         );
 
         const from = formData.get("startDate");
@@ -1557,7 +1557,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           custodianUserId: parsedData.custodian?.userId,
           custodianTeamMemberId: parsedData.custodian?.id,
           hints: getClientHint(request),
-          isSelfServiceOrBase,
+          isScopedToOwnRecords,
           tags,
           userId,
         });
@@ -1591,7 +1591,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         });
         const bookingLink = wrapLinkForNote(
           `/bookings/${booking.id}`,
-          booking.name
+          booking.name,
         );
         await createNotes({
           content: `${actor} checked out asset with ${bookingLink}.`,
@@ -1659,7 +1659,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
         // Extract specific asset IDs if provided (for enhanced completion messaging)
         const specificAssetIds = formData.getAll(
-          "specificAssetIds[]"
+          "specificAssetIds[]",
         ) as string[];
 
         // Only assets that were actually checked out get a check-in note —
@@ -1698,7 +1698,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           });
           const bookingLink = wrapLinkForNote(
             `/bookings/${booking.id}`,
-            booking.name
+            booking.name,
           );
           await createNotes({
             content: `${actor} checked in asset with ${bookingLink}.`,
@@ -1748,7 +1748,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           }),
           {
             additionalData: { userId, id, organizationId, role },
-          }
+          },
         );
 
         // Get the asset data for proper note generation
@@ -1805,7 +1805,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           CancelBookingSchema,
           {
             additionalData: { userId, id, organizationId, role },
-          }
+          },
         );
         const cancelledBooking = await cancelBooking({
           id,
@@ -1822,7 +1822,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         });
         const cancelledBookingLink = wrapLinkForNote(
           `/bookings/${cancelledBooking.id}`,
-          cancelledBooking.name.trim()
+          cancelledBooking.name.trim(),
         );
         await createNotes({
           content: `${actor} cancelled booking ${cancelledBookingLink}.${
@@ -1833,8 +1833,8 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           assetIds: [
             ...new Set(
               cancelledBooking.bookingAssets.map(
-                (ba: { assetId: string }) => ba.assetId
-              )
+                (ba: { assetId: string }) => ba.assetId,
+              ),
             ),
           ],
           organizationId,
@@ -1929,7 +1929,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           }),
           {
             additionalData: { userId, organizationId },
-          }
+          },
         );
 
         // `endDate` is already a zoned `Date` produced by the schema's
@@ -1953,7 +1953,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         return payload({ success: true });
       }
       case "updateNotificationRecipients": {
-        if (isSelfServiceOrBase) {
+        if (isScopedToOwnRecords) {
           throw new ShelfError({
             cause: null,
             message:
@@ -1965,7 +1965,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         }
 
         const recipientIdsRaw = formData.get(
-          "notificationRecipientIds"
+          "notificationRecipientIds",
         ) as string;
         const teamMemberIds = recipientIdsRaw
           ? recipientIdsRaw.split(",").filter(Boolean)
@@ -1989,7 +1989,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       case "bulk-remove-asset-or-kit": {
         const { assetOrKitIds } = parseData(
           formData,
-          BulkRemoveAssetsAndKitSchema
+          BulkRemoveAssetsAndKitSchema,
         );
 
         /**
@@ -2012,12 +2012,12 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
         // Get asset IDs that belong to the selected kits
         const kitAssetIds = kits.flatMap((kit) =>
-          kit.assetKits.map((ak) => ak.asset.id)
+          kit.assetKits.map((ak) => ak.asset.id),
         );
 
         // Filter out assets that belong to the selected kits to avoid double-counting
         const standaloneAssets = assets.filter(
-          (asset) => !kitAssetIds.includes(asset.id)
+          (asset) => !kitAssetIds.includes(asset.id),
         );
 
         // All asset IDs to be disconnected (standalone assets + kit assets)
@@ -2068,7 +2068,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const reason = makeShelfError(
       cause,
       { userId, id },
-      !isZodValidationError(cause)
+      !isZodValidationError(cause),
     );
     return data(error(reason), { status: reason.status });
   }

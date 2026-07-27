@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -25,13 +26,14 @@ export function UserContactDetailsForm({
 }: {
   user: ReturnType<typeof getUserWithContact>;
 }) {
+  const { t } = useTranslation();
   const zo = useZorm("UserContactDetailsForm", UserContactDetailsFormSchema);
   const actionData = useActionData<UserPageActionData>();
   const disabled = useDisabled();
   const isDisabled =
     disabled ||
     (user.sso && {
-      reason: "You cannot edit your details when using SSO.",
+      reason: t("userForm.ssoCannotEdit"),
     });
   const validationErrors = getValidationErrors<
     typeof UserContactDetailsFormSchema
@@ -52,7 +54,7 @@ export function UserContactDetailsForm({
           rowLabel="Phone number"
           className="border-t"
           required={zodFieldIsRequired(
-            UserContactDetailsFormSchema.shape.phone
+            UserContactDetailsFormSchema.shape.phone,
           )}
         >
           <Input
@@ -67,16 +69,16 @@ export function UserContactDetailsForm({
             }
             placeholder="+1 (555) 123-4567"
             required={zodFieldIsRequired(
-              UserContactDetailsFormSchema.shape.phone
+              UserContactDetailsFormSchema.shape.phone,
             )}
             disabled={isDisabled}
           />
         </FormRow>
 
         <FormRow
-          rowLabel="Street address"
+          rowLabel={t("userForm.streetAddress")}
           required={zodFieldIsRequired(
-            UserContactDetailsFormSchema.shape.street
+            UserContactDetailsFormSchema.shape.street,
           )}
         >
           <Input
@@ -89,9 +91,9 @@ export function UserContactDetailsForm({
               validationErrors?.street?.message || zo.errors.street()?.message
             }
             hideLabel
-            placeholder="123 Main Street"
+            placeholder={t("userForm.streetAddressPlaceholder")}
             required={zodFieldIsRequired(
-              UserContactDetailsFormSchema.shape.street
+              UserContactDetailsFormSchema.shape.street,
             )}
             disabled={isDisabled}
           />
@@ -109,23 +111,23 @@ export function UserContactDetailsForm({
             name={zo.fields.city()}
             defaultValue={user?.contact?.city || undefined}
             error={validationErrors?.city?.message || zo.errors.city()?.message}
-            placeholder="San Francisco"
+            placeholder={t("userForm.cityPlaceholder")}
             required={zodFieldIsRequired(
-              UserContactDetailsFormSchema.shape.city
+              UserContactDetailsFormSchema.shape.city,
             )}
             disabled={isDisabled}
           />
         </FormRow>
 
         <FormRow
-          rowLabel="State/Province and Postal Code"
+          rowLabel={t("userForm.stateAndPostal")}
           required={zodFieldIsRequired(
-            UserContactDetailsFormSchema.shape.stateProvince
+            UserContactDetailsFormSchema.shape.stateProvince,
           )}
         >
           <div className="flex gap-6">
             <Input
-              label="State/Province"
+              label={t("userForm.stateProvince")}
               hideLabel
               autoComplete="state"
               type="text"
@@ -137,12 +139,12 @@ export function UserContactDetailsForm({
               }
               placeholder="California"
               required={zodFieldIsRequired(
-                UserContactDetailsFormSchema.shape.stateProvince
+                UserContactDetailsFormSchema.shape.stateProvince,
               )}
               disabled={isDisabled}
             />
             <Input
-              label="ZIP/Postal Code"
+              label={t("userForm.postalCode")}
               type="text"
               hideLabel
               autoComplete="postal-code"
@@ -154,7 +156,7 @@ export function UserContactDetailsForm({
               }
               placeholder="94102"
               required={zodFieldIsRequired(
-                UserContactDetailsFormSchema.shape.zipPostalCode
+                UserContactDetailsFormSchema.shape.zipPostalCode,
               )}
               disabled={isDisabled}
             />
@@ -162,14 +164,14 @@ export function UserContactDetailsForm({
         </FormRow>
 
         <FormRow
-          rowLabel="Country/Region"
+          rowLabel={t("userForm.countryRegion")}
           className="border-b-0 pb-0"
           required={zodFieldIsRequired(
-            UserContactDetailsFormSchema.shape.countryRegion
+            UserContactDetailsFormSchema.shape.countryRegion,
           )}
         >
           <Input
-            label="Country/Region"
+            label={t("userForm.countryRegion")}
             type="text"
             hideLabel
             autoComplete="country"
@@ -179,9 +181,9 @@ export function UserContactDetailsForm({
               validationErrors?.countryRegion?.message ||
               zo.errors.countryRegion()?.message
             }
-            placeholder="United States"
+            placeholder={t("userForm.countryPlaceholder")}
             required={zodFieldIsRequired(
-              UserContactDetailsFormSchema.shape.countryRegion
+              UserContactDetailsFormSchema.shape.countryRegion,
             )}
             disabled={isDisabled}
           />

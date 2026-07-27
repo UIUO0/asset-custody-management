@@ -5,6 +5,7 @@
  * @see {@link file://./preview-display.tsx}
  * @see {@link file://./results-display.tsx}
  */
+import { useTranslation } from "react-i18next";
 import type { ClientValidation } from "./helpers";
 import Icon from "../../icons/icon";
 import { AlertIcon } from "../../icons/library";
@@ -59,6 +60,7 @@ export function ClientValidationFeedback({
   validation: ClientValidation;
   fileName: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="mt-3 rounded-md border bg-gray-50 p-3 text-sm">
       <p className="mb-1 font-medium text-gray-700">
@@ -69,17 +71,23 @@ export function ClientValidationFeedback({
           {validation.idColumnFound ? (
             <>
               <Icon icon="check" className="text-green-600" />
-              Matching by {validation.idColumnFound}
+              {t("assetUpdate.matchingBy", {
+                column: validation.idColumnFound,
+              })}
             </>
           ) : (
             <>
               <Icon icon="x" className="text-red-500" />
-              No identifier column found
+              {t("assetUpdate.noIdentifierColumn")}
             </>
           )}
         </span>
-        <span>{validation.headerCount} columns</span>
-        <span>{validation.rowCount} data rows</span>
+        <span>
+          {t("assetUpdate.columnsCount", { count: validation.headerCount })}
+        </span>
+        <span>
+          {t("assetUpdate.dataRowsCount", { count: validation.rowCount })}
+        </span>
       </div>
       {validation.warnings.length > 0 && (
         <div className="mt-2 space-y-1">
@@ -109,15 +117,16 @@ export function DefectedHeadersTable({
 }: {
   data: { incorrectHeader: string; errorMessage: string }[];
 }) {
+  const { t } = useTranslation();
   return (
     <table className="mt-4 w-full rounded-md border text-start text-sm">
       <thead className="bg-red-100 text-xs">
         <tr>
           <th scope="col" className="px-2 py-1">
-            Unrecognized Header
+            {t("assetUpdate.unrecognizedHeader")}
           </th>
           <th scope="col" className="px-2 py-1">
-            Error
+            {t("assetUpdate.colError")}
           </th>
         </tr>
       </thead>

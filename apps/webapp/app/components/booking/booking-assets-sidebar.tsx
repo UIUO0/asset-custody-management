@@ -19,6 +19,7 @@ import React, { useState } from "react";
 import type { ReactNode } from "react";
 import type { BookingStatus, Prisma } from "@prisma/client";
 import { ChevronDownIcon, PackageIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -309,6 +310,7 @@ function AssetTitleAndStatus({
    */
   availableUnitsByAsset?: Record<string, number>;
 }) {
+  const { t } = useTranslation();
   // Workspace pref + addon entitlement — resolveDisplayCode short-circuits to
   // QR when the org has lost the barcode add-on, so this read is always safe.
   const currentOrganization = useCurrentOrganization();
@@ -429,7 +431,7 @@ function AssetTitleAndStatus({
                   <span
                     className={tw(
                       "ms-1.5 inline-flex cursor-help items-center gap-1 text-xs tabular-nums",
-                      qtyRemaining === 0 ? "text-emerald-700" : "text-gray-700"
+                      qtyRemaining === 0 ? "text-emerald-700" : "text-gray-700",
                     )}
                   >
                     <span className="font-medium">{qtyDispositioned}</span>
@@ -440,11 +442,13 @@ function AssetTitleAndStatus({
                   <div className="flex flex-col gap-1 text-xs">
                     <div className="font-semibold text-gray-900">
                       {qtyRemaining === 0
-                        ? "All units checked in"
-                        : "Partially checked in"}
+                        ? t("bookings.allUnitsCheckedIn")
+                        : t("bookings.partiallyCheckedIn")}
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-gray-600">Booked</span>
+                      <span className="text-gray-600">
+                        {t("bookings.legendBooked")}
+                      </span>
                       <span className="tabular-nums text-gray-900">
                         {qtyBooked}
                       </span>
@@ -456,7 +460,9 @@ function AssetTitleAndStatus({
                       <>
                         {qtyBreakdown.returned > 0 ? (
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-gray-600">Returned</span>
+                            <span className="text-gray-600">
+                              {t("bookings.legendReturned")}
+                            </span>
                             <span className="tabular-nums text-emerald-700">
                               {qtyBreakdown.returned}
                             </span>
@@ -464,7 +470,9 @@ function AssetTitleAndStatus({
                         ) : null}
                         {qtyBreakdown.consumed > 0 ? (
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-gray-600">Consumed</span>
+                            <span className="text-gray-600">
+                              {t("bookings.qtyConsumed")}
+                            </span>
                             <span className="tabular-nums text-gray-900">
                               {qtyBreakdown.consumed}
                             </span>
@@ -472,7 +480,9 @@ function AssetTitleAndStatus({
                         ) : null}
                         {qtyBreakdown.lost > 0 ? (
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-gray-600">Lost</span>
+                            <span className="text-gray-600">
+                              {t("bookings.qtyLost")}
+                            </span>
                             <span className="tabular-nums text-rose-700">
                               {qtyBreakdown.lost}
                             </span>
@@ -480,7 +490,9 @@ function AssetTitleAndStatus({
                         ) : null}
                         {qtyBreakdown.damaged > 0 ? (
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-gray-600">Damaged</span>
+                            <span className="text-gray-600">
+                              {t("bookings.qtyDamaged")}
+                            </span>
                             <span className="tabular-nums text-amber-700">
                               {qtyBreakdown.damaged}
                             </span>
@@ -489,20 +501,24 @@ function AssetTitleAndStatus({
                       </>
                     ) : (
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-gray-600">Checked in</span>
+                        <span className="text-gray-600">
+                          {t("bookings.qtyCheckedIn")}
+                        </span>
                         <span className="tabular-nums text-gray-900">
                           {qtyDispositioned}
                         </span>
                       </div>
                     )}
                     <div className="mt-1 flex items-center justify-between gap-3 border-t border-gray-100 pt-1">
-                      <span className="text-gray-600">Remaining</span>
+                      <span className="text-gray-600">
+                        {t("bookings.qtyRemaining")}
+                      </span>
                       <span
                         className={tw(
                           "tabular-nums",
                           qtyRemaining === 0
                             ? "text-gray-400"
-                            : "font-medium text-amber-700"
+                            : "font-medium text-amber-700",
                         )}
                       >
                         {qtyRemaining}
@@ -570,6 +586,7 @@ function UnassignedModelRequestsSection({
   bookingStatus: BookingStatus;
   modelRequests: SidebarModelRequest[];
 }) {
+  const { t } = useTranslation();
   const outstanding = modelRequests.filter((req) => req.fulfilledAt === null);
   if (outstanding.length === 0) {
     return null;
@@ -577,7 +594,7 @@ function UnassignedModelRequestsSection({
 
   const totalRemaining = outstanding.reduce(
     (sum, req) => sum + (req.quantity - req.fulfilledQuantity),
-    0
+    0,
   );
 
   // Scan-to-assign is available whenever the booking is in a
@@ -593,11 +610,13 @@ function UnassignedModelRequestsSection({
     <>
       <div className="border border-b-0 bg-white px-4 pb-3 pt-4 text-start font-normal text-gray-600 md:mx-0 md:px-6">
         <h5 className="text-start capitalize">
-          Unassigned model reservations ({totalRemaining})
+          {t("bookings.unassignedModelReservations", {
+            count: totalRemaining,
+          })}
         </h5>
         <p>
           <span>
-            {outstanding.length} {outstanding.length === 1 ? "model" : "models"}
+            {t("bookings.modelsCount", { count: outstanding.length })}
           </span>
         </p>
       </div>
@@ -632,14 +651,16 @@ function UnassignedModelRequestsSection({
                             color: BADGE_COLORS.amber.text,
                           }}
                         >
-                          {req.quantity - req.fulfilledQuantity} remaining
+                          {t("bookings.remainingCount", {
+                            count: req.quantity - req.fulfilledQuantity,
+                          })}
                         </span>
                         {canScanToAssign ? (
                           <Link
                             to={`/bookings/${bookingId}/overview/scan-assets`}
                             className="text-[12px] font-medium text-primary-700 hover:text-primary-800 hover:underline"
                           >
-                            Scan to assign
+                            {t("bookings.scanToAssign")}
                           </Link>
                         ) : null}
                       </div>
@@ -663,6 +684,7 @@ export function BookingAssetsSidebar({
   checkedOutByAsset,
   availableUnitsByAsset,
 }: BookingAssetsSidebarProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedKits, setExpandedKits] = useState<Record<string, boolean>>({});
 
@@ -680,7 +702,7 @@ export function BookingAssetsSidebar({
   // reservations. Pure book-by-model bookings legitimately have
   // `bookingAssets.length === 0` but still carry content.
   const outstandingModelRequestCount = (booking.modelRequests ?? []).filter(
-    (req) => req.fulfilledAt === null
+    (req) => req.fulfilledAt === null,
   ).length;
   const hasItems =
     booking.bookingAssets.length > 0 || outstandingModelRequestCount > 0;
@@ -691,7 +713,7 @@ export function BookingAssetsSidebar({
       onClick={hasItems ? () => setIsOpen(true) : undefined}
       className={!hasItems ? "hover:text-gray cursor-default no-underline" : ""}
     >
-      {booking.bookingAssets.length} assets
+      {t("models.asset", { count: booking.bookingAssets.length })}
     </Button>
   );
 
@@ -703,12 +725,12 @@ export function BookingAssetsSidebar({
         <div className="flex h-dvh w-full flex-col">
           <SheetHeader className="border-color-200 border-b px-6 py-3">
             <SheetTitle className="text-start">
-              Assets in "{booking.name}"
+              {t("bookings.assetsInBooking", { name: booking.name })}
             </SheetTitle>
             <SheetDescription className="text-start">
-              {booking.bookingAssets.length}{" "}
-              {booking.bookingAssets.length === 1 ? "asset" : "assets"} in this
-              booking
+              {t("bookings.assetsInThisBooking", {
+                count: booking.bookingAssets.length,
+              })}
             </SheetDescription>
           </SheetHeader>
 
@@ -721,9 +743,13 @@ export function BookingAssetsSidebar({
               />
             ) : null}
             <div className="border border-b-0 bg-white px-4 pb-3 pt-4 text-start font-normal text-gray-600 md:mx-0 md:px-6">
-              <h5 className="text-start capitalize">Assets & kits</h5>
+              <h5 className="text-start capitalize">
+                {t("bookings.assetsAndKits")}
+              </h5>
               <p>
-                <span>{paginatedItems.length} items</span>
+                <span>
+                  {t("list.itemsCount", { count: paginatedItems.length })}
+                </span>
               </p>
             </div>
 
@@ -732,11 +758,11 @@ export function BookingAssetsSidebar({
                 <thead>
                   <tr className="border-b border-gray-200 text-start ">
                     <th className="px-6 py-3 font-normal text-gray-600">
-                      Name
+                      {t("assets.name")}
                     </th>
                     <th className="px-6 py-3"> </th>
                     <th className="px-6 py-3 font-normal text-gray-600">
-                      Category
+                      {t("assets.category")}
                     </th>
                     <th className="px-6 py-3"> </th>
                   </tr>
@@ -773,14 +799,16 @@ export function BookingAssetsSidebar({
                                     className="text-gray-900 hover:text-gray-700"
                                     target="_blank"
                                     onlyNewTabIconOnHover={true}
-                                    aria-label="Go to kit"
+                                    aria-label={t("bookings.goToKit")}
                                   >
                                     <div className="max-w-[200px] truncate sm:max-w-[250px] md:max-w-[350px] lg:max-w-[450px]">
                                       {kit.name}
                                     </div>
                                   </Button>
                                   <p className="text-sm text-gray-600">
-                                    {item.assets.length} assets
+                                    {t("models.asset", {
+                                      count: item.assets.length,
+                                    })}
                                   </p>
                                 </div>
                               </div>
@@ -799,13 +827,13 @@ export function BookingAssetsSidebar({
                                   onClick={() => toggleKitExpansion(kit.id)}
                                   variant="link"
                                   className="text-center font-bold text-gray-600 hover:text-gray-900"
-                                  aria-label="Toggle kit expand"
+                                  aria-label={t("bookings.toggleKitExpand")}
                                 >
                                   <ChevronDownIcon
                                     className={tw(
                                       `size-6 ${
                                         !isExpanded ? "rotate-180" : ""
-                                      }`
+                                      }`,
                                     )}
                                   />
                                 </Button>
@@ -834,7 +862,9 @@ export function BookingAssetsSidebar({
                                             mainImageExpiration:
                                               asset.mainImageExpiration,
                                           }}
-                                          alt={`Image of ${asset.title}`}
+                                          alt={t("bookings.assetImageAlt", {
+                                            name: asset.title,
+                                          })}
                                           className="size-full rounded-[4px] border border-gray-300 object-cover"
                                           withPreview
                                         />
@@ -895,7 +925,9 @@ export function BookingAssetsSidebar({
                                     mainImageExpiration:
                                       asset.mainImageExpiration,
                                   }}
-                                  alt={`Image of ${asset.title}`}
+                                  alt={t("bookings.assetImageAlt", {
+                                    name: asset.title,
+                                  })}
                                   className="size-full rounded-[4px] border object-cover"
                                   withPreview
                                 />

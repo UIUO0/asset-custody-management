@@ -34,7 +34,7 @@ export default function CreateBookingForSelectedAssetsDialog() {
   const workingHoursData = useWorkingHours();
   const { workingHours } = workingHoursData;
   const bookingSettings = useBookingSettings();
-  const { isBaseOrSelfService, roles, isAdministratorOrOwner } =
+  const { isScopedToOwnRecords, roles, isAdministratorOrOwner } =
     useUserRoleHelper();
 
   const zo = useZorm(
@@ -44,14 +44,14 @@ export default function CreateBookingForSelectedAssetsDialog() {
       workingHours,
       bookingSettings,
       isAdminOrOwner: isAdministratorOrOwner,
-    })
+    }),
   );
 
   const { startDate: defaultStartDate, endDate: defaultEndDate } =
     getBookingDefaultStartEndTimes(
       workingHours,
       bookingSettings.bufferStartTime,
-      isAdministratorOrOwner
+      isAdministratorOrOwner,
     );
   const [startDate, setStartDate] = useState(defaultStartDate);
   const [endDate, setEndDate] = useState(defaultEndDate);
@@ -59,7 +59,7 @@ export default function CreateBookingForSelectedAssetsDialog() {
   const user = useUserData();
   // Use teamMembersForForm for BASE/SELF_SERVICE users to ensure their team member is always available
   const teamMembersToUse = teamMembersForForm || teamMembers;
-  const defaultTeamMember = isBaseOrSelfService
+  const defaultTeamMember = isScopedToOwnRecords
     ? teamMembersToUse.find((tm) => tm.userId === user!.id)
     : undefined;
 
@@ -92,7 +92,7 @@ export default function CreateBookingForSelectedAssetsDialog() {
       {({ disabled, handleCloseDialog, fetcherError, fetcherData }) => {
         /** This handles server side errors in case client side validation fails */
         const validationErrors = getValidationErrors<BookingFormSchemaType>(
-          fetcherData?.error
+          fetcherData?.error,
         );
         return (
           <div className="max-h-[calc(100vh_-_200px)] overflow-auto">
@@ -131,7 +131,7 @@ export default function CreateBookingForSelectedAssetsDialog() {
             <Card className="m-0 mb-2">
               <CustodianField
                 defaultTeamMember={defaultTeamMember}
-                disabled={disabled || isBaseOrSelfService}
+                disabled={disabled || isScopedToOwnRecords}
                 userCanSeeCustodian={userCanSeeCustodian}
                 isNewBooking
                 error={

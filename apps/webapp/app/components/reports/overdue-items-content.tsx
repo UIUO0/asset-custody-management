@@ -15,6 +15,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import { useTranslation } from "react-i18next";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import type { OverdueItemRow, ReportKpi } from "~/modules/reports/types";
 import { useHints } from "~/utils/client-hints";
@@ -32,20 +33,20 @@ import { ReportTable, CurrencyCell, DateCell } from "./report-table";
 const OVERDUE_ITEMS_COLUMNS: ColumnDef<OverdueItemRow>[] = [
   {
     accessorKey: "bookingName",
-    header: "Booking",
+    header: "reports.colBooking",
     cell: ({ row }) => (
       <span className="font-medium">{row.original.bookingName}</span>
     ),
   },
   {
     accessorKey: "custodian",
-    header: "Booked by",
+    header: "reports.bookedBy",
     cell: ({ row }) =>
       row.original.custodian || <span className="text-gray-400">—</span>,
   },
   {
     accessorKey: "uncheckedCount",
-    header: "Assets",
+    header: "reports.colAssets",
     cell: ({ row }) => {
       const { uncheckedCount, assetCount, checkedInCount } = row.original;
       const hasPartialReturns = checkedInCount > 0;
@@ -72,12 +73,12 @@ const OVERDUE_ITEMS_COLUMNS: ColumnDef<OverdueItemRow>[] = [
   },
   {
     accessorKey: "scheduledEnd",
-    header: "Due Date",
+    header: "reports.dueDate",
     cell: ({ row }) => <DateCell date={row.original.scheduledEnd} />,
   },
   {
     accessorKey: "daysOverdue",
-    header: "Days Overdue",
+    header: "reports.daysOverdue",
     cell: ({ row }) => {
       const days = row.original.daysOverdue;
       return (
@@ -88,7 +89,7 @@ const OVERDUE_ITEMS_COLUMNS: ColumnDef<OverdueItemRow>[] = [
               ? "bg-red-100 text-red-700"
               : days > 3
               ? "bg-orange-100 text-orange-700"
-              : "bg-yellow-100 text-yellow-700"
+              : "bg-yellow-100 text-yellow-700",
           )}
         >
           {days} days
@@ -98,7 +99,7 @@ const OVERDUE_ITEMS_COLUMNS: ColumnDef<OverdueItemRow>[] = [
   },
   {
     accessorKey: "valueAtRisk",
-    header: "Value",
+    header: "reports.colValue",
     // A real $0 value-at-risk renders as "$0" (or workspace equivalent), not "—".
     cell: ({ row }) => <CurrencyCell value={row.original.valueAtRisk} />,
   },
@@ -128,6 +129,7 @@ export function OverdueItemsContent({
   totalRows,
   onRowClick,
 }: Props) {
+  const { t } = useTranslation();
   const currentOrganization = useCurrentOrganization();
   const { locale } = useHints();
   const columns = OVERDUE_ITEMS_COLUMNS;
@@ -154,7 +156,7 @@ export function OverdueItemsContent({
               <span
                 className={tw(
                   "text-3xl font-semibold",
-                  assetsAtRisk > 0 ? "text-red-600" : "text-green-600"
+                  assetsAtRisk > 0 ? "text-red-600" : "text-green-600",
                 )}
               >
                 {assetsAtRisk}
@@ -181,7 +183,9 @@ export function OverdueItemsContent({
           {totalOverdue > 0 && (
             <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
               <div className="flex flex-col">
-                <span className="text-xs text-gray-500">Total Value</span>
+                <span className="text-xs text-gray-500">
+                  {t("reports.totalValue")}
+                </span>
                 <span className="text-lg font-medium text-gray-900">
                   {valueAtRisk > 0
                     ? formatCurrency({
@@ -193,7 +197,9 @@ export function OverdueItemsContent({
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-gray-500">Longest Overdue</span>
+                <span className="text-xs text-gray-500">
+                  {t("reports.longestOverdue")}
+                </span>
                 <span className="text-lg font-medium text-red-600">
                   {longestOverdue > 0 ? `${longestOverdue} days` : "—"}
                 </span>
@@ -221,8 +227,8 @@ export function OverdueItemsContent({
           emptyContent={
             <ReportEmptyState
               reason="no_data"
-              title="No items waiting"
-              description="All items have been returned on schedule."
+              title={t("reports.noItemsWaiting")}
+              description={t("reports.allReturnedOnSchedule")}
             />
           }
         />

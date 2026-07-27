@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import FormRow from "~/components/forms/form-row";
@@ -76,6 +77,7 @@ export const WorkingHoursOverrideForm = ({
   onSuccess,
   onCancel,
 }: WorkingHoursOverrideFormProps) => {
+  const { t } = useTranslation();
   const fetcher = useFetcher<BookingSettingsActionData>({
     key: "workingHoursOverride",
   });
@@ -110,8 +112,8 @@ export const WorkingHoursOverrideForm = ({
 
         {/* Override Open/Closed Toggle */}
         <FormRow
-          rowLabel="Override Status"
-          subHeading="Choose whether this date should be open or closed"
+          rowLabel={t("workingHours.overrideStatus")}
+          subHeading={t("workingHours.chooseOpenOrClosed")}
           className="border-b pb-4"
         >
           <div className="flex items-center gap-3">
@@ -121,7 +123,7 @@ export const WorkingHoursOverrideForm = ({
               disabled={disabled}
               defaultChecked={isOpen}
               onCheckedChange={handleIsOpenChange}
-              title="Toggle override status"
+              title={t("workingHours.toggleOverrideStatus")}
             />
             <label htmlFor="override-is-open" className="text-sm font-medium">
               Open
@@ -137,12 +139,12 @@ export const WorkingHoursOverrideForm = ({
         {/* Date Field */}
         <FormRow
           rowLabel="Date"
-          subHeading="Select the date for this override"
+          subHeading={t("workingHours.selectOverrideDate")}
           className="border-b pb-4"
           required
         >
           <Input
-            label="Override Date"
+            label={t("workingHours.overrideDate")}
             hideLabel
             type="date"
             name={zo.fields.date()}
@@ -157,8 +159,8 @@ export const WorkingHoursOverrideForm = ({
         {/* Time Fields - Only show when isOpen is true */}
         {isOpen && (
           <FormRow
-            rowLabel="Operating Hours"
-            subHeading="Set the open and close times for this date"
+            rowLabel={t("workingHours.operatingHours")}
+            subHeading={t("workingHours.setOpenClose")}
             className="border-b pb-4"
             required
           >
@@ -167,8 +169,8 @@ export const WorkingHoursOverrideForm = ({
                 <TimeSelect
                   name="openTime"
                   disabled={disabled}
-                  placeholder="Select opening time"
-                  aria-label="Override opening time"
+                  placeholder={t("workingHours.selectOpeningTime")}
+                  aria-label={t("workingHours.overrideOpeningTime")}
                   required={isOpen}
                   defaultValue="09:00"
                 />
@@ -176,8 +178,8 @@ export const WorkingHoursOverrideForm = ({
                 <TimeSelect
                   name="closeTime"
                   disabled={disabled}
-                  placeholder="Select closing time"
-                  aria-label="Override closing time"
+                  placeholder={t("workingHours.selectClosingTime")}
+                  aria-label={t("workingHours.overrideClosingTime")}
                   required={isOpen}
                   defaultValue="17:00"
                 />
@@ -196,18 +198,18 @@ export const WorkingHoursOverrideForm = ({
         {/* Reason Field */}
         <FormRow
           rowLabel="Reason"
-          subHeading="Provide a reason for this override (e.g., Holiday, Maintenance, etc.)"
+          subHeading={t("workingHours.reasonHint")}
           className="border-b pb-4"
           required
         >
           <Input
-            label="Reason for Override"
+            label={t("workingHours.reasonForOverride")}
             hideLabel
             type="text"
             name={zo.fields.reason()}
             disabled={disabled}
             required
-            placeholder="e.g., Public Holiday, Staff Training, etc."
+            placeholder={t("workingHours.reasonPlaceholder")}
             maxLength={500}
             error={zo.errors.reason()?.message}
             className="w-full"
@@ -237,7 +239,7 @@ export const WorkingHoursOverrideForm = ({
               disabled={disabled}
               className={"whitespace-nowrap"}
             >
-              {disabled ? <Spinner /> : "Create Override"}
+              {disabled ? <Spinner /> : t("workingHours.createOverride")}
             </Button>
           </div>
         </div>

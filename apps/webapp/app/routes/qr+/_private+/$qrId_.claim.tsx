@@ -11,6 +11,7 @@ import { OrganizationSelect } from "~/components/layout/sidebar/organization-sel
 import { Button } from "~/components/shared/button";
 
 import { db } from "~/database/db.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { setSelectedOrganizationIdCookie } from "~/modules/organization/context.server";
 import { claimQrCode } from "~/modules/qr/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -35,6 +36,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const { userId } = authSession;
   const { qrId } = getParams(params, z.object({ qrId: z.string() }));
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizations, currentOrganization } = await requirePermission({
       userId,
       request,
@@ -69,7 +74,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     return payload({
       header: {
-        title: "Claim QR code for your organization",
+        title: t("qr.claimTitle"),
       },
       qrId,
       organizations,
@@ -95,7 +100,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           await request.formData(),
           z.object({
             organizationId: z.string(),
-          })
+          }),
         );
 
         await claimQrCode({

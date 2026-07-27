@@ -1,4 +1,5 @@
 import type { ReactNode, FC } from "react";
+import type { TFunction } from "i18next";
 import { AvailabilityBadge } from "~/components/booking/availability-label";
 
 /**
@@ -32,7 +33,7 @@ export function createAvailabilityLabels(
     maxLabels?: number;
     /** Sort labels by priority (default: true) */
     sortByPriority?: boolean;
-  } = {}
+  } = {},
 ): [boolean, FC] {
   const { maxLabels, sortByPriority = true } = options;
 
@@ -42,7 +43,7 @@ export function createAvailabilityLabels(
   // Sort by priority if enabled (higher numbers come first)
   if (sortByPriority) {
     activeLabels = activeLabels.sort(
-      (a, b) => (b.priority || 0) - (a.priority || 0)
+      (a, b) => (b.priority || 0) - (a.priority || 0),
     );
   }
 
@@ -79,24 +80,32 @@ export function createAvailabilityLabels(
 }
 
 /**
- * Predefined label configurations for common asset states
+ * Predefined label configurations for common asset states.
+ *
+ * Each preset takes the caller's `t` as its first argument: these are plain
+ * factory functions living at module scope, so they cannot call
+ * `useTranslation` themselves — the hook stays at the component call site.
  */
 export const assetLabelPresets = {
-  inCustody: (isInCustody: boolean = false): AvailabilityLabelConfig => ({
+  inCustody: (
+    t: TFunction,
+    isInCustody: boolean = false,
+  ): AvailabilityLabelConfig => ({
     condition: isInCustody,
-    badgeText: "In custody",
-    tooltipTitle: "Asset is in custody",
-    tooltipContent:
-      "This asset is already in custody. You need to release it before assigning it again.",
+    badgeText: t("availability.inCustodyBadge"),
+    tooltipTitle: t("scanAvailability.assetInCustodyTitle"),
+    tooltipContent: t("scanAvailability.assetInCustodyContent"),
     priority: 100,
   }),
 
-  checkedOut: (isCheckedOut: boolean = false): AvailabilityLabelConfig => ({
+  checkedOut: (
+    t: TFunction,
+    isCheckedOut: boolean = false,
+  ): AvailabilityLabelConfig => ({
     condition: isCheckedOut,
-    badgeText: "Checked out",
-    tooltipTitle: "Asset is checked out",
-    tooltipContent:
-      "This asset is already checked out. You need to check it in before assigning it custody.",
+    badgeText: t("scanAvailability.checkedOut"),
+    tooltipTitle: t("scanAvailability.assetCheckedOutTitle"),
+    tooltipContent: t("scanAvailability.assetCheckedOutContent"),
     priority: 90,
   }),
 
@@ -113,78 +122,89 @@ export const assetLabelPresets = {
    *     tooltip doesn't contradict the allowed qty-tracked action.
    */
   partOfKit: (
+    t: TFunction,
     isPartOfKit: boolean = false,
-    isQuantityTracked: boolean = false
+    isQuantityTracked: boolean = false,
   ): AvailabilityLabelConfig => ({
     condition: isPartOfKit,
-    badgeText: "Part of kit",
-    tooltipTitle: "Asset is part of a kit",
+    badgeText: t("scanAvailability.partOfKit"),
+    tooltipTitle: t("scanAvailability.partOfKitTitle"),
     tooltipContent: isQuantityTracked
-      ? "Part of this asset's quantity is allocated to a kit. The remaining free pool is still available to add individually."
-      : "Remove the asset from the kit to add it individually.",
+      ? t("scanAvailability.partialKitAllocation")
+      : t("scanAvailability.partOfKitContent"),
     priority: 80,
   }),
 
-  unavailable: (isUnavailable: boolean = false): AvailabilityLabelConfig => ({
+  unavailable: (
+    t: TFunction,
+    isUnavailable: boolean = false,
+  ): AvailabilityLabelConfig => ({
     condition: isUnavailable,
-    badgeText: "Unavailable",
-    tooltipTitle: "Asset is unavailable",
-    tooltipContent: "This asset is marked as unavailable and cannot be used.",
+    badgeText: t("availability.unavailableBadge"),
+    tooltipTitle: t("scanAvailability.assetUnavailableTitle"),
+    tooltipContent: t("scanAvailability.assetUnavailableContent"),
     priority: 110,
   }),
 
   alreadyInBooking: (
-    isInBooking: boolean = false
+    t: TFunction,
+    isInBooking: boolean = false,
   ): AvailabilityLabelConfig => ({
     condition: isInBooking,
-    badgeText: "Already in booking",
-    tooltipTitle: "Asset is already in this booking",
-    tooltipContent: "This asset is already added to the current booking.",
+    badgeText: t("scanAvailability.alreadyInBooking"),
+    tooltipTitle: t("scanAvailability.alreadyInBookingTitle"),
+    tooltipContent: t("scanAvailability.alreadyInBookingContent"),
     priority: 70,
   }),
 };
 
 /**
- * Predefined label configurations for common kit states
+ * Predefined label configurations for common kit states.
+ *
+ * Same `t`-first convention as {@link assetLabelPresets}.
  */
 export const kitLabelPresets = {
-  inCustody: (isInCustody: boolean = false): AvailabilityLabelConfig => ({
+  inCustody: (
+    t: TFunction,
+    isInCustody: boolean = false,
+  ): AvailabilityLabelConfig => ({
     condition: isInCustody,
-    badgeText: "In custody",
-    tooltipTitle: "Kit is in custody",
-    tooltipContent:
-      "This kit is already in custody. You need to release it before assigning it again.",
+    badgeText: t("availability.inCustodyBadge"),
+    tooltipTitle: t("scanAvailability.kitInCustodyTitle"),
+    tooltipContent: t("scanAvailability.kitInCustodyContent"),
     priority: 100,
   }),
 
-  checkedOut: (isCheckedOut: boolean = false): AvailabilityLabelConfig => ({
+  checkedOut: (
+    t: TFunction,
+    isCheckedOut: boolean = false,
+  ): AvailabilityLabelConfig => ({
     condition: isCheckedOut,
-    badgeText: "Checked out",
-    tooltipTitle: "Kit is checked out",
-    tooltipContent:
-      "This kit is already checked out. You need to check it in before assigning it custody.",
+    badgeText: t("scanAvailability.checkedOut"),
+    tooltipTitle: t("scanAvailability.kitCheckedOutTitle"),
+    tooltipContent: t("scanAvailability.kitCheckedOutContent"),
     priority: 90,
   }),
 
   hasAssetsInCustody: (
-    hasInCustody: boolean = false
+    t: TFunction,
+    hasInCustody: boolean = false,
   ): AvailabilityLabelConfig => ({
     condition: hasInCustody,
-    badgeText: "Contains assets in custody",
-    tooltipTitle: "Kit contains assets in custody",
-    tooltipContent:
-      "Some assets in this kit are already in custody. Release them first before assigning the kit.",
+    badgeText: t("scanAvailability.containsInCustody"),
+    tooltipTitle: t("scanAvailability.containsInCustody"),
+    tooltipContent: t("scanAvailability.containsInCustodyContent"),
     priority: 85,
   }),
 
   containsUnavailableAssets: (
-    hasUnavailable: boolean = false
+    t: TFunction,
+    hasUnavailable: boolean = false,
   ): AvailabilityLabelConfig => ({
     condition: hasUnavailable,
-    badgeText: "Contains unavailable assets",
-    tooltipTitle: "Kit contains unavailable assets",
-    tooltipContent:
-      "Some assets in this kit are marked as unavailable. Address this before proceeding.",
+    badgeText: t("scanAvailability.containsUnavailable"),
+    tooltipTitle: t("scanAvailability.containsUnavailable"),
+    tooltipContent: t("scanAvailability.containsUnavailableContent"),
     priority: 110,
   }),
 };

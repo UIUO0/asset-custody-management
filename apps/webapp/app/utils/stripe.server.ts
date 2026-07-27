@@ -207,7 +207,7 @@ export async function getStripePricesAndProducts() {
       (p) =>
         p.metadata.show_on_table &&
         p.metadata.show_on_table === "true" &&
-        p.metadata.legacy !== "true"
+        p.metadata.legacy !== "true",
     ) as PriceWithProduct[];
 
     return groupPricesByInterval(filteredPrices);
@@ -232,20 +232,20 @@ export async function getStripePricesForTrialPlanSelection() {
     });
 
     const groupedPrices = groupPricesByInterval(
-      pricesResponse.data as PriceWithProduct[]
+      pricesResponse.data as PriceWithProduct[],
     );
     return [
       ...groupedPrices.month.filter(
         (price) =>
           price.product.metadata.shelf_tier === "tier_2" &&
           price.metadata.show_on_table === "true" &&
-          price.metadata.legacy !== "true"
+          price.metadata.legacy !== "true",
       ),
       ...groupedPrices.year.filter(
         (price) =>
           price.product.metadata.shelf_tier === "tier_2" &&
           price.metadata.show_on_table === "true" &&
-          price.metadata.legacy !== "true"
+          price.metadata.legacy !== "true",
       ),
     ];
   } catch (cause) {
@@ -293,7 +293,7 @@ function groupPricesByInterval(prices: PriceWithProduct[]) {
  * @throws ShelfError if no customerId is found for the user
  */
 export async function getOrCreateCustomerId(
-  user: Pick<User, "id" | "email" | "firstName" | "lastName" | "customerId">
+  user: Pick<User, "id" | "email" | "firstName" | "lastName" | "customerId">,
 ) {
   /**
    * We create the stripe customer on onboarding,
@@ -374,7 +374,7 @@ export const getStripeCustomer = async (customerId: string) => {
 
 /** Fetches subscriptions for a customer with expanded product details */
 export const getCustomerSubscriptionsWithProducts = async (
-  customerId: string
+  customerId: string,
 ) => {
   try {
     if (!stripe) return [];
@@ -390,8 +390,8 @@ export const getCustomerSubscriptionsWithProducts = async (
       subscriptionsList.data.map((sub) =>
         stripe.subscriptions.retrieve(sub.id, {
           expand: ["items.data.price.product"],
-        })
-      )
+        }),
+      ),
     );
 
     return subscriptions;
@@ -498,18 +498,18 @@ export async function getDataFromStripeEvent(event: Stripe.Event) {
           productType: product?.metadata?.product_type,
           addonType: product?.metadata?.addon_type,
         };
-      })
+      }),
     );
 
     // The tier item is the one with a shelf_tier metadata
     const tierItem = items.find((i) => i.tierId);
     // The audit addon item is the one marked as addon with audits type
     const auditItem = items.find(
-      (i) => i.productType === "addon" && i.addonType === "audits"
+      (i) => i.productType === "addon" && i.addonType === "audits",
     );
     // The barcode addon item is the one marked as addon with barcodes type
     const barcodeItem = items.find(
-      (i) => i.productType === "addon" && i.addonType === "barcodes"
+      (i) => i.productType === "addon" && i.addonType === "barcodes",
     );
 
     // For backward compat: return tier product info, or fall back to first item
@@ -794,7 +794,7 @@ export async function getInvoiceNotificationData({
   });
 
   const subscriptionName =
-    invoice.lines?.data?.[0]?.description || "Shelf Subscription";
+    invoice.lines?.data?.[0]?.description || `${config.appName} Subscription`;
   const amountDue = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: invoice.currency,
@@ -818,14 +818,14 @@ export async function getInvoiceNotificationData({
 
 /** Fetches upcoming invoices for all active subscriptions of a customer */
 export async function getCustomerUpcomingInvoices(
-  customer: CustomerWithSubscriptions
+  customer: CustomerWithSubscriptions,
 ) {
   try {
     if (!stripe) return [];
 
     const activeSubscriptions =
       customer.subscriptions?.data.filter(
-        (sub) => sub.status === "active" || sub.status === "trialing"
+        (sub) => sub.status === "active" || sub.status === "trialing",
       ) ?? [];
 
     if (activeSubscriptions.length === 0) return [];
@@ -851,12 +851,12 @@ export async function getCustomerUpcomingInvoices(
           }
           throw cause;
         }
-      })
+      }),
     );
 
     // Filter out null values (subscriptions without upcoming invoices)
     return upcomingInvoices.filter(
-      (invoice): invoice is NonNullable<typeof invoice> => invoice !== null
+      (invoice): invoice is NonNullable<typeof invoice> => invoice !== null,
     );
   } catch (cause) {
     throw new ShelfError({
@@ -885,7 +885,7 @@ export type OwnerSubscriptionInfo = {
  * Returns the active or trialing subscription if one exists
  */
 export async function getUserActiveSubscription(
-  userId: string
+  userId: string,
 ): Promise<Stripe.Subscription | null> {
   try {
     if (!stripe || !premiumIsEnabled) return null;
@@ -898,7 +898,7 @@ export async function getUserActiveSubscription(
     if (!user?.customerId) return null;
 
     const customer = (await getStripeCustomer(
-      user.customerId
+      user.customerId,
     )) as CustomerWithSubscriptions;
 
     if (customer.deleted) return null;
@@ -919,7 +919,7 @@ export async function getUserActiveSubscription(
  * Used by the transfer flow to transfer all relevant subscriptions.
  */
 export async function getUserActiveSubscriptions(
-  userId: string
+  userId: string,
 ): Promise<Stripe.Subscription[]> {
   try {
     if (!stripe || !premiumIsEnabled) return [];
@@ -932,11 +932,11 @@ export async function getUserActiveSubscriptions(
     if (!user?.customerId) return [];
 
     const subscriptions = await getCustomerSubscriptionsWithProducts(
-      user.customerId
+      user.customerId,
     );
 
     return subscriptions.filter(
-      (sub) => sub.status === "active" || sub.status === "trialing"
+      (sub) => sub.status === "active" || sub.status === "trialing",
     );
   } catch (cause) {
     throw new ShelfError({
@@ -957,7 +957,7 @@ export async function getUserActiveSubscriptions(
  */
 export async function getOwnerSubscriptionInfo(
   ownerId: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<OwnerSubscriptionInfo> {
   try {
     if (!stripe || !premiumIsEnabled) {
@@ -982,12 +982,12 @@ export async function getOwnerSubscriptionInfo(
     }
 
     const allSubscriptions = await getCustomerSubscriptionsWithProducts(
-      user.customerId
+      user.customerId,
     );
 
     // Filter to active or trialing subscriptions
     const activeSubscriptions = allSubscriptions.filter(
-      (sub) => sub.status === "active" || sub.status === "trialing"
+      (sub) => sub.status === "active" || sub.status === "trialing",
     );
 
     if (activeSubscriptions.length === 0) {
@@ -1078,7 +1078,7 @@ export async function transferSubscriptionToCustomer({
     // Retrieve the existing subscription with expanded price info
     const existingSubscription = (await stripe.subscriptions.retrieve(
       subscriptionId,
-      { expand: ["items.data.price"] }
+      { expand: ["items.data.price"] },
     )) as Stripe.Subscription;
 
     // Capture the original renewal date before cancellation
@@ -1175,7 +1175,7 @@ export async function transferSubscriptionToCustomer({
  * Used to validate if a user can receive a transferred subscription
  */
 export async function userHasActiveSubscription(
-  userId: string
+  userId: string,
 ): Promise<boolean> {
   const subscription = await getUserActiveSubscription(userId);
   return subscription !== null;
@@ -1186,7 +1186,7 @@ export async function userHasActiveSubscription(
  * Returns true if the customer has at least one payment method
  */
 export async function customerHasPaymentMethod(
-  customerId: string
+  customerId: string,
 ): Promise<boolean> {
   try {
     if (!stripe) return false;

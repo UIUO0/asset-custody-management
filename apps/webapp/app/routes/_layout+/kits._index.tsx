@@ -38,6 +38,7 @@ import { db } from "~/database/db.server";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useIsAvailabilityView } from "~/hooks/use-is-availability-view";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
@@ -77,6 +78,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, canSeeAllCustody, role } = await requirePermission({
       userId,
       request,
@@ -244,13 +249,13 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         modelName,
         search,
         hasActiveFilters,
-        searchFieldLabel: "Search kits",
+        searchFieldLabel: t("search.kitsLabel"),
         teamMembers,
         totalTeamMembers,
         currentUserTeamMember,
         searchFieldTooltip: {
-          title: "Search your kits database",
-          text: "Search kits based on name or description.",
+          title: t("search.kitsTitle"),
+          text: t("search.kitsText"),
         },
         locations,
         totalLocations,
@@ -282,11 +287,22 @@ export const handle = {
 export default function KitsIndexPage() {
   const { t } = useTranslation();
   const { items } = useLoaderData<typeof loader>();
-  const { roles, isBase } = useUserRoleHelper();
+  const { roles } = useUserRoleHelper();
   const canCreateKit = userHasPermission({
     roles,
     entity: PermissionEntity.kit,
     action: PermissionAction.create,
+  });
+  /**
+   * The bulk dropdown gates each of its own entries, so this only decides
+   * whether ANY of them would be available. `custody` is included because
+   * SELF_SERVICE users rely on bulk "take custody" — dropping it would be a
+   * regression for them.
+   */
+  const canBulkManageKits = userHasPermission({
+    roles,
+    entity: PermissionEntity.kit,
+    action: [PermissionAction.update, PermissionAction.custody],
   });
   const { isAvailabilityView, shouldShowAvailabilityView } =
     useIsAvailabilityView();
@@ -388,7 +404,9 @@ export default function KitsIndexPage() {
           <List
             className="overflow-x-visible md:overflow-x-auto"
             ItemComponent={ListContent}
-            bulkActions={isBase ? undefined : <BulkActionsDropdown />}
+            bulkActions={
+              canBulkManageKits ? <BulkActionsDropdown /> : undefined
+            }
             customEmptyStateContent={{
               title: t("kits.emptyTitle"),
               text: t("kits.emptyText"),

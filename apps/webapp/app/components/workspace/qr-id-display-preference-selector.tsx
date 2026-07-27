@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
@@ -27,8 +28,10 @@ type QrIdDisplayPreferenceSelectorProps = {
 
 type Option = {
   value: QrIdDisplayPreference;
-  label: string;
-  description: string;
+  /** i18n key for the option label — resolved with `t()` at render time. */
+  labelKey: string;
+  /** i18n key for the option description. */
+  descriptionKey: string;
   /**
    * Synthetic value used by the inline AssetCodeBadge preview chip — gives the
    * user a feel for what their list rows will look like once they save. Kept
@@ -42,15 +45,14 @@ type Option = {
 const BASE_OPTIONS: Option[] = [
   {
     value: "QR_ID",
-    label: "QR Code ID",
-    description: "Shelf-generated — every asset has one (e.g., abc123xyz)",
+    labelKey: "barcodePreference.qrCodeId",
+    descriptionKey: "barcodePreference.qrCodeIdDesc",
     exampleValue: "abc123xyz",
   },
   {
     value: "SAM_ID",
-    label: "SAM ID",
-    description:
-      "Sequential Asset Marker — short, human-readable (e.g., SAM-0001)",
+    labelKey: "barcodePreference.samId",
+    descriptionKey: "barcodePreference.samIdDesc",
     exampleValue: "SAM-0001",
   },
 ];
@@ -59,33 +61,32 @@ const BASE_OPTIONS: Option[] = [
 const BARCODE_OPTIONS: Option[] = [
   {
     value: "Code128",
-    label: "Code 128",
-    description: "Most flexible: letters + numbers + symbols (e.g., ABC-123)",
+    labelKey: "barcodePreference.code128",
+    descriptionKey: "barcodePreference.code128Desc",
     exampleValue: "ABC-123",
   },
   {
     value: "Code39",
-    label: "Code 39",
-    description: "Letters and numbers only, no symbols (e.g., ABC123)",
+    labelKey: "barcodePreference.code39",
+    descriptionKey: "barcodePreference.code39Desc",
     exampleValue: "ABC123",
   },
   {
     value: "DataMatrix",
-    label: "DataMatrix",
-    description: "2D matrix code, supports any characters (e.g., ABC-123)",
+    labelKey: "barcodePreference.dataMatrix",
+    descriptionKey: "barcodePreference.dataMatrixDesc",
     exampleValue: "ABC-123",
   },
   {
     value: "ExternalQR",
-    label: "External QR",
-    description:
-      "Third-party QR codes — URLs or text (e.g., https://example.com)",
+    labelKey: "barcodePreference.externalQr",
+    descriptionKey: "barcodePreference.externalQrDesc",
     exampleValue: "https://example.com",
   },
   {
     value: "EAN13",
-    label: "EAN-13",
-    description: "Retail barcodes, exactly 13 digits (e.g., 9780201379624)",
+    labelKey: "barcodePreference.ean13",
+    descriptionKey: "barcodePreference.ean13Desc",
     exampleValue: "9780201379624",
   },
 ];
@@ -96,6 +97,7 @@ export default function QrIdDisplayPreferenceSelector({
   name,
   canUseBarcodes = false,
 }: QrIdDisplayPreferenceSelectorProps) {
+  const { t } = useTranslation();
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   // Available options depend on the org's barcode add-on. Computed once per
@@ -103,20 +105,20 @@ export default function QrIdDisplayPreferenceSelector({
   const availableOptions = useMemo<Option[]>(
     () =>
       canUseBarcodes ? [...BASE_OPTIONS, ...BARCODE_OPTIONS] : BASE_OPTIONS,
-    [canUseBarcodes]
+    [canUseBarcodes],
   );
 
   const [isOpen, setIsOpen] = useState(false);
   // Lazy initializer avoids a false-positive derived-state lint: after mount this
   // state is user-controlled via the selector, so it must NOT re-sync with the prop.
   const [selectedPreference, setSelectedPreference] = useState(
-    () => defaultValue
+    () => defaultValue,
   );
   const [selectedIndex, setSelectedIndex] = useState<number>(() =>
     Math.max(
       0,
-      availableOptions.findIndex((option) => option.value === defaultValue)
-    )
+      availableOptions.findIndex((option) => option.value === defaultValue),
+    ),
   );
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -128,8 +130,10 @@ export default function QrIdDisplayPreferenceSelector({
 
     return availableOptions.filter(
       (option) =>
-        option.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        option.description.toLowerCase().includes(searchQuery.toLowerCase())
+        t(option.labelKey).toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t(option.descriptionKey)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
     );
   }, [searchQuery, availableOptions]);
 
@@ -143,7 +147,7 @@ export default function QrIdDisplayPreferenceSelector({
   // arrow keys always land somewhere sensible.
   useEffect(() => {
     const idx = filteredOptions.findIndex(
-      (option) => option.value === selectedPreference
+      (option) => option.value === selectedPreference,
     );
     setSelectedIndex(idx >= 0 ? idx : 0);
   }, [selectedPreference, filteredOptions]);
@@ -157,7 +161,7 @@ export default function QrIdDisplayPreferenceSelector({
   const scrollToIndex = (index: number) => {
     setTimeout(() => {
       const selectedElement = document.getElementById(
-        `qr-preference-option-${index}`
+        `qr-preference-option-${index}`,
       );
       if (selectedElement) {
         selectedElement.scrollIntoView({ block: "nearest" });
@@ -229,15 +233,15 @@ export default function QrIdDisplayPreferenceSelector({
             // content to set the actual height.
             className={tw(
               "flex min-h-[44px] w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-start",
-              className
+              className,
             )}
           >
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate text-sm font-medium text-gray-900">
-                {selectedOption?.label}
+                {selectedOption ? t(selectedOption.labelKey) : null}
               </span>
               <span className="truncate text-xs text-gray-500">
-                {selectedOption?.description}
+                {selectedOption ? t(selectedOption.descriptionKey) : null}
               </span>
             </span>
             <ChevronDownIcon className="size-4 shrink-0 text-gray-500" />
@@ -262,7 +266,7 @@ export default function QrIdDisplayPreferenceSelector({
             <div className="flex items-center border-b">
               <SearchIcon className="ms-4 size-4 text-gray-500" />
               <input
-                placeholder="Search options..."
+                placeholder={t("barcodePreference.searchOptions")}
                 className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
                 value={searchQuery}
                 onChange={(event) => {
@@ -273,7 +277,7 @@ export default function QrIdDisplayPreferenceSelector({
                 // accessible name. The placeholder alone is not a substitute
                 // for screen readers — `aria-label` gives the same visible
                 // text a non-visual equivalent.
-                aria-label="Search display code preferences"
+                aria-label={t("barcodePreference.searchPreferences")}
               />
             </div>
             {filteredOptions.map((option, index) => {
@@ -295,7 +299,7 @@ export default function QrIdDisplayPreferenceSelector({
                   // the vertical center of the two-line content).
                   className={tw(
                     "flex items-start justify-between gap-3 px-4 py-3 hover:cursor-pointer hover:bg-gray-50",
-                    isHovered && "bg-gray-50"
+                    isHovered && "bg-gray-50",
                   )}
                   role="option"
                   aria-selected={isSelected}
@@ -304,15 +308,15 @@ export default function QrIdDisplayPreferenceSelector({
                     handleSelect(option.value);
                   }}
                   onKeyDown={handleActivationKeyPress(() =>
-                    handleSelect(option.value)
+                    handleSelect(option.value),
                   )}
                 >
                   <div className="flex min-w-0 flex-1 flex-col">
                     <span className="text-sm font-medium text-gray-900">
-                      {option.label}
+                      {t(option.labelKey)}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {option.description}
+                      {t(option.descriptionKey)}
                     </span>
                   </div>
                   <When truthy={isSelected}>

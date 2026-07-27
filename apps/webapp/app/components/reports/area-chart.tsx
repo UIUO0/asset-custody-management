@@ -1,7 +1,7 @@
 /**
  * Area Chart Component
  *
- * Time-series area chart built on Recharts with Shelf's design tokens.
+ * Time-series area chart built on Recharts with the app's design tokens.
  * Optimized for reports: clean axes, minimal gridlines, monochrome palette.
  *
  * Features:
@@ -27,7 +27,7 @@ import {
 
 import type { ChartSeries } from "~/modules/reports/types";
 
-/** Shelf's color palette for charts */
+/** Brand color palette for charts */
 const CHART_COLORS = {
   primary: "#101828", // gray-900
   primaryLight: "#344054", // gray-700
@@ -169,7 +169,7 @@ export function AreaChart({
                       {tooltipFormatter
                         ? tooltipFormatter(
                             entry.value as number,
-                            entry.name as string
+                            entry.name as string,
                           )
                         : (entry.value as number).toLocaleString()}
                     </span>

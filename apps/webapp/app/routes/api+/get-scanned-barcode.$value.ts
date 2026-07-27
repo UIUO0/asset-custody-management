@@ -57,7 +57,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       throw new ShelfError({
         cause: null,
         message:
-          "Your workspace does not support scanning barcodes. Contact your workspace owner to activate this feature or try scanning a Shelf QR code.",
+          "Your workspace does not support scanning barcodes. Contact your workspace owner to activate this feature or try scanning a QR code instead.",
         additionalData: { shouldSendNotification: false },
         label: "Barcode",
         shouldBeCaptured: false,
@@ -72,7 +72,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
         additionalData: {
           userId,
         },
-      }
+      },
     );
 
     // Decode the URL-encoded barcode value
@@ -127,7 +127,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               return z.NEVER;
             }
           }),
-      })
+      }),
     ) as {
       assetExtraInclude: Prisma.AssetInclude | undefined;
       kitExtraInclude: Prisma.KitInclude | undefined;
@@ -241,7 +241,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               }
             : undefined,
         },
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

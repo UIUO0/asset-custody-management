@@ -57,7 +57,7 @@ export const sendBarcodeTrialEndsTomorrowEmail = async ({
           "Something went wrong while sending the barcode trial ends tomorrow email",
         additionalData: { email },
         label: "User",
-      })
+      }),
     );
   }
 };
@@ -86,7 +86,7 @@ If you'd like to keep using Barcodes, no action is needed - everything will tran
 
 If you have any questions, feel free to reach out to us at ${SUPPORT_EMAIL}. We're happy to help!
 
-The Shelf Team
+The ${config.appName} Team
 `;
   }
 
@@ -100,7 +100,7 @@ Don't worry - your barcode data won't be deleted. Once you subscribe, everything
 
 If you have any questions, feel free to reach out to us at ${SUPPORT_EMAIL}. We're happy to help!
 
-The Shelf Team
+The ${config.appName} Team
 `;
 };
 
@@ -218,7 +218,9 @@ function BarcodeTrialEndsTomorrowEmailTemplate({
             {SUPPORT_EMAIL}. We're happy to help!
           </Text>
 
-          <Text style={{ marginTop: "24px", ...styles.p }}>The Shelf Team</Text>
+          <Text style={{ marginTop: "24px", ...styles.p }}>
+            The {config.appName} Team
+          </Text>
         </div>
       </Container>
     </Html>
@@ -239,5 +241,5 @@ export const barcodeTrialEndsTomorrowEmailHtml = ({
       firstName={firstName}
       hasPaymentMethod={hasPaymentMethod}
       trialEndDate={trialEndDate}
-    />
+    />,
   );

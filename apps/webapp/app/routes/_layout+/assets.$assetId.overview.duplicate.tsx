@@ -16,6 +16,7 @@ import Icon from "~/components/icons/icon";
 import Header from "~/components/layout/header";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { duplicateAsset, getAsset } from "~/modules/asset/service.server";
 import styles from "~/styles/layout/custom-modal.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -41,6 +42,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+
     const { organizationId, userOrganizations } = await requirePermission({
       userId,
       request,
@@ -60,8 +65,8 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     return payload({
       header: {
-        title: `Duplicate asset`,
-        subHeading: "Choose the amount of duplicates you want to create.",
+        title: t("assets.duplicateTitle"),
+        subHeading: t("assets.duplicateSubHeading"),
       },
       showModal: true,
       asset,
@@ -114,7 +119,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     const { amountOfDuplicates } = parseData(
       await request.formData(),
-      DuplicateAssetSchema
+      DuplicateAssetSchema,
     );
 
     const duplicatedAssets = await duplicateAsset({
@@ -132,7 +137,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     });
 
     return redirect(
-      `/assets/${amountOfDuplicates > 1 ? "" : duplicatedAssets[0].id}`
+      `/assets/${amountOfDuplicates > 1 ? "" : duplicatedAssets[0].id}`,
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, assetId });
@@ -201,7 +206,7 @@ export default function DuplicateAsset() {
             error={
               zo.errors.amountOfDuplicates()?.message ||
               getValidationErrors<typeof DuplicateAssetSchema>(
-                actionData?.error
+                actionData?.error,
               )?.amountOfDuplicates?.message
             }
           />

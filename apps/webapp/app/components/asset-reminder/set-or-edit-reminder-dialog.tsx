@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Form, useNavigation, useLocation, useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -39,6 +40,7 @@ export default function SetOrEditReminderDialog({
   reminder,
   action,
 }: SetOrEditReminderDialogProps) {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
 
@@ -56,7 +58,7 @@ export default function SetOrEditReminderDialog({
   const actionData = useActionData<DataOrErrorResponse>();
   /** This handles server side errors in case client side validation fails */
   const validationErrors = getValidationErrors<typeof setReminderSchema>(
-    actionData?.error
+    actionData?.error,
   );
 
   const isEdit = !!reminder;
@@ -75,7 +77,7 @@ export default function SetOrEditReminderDialog({
         });
       }
     },
-    [onClose, searchParams, setSearchParams]
+    [onClose, searchParams, setSearchParams],
   );
 
   return (
@@ -124,7 +126,7 @@ export default function SetOrEditReminderDialog({
               label="Name"
               disabled={disabled}
               required
-              placeholder="Enter name of reminder"
+              placeholder={t("reminders.namePlaceholder")}
               className="mb-4"
             />
 
@@ -139,21 +141,13 @@ export default function SetOrEditReminderDialog({
                 label="Message"
                 disabled={disabled}
                 required
-                placeholder="Enter description..."
+                placeholder={t("reminders.descriptionPlaceholder")}
                 inputType="textarea"
                 className="mb-2"
               />
               <p className="text-gray-500">
                 This will show in the reminder mail that gets sent to selected
-                team member(s). Curious about the reminder mail?{" "}
-                <Button
-                  variant="link"
-                  to="https://www.shelf.nu/knowledge-base/asset-reminders"
-                  target="_blank"
-                >
-                  See a sample
-                </Button>
-                .
+                team member(s).
               </p>
             </div>
 
@@ -162,7 +156,7 @@ export default function SetOrEditReminderDialog({
                 defaultValue={
                   reminder?.alertDateTime
                     ? dateForDateTimeInputValue(
-                        new Date(reminder.alertDateTime)
+                        new Date(reminder.alertDateTime),
                       )
                     : undefined
                 }
@@ -172,10 +166,10 @@ export default function SetOrEditReminderDialog({
                   validationErrors?.alertDateTime?.message ||
                   zo.errors.alertDateTime()?.message
                 }
-                label="Reminder Date"
+                label={t("reminders.reminderDate")}
                 disabled={disabled}
                 required
-                placeholder="Enter description..."
+                placeholder={t("reminders.descriptionPlaceholder")}
                 className="mb-2"
               />
               <p className="text-gray-500">

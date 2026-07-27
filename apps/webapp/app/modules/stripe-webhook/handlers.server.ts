@@ -1,5 +1,6 @@
 import { TierId } from "@prisma/client";
 import type Stripe from "stripe";
+import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import { sendEmail } from "~/emails/mail.server";
 import { sendAuditTrialEndsSoonEmail } from "~/emails/stripe/audit-trial-ends-soon";
@@ -53,7 +54,7 @@ const OK = () => new Response(null, { status: 200 });
 function buildUpgradeCompletedProps(
   subscription: Stripe.Subscription,
   tierId: string | undefined,
-  via: "direct" | "upgrade" | "trial_conversion"
+  via: "direct" | "upgrade" | "trial_conversion",
 ) {
   const plan = subscription.items.data[0]?.plan;
 
@@ -92,7 +93,7 @@ function buildUpgradeCompletedProps(
 
 export async function handleCheckoutCompleted(
   event: Stripe.Event,
-  _user: WebhookUser
+  _user: WebhookUser,
 ) {
   const { subscription: subscriptionId } = event.data
     .object as Stripe.Checkout.Session;
@@ -163,7 +164,7 @@ export async function handleCheckoutCompleted(
 
 export async function handleSubscriptionCreated(
   event: Stripe.Event,
-  user: WebhookUser
+  user: WebhookUser,
 ) {
   const { subscription, customerId, tierId, productType, product } =
     await getDataFromStripeEvent(event);
@@ -270,12 +271,12 @@ export async function handleSubscriptionCreated(
       customerId,
       user,
     });
-    const subscriptionName = product?.name || "Shelf Subscription";
+    const subscriptionName = product?.name || `${config.appName} Subscription`;
 
     for (const email of emailsToNotify) {
       sendEmail({
         to: email,
-        subject: "Your Shelf subscription is now active",
+        subject: `Your ${config.appName} subscription is now active`,
         text: subscriptionGrantedText({ customerName, subscriptionName }),
       });
     }
@@ -288,7 +289,7 @@ export async function handleSubscriptionCreated(
 
 export async function handleSubscriptionPaused(
   event: Stripe.Event,
-  user: WebhookUser
+  user: WebhookUser,
 ) {
   const { subscription, customerId, tierId, productType, product } =
     await getDataFromStripeEvent(event);
@@ -321,7 +322,7 @@ export async function handleSubscriptionPaused(
 
   const pausedSubscriptionIsHigherOrEqualTier = isHigherOrEqualTier(
     tierId as TierId,
-    user.tierId
+    user.tierId,
   );
 
   if (
@@ -357,7 +358,7 @@ export async function handleSubscriptionPaused(
 
 export async function handleSubscriptionUpdated(
   event: Stripe.Event,
-  user: WebhookUser
+  user: WebhookUser,
 ) {
   const { subscription, customerId, tierId, productType, product } =
     await getDataFromStripeEvent(event);
@@ -390,7 +391,7 @@ export async function handleSubscriptionUpdated(
 
   const newSubscriptionIsHigherTier = isHigherTier(
     tierId as TierId,
-    user.tierId
+    user.tierId,
   );
 
   // A trial converting to paid arrives as a status transition trialing →
@@ -436,7 +437,7 @@ export async function handleSubscriptionUpdated(
       properties: buildUpgradeCompletedProps(
         subscription,
         tierId,
-        isTrialConversion ? "trial_conversion" : "upgrade"
+        isTrialConversion ? "trial_conversion" : "upgrade",
       ),
     });
   }
@@ -448,7 +449,7 @@ export async function handleSubscriptionUpdated(
 
 export async function handleSubscriptionDeleted(
   event: Stripe.Event,
-  user: WebhookUser
+  user: WebhookUser,
 ) {
   const { subscription, customerId, tierId, productType, product } =
     await getDataFromStripeEvent(event);
@@ -484,7 +485,7 @@ export async function handleSubscriptionDeleted(
 
   const deletedSubscriptionIsHigherOrEqualTier = isHigherOrEqualTier(
     tierId as TierId,
-    user.tierId
+    user.tierId,
   );
 
   if (deletedSubscriptionIsHigherOrEqualTier) {
@@ -533,7 +534,7 @@ export async function handleSubscriptionDeleted(
 export async function handleInvoicePaymentFailed(
   event: Stripe.Event,
   user: WebhookUser,
-  customerId: string
+  customerId: string,
 ) {
   const failedInvoice = event.data.object as Stripe.Invoice;
 
@@ -586,7 +587,7 @@ export async function handleInvoicePaymentFailed(
   for (const email of emailsToNotify) {
     sendEmail({
       to: email,
-      subject: "Action needed: Payment issue with your Shelf subscription",
+      subject: `Action needed: Payment issue with your ${config.appName} subscription`,
       text: unpaidInvoiceUserText({
         customerEmail: email,
         customerName,
@@ -605,7 +606,7 @@ export async function handleInvoicePaymentFailed(
 export async function handleInvoicePaid(
   event: Stripe.Event,
   user: WebhookUser,
-  customerId: string
+  customerId: string,
 ) {
   const paidInvoice = event.data.object as Stripe.Invoice;
 
@@ -642,7 +643,7 @@ export async function handleInvoicePaid(
   const subscriptionId = paidInvoice.parent?.subscription_details?.subscription;
   if (subscriptionId) {
     const subscription = await fetchStripeSubscription(
-      subscriptionId as string
+      subscriptionId as string,
     );
 
     if (subscription.status === "active") {
@@ -724,7 +725,7 @@ export async function handleInvoicePaid(
 export async function handleInvoiceResolved(
   event: Stripe.Event,
   user: WebhookUser,
-  customerId: string
+  customerId: string,
 ) {
   const resolvedInvoice = event.data.object as Stripe.Invoice;
 
@@ -759,7 +760,7 @@ export async function handleInvoiceResolved(
 export async function handleInvoiceOverdue(
   event: Stripe.Event,
   user: WebhookUser,
-  customerId: string
+  customerId: string,
 ) {
   const overdueInvoice = event.data.object as Stripe.Invoice;
 
@@ -798,7 +799,7 @@ export async function handleInvoiceOverdue(
   for (const email of emailsToNotify) {
     sendEmail({
       to: email,
-      subject: "Action needed: Your Shelf invoice is overdue",
+      subject: `Action needed: Your ${config.appName} invoice is overdue`,
       text: unpaidInvoiceUserText({
         customerEmail: email,
         customerName,
@@ -814,7 +815,7 @@ export async function handleInvoiceOverdue(
     overdueInvoice.parent?.subscription_details?.subscription;
   if (subscriptionId) {
     const subscription = await fetchStripeSubscription(
-      subscriptionId as string
+      subscriptionId as string,
     );
     const product = subscription.items.data[0].plan.product as Stripe.Product;
     const tierId = product?.metadata?.shelf_tier;
@@ -854,7 +855,7 @@ export async function handleInvoiceOverdue(
 
 export async function handleTrialWillEnd(
   event: Stripe.Event,
-  user: WebhookUser
+  user: WebhookUser,
 ) {
   const { tierId, subscription, productType, product, customerId } =
     await getDataFromStripeEvent(event);
@@ -896,7 +897,7 @@ export async function handleTrialWillEnd(
       // Schedule 1-day warning email (only for users with payment method)
       if (hasPaymentMethod) {
         const oneDayBefore = new Date(
-          trialEndDate.getTime() - 24 * 60 * 60 * 1000
+          trialEndDate.getTime() - 24 * 60 * 60 * 1000,
         );
         scheduleTrialEndsTomorrowEmail({
           data: {
@@ -920,7 +921,7 @@ export async function handleTrialWillEnd(
                 subscriptionId: subscription.id,
               },
               label: "Stripe",
-            })
+            }),
           );
         });
       }
@@ -937,7 +938,7 @@ export async function handleTrialWillEnd(
       firstName: user.firstName,
       email: user.email,
       hasPaymentMethod,
-      planName: product?.name || "Shelf",
+      planName: product?.name || config.appName,
       trialEndDate: new Date((subscription.trial_end as number) * 1000),
     });
   }
@@ -950,7 +951,7 @@ export async function handleTrialWillEnd(
 export async function handlePaymentMethodAttached(
   _event: Stripe.Event,
   _user: WebhookUser,
-  customerId: string
+  customerId: string,
 ) {
   // Clear the warning flag when user adds a payment method
   await db.user
@@ -977,7 +978,7 @@ export async function handlePaymentMethodAttached(
 export async function handlePaymentMethodDetached(
   _event: Stripe.Event,
   _user: WebhookUser,
-  customerId: string
+  customerId: string,
 ) {
   // When user removes a payment method, check if they still have one
   // If they have an active subscription but no payment method, warn them
@@ -985,7 +986,7 @@ export async function handlePaymentMethodDetached(
 
   if (!hasPaymentMethod) {
     const customer = (await getStripeCustomer(
-      customerId
+      customerId,
     )) as CustomerWithSubscriptions;
     const activeSubscription = getCustomerActiveSubscription({ customer });
 

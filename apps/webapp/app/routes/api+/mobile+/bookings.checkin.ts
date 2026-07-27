@@ -16,6 +16,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { hasOrgWideNonOwnerRole } from "~/utils/permissions/role-scope";
 
 /**
  * POST /api/mobile/bookings/checkin
@@ -48,8 +49,11 @@ export async function action({ request }: ActionFunctionArgs) {
     const { role } = await getMobileUserContext(user.id, organizationId);
     const bookingSettings =
       await getBookingSettingsForOrganization(organizationId);
+    // why: the "for admin" flag covers every organization-wide role except the
+    // owner, not literally ADMIN — otherwise WAREHOUSE/FINANCE/INVENTORY would
+    // quietly bypass a restriction the workspace switched on.
     const explicitCheckinRequired =
-      (role === OrganizationRoles.ADMIN &&
+      (hasOrgWideNonOwnerRole(role) &&
         bookingSettings.requireExplicitCheckinForAdmin) ||
       (role === OrganizationRoles.SELF_SERVICE &&
         bookingSettings.requireExplicitCheckinForSelfService);
@@ -101,7 +105,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

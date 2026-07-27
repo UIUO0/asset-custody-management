@@ -9,6 +9,7 @@ import {
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -90,7 +91,7 @@ function TypeToggle({
               "flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors",
               value === option
                 ? "border-primary-400 bg-primary-50 text-primary-700"
-                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50",
             )}
             aria-pressed={value === option}
           >
@@ -119,6 +120,7 @@ function ScreenshotField({
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div>
       <p className="mb-2 text-sm font-medium text-gray-700">
@@ -129,14 +131,14 @@ function ScreenshotField({
         <div className="relative inline-block">
           <img
             src={previewUrl}
-            alt="Screenshot preview"
+            alt={t("feedback.screenshotPreview")}
             className="h-24 rounded-lg border border-gray-200 object-cover"
           />
           <button
             type="button"
             onClick={onRemove}
             className="absolute -right-2 -top-2 rounded-full border border-gray-200 bg-white p-0.5 shadow-sm hover:bg-gray-50"
-            aria-label="Remove screenshot"
+            aria-label={t("feedback.removeScreenshot")}
           >
             <XIcon className="size-3.5 text-gray-500" />
           </button>
@@ -159,7 +161,7 @@ function ScreenshotField({
         accept="image/png,image/jpeg,image/webp"
         onChange={onFileChange}
         className="hidden"
-        aria-label="Upload screenshot"
+        aria-label={t("feedback.uploadScreenshot")}
       />
 
       {fileError ? (
@@ -183,7 +185,7 @@ function InlineBanner({
         "flex items-start gap-2 rounded-lg border px-3 py-2 text-sm",
         tone === "error"
           ? "border-error-300 bg-error-50 text-error-700"
-          : "border-gray-200 bg-gray-50 text-gray-600"
+          : "border-gray-200 bg-gray-50 text-gray-600",
       )}
     >
       <AlertCircleIcon className="mt-0.5 size-4 shrink-0" />
@@ -194,7 +196,7 @@ function InlineBanner({
 
 function feedbackReducer(
   state: FeedbackState,
-  action: FeedbackAction
+  action: FeedbackAction,
 ): FeedbackState {
   switch (action.type) {
     case "set_feedback_type":
@@ -224,6 +226,7 @@ export default function FeedbackModal({
   onClose,
   errorContext,
 }: FeedbackModalProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<DataOrErrorResponse>();
   const disabled = useDisabled(fetcher);
   const zo = useZorm("Feedback", feedbackSchema);
@@ -234,7 +237,7 @@ export default function FeedbackModal({
   const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const validationErrors = getValidationErrors<typeof feedbackSchema>(
-    fetcher.data?.error
+    fetcher.data?.error,
   );
 
   const generalError =
@@ -257,7 +260,7 @@ export default function FeedbackModal({
       ? ""
       : `${window.innerWidth}x${window.innerHeight} @${window.devicePixelRatio}x`.slice(
           0,
-          FEEDBACK_FIELD_LIMITS.viewport
+          FEEDBACK_FIELD_LIMITS.viewport,
         );
 
   const handleClose = useCallback(() => {
@@ -297,7 +300,7 @@ export default function FeedbackModal({
         };
       }
     },
-    [fetcher.data, fetcher.state, handleClose]
+    [fetcher.data, fetcher.state, handleClose],
   );
 
   useEffect(
@@ -308,7 +311,7 @@ export default function FeedbackModal({
         }
       };
     },
-    [previewUrl]
+    [previewUrl],
   );
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -357,12 +360,14 @@ export default function FeedbackModal({
         title={
           <div className="-mb-3 w-full pb-4">
             <h3 className="text-lg font-semibold text-gray-900">
-              {errorContext ? "Report this issue" : "Share feedback"}
+              {errorContext
+                ? t("feedback.reportThisIssue")
+                : t("feedback.shareFeedback")}
             </h3>
             <p className="text-sm text-gray-600">
               {errorContext
-                ? "Tell us what happened. The technical details are included automatically."
-                : "What would you like to share?"}
+                ? t("feedback.technicalDetailsIncluded")
+                : t("feedback.whatWouldYouShare")}
             </p>
           </div>
         }
@@ -468,10 +473,10 @@ export default function FeedbackModal({
                 name={zo.fields.message()}
                 placeholder={
                   errorContext
-                    ? "What were you trying to do when this error happened?"
+                    ? t("feedback.whatWereYouDoing")
                     : feedbackType === "issue"
-                    ? "Tell us about the issue you're experiencing..."
-                    : "Share your idea for improving Shelf..."
+                    ? t("feedback.issuePlaceholder")
+                    : t("feedback.ideaPlaceholder")
                 }
                 rows={5}
                 maxLength={5000}
@@ -516,7 +521,7 @@ export default function FeedbackModal({
               </button>
 
               <Button type="submit" disabled={disabled}>
-                {disabled ? "Sending..." : "Send feedback"}
+                {disabled ? "Sending..." : t("feedback.sendFeedback")}
               </Button>
             </div>
           </fetcher.Form>

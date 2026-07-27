@@ -1,3 +1,4 @@
+import { config } from "~/config/shelf.config";
 export function newOwnerEmailText({
   newOwnerName,
   workspaceName,
@@ -27,7 +28,7 @@ This means you now have full control over:
 - User management
 ${subscriptionSection}
 Thanks,
-The Shelf Team
+The ${config.appName} Team
 `;
 }
 
@@ -60,6 +61,6 @@ As a result:
 - You no longer have access to billing or ownership-level settings
 ${subscriptionSection}
 Thanks,
-The Shelf Team
+The ${config.appName} Team
 `;
 }

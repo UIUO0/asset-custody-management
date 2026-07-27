@@ -26,6 +26,7 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { hasPermission } from "~/utils/permissions/permission.validator.server";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 import { canImportAssets } from "~/utils/subscription.server";
 import { resolveUserDisplayName } from "~/utils/user";
 import { parseFiltersWithHierarchy } from "./query.server";
@@ -113,9 +114,9 @@ export async function attachKitNamesToBookingAssets({
       assets.flatMap((a) =>
         (a.bookingAssets ?? [])
           .map((ba) => ba.assetKitId)
-          .filter((id): id is string => id !== null)
-      )
-    )
+          .filter((id): id is string => id !== null),
+      ),
+    ),
   );
   if (assetKitIds.length === 0) return;
 
@@ -148,8 +149,7 @@ export async function simpleModeLoader({
 }: Props) {
   const { locale, timeZone } = getClientHint(request);
   const isSelfService = role === OrganizationRoles.SELF_SERVICE;
-  const isSelfServiceOrBase =
-    role === OrganizationRoles.SELF_SERVICE || role === OrganizationRoles.BASE;
+  const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
   // Check if URL contains advanced filter syntax (from browser back button or old bookmark)
   // URLSearchParams.toString() encodes colons as %3A, so we must check the decoded values
@@ -265,11 +265,11 @@ export async function simpleModeLoader({
       organizationId,
     }),
     // Team members for booking form - BASE/SELF_SERVICE always get their team member
-    isSelfServiceOrBase
+    isScopedToOwnRecords
       ? getTeamMemberForForm({
           organizationId,
           userId,
-          isSelfServiceOrBase,
+          isScopedToOwnRecords,
           getAll:
             searchParams.has("getAll") &&
             hasGetAllValue(searchParams, "teamMember"),
@@ -313,7 +313,7 @@ export async function simpleModeLoader({
         label: "Assets",
         additionalData: { assetCount: assets.length },
         shouldBeCaptured: true,
-      })
+      }),
     );
   }
 
@@ -342,7 +342,7 @@ export async function simpleModeLoader({
           label: "Assets",
           additionalData: { organizationId, assetCount: assets.length },
           shouldBeCaptured: true,
-        })
+        }),
       );
     }
   }
@@ -420,7 +420,7 @@ export async function simpleModeLoader({
     }),
     {
       headers,
-    }
+    },
   );
 }
 
@@ -436,7 +436,7 @@ export async function advancedModeLoader({
 }: Props) {
   const { locale, timeZone } = getClientHint(request);
   const isSelfService = role === OrganizationRoles.SELF_SERVICE;
-  const isSelfServiceOrBase = isSelfService || role === OrganizationRoles.BASE;
+  const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
 
   /** Parse filters */
   const {
@@ -451,7 +451,7 @@ export async function advancedModeLoader({
     : getCurrentSearchParams(request);
   const hasActiveFilters = computeHasActiveFilters(searchParams);
   const allSelectedEntries = searchParams.getAll(
-    "getAll"
+    "getAll",
   ) as AllowedModelNames[];
   const view = searchParams.get("view") ?? "table";
 
@@ -471,7 +471,7 @@ export async function advancedModeLoader({
   const parsedFilters = await parseFiltersWithHierarchy(
     filters ?? "",
     settings.columns as Column[],
-    organizationId
+    organizationId,
   );
 
   const {
@@ -483,7 +483,7 @@ export async function advancedModeLoader({
     filters,
     settings.columns as Column[],
     organizationId,
-    parsedFilters
+    parsedFilters,
   );
 
   // getEntitiesWithSelectedValues fetches filter dropdown options (tags,
@@ -568,11 +568,11 @@ export async function advancedModeLoader({
       organizationId,
     }),
     // Team members for booking form - BASE/SELF_SERVICE always get their team member
-    isSelfServiceOrBase
+    isScopedToOwnRecords
       ? getTeamMemberForForm({
           organizationId,
           userId,
-          isSelfServiceOrBase,
+          isScopedToOwnRecords,
           getAll:
             searchParams.has("getAll") &&
             hasGetAllValue(searchParams, "teamMember"),
@@ -631,7 +631,7 @@ export async function advancedModeLoader({
         label: "Assets",
         additionalData: { assetCount: refreshedAssets.length },
         shouldBeCaptured: true,
-      })
+      }),
     );
   }
 
@@ -706,6 +706,6 @@ export async function advancedModeLoader({
     }),
     {
       headers,
-    }
+    },
   );
 }

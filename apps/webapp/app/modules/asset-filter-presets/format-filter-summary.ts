@@ -6,6 +6,14 @@ import { parseFilters } from "~/modules/asset/filter-parsing";
 import type { Column } from "~/modules/asset-index-settings/helpers";
 
 /**
+ * Minimal translator shape accepted by this module.
+ *
+ * Kept structural (rather than importing i18next's `TFunction`) so the module
+ * stays free of a React/i18next dependency and can be unit-tested in isolation.
+ */
+type TranslateFn = (key: string) => string;
+
+/**
  * Lookup data for resolving IDs to user-friendly names.
  */
 export interface FilterLookupData {
@@ -20,7 +28,7 @@ export interface FilterLookupData {
  * Format: sortBy=name:asc&sortBy=category:desc
  */
 function parseSorting(
-  query: string
+  query: string,
 ): Array<{ name: string; direction: string }> {
   const params = new URLSearchParams(query);
   const sortByParams = params.getAll("sortBy");
@@ -40,7 +48,7 @@ function parseSorting(
  * Formats sorting options to human-readable text.
  */
 function formatSorting(
-  sorts: Array<{ name: string; direction: string }>
+  sorts: Array<{ name: string; direction: string }>,
 ): string {
   if (sorts.length === 0) return "";
 
@@ -67,7 +75,8 @@ function formatSorting(
 export function formatFilterSummary(
   query: string,
   columns: Column[],
-  lookupData?: FilterLookupData
+  lookupData?: FilterLookupData,
+  translate?: TranslateFn,
 ): string {
   if (!query) return "No filters or sorting";
 
@@ -89,13 +98,13 @@ export function formatFilterSummary(
     // Format filters
     const filterSummaries = filters.map((filter: Filter) => {
       const fieldName = formatFieldName(filter.name);
-      const operatorText = formatOperator(filter.operator);
+      const operatorText = formatOperator(filter.operator, translate);
       const valueText = formatValue(
         filter.value,
         filter.type,
         filter.operator,
         filter.name,
-        lookupData
+        lookupData,
       );
 
       // Format: "Field operator: value" with colon after operator
@@ -150,11 +159,18 @@ function formatFieldName(name: string): string {
 
 /**
  * Formats an operator to be human-readable.
- * Reuses the existing operatorsMap from operator-selector component.
+ *
+ * `operatorsMap` stores `[symbol, i18nKey]`, so the label is resolved through
+ * the caller-supplied `translate`. Without one (non-React callers) the raw
+ * operator name is returned rather than leaking a translation key.
+ *
+ * @param operator - Raw operator name from the filter query
+ * @param translate - Optional translator, typically `t` from `useTranslation`
  */
-function formatOperator(operator: string): string {
-  // operatorsMap format: { operator: ["symbol", "label"] }
-  return operatorsMap[operator as keyof typeof operatorsMap]?.[1] ?? operator;
+function formatOperator(operator: string, translate?: TranslateFn): string {
+  const labelKey = operatorsMap[operator as keyof typeof operatorsMap]?.[1];
+  if (!labelKey) return operator;
+  return translate ? translate(labelKey) : operator;
 }
 
 /**
@@ -165,7 +181,7 @@ function formatValue(
   type: string,
   operator: string,
   fieldName: string,
-  lookupData?: FilterLookupData
+  lookupData?: FilterLookupData,
 ): string {
   // Handle array values
   if (Array.isArray(value)) {
@@ -174,7 +190,7 @@ function formatValue(
         value[0],
         type,
         fieldName,
-        lookupData
+        lookupData,
       )} and ${formatSingleValue(value[1], type, fieldName, lookupData)}`;
     }
     // For multiple values, show count if more than 3
@@ -196,7 +212,7 @@ function formatSingleValue(
   value: unknown,
   type: string,
   fieldName: string,
-  lookupData?: FilterLookupData
+  lookupData?: FilterLookupData,
 ): string {
   if (value === null || value === undefined) return "empty";
 

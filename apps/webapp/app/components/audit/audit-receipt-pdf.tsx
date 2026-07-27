@@ -48,7 +48,7 @@ export const AuditReceiptPDF = ({
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
     documentTitle: `audit-receipt-${sanitizeFilename(
-      audit.name
+      audit.name,
     )}-${Date.now()}`,
   });
 
@@ -198,7 +198,7 @@ const AuditPDFContent = ({
       acc[assetId].images.push(img);
       return acc;
     },
-    {} as Record<string, { assetName: string; images: typeof assetImages }>
+    {} as Record<string, { assetName: string; images: typeof assetImages }>,
   );
 
   return (
@@ -429,7 +429,7 @@ const AuditPDFContent = ({
                       ))}
                     </div>
                   </div>
-                )
+                ),
               )}
             </div>
           </When>
@@ -509,7 +509,7 @@ const AuditPDFContent = ({
                                 expected: boolean;
                                 auditStatus: AuditAssetStatus;
                               })
-                            : null
+                            : null,
                         )}
                       />
                     </td>
@@ -549,7 +549,7 @@ const AuditPDFContent = ({
                   className={tw(
                     "flex gap-3 p-3",
                     index !== activityNotes.length - 1 &&
-                      "border-b border-gray-300"
+                      "border-b border-gray-300",
                   )}
                 >
                   <div className="min-w-[140px] text-xs text-gray-500">
@@ -573,7 +573,7 @@ const AuditPDFContent = ({
 
       {/* Footer */}
       <div className="mt-8 border-t border-gray-300 pt-4 text-center text-xs text-gray-500">
-        Generated on <DateS date={new Date()} /> | Powered by shelf.nu
+        Generated on <DateS date={new Date()} />
       </div>
     </div>
   );

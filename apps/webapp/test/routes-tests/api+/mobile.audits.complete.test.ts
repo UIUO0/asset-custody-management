@@ -85,7 +85,7 @@ function createCompleteRequest(body: Record<string, unknown>, orgId = "org-1") {
         Authorization: "Bearer token",
       },
       body: JSON.stringify(body),
-    }
+    },
   );
 }
 
@@ -125,7 +125,7 @@ describe("POST /api/mobile/audits/complete", () => {
       auditSessionId: "session-1",
       organizationId: "org-1",
       userId: "user-1",
-      isSelfServiceOrBase: false,
+      isScopedToOwnRecords: false,
     });
 
     expect(completeAuditSession).toHaveBeenCalledWith({

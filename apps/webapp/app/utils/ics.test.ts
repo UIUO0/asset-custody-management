@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { config } from "~/config/shelf.config";
 import { formatDateForICal } from "./date-fns";
 import {
   buildBookingICalendar,
@@ -154,7 +155,7 @@ describe("buildBookingVEvent", () => {
     expect(lines).toContain(`DTEND:${formatDateForICal(baseInput.to)}`);
     // DTSTAMP is booking-derived (stable per poll), not fetch time.
     expect(lines).toContain(
-      `DTSTAMP:${formatDateForICal(baseInput.updatedAt)}`
+      `DTSTAMP:${formatDateForICal(baseInput.updatedAt)}`,
     );
     // Summary includes the asset count
     expect(lines).toContain("SUMMARY:Studio shoot (2 assets)");
@@ -166,7 +167,7 @@ describe("buildBookingVEvent", () => {
     expect(description).toContain("Custodian: Erfan R");
     expect(description).toContain("Assets (2): Camera A\\, Tripod");
     expect(description).toContain(
-      "View booking: https://app.shelf.nu/bookings/booking-123"
+      "View booking: https://app.shelf.nu/bookings/booking-123",
     );
   });
 
@@ -214,7 +215,9 @@ describe("buildBookingICalendar", () => {
     expect(ics.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
     expect(ics.endsWith("END:VCALENDAR")).toBe(true);
     expect(ics).toContain("VERSION:2.0");
-    expect(ics).toContain("PRODID:-//Shelf.nu//Shelf Calendar 1.0//EN");
+    expect(ics).toContain(
+      `PRODID:-//${config.appIdentifier}//${config.appIdentifier} Calendar 1.0//EN`,
+    );
     expect(ics).toContain("METHOD:PUBLISH");
     expect(ics.split("\r\n")).toContain("BEGIN:VEVENT");
   });

@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { Pencil, Trash2, Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Spinner } from "~/components/shared/spinner";
 import type { Column } from "~/modules/asset-index-settings/helpers";
@@ -48,6 +49,7 @@ export function PresetListItem({
   onApply: (preset: NormalizedPreset) => void;
   onRename: (preset: NormalizedPreset) => void;
 }) {
+  const { t } = useTranslation();
   // Use unique fetcher key per preset to allow concurrent delete requests
   const deleteFetcher = useFetcher({ key: `delete-preset-${preset.id}` });
 
@@ -66,7 +68,7 @@ export function PresetListItem({
       id={id}
       className={tw(
         "group flex items-start gap-2 rounded p-2 hover:bg-gray-50",
-        isSelected && "bg-gray-50"
+        isSelected && "bg-gray-50",
       )}
     >
       {/* Star button */}
@@ -83,7 +85,7 @@ export function PresetListItem({
           <span className="truncate">{preset.name}</span>
           {/* Loading indicator when applying preset */}
           {isApplying && (
-            <div className="shrink-0" title="Applying preset...">
+            <div className="shrink-0" title={t("assetsIndex.applyingPreset")}>
               <Spinner className="size-4" />
             </div>
           )}
@@ -91,7 +93,7 @@ export function PresetListItem({
           {isActive && !isApplying && (
             <div
               className="flex size-4 shrink-0 items-center justify-center rounded-full bg-gray-100"
-              title="Currently active"
+              title={t("assetsIndex.currentlyActive")}
             >
               <Check className="size-3 text-gray-600" />
             </div>
@@ -103,7 +105,7 @@ export function PresetListItem({
       {/* Rename and delete action buttons */}
       <div
         className={tw(
-          "mt-0.5 flex gap-1 opacity-0 focus-within:opacity-100 group-hover:opacity-100"
+          "mt-0.5 flex gap-1 opacity-0 focus-within:opacity-100 group-hover:opacity-100",
         )}
       >
         <button
@@ -124,7 +126,7 @@ export function PresetListItem({
             type="submit"
             onClick={(e) => {
               e.stopPropagation();
-              if (!confirm("Delete this preset?")) {
+              if (!confirm(t("assetsIndex.deleteThisPreset"))) {
                 e.preventDefault();
               }
             }}

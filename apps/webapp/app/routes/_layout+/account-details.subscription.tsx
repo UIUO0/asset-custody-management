@@ -74,7 +74,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
 
     /** Get the Stripe customer */
     const customer = (await getStripeCustomer(
-      await getOrCreateCustomerId(user)
+      await getOrCreateCustomerId(user),
     )) as CustomerWithSubscriptions;
 
     /* Get the prices, products, subscriptions, and invoices from Stripe */
@@ -111,7 +111,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
 
       // Find the subscription in customer data to get its name
       const subscription = customer.subscriptions?.data.find(
-        (sub) => sub.id === subscriptionId
+        (sub) => sub.id === subscriptionId,
       );
 
       // Get the product name from the first line item description or subscription item
@@ -183,7 +183,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           shelfTier: z.enum(["tier_1", "tier_2"]),
           auditPriceId: z.string().optional(),
           barcodePriceId: z.string().optional(),
-        })
+        }),
       );
 
     const user = await getUserByID(userId, {
@@ -310,7 +310,7 @@ export default function SubscriptionPage() {
         return tier === "tier_1" || tier === "tier_2";
       }
       return false;
-    })
+    }),
   );
 
   /**
@@ -333,8 +333,8 @@ export default function SubscriptionPage() {
             <>
               <span className="font-semibold">CUSTOM</span> plan
             </>
-          )}{" "}
-          of Shelf.
+          )}
+          .
           <br />
           {isEnterprise && <>That means you have a custom plan. </>}
           To get more information about your plan, please{" "}
@@ -364,7 +364,7 @@ export default function SubscriptionPage() {
                   </div>
                   <p className="text-[14px] font-medium text-gray-700">
                     You're currently using the{" "}
-                    <span className="font-semibold">FREE</span> version of Shelf
+                    <span className="font-semibold">FREE</span> version
                   </p>
                 </div>
                 <h3 className="text-text-lg font-semibold">
@@ -385,7 +385,7 @@ export default function SubscriptionPage() {
                       </p>
                       <p className="text-[13px] text-gray-500">
                         Upgrade to a workspace plan to unlock the full potential
-                        of Shelf alongside your add-ons.
+                        of the system alongside your add-ons.
                       </p>
                     </div>
                   </div>

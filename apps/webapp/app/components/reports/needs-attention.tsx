@@ -7,6 +7,7 @@
 
 import { User, CheckCircle } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import type { CustodianPerformanceData } from "~/modules/reports/types";
 import { tw } from "~/utils/tw";
 
@@ -33,13 +34,14 @@ export function NeedsAttention({
   timeframeLabel,
   className,
 }: NeedsAttentionProps) {
+  const { t } = useTranslation();
   // Show custodians with significant late returns (at least 2 bookings, below threshold)
   const threshold =
     overallRate !== null && overallRate >= 50
       ? Math.min(80, overallRate - 10)
       : 50;
   const needsAttention = custodianPerformance.filter(
-    (c) => c.total >= 2 && c.rate < threshold
+    (c) => c.total >= 2 && c.rate < threshold,
   );
   const hasIssues = needsAttention.length > 0;
 
@@ -47,7 +49,7 @@ export function NeedsAttention({
     <div
       className={tw(
         "flex flex-col rounded border border-gray-200 bg-white",
-        className
+        className,
       )}
     >
       {/* Header */}
@@ -72,7 +74,9 @@ export function NeedsAttention({
         {!hasIssues ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
             <CheckCircle className="size-5 text-green-600" />
-            <p className="text-sm text-gray-600">Compliance is healthy</p>
+            <p className="text-sm text-gray-600">
+              {t("reports.complianceHealthy")}
+            </p>
             <p className="max-w-[200px] text-xs text-gray-400">
               No team members need attention.
             </p>
@@ -102,7 +106,7 @@ export function NeedsAttention({
                       ? "text-green-600"
                       : custodian.rate >= 50
                       ? "text-orange-600"
-                      : "text-red-600"
+                      : "text-red-600",
                   )}
                 >
                   {custodian.rate}%

@@ -76,8 +76,7 @@ function ConditionalActionsDropdown() {
     const someAssetsPartOfKit = realAssets.some((asset) => !!asset.kit);
     if (someAssetsPartOfKit) {
       return {
-        reason:
-          "Cannot book assets directly because some of the assets are part of a kit.",
+        reason: t("assetsIndex.bookPartOfKitReason"),
       };
     }
 
@@ -86,12 +85,12 @@ function ConditionalActionsDropdown() {
       (asset) => !asset.availableToBook,
     );
     if (someAssetsMarkedUnavailable) {
-      return { reason: "Some of the assets are marked as unavailable." };
+      return { reason: t("assetsIndex.bookUnavailableReason") };
     }
 
     /** If user has not selected any asset. */
     if (!selectedAssets.length) {
-      return { reason: "You must select at least 1 asset to book." };
+      return { reason: t("assetsIndex.bookSelectionRequirement") };
     }
 
     return false;
@@ -188,7 +187,7 @@ function ConditionalActionsDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="bookings"
-                  label="Create new booking"
+                  label={t("assetsIndex.createNewBooking")}
                   onClick={closeMenu}
                   disabled={disabledReason}
                 />
@@ -204,7 +203,7 @@ function ConditionalActionsDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="booking-exist"
-                  label="Add to existing"
+                  label={t("assetsIndex.addToExisting")}
                   onClick={closeMenu}
                   disabled={disabledReason}
                 />

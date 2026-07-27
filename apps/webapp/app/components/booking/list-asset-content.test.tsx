@@ -108,7 +108,7 @@ vi.mock("~/hooks/user-user-role-helper", () => ({
   useUserRoleHelper: () => ({
     isBase: false,
     isSelfService: false,
-    isBaseOrSelfService: false,
+    isScopedToOwnRecords: false,
   }),
 }));
 
@@ -208,7 +208,7 @@ describe("ListAssetContent", () => {
             />
           </tr>
         </tbody>
-      </table>
+      </table>,
     );
 
     const returnedBadge = screen.getByText("Returned");
@@ -260,7 +260,7 @@ describe("ListAssetContent", () => {
             />
           </tr>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.queryByText("Returned")).not.toBeInTheDocument();
@@ -301,7 +301,7 @@ describe("ListAssetContent", () => {
             />
           </tr>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.getByText("Returned")).toBeInTheDocument();
@@ -331,7 +331,7 @@ describe("ListAssetContent", () => {
             />
           </tr>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(assetStatusBadgeMock).toHaveBeenCalled();
@@ -361,7 +361,7 @@ describe("ListAssetContent", () => {
             />
           </tr>
         </tbody>
-      </table>
+      </table>,
     );
 
     expect(screen.getByTestId("tags-column")).toHaveTextContent("Fragile");
@@ -451,11 +451,11 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       expect(assetStatusBadgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "AVAILABLE" })
+        expect.objectContaining({ status: "AVAILABLE" }),
       );
       // No amber "Checked out" availability badge for QT rows.
       expect(screen.queryByText("Checked out")).not.toBeInTheDocument();
@@ -490,11 +490,11 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       expect(assetStatusBadgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "AVAILABLE" })
+        expect.objectContaining({ status: "AVAILABLE" }),
       );
       expect(screen.queryByText("In custody")).not.toBeInTheDocument();
       expect(screen.queryByText("Checked out")).not.toBeInTheDocument();
@@ -532,7 +532,7 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       const trigger = screen.getByText("Insufficient stock");
@@ -578,7 +578,7 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       const badge = screen.getByText("Checked out");
@@ -621,7 +621,7 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       expect(screen.queryByText(/insufficient stock/i)).not.toBeInTheDocument();
@@ -679,11 +679,11 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       expect(assetStatusBadgeMock).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "CHECKED_OUT" })
+        expect.objectContaining({ status: "CHECKED_OUT" }),
       );
     });
 
@@ -716,13 +716,13 @@ describe("ListAssetContent", () => {
               />
             </tr>
           </tbody>
-        </table>
+        </table>,
       );
 
       expect(assetStatusBadgeMock).toHaveBeenCalledWith(
         expect.objectContaining({
           status: "PARTIALLY_CHECKED_OUT_QTY_PENDING_RETURN",
-        })
+        }),
       );
     });
   });

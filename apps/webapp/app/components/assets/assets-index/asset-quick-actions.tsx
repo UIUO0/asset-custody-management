@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { CopyIcon, PencilIcon, QrCodeIcon, Trash2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import When from "~/components/when/when";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
@@ -27,6 +28,7 @@ export default function AssetQuickActions({
   style,
   asset,
 }: AssetQuickActionsProps) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
 
   return (
@@ -43,8 +45,8 @@ export default function AssetQuickActions({
           variant="secondary"
           className={"p-2"}
           to={`/assets/${asset.id}/edit`}
-          aria-label="Edit asset information"
-          tooltip="Edit asset information"
+          aria-label={t("assetActions.editAssetInformation")}
+          tooltip={t("assetActions.editAssetInformation")}
         >
           <PencilIcon className="size-4" />
         </Button>
@@ -64,8 +66,8 @@ export default function AssetQuickActions({
             size="sm"
             variant="secondary"
             className={"p-2"}
-            aria-label="Show asset label"
-            tooltip="Show asset label"
+            aria-label={t("assetActions.showAssetLabel")}
+            tooltip={t("assetActions.showAssetLabel")}
           >
             <QrCodeIcon className="size-4" />
           </Button>
@@ -84,8 +86,8 @@ export default function AssetQuickActions({
           variant="secondary"
           className={"p-2"}
           to={`/assets/${asset.id}/overview/duplicate`}
-          aria-label="Duplicate asset"
-          tooltip="Duplicate asset"
+          aria-label={t("assetActions.duplicateAsset")}
+          tooltip={t("assetActions.duplicateAsset")}
         >
           <CopyIcon className="size-4" />
         </Button>
@@ -106,8 +108,8 @@ export default function AssetQuickActions({
               size="sm"
               variant="secondary"
               className={"p-2"}
-              aria-label="Delete asset"
-              tooltip="Delete asset"
+              aria-label={t("assetActions.deleteAsset")}
+              tooltip={t("assetActions.deleteAsset")}
             >
               <Trash2Icon className="size-4" />
             </Button>

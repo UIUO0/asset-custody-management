@@ -21,6 +21,7 @@ import { CalendarIcon, ChevronDown } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 import { resolveTimeframe } from "~/modules/reports/timeframe";
 import type {
@@ -60,15 +61,57 @@ export interface TimeframePickerProps {
 }
 
 /** Preset button configuration */
-const PRESETS: { id: TimeframePreset; label: string; shortLabel: string }[] = [
-  { id: "today", label: "Today", shortLabel: "Today" },
-  { id: "last_7d", label: "Last 7 days", shortLabel: "7d" },
-  { id: "last_30d", label: "Last 30 days", shortLabel: "30d" },
-  { id: "last_90d", label: "Last 90 days", shortLabel: "90d" },
-  { id: "this_month", label: "This month", shortLabel: "Month" },
-  { id: "this_quarter", label: "This quarter", shortLabel: "Qtr" },
-  { id: "this_year", label: "This year", shortLabel: "Year" },
-  { id: "all_time", label: "All time", shortLabel: "All" },
+/**
+ * Selectable timeframe presets.
+ *
+ * `labelKey` / `shortLabelKey` are **i18n keys** — this list is module-scope,
+ * so the copy is resolved with `t()` at render time.
+ */
+const PRESETS: {
+  id: TimeframePreset;
+  labelKey: string;
+  shortLabelKey: string;
+}[] = [
+  {
+    id: "today",
+    labelKey: "reports.timeframeToday",
+    shortLabelKey: "reports.timeframeToday",
+  },
+  {
+    id: "last_7d",
+    labelKey: "reports.timeframeLast7",
+    shortLabelKey: "reports.timeframeShort7d",
+  },
+  {
+    id: "last_30d",
+    labelKey: "reports.timeframeLast30",
+    shortLabelKey: "reports.timeframeShort30d",
+  },
+  {
+    id: "last_90d",
+    labelKey: "reports.timeframeLast90",
+    shortLabelKey: "reports.timeframeShort90d",
+  },
+  {
+    id: "this_month",
+    labelKey: "reports.timeframeThisMonth",
+    shortLabelKey: "reports.timeframeShortMonth",
+  },
+  {
+    id: "this_quarter",
+    labelKey: "reports.timeframeThisQuarter",
+    shortLabelKey: "reports.timeframeShortQtr",
+  },
+  {
+    id: "this_year",
+    labelKey: "reports.timeframeThisYear",
+    shortLabelKey: "reports.timeframeShortYear",
+  },
+  {
+    id: "all_time",
+    labelKey: "reports.timeframeAllTime",
+    shortLabelKey: "reports.timeframeShortAll",
+  },
 ];
 
 const EMPTY_EXCLUDE_PRESETS: TimeframePreset[] = [];
@@ -87,6 +130,7 @@ export function TimeframePicker({
   disabled = false,
   className,
 }: TimeframePickerProps) {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Filter out excluded presets
@@ -115,7 +159,7 @@ export function TimeframePicker({
 
       onChange?.(resolved);
     },
-    [searchParams, setSearchParams, syncToUrl, onChange]
+    [searchParams, setSearchParams, syncToUrl, onChange],
   );
 
   const handleCustomApply = useCallback(() => {
@@ -124,7 +168,7 @@ export function TimeframePicker({
     const resolved = resolveTimeframe(
       "custom",
       customRange.from,
-      customRange.to
+      customRange.to,
     );
 
     if (syncToUrl) {
@@ -165,12 +209,12 @@ export function TimeframePicker({
               "disabled:cursor-not-allowed disabled:opacity-50",
               value.preset === preset.id
                 ? "bg-primary-600 text-static-white"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 disabled:hover:bg-transparent",
             )}
             aria-pressed={value.preset === preset.id}
           >
-            <span className="hidden sm:inline">{preset.label}</span>
-            <span className="sm:hidden">{preset.shortLabel}</span>
+            <span className="hidden sm:inline">{t(preset.labelKey)}</span>
+            <span className="sm:hidden">{t(preset.shortLabelKey)}</span>
           </button>
         ))}
       </div>
@@ -187,7 +231,7 @@ export function TimeframePicker({
               "disabled:cursor-not-allowed disabled:opacity-50",
               isCustomActive
                 ? "border-primary-600 bg-primary-600 text-static-white"
-                : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:hover:border-gray-200 disabled:hover:bg-white"
+                : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 disabled:hover:border-gray-200 disabled:hover:bg-white",
             )}
             aria-expanded={customOpen}
           >
@@ -196,7 +240,7 @@ export function TimeframePicker({
             <ChevronDown
               className={tw(
                 "size-3 transition-transform",
-                customOpen && "rotate-180"
+                customOpen && "rotate-180",
               )}
             />
           </button>
@@ -206,7 +250,7 @@ export function TimeframePicker({
           <Popover.Content
             className={tw(
               "z-50 rounded border border-gray-200 bg-white p-4 shadow-lg",
-              "animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+              "animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
             )}
             sideOffset={8}
             align="end"
@@ -255,7 +299,7 @@ export function TimeframePicker({
                       onClick={handleClear}
                       className={tw(
                         "text-xs font-medium text-gray-500",
-                        "hover:text-gray-700 focus:outline-none focus-visible:text-gray-700"
+                        "hover:text-gray-700 focus:outline-none focus-visible:text-gray-700",
                       )}
                     >
                       Clear
@@ -276,7 +320,7 @@ export function TimeframePicker({
                     onClick={() => setCustomOpen(false)}
                     className={tw(
                       "rounded-md px-3 py-1.5 text-xs font-medium text-gray-600",
-                      "hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+                      "hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                     )}
                   >
                     Cancel
@@ -288,7 +332,7 @@ export function TimeframePicker({
                     className={tw(
                       "rounded-md bg-primary-600 px-3 py-1.5 text-xs font-medium text-static-white",
                       "hover:bg-primary-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
-                      "disabled:cursor-not-allowed disabled:opacity-50"
+                      "disabled:cursor-not-allowed disabled:opacity-50",
                     )}
                   >
                     Apply

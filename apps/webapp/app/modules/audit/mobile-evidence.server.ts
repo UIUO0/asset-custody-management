@@ -24,6 +24,7 @@ import { db } from "~/database/db.server";
 import { getMobileUserContext } from "~/modules/api/mobile-auth.server";
 import { requireAuditAssignee } from "~/modules/audit/service.server";
 import { ShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * Asserts the caller may write evidence to `auditAssetId` within
@@ -77,11 +78,11 @@ export async function requireAuditAssetInSession({
   }
 
   const { role } = await getMobileUserContext(userId, organizationId);
-  const isSelfServiceOrBase = role === "SELF_SERVICE" || role === "BASE";
+  const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
   await requireAuditAssignee({
     auditSessionId,
     organizationId,
     userId,
-    isSelfServiceOrBase,
+    isScopedToOwnRecords,
   });
 }

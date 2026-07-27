@@ -1,3 +1,4 @@
+import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import { bookingUpdatesTemplateString } from "~/emails/bookings-updates-template";
 import { sendEmail } from "~/emails/mail.server";
@@ -60,7 +61,7 @@ To view the booking, follow the link below:
 ${SERVER_URL}/bookings/${bookingId}
 ${customEmailFooter ? `\n---\n${customEmailFooter}` : ""}
 Thanks,
-The Shelf Team
+The ${config.appName} Team
 `;
 };
 
@@ -105,7 +106,7 @@ export const checkoutReminderEmailContent = (args: BasicEmailContentArgs) =>
     ...args,
     emailContent: `Your booking is due for checkout in ${getTimeRemainingMessage(
       new Date(args.from),
-      new Date()
+      new Date(),
     )}.`,
   });
 
@@ -118,7 +119,7 @@ export const checkinReminderEmailContent = (args: BasicEmailContentArgs) =>
     ...args,
     emailContent: `Your booking is due for checkin in ${getTimeRemainingMessage(
       new Date(args.to),
-      new Date()
+      new Date(),
     )}.`,
   });
 
@@ -142,7 +143,7 @@ export async function sendCheckinReminder(
   booking: BookingForEmail,
   assetCount: number,
   hints: ClientHint,
-  organizationId: string
+  organizationId: string,
 ) {
   const recipients = await getBookingNotificationRecipients({
     booking,
@@ -157,7 +158,7 @@ export async function sendCheckinReminder(
     resolveUserDisplayName(booking.custodianUser) ||
     (booking.custodianTeamMember?.name as string);
 
-  const subject = `🔔 Checkin reminder (${booking.name}) - shelf.nu`;
+  const subject = `🔔 Checkin reminder (${booking.name}) - ${config.appName}`;
 
   const text = checkinReminderEmailContent({
     hints,
@@ -175,7 +176,7 @@ export async function sendCheckinReminder(
       booking,
       heading: `Your booking is due for checkin in ${getTimeRemainingMessage(
         new Date(booking.to!),
-        new Date()
+        new Date(),
       )}.`,
       assetCount,
       hints,
@@ -231,7 +232,7 @@ export const deletedBookingEmailContent = (args: BasicEmailContentArgs) =>
  * This email gets sent when a booking is cancelled
  */
 export const cancelledBookingEmailContent = (
-  args: BasicEmailContentArgs & { cancellationReason?: string }
+  args: BasicEmailContentArgs & { cancellationReason?: string },
 ) =>
   baseBookingTextEmailContent({
     ...args,
@@ -257,7 +258,7 @@ export function extendBookingEmailContent({
   return baseBookingTextEmailContent({
     ...args,
     emailContent: `You booking has been extended from ${format(
-      oldToDate
+      oldToDate,
     )} to ${format(args.to)}`,
   });
 }
@@ -268,7 +269,7 @@ export function extendBookingEmailContent({
  * This email is sent when a booking's fields or assets are modified.
  */
 export const bookingUpdatedEmailContent = (
-  args: BasicEmailContentArgs & { changes: string[] }
+  args: BasicEmailContentArgs & { changes: string[] },
 ) =>
   baseBookingTextEmailContent({
     ...args,
@@ -331,7 +332,7 @@ export async function sendBookingUpdatedEmail({
         booking.custodianTeamMember?.name) ??
       "";
 
-    const subject = `📝 Booking updated (${booking.name}) - shelf.nu`;
+    const subject = `📝 Booking updated (${booking.name}) - ${config.appName}`;
 
     const emailArgs: BasicEmailContentArgs = {
       bookingName: booking.name,
@@ -413,7 +414,7 @@ export async function sendBookingUpdatedEmail({
         message: "Failed to send booking updated email",
         additionalData: { bookingId },
         label: "Booking",
-      })
+      }),
     );
   }
 }

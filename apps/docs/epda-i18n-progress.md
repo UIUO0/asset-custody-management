@@ -1,0 +1,202 @@
+# حالة التعريب (i18n) — سجل التقدّم
+
+سجل عملي لما أُنجز وما تبقّى في تعريب واجهة `apps/webapp`. اقرأ
+[epda-i18n-and-theming.md](./epda-i18n-and-theming.md) أولاً — هذا الملف يكمّله
+ولا يغني عنه.
+
+الحصيلة الحالية: **66 نطاقاً، 2529 مفتاحاً عربياً / 2321 إنجليزياً**.
+
+## الأدوات والأنماط المضافة
+
+### `getFixedT(locale)` — للترجمة داخل loaders/actions
+
+معرَّفة في `app/i18n/i18n.server.ts`. تُرجع دالة `t` مربوطة بلغة الطلب، مع
+تخزين مؤقّت لنسخة i18next واحدة لكل لغة (آمنة تحت التزامن لأن اللغة ثابتة ولا
+تحمل حالة الطلب).
+
+```ts
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const t = await getFixedT(getLocale(request));
+  return payload({ header: { title: t("assets.importTitle") } });
+}
+```
+
+استخدمها للنصوص التي يضعها الـ loader في الحمولة: `header.title`،
+`header.subHeading`، `searchFieldLabel`، `searchFieldTooltip`.
+
+### نمط `meta`
+
+`meta` تُنفَّذ خارج React، فتقرأ اللغة من الـ root loader:
+
+```tsx
+export const meta: MetaFunction = ({ matches }) => {
+  const rootData = matches.find((m) => m.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+  return [{ title: appendToMetaTitle(resources.bookings.manageAssetsTitle) }];
+};
+```
+
+### الثوابت على مستوى الوحدة تخزّن **مفاتيح** لا نصوصاً
+
+كثير من الملفات تُعرِّف مصفوفات إعداد على مستوى الوحدة (تعريفات أعمدة الجداول،
+خيارات القوائم، إعدادات الحالات الفارغة). هذه لا يمكنها استدعاء `useTranslation`،
+والقاعدة المتّبعة أن تخزّن **مفتاح i18n** ويحلّه المستهلك:
+
+| الملف                                             | الحقل                          |
+| ------------------------------------------------- | ------------------------------ |
+| `reports/*-content.tsx`                           | `header` (يحلّه `ReportTable`) |
+| `reports/report-empty-state.tsx`                  | `titleKey` / `descriptionKey`  |
+| `reports/timeframe-picker.tsx`                    | `labelKey` / `shortLabelKey`   |
+| `workspace/qr-id-display-preference-selector.tsx` | `labelKey` / `descriptionKey`  |
+| `welcome/choose-purpose.tsx`                      | `helperKey` / `ctaLabelKey`    |
+| `scanner/drawer/action-switcher.tsx`              | `ACTION_LABEL_KEYS`            |
+| `kits.$kitId.assets.manage-assets.tsx`            | `labelKey`                     |
+
+`ReportTable` يحلّ رؤوس الأعمدة تلقائياً: إن كان `columnDef.header` نصاً فهو
+مفتاح ويُمرَّر إلى `t()`؛ وإن كان دالة فيُرسَم عبر `flexRender` كالمعتاد.
+
+### الدوال المساعدة تأخذ `t` كمعامل
+
+الدوال التي ليست مكوّنات ولا تستطيع استضافة hook تستقبل `t` كمعامل:
+`assetLabelPresets` و`kitLabelPresets` و`getCopyByMode` و`resolveCopy` و
+`buildWorkspaceDefaultSecondary` و`formatFilterSummary` و
+`renderPendingIndividualAsset` و`renderPendingQtyAsset` و
+`renderAlreadyReconciledAsset`.
+
+### مُعالِجات خلايا TanStack لا تستضيف hooks
+
+`cell` يُنفَّذ لكل صف، فاستدعاء hook داخله يخالف ترتيب الاستدعاء. الحل: مكوّن
+صغير مُسمّى — `ActivityTypeBadge`، `SystemActorLabel`، `AssetStatusCell`،
+`BookingCountLink`.
+
+## النطاقات المضافة إلى ملفات الترجمة
+
+| النطاق                             | الغرض                                                    |
+| ---------------------------------- | -------------------------------------------------------- |
+| `availability`                     | شارات وتلميحات توفّر الأصول والمجموعات في نطاق الحجوزات  |
+| `search`                           | تسميات وتلميحات حقول البحث المشتركة بين الفهارس          |
+| `bulkActions`                      | حوارات الإجراءات الجماعية وقائمة الإجراءات المنسدلة      |
+| `quantity`                         | بطاقات وحوارات الأصول المتتبَّعة بالكمية                 |
+| `moveUnits`                        | حوار نقل الوحدات بين المواقع والمجموعات                  |
+| `qr`                               | صفحات ربط/المطالبة برموز QR                              |
+| `assetsIndex`                      | أشرطة أدوات فهرس الأصول والفلاتر المحفوظة وإعداد الأعمدة |
+| `advancedFilters`                  | حقول الفلترة المتقدمة وأعمدتها                           |
+| `filterOperators`                  | معاملات المقارنة في الفلاتر (`is`، `contains`، …)        |
+| `assetImport`                      | صفحة استيراد الأصول من CSV                               |
+| `assetUpdate`                      | صفحة التحديث الجماعي للأصول من CSV                       |
+| `addToBooking`                     | حوار إضافة أصول إلى حجز قائم                             |
+| `barcodePreference`                | مُحدِّد الباركود المفضّل للعرض                           |
+| `scanner`                          | الماسح ودُرجه بالكامل                                    |
+| `scanAvailability`                 | شارات التوفّر داخل دُرج الماسح                           |
+| `reports`                          | كل التقارير وأعمدتها وحالاتها الفارغة                    |
+| `userForm`                         | نماذج بيانات المستخدم ومعلومات الاتصال                   |
+| `changeEmail`                      | تدفّق تغيير البريد الإلكتروني                            |
+| `onboardingForm`                   | نموذج إعداد الحساب الأولي                                |
+| `workingHours`                     | ساعات العمل والاستثناءات                                 |
+| `assetModelForm`                   | نموذج طُرز الأصول                                        |
+| `scanDetails`                      | تفاصيل المسح في صفحة الموقع                              |
+| `barcodesInput`                    | مُدخِل الباركود                                          |
+| `kitActions`                       | إجراءات المجموعات                                        |
+| `feedback`                         | حوار الملاحظات                                           |
+| `subscription`                     | نظرة عامة على الاشتراكات                                 |
+| `calendar`                         | التقويم وبطاقات الأحداث                                  |
+| `dashboard`                        | لوحة المعلومات                                           |
+| `audits`, `auditNotes`             | الجرد وملاحظاته                                          |
+| `workspaceForm2`                   | نموذج مساحة العمل                                        |
+| `welcome`                          | صفحات الترحيب واختيار الخطة                              |
+| `emailSettings`, `bookingSettings` | نطاقان مُوسَّعان لإعدادات البريد والحجز                  |
+
+## المُنجز
+
+- **الحجوزات** — المكوّنات والمسارات المتاحة كافّة (خارج الملفات المحجوزة).
+- **الأصول** — النموذج، الفهرس، الفلاتر المتقدمة، الإجراءات الجماعية، الكمية
+  والعهدة والمواضع، استيراد وتحديث CSV، وحوارات الأصول.
+- **الماسح** — `code-scanner`، `camera-selector`، `action-switcher`،
+  `generic-item-row`، `base-drawer`، `blockers-factory`،
+  `configurable-drawer`، `availability-label-factory`، وكل ملفات
+  `drawer/uses/*` بما فيها دُرجَي الإرجاع/التسليم الجزئي.
+- **التقارير** — 26 ملفاً: الأعمدة، الحالات الفارغة، مُنتقي الفترات، الرسوم،
+  التصدير، الترقيم.
+- **المصادقة والترحيب** — تسجيل الدخول، إنشاء الحساب، نسيان كلمة المرور، قبول
+  الدعوة، إعداد الحساب، اختيار الخطة.
+- **بيانات المستخدم** — التفاصيل، معلومات الاتصال، تغيير البريد.
+- **ترويسات ونصوص البحث في الـ loaders** — 20 مساراً.
+- **مشترَكات** — ترقيم الصفحات، رؤوس القوائم، أزرار، إجراءات الفريق والمجموعات
+  والجرد، ساعات العمل، التقويم، لوحة المعلومات، الملاحظات.
+
+## تنظيف هوية العلامة (قاعدة EPDA) — **مكتمل 100%**
+
+`grep` على النصوص الظاهرة في `app/components` و`app/routes` لا يُرجع أي ذكر
+لـ Shelf أو shelf.nu.
+
+- نصوص ظاهرة أُعيدت صياغتها بحياد (لا تُرجمت حرفياً).
+- تذييلات PDF: أُزيل «Powered by shelf.nu» و«Generated by Shelf».
+- `alt` الشعارات: ثابت واحد محايد في `marketing/logos.tsx`.
+- روابط قاعدة المعرفة الخارجية إلى shelf.nu حُذفت مع الإبقاء على النص المحيط.
+- بريد الإعداد: أُزيلت عناوين `carlos@shelf.nu` الافتراضية؛ يعتمد على
+  `SMTP_FROM` و`ADMIN_EMAIL` فقط (مع `SMTP_FROM` كبديل لمستقبِل طلب حذف
+  الحساب حتى لا يُفقد الإشعار).
+- قوالب CSV الثلاثة: أُعيدت تسميتها إلى `epda-example-*.csv`.
+- حُذف `layout/sidebar/notice-card.tsx` — مكوّن ميت كان يروّج لتطبيق Shelf.
+- تعليقات برمجية تحمل روابط مستودع Shelf بقيت (مراجع تقنية للمطوّرين).
+
+## إصلاحات جانبية اكتُشفت أثناء التحقّق
+
+- **21 مفتاحاً مفقوداً** كانت تُستدعى ولا وجود لها فتظهر كنص خام:
+  `booking-process-sidebar` (15)، `time-remaining` (10 بعد إزالة التكرار)،
+  `bookings.$bookingId.overview.duplicate.tsx` (3)،
+  `settings.custom-fields.index.tsx` (1). أُضيفت جميعها بترجمتين — **راجع
+  نصوصها الإنجليزية فهي من تأليفي**.
+- `list.itemsCount` كان ينقصه صيغ الجمع العربية فيعرض المفتاح عند عدد ≥ 3.
+- `compliance-trend.tsx`: مفتاح سلسلة الرسم كان `"Compliance Rate"` بينما
+  `categories` صارت مترجمة — كان سيُخفي السلسلة في العربية. صار المفتاح
+  والتسمية من متغيّر واحد (`rateSeriesKey`).
+- `operatorsMap` كان يخزّن نصوصاً ويُستهلك من وحدة غير React
+  (`format-filter-summary.ts`) — صار يخزّن مفاتيح، ويُمرَّر `t` كمعامل
+  `translate` اختياري.
+
+## ما يجب **عدم** ترجمته (قواعد مثبَّتة بالفحص)
+
+- رسائل Zod ونصوص `ShelfError`/`sendNotification` داخل loaders و actions.
+- `label:` في `ShelfError` — مفتاح تجميع للسجلات وSentry، ليس نصاً ظاهراً.
+- القيم التي تُقارَن أو تُحفَظ: `ACTION_CONFIGS[].id` في الماسح،
+  `PERSONAL_USE_JOB_TITLE` في الإعداد الأولي، مفاتيح سلاسل الرسوم.
+- رؤوس أعمدة CSV في مسارات التصدير (بيانات لا واجهة).
+- قوالب PDF والبريد (`app/emails/**`) — عدا إزالة اسم العلامة.
+
+## ملفات محجوزة لمحادثة الأدوار والصلاحيات
+
+الـ21 ملفاً المعروفة لم تُعدَّل تعريبياً، عدا إصلاحين لا يمسّان الصلاحيات:
+سطر نصّي في `scanner.tsx` (إزالة اسم العلامة) وقد سبق للمحادثة الأخرى تحديث
+`import-users-dialog.tsx` إلى مسار CSV الجديد.
+
+`bookingsSearchFieldTooltipText` في `bookings._index.tsx` بقي مُصدَّراً
+ومُعلَّماً `@deprecated` لأن `calendar.tsx` (محجوز) لا يزال يستهلكه.
+
+## المتبقّي
+
+بقايا متفرقة منخفضة الأثر: بعض نصوص `app/routes/_layout+/settings.*` و
+`account-details.*`، ورسائل الإشعارات في الـ actions (مستثناة بالقاعدة)، وملفات
+`admin-dashboard` و`editor-v2` (مستثناة). أعِد تشغيل الفحص لمعرفة الحالة:
+
+```bash
+# مقارنة المفاتيح + صيغ الجمع + المتغيّرات
+python3 <سكربت التحقّق>
+```
+
+## التحقّق المطبَّق بعد كل دفعة
+
+1. الملفان `ar.json` و`en.json` يُحلَّلان ومجموعتا المفاتيح متطابقتان (مع
+   تجاهل لواحق الجمع).
+2. اكتمال صيغ الجمع: العربية تحتاج الصيغ الست، والإنجليزية `_one`/`_other`.
+3. تطابق متغيّرات `{{...}}` ووسوم `<1>` بين اللغتين.
+4. كل مفتاح يُستدعى عبر `t("…")` أو `i18nKey="…"` موجود فعلاً في اللغتين.
+5. **فحص التكامل**: لا `t()` بلا `t` في النطاق، ولا hook داخل دالة ليست
+   مكوّناً، ولا `label:` مترجم في `ShelfError`.
+6. تحليل نحوي لكل ملف معدَّل عبر واجهة TypeScript.
+
+هذه فحوص نحوية/بنيوية فقط ولا تغني عن `pnpm webapp:validate`.
