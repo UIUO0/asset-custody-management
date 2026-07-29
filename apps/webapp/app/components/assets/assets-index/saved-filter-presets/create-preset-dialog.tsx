@@ -67,7 +67,7 @@ export function CreatePresetDialog({
           <div className="-mb-3 w-full pb-6">
             <h3>{t("assetsIndex.savePreset")}</h3>
             <p className="text-gray-500">
-              Give your filter a name and save it for quick access later.
+              {t("ui.giveYourFilterANameAndSaveItForQuickAccessLa")}
             </p>
           </div>
         }
@@ -89,7 +89,9 @@ export function CreatePresetDialog({
 
             {/* Filter preview */}
             <div className="mt-4 rounded-md border border-gray-200 bg-gray-50 p-3">
-              <p className="mb-1 text-xs font-medium text-gray-600">Preview</p>
+              <p className="mb-1 text-xs font-medium text-gray-600">
+                {t("emailSettings.preview")}
+              </p>
               {preview}
             </div>
 
@@ -99,7 +101,7 @@ export function CreatePresetDialog({
                 variant="secondary"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={!name.trim() || isSubmitting}>
                 {isSubmitting ? "Saving..." : "Save"}

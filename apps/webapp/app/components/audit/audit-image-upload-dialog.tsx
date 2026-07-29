@@ -172,7 +172,7 @@ export function AuditImageUploadDialog({
               disabled={isSubmitting}
             >
               <X className="size-4" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t("common.close")}</span>
             </button>
           </AlertDialogHeader>
 
@@ -199,7 +199,7 @@ export function AuditImageUploadDialog({
                     >
                       <img
                         src={image.previewUrl}
-                        alt="Selected"
+                        alt={t("ui.selected")}
                         className="size-full object-cover"
                       />
                       {!isSubmitting && (
@@ -220,12 +220,14 @@ export function AuditImageUploadDialog({
                       disabled={!canAddMore}
                       title={
                         canAddMore
-                          ? "Add more images"
+                          ? t("audits.addMoreImages")
                           : `Maximum ${maxCount} images allowed`
                       }
                       className="flex size-24 shrink-0 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 transition-colors hover:border-gray-400 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-gray-300 disabled:hover:bg-gray-50"
                     >
-                      <span className="text-xs text-gray-600">Add more</span>
+                      <span className="text-xs text-gray-600">
+                        {t("addToBooking.addMore")}
+                      </span>
                     </button>
                   )}
                 </div>
@@ -237,10 +239,10 @@ export function AuditImageUploadDialog({
                     htmlFor="image-note"
                     className="text-sm font-medium text-gray-700"
                   >
-                    Note (Optional)
+                    {t("quantity.noteOptional")}
                   </label>
                   <p className="text-sm text-gray-500">
-                    Add a note to accompany these images.
+                    {t("ui.addANoteToAccompanyTheseImages")}
                   </p>
                   <textarea
                     ref={textareaRef}
@@ -257,7 +259,7 @@ export function AuditImageUploadDialog({
               )}
               {existingNoteId && (
                 <p className="text-sm text-gray-500">
-                  Images will be added to the existing note.
+                  {t("ui.imagesWillBeAddedToTheExistingNote")}
                 </p>
               )}
             </div>
@@ -266,7 +268,7 @@ export function AuditImageUploadDialog({
           <AlertDialogFooter className="mt-4">
             <AlertDialogCancel asChild>
               <Button variant="secondary" type="button" disabled={isSubmitting}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
             <Button

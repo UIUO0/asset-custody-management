@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { SearchIcon } from "../icons/library";
 
 export const EmptyState = ({
@@ -6,21 +7,25 @@ export const EmptyState = ({
 }: {
   modelName: string;
   searchQuery: string;
-}) => (
-  <div className="my-16 flex flex-col items-center px-3 text-center">
-    <div className="mb-4 rounded-full bg-primary-50  p-2">
-      <div className=" rounded-full bg-primary-100 p-2 text-primary">
-        <SearchIcon className="h-auto" />
-      </div>
-    </div>
+}) => {
+  const { t } = useTranslation();
 
-    <div>
-      <div className="text-base font-semibold text-gray-900">
-        No matching results
+  return (
+    <div className="my-16 flex flex-col items-center px-3 text-center">
+      <div className="mb-4 rounded-full bg-primary-50  p-2">
+        <div className=" rounded-full bg-primary-100 p-2 text-primary">
+          <SearchIcon className="h-auto" />
+        </div>
       </div>
-      <p className="text-sm text-gray-600">
-        Your search “{searchQuery}” did not match any {modelName}.
-      </p>
+
+      <div>
+        <div className="text-base font-semibold text-gray-900">
+          {t("reports.emptyNoMatches")}
+        </div>
+        <p className="text-sm text-gray-600">
+          Your search “{searchQuery}” did not match any {modelName}.
+        </p>
+      </div>
     </div>
-  </div>
-);
+  );
+};

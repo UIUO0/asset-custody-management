@@ -280,7 +280,7 @@ export default function EmailSettingsPage() {
 
           <div>
             <Button type="submit" disabled={disabled}>
-              {disabled ? t("common.saving") : t("common.save")}
+              {disabled ? "Saving..." : t("common.save")}
             </Button>
           </div>
         </Form>
@@ -341,6 +341,7 @@ function EmailPreview({
   organizationName: string;
   previewMode: "desktop" | "mobile";
 }) {
+  const { t } = useTranslation();
   const isMobile = previewMode === "mobile";
 
   return (
@@ -404,7 +405,7 @@ function EmailPreview({
               }}
             >
               <img
-                src="/static/images/epda-logo-full.png"
+                src="/static/images/sda-logo-full.png"
                 alt="logo"
                 style={{ height: "32px", width: "auto" }}
               />
@@ -420,7 +421,7 @@ function EmailPreview({
                   marginBottom: "16px",
                 }}
               >
-                Booking reservation for Jane Doe
+                {t("ui.bookingReservationForJaneDoe")}
               </h1>
               <h2
                 style={{
@@ -452,7 +453,7 @@ function EmailPreview({
 
             {/* View button */}
             <div style={EMAIL_PREVIEW_VIEW_BUTTON_STYLE}>
-              View booking in app
+              {t("ui.viewBookingInApp")}
             </div>
 
             {/* Custom footer - live preview */}

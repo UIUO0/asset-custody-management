@@ -8,6 +8,7 @@
  *
  * @see {@link file://./../../routes/_layout+/audits.$auditId.duplicate.tsx}
  */
+import { useTranslation } from "react-i18next";
 import { Form, useActionData, useLoaderData } from "react-router";
 import { useDisabled } from "~/hooks/use-disabled";
 import type { loader } from "~/routes/_layout+/audits.$auditId.duplicate";
@@ -18,6 +19,7 @@ import { Button } from "../shared/button";
  * warnings. Used as the default export of the duplicate route.
  */
 export function DuplicateAuditDialog() {
+  const { t } = useTranslation();
   const { audit, originalAssetCount, availableAssetCount, droppedAssetCount } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<{ error?: { message: string } }>();
@@ -36,11 +38,7 @@ export function DuplicateAuditDialog() {
           You&apos;re about to duplicate the audit{" "}
           <strong className="text-gray-900">{audit.name}</strong>.
         </p>
-        <p>
-          A new audit will be created with the same name, description, and
-          assets. Assignments, notes, scans, images, and due date will not be
-          copied.
-        </p>
+        <p>{t("audits.duplicateHint")}</p>
       </div>
 
       {/* Warning when some assets are missing */}
@@ -57,8 +55,7 @@ export function DuplicateAuditDialog() {
       {allAssetsGone && (
         <div className="mb-4 rounded-md border border-red-300 bg-red-50 p-4">
           <p className="text-sm text-red-700">
-            None of the original assets exist anymore. Cannot duplicate this
-            audit.
+            {t("audits.duplicateNoAssets")}
           </p>
         </div>
       )}
@@ -79,7 +76,7 @@ export function DuplicateAuditDialog() {
           disabled={disabled}
           to=".."
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
 
         <Form method="POST" className="flex-1">
@@ -88,7 +85,7 @@ export function DuplicateAuditDialog() {
             className="w-full"
             disabled={disabled || allAssetsGone}
           >
-            {disabled ? "Duplicating..." : "Confirm"}
+            {disabled ? "Duplicating..." : t("common.confirm")}
           </Button>
         </Form>
       </div>

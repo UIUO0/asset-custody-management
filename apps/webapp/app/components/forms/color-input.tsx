@@ -1,5 +1,6 @@
 import type { ChangeEvent } from "react";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { darkenColor } from "~/utils/color-contrast";
 import { getRandomColor } from "~/utils/get-random-color";
 import Input from "./input";
@@ -13,6 +14,7 @@ export const ColorInput = ({
   colorFromServer?: string;
   [key: string]: any;
 }) => {
+  const { t } = useTranslation();
   // Re-sync with server-provided color when it changes (e.g. on save revalidation).
   // Uses the "store previous prop in a ref" pattern instead of useEffect to avoid a
   // render flash. See
@@ -38,7 +40,7 @@ export const ColorInput = ({
   return (
     <div className="flex items-end gap-1">
       <Input
-        label="Hex Color"
+        label={t("ui.hexColor")}
         value={color}
         onChange={handleColorChange}
         className="w-full min-w-[120px] lg:max-w-[120px]"
@@ -55,7 +57,7 @@ export const ColorInput = ({
           backgroundColor: `${color}33`,
           color: iconColor,
         }}
-        title="Generate random color (preview shows how badge will look)"
+        title={t("ui.generateRandomColorPreviewShowsHowBadgeWillL")}
         data-test-id="generateRandomColor"
       />
     </div>

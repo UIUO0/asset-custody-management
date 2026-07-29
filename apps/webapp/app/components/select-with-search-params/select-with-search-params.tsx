@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useSearchParams } from "~/hooks/search-params";
 import { useDisabled } from "~/hooks/use-disabled";
 import { tw } from "~/utils/tw";
@@ -43,8 +44,11 @@ export default function SelectWithSearchParams({
   items,
   name,
   defaultValue = "ALL",
-  placeholder = "Select an option",
+  placeholder: placeholderProp,
 }: SelectWithSearchParamsProps) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `placeholder`. */
+  const placeholder = placeholderProp ?? t("list.selectAnOption");
   const disabled = useDisabled();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedValue = searchParams.get("name") || defaultValue;

@@ -9,6 +9,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
@@ -27,10 +28,13 @@ export default function KitSelector({
   className,
   kits,
   name,
-  placeholder = "Select a kit",
+  placeholder: placeholderProp,
   isLoading = false,
   error,
 }: KitSelectorProps) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `placeholder`. */
+  const placeholder = placeholderProp ?? t("bulkActions.selectAKit");
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -51,13 +55,13 @@ export default function KitSelector({
     }
 
     return kits.filter((kit) =>
-      kit.name.toLowerCase().includes(searchQuery.toLowerCase())
+      kit.name.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [kits, searchQuery]);
 
   const selectedKitName = useMemo(
     () => kits.find((kit) => kit.id === selectedKit)?.name || "",
-    [kits, selectedKit]
+    [kits, selectedKit],
   );
 
   function handleSelect(kitId: string) {
@@ -128,7 +132,7 @@ export default function KitSelector({
             className={tw(
               "flex w-full items-center justify-between rounded border p-3 text-start focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50",
               error && "border-error-300",
-              className
+              className,
             )}
           >
             <span className="truncate">
@@ -148,7 +152,7 @@ export default function KitSelector({
               <SearchIcon className="ms-4 size-4 text-gray-500" />
               <input
                 ref={searchInputRef}
-                placeholder="Search kits..."
+                placeholder={t("ui.searchKits")}
                 className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
                 value={searchQuery}
                 onChange={(event) => {
@@ -169,7 +173,7 @@ export default function KitSelector({
                     key={kit.id}
                     className={tw(
                       "flex items-center justify-between px-4 py-3 text-sm text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                      isHovered && "bg-gray-50"
+                      isHovered && "bg-gray-50",
                     )}
                     role="option"
                     aria-selected={isSelected}
@@ -178,7 +182,7 @@ export default function KitSelector({
                       handleSelect(kit.id);
                     }}
                     onKeyDown={handleActivationKeyPress(() =>
-                      handleSelect(kit.id)
+                      handleSelect(kit.id),
                     )}
                   >
                     <span className="truncate">{kit.name}</span>
@@ -190,12 +194,14 @@ export default function KitSelector({
               })}
               {filteredKits.length === 0 && !isLoading && (
                 <div className="px-4 py-3 text-sm text-gray-500">
-                  {searchQuery ? "No kits found" : "No kits available"}
+                  {searchQuery
+                    ? t("ui.noKitsFound")
+                    : t("kits.noKitsAvailable")}
                 </div>
               )}
               {isLoading && (
                 <div className="px-4 py-3 text-sm text-gray-500">
-                  Loading kits...
+                  {t("ui.loadingKits")}
                 </div>
               )}
             </div>

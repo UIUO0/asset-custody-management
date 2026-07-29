@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import {
   AlertDialog,
@@ -23,6 +24,7 @@ export const RemoveAssetFromAudit = ({
   auditAssetId,
   assetTitle,
 }: RemoveAssetFromAuditProps) => {
+  const { t } = useTranslation();
   const disabled = useDisabled();
 
   return (
@@ -33,12 +35,12 @@ export const RemoveAssetFromAudit = ({
           variant="link"
           icon="trash"
           className={tw(
-            "justify-start whitespace-nowrap rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none hover:bg-slate-100 hover:text-gray-700"
+            "justify-start whitespace-nowrap rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none hover:bg-slate-100 hover:text-gray-700",
           )}
           width="full"
           disabled={disabled}
         >
-          Remove from audit
+          {t("ui.removeFromAudit")}
         </Button>
       </AlertDialogTrigger>
 
@@ -51,15 +53,14 @@ export const RemoveAssetFromAudit = ({
           </div>
           <AlertDialogTitle>Remove {assetTitle} from audit</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to remove this asset from the audit? This
-            action cannot be undone.
+            {t("audits.removeAssetConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -71,7 +72,7 @@ export const RemoveAssetFromAudit = ({
                 type="submit"
                 disabled={disabled}
               >
-                Remove
+                {t("common.remove")}
               </Button>
             </Form>
           </div>

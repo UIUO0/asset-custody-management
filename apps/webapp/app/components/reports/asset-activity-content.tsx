@@ -173,7 +173,7 @@ export function AssetActivityContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Total Activities
+                {t("ui.totalActivities")}
               </span>
             </div>
           </div>
@@ -181,7 +181,9 @@ export function AssetActivityContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Assignments</span>
+              <span className="text-xs text-gray-500">
+                {t("ui.assignments")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {custodyChanges}
               </span>
@@ -212,22 +214,22 @@ export function AssetActivityContent({
         <div className="border-t border-gray-100 bg-gray-50 px-4 py-3 md:px-6">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <span className="text-xs font-medium text-gray-700">
-              Activity types:
+              {t("reports.activityTypes")}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              Asset created
+              {t("reports.assetCreated")}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-              Updated / Moved
+              {t("reports.updatedMoved")}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
-              Custody changed
+              {t("ui.custodyChanged")}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
-              Checked out
+              {t("assets.checkedOut")}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-              Checked in
+              {t("bookings.qtyCheckedIn")}
             </span>
           </div>
         </div>
@@ -237,7 +239,7 @@ export function AssetActivityContent({
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">
-            Recent Activity
+            {t("ui.recentActivity")}
           </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}

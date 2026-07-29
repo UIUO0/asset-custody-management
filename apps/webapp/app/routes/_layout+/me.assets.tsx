@@ -1,5 +1,8 @@
-import { data, type LoaderFunctionArgs } from "react-router";
+import { useTranslation } from "react-i18next";
+import { data, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { AssetsList } from "~/components/assets/assets-index/assets-list";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getUserAssetsTabLoaderData } from "~/modules/asset/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError } from "~/utils/error";
@@ -16,7 +19,15 @@ import { requirePermission } from "~/utils/roles.server";
 export const handle = {
   name: "me.assets",
 };
-export const meta = () => [{ title: appendToMetaTitle("My assets") }];
+export const meta: MetaFunction = ({ matches }: { matches: any[] }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match: any) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.nav.myAssets) }];
+};
 
 export async function loader({ request, context }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -44,13 +55,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 }
 
 export default function MyAssets() {
+  const { t } = useTranslation();
   return (
     <AssetsList
       disableTeamMemberFilter
       disableBulkActions
       customEmptyStateContent={{
-        title: "No assets",
-        text: "You have not created any assets yet and no assets are assigned to you.",
+        title: t("availability.noAssetsBadge"),
+        text: t("ui.youHaveNotCreatedAnyAssetsYetAndNoAssetsAreA"),
       }}
     />
   );

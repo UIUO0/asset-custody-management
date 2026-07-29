@@ -171,7 +171,7 @@ export function CustodySnapshotContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Assets Currently Assigned
+                {t("ui.assetsCurrentlyAssigned")}
               </span>
               <span className="text-xs text-gray-500">
                 Across {totalCustodians} team member
@@ -214,7 +214,7 @@ export function CustodySnapshotContent({
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">
-            Current Assignments
+            {t("ui.currentAssignments")}
           </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}

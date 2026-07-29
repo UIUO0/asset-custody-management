@@ -329,7 +329,7 @@ export default function DuplicateBooking() {
                 {kit.added.length > 0 && (
                   <div className="mb-2">
                     <p className="text-xs font-medium text-gray-500">
-                      Added since the original
+                      {t("ui.addedSinceTheOriginal")}
                     </p>
                     <ul className="mt-1 space-y-1">
                       {kit.added.map((item) => (
@@ -353,7 +353,7 @@ export default function DuplicateBooking() {
                 {kit.removed.length > 0 && (
                   <div>
                     <p className="text-xs font-medium text-gray-500">
-                      Removed since the original
+                      {t("ui.removedSinceTheOriginal")}
                     </p>
                     <ul className="mt-1 space-y-1">
                       {kit.removed.map((item) => (
@@ -416,11 +416,11 @@ export default function DuplicateBooking() {
             disabled={disabled}
             to=".."
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
 
           <Button type="submit" className="flex-1" disabled={disabled}>
-            Confirm
+            {t("common.confirm")}
           </Button>
         </div>
       </Form>

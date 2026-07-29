@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -11,9 +12,10 @@ export const BulkRemoveKitsFromLocationSchema = z.object({
 });
 
 export default function BulkRemoveKitsFromLocationDialog() {
+  const { t } = useTranslation();
   const zo = useZorm(
     "BulkRemoveKitsFromLocation",
-    BulkRemoveKitsFromLocationSchema
+    BulkRemoveKitsFromLocationSchema,
   );
   const totalSelectedItems = useAtomValue(selectedBulkItemsCountAtom);
   const { locationId } = useParams<{ locationId: string }>();
@@ -43,7 +45,7 @@ export default function BulkRemoveKitsFromLocationDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -52,7 +54,7 @@ export default function BulkRemoveKitsFromLocationDialog() {
               disabled={disabled}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:!bg-error-800"
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

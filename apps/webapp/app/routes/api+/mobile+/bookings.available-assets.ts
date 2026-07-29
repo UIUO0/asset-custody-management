@@ -3,6 +3,7 @@ import { db } from "~/database/db.server";
 import {
   requireMobileAuth,
   requireOrganizationAccess,
+  getMobileUserContext,
   assertMobileCanUseBookings,
 } from "~/modules/api/mobile-auth.server";
 import { getPaginatedAndFilterableAssets } from "~/modules/asset/service.server";
@@ -11,6 +12,7 @@ import {
   labelForPreference,
 } from "~/modules/barcode/display";
 import { makeShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/bookings/available-assets
@@ -48,8 +50,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
     // The web booking-asset picker (manage-assets) does NOT scope by
     // self-service custody — any bookable asset is selectable, and the
     // self-service restriction is enforced on the mutation, not the read.
+    // Assets still at the PENDING intake stage are not part of the visible
+    // inventory for ordinary employees, so they must not surface in the mobile
+    // picker either — the web twin applies the same filter.
+    const { role } = await getMobileUserContext(user.id, organizationId);
+    const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+
     const { assets, page, perPage, totalAssets, totalPages } =
-      await getPaginatedAndFilterableAssets({ request, organizationId });
+      await getPaginatedAndFilterableAssets({
+        request,
+        organizationId,
+        onlyReadyAssets: isScopedToOwnRecords,
+      });
 
     // Resolve the workspace's display code (QR Code ID by default, or a SAM ID
     // / barcode per the org's preference) for each asset so the mobile picker
@@ -119,7 +131,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

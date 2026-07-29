@@ -166,10 +166,11 @@ export const WeeklyScheduleForm = ({
       >
         <input type="hidden" name="intent" value="updateSchedule" />
         <div className="mb-4 border-b pb-4">
-          <h3 className="text-text-lg font-semibold">Weekly Schedule</h3>
+          <h3 className="text-text-lg font-semibold">
+            {t("workingHours.weeklySchedule")}
+          </h3>
           <p className="text-sm text-gray-600">
-            Set your working hours for each day of the week. Times will be
-            displayed in your local format.
+            {t("workingHours.weeklyScheduleHint")}
           </p>
 
           {validationErrors.general && (
@@ -217,7 +218,7 @@ export const WeeklyScheduleForm = ({
                             handleTimeChange(dayNumber, "openTime", time)
                           }
                           disabled={disabled}
-                          placeholder="Select opening time"
+                          placeholder={t("workingHours.selectOpeningTime")}
                           aria-label={`${dayName} opening time`}
                           required={dayState.isOpen}
                         />
@@ -229,7 +230,7 @@ export const WeeklyScheduleForm = ({
                             handleTimeChange(dayNumber, "closeTime", time)
                           }
                           disabled={disabled}
-                          placeholder="Select closing time"
+                          placeholder={t("workingHours.selectClosingTime")}
                           aria-label={`${dayName} closing time`}
                           required={dayState.isOpen}
                         />

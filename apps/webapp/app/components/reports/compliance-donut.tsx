@@ -41,7 +41,7 @@ export function ComplianceDonut({
   const complianceRate = total > 0 ? Math.round((onTime / total) * 100) : 0;
 
   const chartData = [
-    { status: "On-time", count: onTime, color: "#22c55e" }, // green-500
+    { status: t("ui.onTime"), count: onTime, color: "#22c55e" }, // green-500
     { status: "Late", count: late, color: "#f97316" }, // orange-500
   ];
 
@@ -74,7 +74,7 @@ export function ComplianceDonut({
       <div className="border-b border-gray-100 px-4 py-3 md:px-6">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold text-gray-900">
-            Return Breakdown
+            {t("ui.returnBreakdown")}
           </h3>
           {timeframeLabel && (
             <span className="text-xs text-gray-400">{timeframeLabel}</span>

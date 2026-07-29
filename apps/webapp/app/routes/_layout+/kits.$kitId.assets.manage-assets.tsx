@@ -134,7 +134,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
-    const { organizationId } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.kit,
@@ -188,6 +188,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           });
         }),
       getPaginatedAndFilterableAssets({
+        /**
+         * PENDING assets are invisible to roles scoped to their own records, so
+         * they must not appear in this picker either — otherwise an employee
+         * could attach inventory the warehouse has not released.
+         */
+        onlyReadyAssets: isScopedToOwnRecords,
         request,
         organizationId,
       }),
@@ -545,16 +551,16 @@ export default function ManageAssetsInKit() {
             title: t("assets.pickerEmptyTitle"),
             text: t("assets.pickerEmptyText"),
             newButtonRoute: "/assets/new",
-            newButtonContent: "New asset",
+            newButtonContent: t("assets.newAsset"),
           }}
           className="-mx-5 flex h-full flex-col justify-start border-0"
           bulkActions={<> </>}
           headerChildren={
             <>
-              <Th>Kit</Th>
-              <Th>Category</Th>
-              <Th>Tags</Th>
-              <Th>Location</Th>
+              <Th>{t("reports.colKit")}</Th>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("nav.tags")}</Th>
+              <Th>{t("assets.location")}</Th>
             </>
           }
           disableSelectAllItems={true}
@@ -574,7 +580,7 @@ export default function ManageAssetsInKit() {
 
         <div className="flex gap-3">
           <Button variant="secondary" to="..">
-            Close
+            {t("common.close")}
           </Button>
           <Form method="post" ref={formRef}>
             {selectedBulkItems.map((asset, i) => (
@@ -597,7 +603,7 @@ export default function ManageAssetsInKit() {
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button type="button" disabled={isSearching}>
-                  Confirm
+                  {t("common.confirm")}
                 </Button>
               </AlertDialogTrigger>
 
@@ -609,7 +615,7 @@ export default function ManageAssetsInKit() {
                     </div>
                   </div>
 
-                  <h3>Add Assets to kit?</h3>
+                  <h3>{t("kits.addAssetsQuestion")}</h3>
                 </div>
 
                 <div>
@@ -630,8 +636,8 @@ export default function ManageAssetsInKit() {
                       the cascade before they confirm. */}
                   {showInCustodyQtyWarning && (
                     <div className="mb-3 rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-                      <strong>Quantity change notice:</strong> You changed the
-                      quantity for{" "}
+                      <strong>{t("kits.quantityChangeNotice")}</strong> You
+                      changed the quantity for{" "}
                       {qtyEditedInExistingKitRows.length === 1
                         ? "1 asset"
                         : `${qtyEditedInExistingKitRows.length} assets`}{" "}
@@ -641,30 +647,29 @@ export default function ManageAssetsInKit() {
                   )}
                   {kit.location ? (
                     <p className="mb-3">
-                      <strong>Location Update Notice:</strong> Adding assets to
-                      this kit will automatically update their location to{" "}
-                      <strong>{kit.location.name}</strong>.
+                      <strong>{t("kits.locationUpdateNotice")}</strong> Adding
+                      assets to this kit will automatically update their
+                      location to <strong>{kit.location.name}</strong>.
                     </p>
                   ) : (
                     <p className="mb-3">
-                      <strong>Location Update Notice:</strong> Adding assets to
-                      this kit will remove their current location since this kit
-                      has no location assigned.
+                      <strong>{t("kits.locationUpdateNotice")}</strong>{" "}
+                      {t("kits.locationUpdateNoticeBody")}
                     </p>
                   )}
-                  <p>Are you sure you want to continue?</p>
+                  <p>{t("kits.areYouSureContinue")}</p>
                 </div>
 
                 <AlertDialogFooter>
                   <AlertDialogCancel asChild>
                     <Button type="button" variant="secondary">
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                   </AlertDialogCancel>
 
                   <AlertDialogAction asChild>
                     <Button type="button" onClick={handleSubmit}>
-                      Continue
+                      {t("ui.continue")}
                     </Button>
                   </AlertDialogAction>
                 </AlertDialogFooter>
@@ -694,6 +699,7 @@ const RowComponent = ({
     initialKitQuantities: Record<string, number>;
   };
 }) => {
+  const { t } = useTranslation();
   const { category, tags } = item;
   const location = getPrimaryLocation(item);
   const isQty = isQuantityTracked(item);
@@ -826,7 +832,7 @@ const RowComponent = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center justify-center rounded-md border border-warning-200 bg-warning-50 px-1.5 py-0.5 text-center text-xs text-warning-700">
-                          In custody
+                          {t("status.IN_CUSTODY")}
                         </div>
                       </TooltipTrigger>
 
@@ -836,12 +842,10 @@ const RowComponent = ({
                         className="md:w-80"
                       >
                         <h2 className="mb-1 text-xs font-semibold text-gray-700">
-                          Asset is in custody
+                          {t("scanAvailability.assetInCustodyTitle")}
                         </h2>
                         <div className="text-wrap text-xs font-medium text-gray-500">
-                          Asset is currently in custody of a team member. <br />{" "}
-                          Make sure the asset has an Available status in order
-                          to add it to this kit.
+                          {t("scanAvailability.assetInCustodyForKitContent")}
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -854,7 +858,7 @@ const RowComponent = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center justify-center rounded-md border border-warning-200 bg-warning-50 px-1.5 py-0.5 text-center text-xs text-warning-700">
-                          Checked out
+                          {t("status.CHECKED_OUT")}
                         </div>
                       </TooltipTrigger>
 
@@ -864,12 +868,11 @@ const RowComponent = ({
                         className="md:w-80"
                       >
                         <h2 className="mb-1 text-xs font-semibold text-gray-700">
-                          Asset is checked out
+                          {t("scanAvailability.assetCheckedOutTitle")}
                         </h2>
                         <div className="text-wrap text-xs font-medium text-gray-500">
                           Asset is currently in checked out via a booking.{" "}
-                          <br /> Make sure the asset has an Available status in
-                          order to add it to this kit.
+                          <br /> {t("kits.availableStatusHint")}
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -880,7 +883,7 @@ const RowComponent = ({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <div className="flex items-center justify-center rounded-md border border-success-200 bg-success-50 px-1.5 py-0.5 text-center text-xs text-success-700">
-                          Part of kit
+                          {t("scanAvailability.partOfKit")}
                         </div>
                       </TooltipTrigger>
 
@@ -890,11 +893,10 @@ const RowComponent = ({
                         className="md:w-80"
                       >
                         <h2 className="mb-1 text-xs font-semibold text-gray-700">
-                          Asset is already part of this kit
+                          {t("kits.assetAlreadyInKit")}
                         </h2>
                         <div className="text-wrap text-xs font-medium text-gray-500">
-                          Asset is currently in checked out via a booking and is
-                          already part of this kit.
+                          {t("kits.assetCheckedOutInKit")}
                         </div>
                       </TooltipContent>
                     </Tooltip>

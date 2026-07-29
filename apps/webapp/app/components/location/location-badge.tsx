@@ -10,7 +10,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { LocationTree, type LocationTreeNode } from "./location-tree";
 import { Button } from "../shared/button";
@@ -108,7 +108,9 @@ export function LocationBadge({ location, className }: LocationBadgeProps) {
     return (
       <div className="space-y-3 text-sm">
         <div>
-          <p className="font-semibold text-gray-500">Current location</p>
+          <p className="font-semibold text-gray-500">
+            {t("locations.currentLocation")}
+          </p>
           <Button
             to={`/locations/${currentLocation.id}`}
             variant="block-link"
@@ -120,7 +122,9 @@ export function LocationBadge({ location, className }: LocationBadgeProps) {
 
         {hasAncestors ? (
           <div>
-            <p className="font-semibold text-gray-500">Parent chain</p>
+            <p className="font-semibold text-gray-500">
+              {t("locations.parentChain")}
+            </p>
             <div className="mt-2">
               <LocationTree
                 nodes={buildParentChainTree(ancestors, currentLocation)}
@@ -131,13 +135,17 @@ export function LocationBadge({ location, className }: LocationBadgeProps) {
         ) : null}
 
         <div>
-          <p className="font-semibold text-gray-500">Child locations</p>
+          <p className="font-semibold text-gray-500">
+            {t("locations.childLocations")}
+          </p>
           {hasChildren ? (
             <div className="mt-2">
               <LocationTree nodes={descendants} />
             </div>
           ) : (
-            <p className="mt-2 text-sm text-gray-600">No child locations.</p>
+            <p className="mt-2 text-sm text-gray-600">
+              {t("locations.noChildLocations")}
+            </p>
           )}
         </div>
       </div>

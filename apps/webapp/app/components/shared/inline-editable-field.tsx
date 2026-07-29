@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import { useFetcher } from "react-router";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -87,6 +88,7 @@ export function InlineEditableField({
   extraHiddenInputs,
   isEmpty,
 }: InlineEditableFieldProps) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const fetcher = useFetcher<InlineEditFetcherData>({
     key: `inline-edit-${fieldName}`,
@@ -130,7 +132,7 @@ export function InlineEditableField({
         '[role="combobox"]',
         "button[aria-haspopup]:not([disabled])",
         "button[aria-expanded]:not([disabled])",
-      ].join(", ")
+      ].join(", "),
     );
     firstInput?.focus();
   }, [isEditing]);
@@ -172,7 +174,7 @@ export function InlineEditableField({
       e.preventDefault();
       handleCancel();
     },
-    [handleCancel, disabled]
+    [handleCancel, disabled],
   );
 
   /** When form is submitted, surface errors again */
@@ -195,7 +197,7 @@ export function InlineEditableField({
     <li
       className={tw(
         "group/field w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex",
-        className
+        className,
       )}
     >
       <span className="w-1/4 text-[14px] font-medium text-gray-900">
@@ -246,7 +248,7 @@ export function InlineEditableField({
                 onClick={handleCancel}
                 disabled={disabled}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </fetcher.Form>

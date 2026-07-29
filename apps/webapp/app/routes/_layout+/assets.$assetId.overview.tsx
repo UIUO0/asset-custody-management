@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { RenderableTreeNode } from "@markdoc/markdoc";
 import {
+  AssetLifecycleStage,
   AssetStatus,
   CustomFieldType,
   OrganizationRoles,
@@ -15,6 +16,7 @@ import { data, useFetcher, useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { CustodyCard } from "~/components/assets/asset-custody-card";
+import { AssetLifecycleStagePanel } from "~/components/assets/asset-lifecycle-stage-panel";
 import { AssetReminderCards } from "~/components/assets/asset-reminder-cards";
 import { MoveUnitsDialog } from "~/components/assets/move-units-dialog";
 import { QuantityCustodyList } from "~/components/assets/quantity-custody-list";
@@ -66,6 +68,7 @@ import {
   parseAssetValuation,
   placeUnplacedUnits,
   updateAsset,
+  updateAssetLifecycleStage,
   updateAssetBookingAvailability,
 } from "~/modules/asset/service.server";
 import type { ShelfAssetCustomFieldValueType } from "~/modules/asset/types";
@@ -101,12 +104,12 @@ import { isLink } from "~/utils/misc";
 import {
   userCanViewSpecificCustody,
   userHasCustodyViewPermission,
-} from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+} from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { hasPermission } from "~/utils/permissions/permission.validator.server";
 import { useBarcodePermissions } from "~/utils/permissions/use-barcode-permissions";
 import { requirePermission } from "~/utils/roles.server";
@@ -552,7 +555,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   });
 
   try {
-    const { organizationId } = await requirePermission({
+    const { organizationId, role } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.asset,
@@ -580,7 +583,9 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     const { intent } = parseData(
       formData,
-      z.object({ intent: z.enum(["toggle", "updateField"]) }),
+      z.object({
+        intent: z.enum(["toggle", "updateField", "updateLifecycleStage"]),
+      }),
     );
 
     if (intent === "toggle") {
@@ -735,6 +740,49 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         senderId: authSession.userId,
       });
       return payload({ success: true });
+    } else if (intent === "updateLifecycleStage") {
+      /**
+       * `asset.update` gets the caller into this action, but moving an asset
+       * in or out of circulation is a separate capability — المالية can edit an
+       * asset's data without deciding when employees may see it. Re-check
+       * `approve` here rather than relying on the button being hidden.
+       */
+      const canApprove = userHasPermission({
+        roles: role ? [role] : [],
+        entity: PermissionEntity.asset,
+        action: PermissionAction.approve,
+      });
+
+      if (!canApprove) {
+        throw new ShelfError({
+          cause: null,
+          message: "You are not allowed to change the stage of an asset.",
+          status: 403,
+          additionalData: { userId, id },
+          label: "Assets",
+        });
+      }
+
+      const { lifecycleStage, reason } = parseData(
+        formData,
+        UpdateLifecycleStageFormSchema,
+      );
+
+      await updateAssetLifecycleStage({
+        id,
+        organizationId,
+        userId,
+        stage: lifecycleStage,
+        reason,
+      });
+
+      sendNotification({
+        title: "Asset updated",
+        message: "Your asset has been updated successfully",
+        icon: { name: "success", variant: "success" },
+        senderId: authSession.userId,
+      });
+      return payload({ success: true });
     } else {
       checkExhaustiveSwitch(intent);
       return payload(null);
@@ -744,6 +792,19 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     return data(error(reason), { status: reason.status });
   }
 }
+
+/**
+ * Payload for the `updateLifecycleStage` intent.
+ *
+ * `reason` is optional at the schema level because approving an asset does not
+ * need one; the service layer enforces that a send-back (READY -> PENDING)
+ * always carries one, so the rule lives in a single place regardless of which
+ * caller triggers the transition.
+ */
+export const UpdateLifecycleStageFormSchema = z.object({
+  lifecycleStage: z.nativeEnum(AssetLifecycleStage),
+  reason: z.string().trim().max(1000).optional(),
+});
 
 /**
  * Zod schemas for the three move-units intents. Each schema carries the
@@ -940,9 +1001,24 @@ export default function AssetOverview() {
   });
   const canEditAsset = canUpdateAvailability;
 
+  /**
+   * Moving an asset in or out of circulation is its own capability. المالية
+   * hold `asset.update` (they add the financial coding) but not `approve`, so
+   * they see the stage banner without the buttons that change it.
+   */
+  const canApproveAsset = userHasPermission({
+    roles,
+    entity: PermissionEntity.asset,
+    action: PermissionAction.approve,
+  });
+
   return (
     <div>
       <ContextualModal />
+      <AssetLifecycleStagePanel
+        stage={asset.lifecycleStage}
+        canApprove={canApproveAsset}
+      />
       <div className="mx-[-16px] mt-[-16px] block md:mx-0 lg:flex ">
         <div className="max-w-full flex-1 overflow-hidden">
           <Card className="my-3 max-w-full px-[-4] py-[-5] md:border">
@@ -1001,8 +1077,8 @@ export default function AssetOverview() {
                     fieldName="fieldValue"
                     defaultValue={asset.category?.id ?? undefined}
                     model={{ name: "category", queryKey: "name" }}
-                    contentLabel="Categories"
-                    placeholder="Select category"
+                    contentLabel={t("nav.categories")}
+                    placeholder={t("assetOverview.selectCategory")}
                     initialDataKey="categories"
                     countKey="totalCategories"
                     closeOnSelect
@@ -1016,7 +1092,7 @@ export default function AssetOverview() {
                 /*
                  * QUANTITY_TRACKED variant: render every placement with
                  * its per-location qty, and route the pencil edit
-                 * button to the multi-row "Manage placements" modal
+                 * button to the multi-row t("assetActions.managePlacements") modal
                  * instead of the inline single-location editor. Same
                  * shell as `InlineEditableField` so the row visually
                  * matches the rest of the detail list. INDIVIDUAL
@@ -1025,7 +1101,7 @@ export default function AssetOverview() {
                  */
                 <li className="group/field w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                    Location
+                    {t("assets.location")}
                   </span>
                   <div className="relative mt-1 flex items-start gap-2 md:mt-0 md:w-3/5">
                     <div className="min-w-0 flex-1">
@@ -1060,7 +1136,7 @@ export default function AssetOverview() {
                                           target="_blank"
                                           className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 no-underline hover:bg-blue-100 hover:text-blue-800"
                                         >
-                                          via kit
+                                          {t("quantity.viaKit")}
                                         </Button>
                                       </TooltipTrigger>
                                       <TooltipContent
@@ -1170,7 +1246,7 @@ export default function AssetOverview() {
                       maxLength={1000}
                     />
                     <p className="mt-1 text-xs text-gray-400">
-                      Maximum 1000 characters
+                      {t("ui.max1000Characters")}
                     </p>
                   </div>
                 )}
@@ -1264,7 +1340,7 @@ export default function AssetOverview() {
                     return (
                       <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                         <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                          Total value
+                          {t("assetOverview.totalValue")}
                         </span>
                         <div className="mt-1 text-gray-600 md:mt-0 md:w-3/5">
                           {breakdown.total}
@@ -1283,7 +1359,7 @@ export default function AssetOverview() {
               {asset?.assetModel ? (
                 <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                    Asset Model
+                    {t("assetOverview.assetModel")}
                   </span>
                   <div className="mt-1 text-gray-600 md:mt-0 md:w-3/5">
                     {userHasPermission({
@@ -1323,11 +1399,8 @@ export default function AssetOverview() {
                           iconClassName="size-4"
                           content={
                             <>
-                              <h6>Barcodes support</h6>
-                              <p>
-                                Alternative barcodes let you scan assets with
-                                the codes you already use.
-                              </p>
+                              <h6>{t("assetOverview.barcodesSupport")}</h6>
+                              <p>{t("assetOverview.altBarcodesHint")}</p>
                             </>
                           }
                         />
@@ -1355,7 +1428,7 @@ export default function AssetOverview() {
                         >
                           <div className="flex flex-col items-center gap-1 text-gray-400">
                             <Icon icon="lock" />
-                            <span className="text-xs">Hidden</span>
+                            <span className="text-xs">{t("ui.hidden")}</span>
                           </div>
                         </div>
                       ))}
@@ -1444,7 +1517,9 @@ export default function AssetOverview() {
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-400">Not set</span>
+                            <span className="text-gray-400">
+                              {t("assetOverview.notSet")}
+                            </span>
                           )
                         }
                         renderEditor={() => {
@@ -1491,7 +1566,9 @@ export default function AssetOverview() {
                                   defaultValue={rawValue}
                                   className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
                                 >
-                                  <option value="">Select an option</option>
+                                  <option value="">
+                                    {t("assetOverview.selectAnOption")}
+                                  </option>
                                   {(def.options as string[] | null)
                                     ?.filter(
                                       (o: string) => o !== null && o !== "",
@@ -1560,11 +1637,10 @@ export default function AssetOverview() {
                       !canUpdateAvailability || isFormProcessing(fetcher.state)
                     } // Disable for self service users
                     defaultChecked={asset?.availableToBook}
-                    required
                     title={
                       !canUpdateAvailability
                         ? t("assetOverview.noAvailabilityPermission")
-                        : "Toggle availability"
+                        : t("assetOverview.toggleAvailability")
                     }
                   />
                   <input type="hidden" value="toggle" name="intent" />
@@ -1678,8 +1754,8 @@ export default function AssetOverview() {
 
           {(() => {
             /**
-             * "Placed at locations" sidebar card — mirrors the
-             * "Included in kits" card above. A QUANTITY_TRACKED asset
+             * t("assetOverview.placedAtLocations") sidebar card — mirrors the
+             * t("assetOverview.includedInKits") card above. A QUANTITY_TRACKED asset
              * can sit at multiple locations at distinct per-location
              * slices; an INDIVIDUAL asset sits at exactly one. Render
              * one row per placement with the per-location quantity
@@ -1743,7 +1819,7 @@ export default function AssetOverview() {
                           variant="link"
                           className="shrink-0 text-xs font-normal text-gray-500 underline hover:text-gray-700"
                         >
-                          Edit placements
+                          {t("assetOverview.editPlacements")}
                         </Button>
                       ) : null}
                     </div>
@@ -1774,7 +1850,7 @@ export default function AssetOverview() {
                                       target="_blank"
                                       className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 no-underline hover:bg-blue-100 hover:text-blue-800"
                                     >
-                                      via kit
+                                      {t("quantity.viaKit")}
                                     </Button>
                                   </TooltipTrigger>
                                   <TooltipContent
@@ -1904,7 +1980,7 @@ export default function AssetOverview() {
                       variant="secondary"
                       className="py-1 text-xs"
                     >
-                      Place them
+                      {t("assetOverview.placeThem")}
                     </Button>
                   }
                 />
@@ -1981,6 +2057,7 @@ function BooleanCustomFieldEditor({
   initialChecked: boolean;
   initialIsUnset?: boolean;
 }) {
+  const { t } = useTranslation();
   const [isUnset, setIsUnset] = useState(initialIsUnset);
   const [checked, setChecked] = useState(initialChecked);
   return (
@@ -2014,7 +2091,7 @@ function BooleanCustomFieldEditor({
           onClick={() => setIsUnset(true)}
           className="text-xs text-gray-400 underline hover:text-gray-600"
         >
-          Clear
+          {t("ui.clear")}
         </button>
       )}
     </div>

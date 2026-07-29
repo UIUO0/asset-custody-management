@@ -426,7 +426,7 @@ function ReleaseButton({
             </AlertDialogCancel>
 
             <Button type="submit" variant="primary" disabled={disabled}>
-              {isSubmitting ? t("quantity.releasing") : t("quantity.release")}
+              {isSubmitting ? "Releasing..." : t("quantity.release")}
             </Button>
           </AlertDialogFooter>
         </fetcher.Form>

@@ -14,14 +14,17 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
+import BookSelectedAssetsDropdown from "./assets-index/book-selected-assets-dropdown";
 import BulkAddToAuditDialog from "./bulk-add-to-audit-dialog";
 import BulkAddToKitDialog from "./bulk-add-to-kit-dialog";
+import BulkApproveDialog from "./bulk-approve-dialog";
 import BulkAssignCustodyDialog from "./bulk-assign-custody-dialog";
 import BulkAssignTagsDialog from "./bulk-assign-tags-dialog";
 import BulkCategoryUpdateDialog from "./bulk-category-update-dialog";
 import BulkDeleteDialog from "./bulk-delete-dialog";
+import BulkDownloadQrDialog from "./bulk-download-qr-dialog";
 import BulkLocationUpdateDialog from "./bulk-location-update-dialog";
 import BulkMarkAvailabilityDialog from "./bulk-mark-availability-dialog";
 import BulkReleaseCustodyDialog from "./bulk-release-custody-dialog";
@@ -29,6 +32,7 @@ import BulkRemoveFromKits from "./bulk-remove-from-kits";
 import BulkRemoveTagsDialog from "./bulk-remove-tags-dialog";
 import BulkStartAuditDialog from "./bulk-start-audit-dialog";
 import { BulkUpdateDialogTrigger } from "../bulk-update-dialog/bulk-update-dialog";
+import Icon from "../icons/icon";
 import { ChevronRight } from "../icons/library";
 import { Button } from "../shared/button";
 import {
@@ -39,9 +43,6 @@ import {
 } from "../shared/dropdown";
 import { MobileDropdownStyles } from "../shared/mobile-dropdown-styles";
 import When from "../when/when";
-import BookSelectedAssetsDropdown from "./assets-index/book-selected-assets-dropdown";
-import BulkDownloadQrDialog from "./bulk-download-qr-dialog";
-import Icon from "../icons/icon";
 
 export default function BulkActionsDropdown() {
   const { t } = useTranslation();
@@ -159,11 +160,30 @@ function ConditionalDropdown() {
         <BulkAssignTagsDialog />
         <BulkRemoveTagsDialog />
         <BulkCategoryUpdateDialog />
-        <BulkDeleteDialog />
         <BulkMarkAvailabilityDialog type="available" />
         <BulkMarkAvailabilityDialog type="unavailable" />
         <BulkAddToKitDialog />
         <BulkRemoveFromKits />
+      </When>
+
+      <When
+        truthy={userHasPermission({
+          roles,
+          entity: PermissionEntity.asset,
+          action: PermissionAction.delete,
+        })}
+      >
+        <BulkDeleteDialog />
+      </When>
+
+      <When
+        truthy={userHasPermission({
+          roles,
+          entity: PermissionEntity.asset,
+          action: PermissionAction.approve,
+        })}
+      >
+        <BulkApproveDialog />
       </When>
 
       <BulkDownloadQrDialog
@@ -315,7 +335,7 @@ function ConditionalDropdown() {
                   type="assign-custody"
                   label={
                     isSelfService
-                      ? t("bulkActions.takeCustody")
+                      ? t("assetActions.takeCustody")
                       : t("bulkActions.assignCustody")
                   }
                   onClick={closeMenu}
@@ -328,6 +348,23 @@ function ConditionalDropdown() {
                         }
                       : isLoading
                   }
+                />
+              </DropdownMenuItem>
+            </When>
+
+            <When
+              truthy={userHasPermission({
+                roles,
+                entity: PermissionEntity.asset,
+                action: PermissionAction.approve,
+              })}
+            >
+              <DropdownMenuItem className="border-t py-1 lg:p-0">
+                <BulkUpdateDialogTrigger
+                  type="approve"
+                  onClick={closeMenu}
+                  disabled={isLoading}
+                  label={t("assetLifecycle.approveAction")}
                 />
               </DropdownMenuItem>
             </When>
@@ -408,7 +445,28 @@ function ConditionalDropdown() {
                 />
               </DropdownMenuItem>
 
-              <DropdownMenuItem className="py-1 lg:p-0">
+              <DropdownMenuItem className="border-t md:hidden lg:p-0">
+                <Button
+                  type="button"
+                  role="button"
+                  variant="secondary"
+                  className="flex items-center justify-center text-gray-700 hover:text-gray-700 "
+                  width="full"
+                  onClick={() => setOpen(false)}
+                >
+                  {t("common.close")}
+                </Button>
+              </DropdownMenuItem>
+            </When>
+
+            <When
+              truthy={userHasPermission({
+                roles,
+                entity: PermissionEntity.asset,
+                action: PermissionAction.delete,
+              })}
+            >
+              <DropdownMenuItem className="border-t py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="trash"
                   label={t("common.delete")}
@@ -421,18 +479,6 @@ function ConditionalDropdown() {
                       : isLoading
                   }
                 />
-              </DropdownMenuItem>
-              <DropdownMenuItem className="border-t md:hidden lg:p-0">
-                <Button
-                  type="button"
-                  role="button"
-                  variant="secondary"
-                  className="flex items-center justify-center text-gray-700 hover:text-gray-700 "
-                  width="full"
-                  onClick={() => setOpen(false)}
-                >
-                  {t("common.close")}
-                </Button>
               </DropdownMenuItem>
             </When>
           </div>

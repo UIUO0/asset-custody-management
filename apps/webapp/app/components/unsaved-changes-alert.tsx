@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
+import { useTranslation } from "react-i18next";
 import { useDisabled } from "~/hooks/use-disabled";
 import { Button } from "./shared/button";
 import {
@@ -30,12 +31,13 @@ export default function UnsavedChangesAlert({
   onYes,
   children,
 }: UnsavedChangesAlertProps) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className={className} style={style}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+          <AlertDialogTitle>{t("ui.unsavedChanges")}</AlertDialogTitle>
           <AlertDialogDescription>{children}</AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -48,7 +50,7 @@ export default function UnsavedChangesAlert({
                 onClick={onCancel}
                 disabled={disabled}
               >
-                No, discard changes
+                {t("ui.noDiscardChanges")}
               </Button>
             </AlertDialogCancel>
 
@@ -58,7 +60,7 @@ export default function UnsavedChangesAlert({
               disabled={disabled}
               variant="primary"
             >
-              Yes, confirm change
+              {t("ui.yesConfirmChange")}
             </Button>
           </div>
         </AlertDialogFooter>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { loader } from "~/routes/_layout+/home";
 import { ClickableTr } from "../dashboard/clickable-tr";
@@ -11,6 +12,7 @@ type LocationItem = ReturnType<
 >["locationDistribution"][number];
 
 export default function LocationDistribution() {
+  const { t } = useTranslation();
   const { locationDistribution } = useLoaderData<typeof loader>();
 
   const maxCount =
@@ -22,7 +24,7 @@ export default function LocationDistribution() {
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Top locations
+          {t("ui.topLocations")}
         </span>
         <div className="flex items-center gap-2">
           <Button
@@ -30,7 +32,7 @@ export default function LocationDistribution() {
             variant="block-link-gray"
             className="!mt-0 text-xs"
           >
-            View all
+            {t("audits.viewAll")}
           </Button>
         </div>
       </div>
@@ -72,10 +74,10 @@ export default function LocationDistribution() {
       ) : (
         <div className="flex flex-1 items-center justify-center p-4">
           <DashboardEmptyState
-            text="No locations assigned"
-            subText="Assign locations to assets to see distribution here."
+            text={t("ui.noLocationsAssigned")}
+            subText={t("home.locationDistributionEmpty")}
             ctaTo="/locations"
-            ctaText="Manage locations"
+            ctaText={t("locations.manageLocations")}
           />
         </div>
       )}

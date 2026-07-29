@@ -6,6 +6,7 @@ import Header from "~/components/layout/header";
 import HorizontalTabs from "~/components/layout/horizontal-tabs";
 import When from "~/components/when/when";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import type { RouteHandleWithName } from "~/modules/types";
@@ -17,7 +18,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
 /** Breadcrumb for settings (component so it can use the translation hook). */
@@ -42,8 +43,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const title = "Settings";
-    const subHeading = "Manage your preferences here.";
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+    const title = t("settings.title");
+    const subHeading = t("settings.subHeading");
     const header = {
       title,
       subHeading,

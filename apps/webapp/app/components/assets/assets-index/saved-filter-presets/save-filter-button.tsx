@@ -111,7 +111,7 @@ export function SaveFilterButton({
         <div className="flex items-center gap-2">
           <Save className="size-4" />
           <span className="hidden whitespace-nowrap md:inline">
-            Save Filter
+            {t("ui.saveFilter")}
           </span>
         </div>
       </Button>

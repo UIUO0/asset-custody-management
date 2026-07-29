@@ -1,4 +1,5 @@
 import type { Asset } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { isFormProcessing } from "~/utils/form";
 import { Form } from "../custom-form";
@@ -20,6 +21,7 @@ export default function RemoveAssetFromKit({
 }: {
   asset: Pick<Asset, "id" | "title">;
 }) {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
 
@@ -33,7 +35,7 @@ export default function RemoveAssetFromKit({
           width="full"
           icon="trash"
         >
-          Remove
+          {t("common.remove")}
         </Button>
       </AlertDialogTrigger>
 
@@ -46,8 +48,7 @@ export default function RemoveAssetFromKit({
           </div>
           <AlertDialogTitle>Remove "{asset.title}" from kit</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to remove this asset from the kit? Asset will
-            lose any status that is inherited by the kit.
+            {t("kits.removeAssetConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -55,7 +56,7 @@ export default function RemoveAssetFromKit({
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary">
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -67,7 +68,7 @@ export default function RemoveAssetFromKit({
                 value="removeAsset"
                 disabled={disabled}
               >
-                Remove
+                {t("common.remove")}
               </Button>
             </Form>
           </div>

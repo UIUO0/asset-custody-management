@@ -122,7 +122,7 @@ export default function AssetModelForm({
         <div className="gap-4 md:flex md:items-end">
           <Input
             ref={nameInputRef}
-            label="Name"
+            label={t("assets.name")}
             placeholder={t("assetModelForm.name")}
             className="mb-4 lg:mb-0 lg:max-w-[180px]"
             name={zo.fields.name()}
@@ -133,7 +133,7 @@ export default function AssetModelForm({
             defaultValue={assetModel?.name}
           />
           <Input
-            label="Description"
+            label={t("assets.description")}
             placeholder={t("assetModelForm.descriptionOptional")}
             name={zo.fields.description()}
             disabled={disabled}
@@ -154,7 +154,7 @@ export default function AssetModelForm({
                 className="flex-1"
                 disabled={disabled}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             ) : null}
             <Button
@@ -222,7 +222,9 @@ function FullPageForm({
         {/* -- Top action bar (visible on md+) -- */}
         <div className="flex items-start justify-between border-b pb-5">
           <div>
-            <h2 className="mb-1 text-[18px] font-semibold">Asset model</h2>
+            <h2 className="mb-1 text-[18px] font-semibold">
+              {t("advancedFilters.assetModel")}
+            </h2>
             <p>
               {assetModel
                 ? t("assetModelForm.editSubheading")
@@ -236,13 +238,13 @@ function FullPageForm({
 
         {/* -- Name -- */}
         <FormRow
-          rowLabel="Name"
+          rowLabel={t("assets.name")}
           className="border-b-0 pb-[10px]"
           required={true}
         >
           <Input
             ref={nameInputRef}
-            label="Name"
+            label={t("assets.name")}
             hideLabel
             name={zo.fields.name()}
             disabled={disabled}
@@ -256,14 +258,14 @@ function FullPageForm({
 
         {/* -- Description -- */}
         <FormRow
-          rowLabel="Description"
+          rowLabel={t("assets.description")}
           subHeading={t("assetModelForm.descriptionHint")}
           className="border-b-0 pb-[10px]"
         >
           <Input
             inputType="textarea"
             maxLength={1000}
-            label="Description"
+            label={t("assets.description")}
             hideLabel
             name={zo.fields.description()}
             disabled={disabled}
@@ -284,8 +286,8 @@ function FullPageForm({
             defaultValue={assetModel?.defaultCategoryId ?? undefined}
             model={{ name: "category", queryKey: "name" }}
             triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start"
-            contentLabel="Categories"
-            label="Category"
+            contentLabel={t("nav.categories")}
+            label={t("assets.category")}
             hideLabel
             fieldName="defaultCategoryId"
             initialDataKey="categories"
@@ -345,6 +347,7 @@ function FullPageForm({
  * Cancel + Save buttons shared between top and bottom of the form.
  */
 function Actions({ disabled }: { disabled: boolean }) {
+  const { t } = useTranslation();
   return (
     <>
       {/* Save is first in DOM so Enter triggers it */}
@@ -356,7 +359,7 @@ function Actions({ disabled }: { disabled: boolean }) {
         to="/settings/asset-models"
         disabled={disabled}
       >
-        Cancel
+        {t("common.cancel")}
       </Button>
     </>
   );

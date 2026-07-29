@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { AssetImage } from "~/components/assets/asset-image/component";
 import KitImage from "~/components/kits/kit-image";
 import { Button } from "~/components/shared/button";
@@ -52,6 +53,7 @@ export function KitsListComponent({
   ids,
   action: _action,
 }: KitsListComponentProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   // Use useApiQuery hook for fetching kits
@@ -107,7 +109,9 @@ export function KitsListComponent({
         {isLoading && (
           <div className="flex items-center justify-center py-4">
             <Spinner className="size-4" />
-            <span className="ms-2 text-sm text-gray-500">Loading kits...</span>
+            <span className="ms-2 text-sm text-gray-500">
+              {t("ui.loadingKits")}
+            </span>
           </div>
         )}
 
@@ -186,12 +190,14 @@ export function KitsListComponent({
 
         {!isLoading && error && (
           <div className="py-2 text-sm text-gray-500">
-            Failed to load kit details
+            {t("ui.failedToLoadKitDetails")}
           </div>
         )}
 
         {!isLoading && data?.kits.length === 0 && (
-          <div className="py-2 text-sm text-gray-500">No kits found</div>
+          <div className="py-2 text-sm text-gray-500">
+            {t("ui.noKitsFound")}
+          </div>
         )}
       </PopoverContent>
     </Popover>

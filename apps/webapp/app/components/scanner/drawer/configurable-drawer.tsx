@@ -86,7 +86,7 @@ export default function ConfigurableDrawer<T>({
   renderItem,
   Blockers,
   disableSubmit = false,
-  submitButtonText = "Confirm",
+  submitButtonText: submitButtonTextProp,
   submitButtonClassName,
   defaultExpanded = false,
   onSubmit,
@@ -99,6 +99,8 @@ export default function ConfigurableDrawer<T>({
   collapsedHeight,
 }: ConfigurableDrawerProps<T>) {
   const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `submitButtonText`. */
+  const submitButtonText = submitButtonTextProp ?? t("common.confirm");
   const zo = useZorm(formName, schema);
   const itemsLength = Object.keys(items).length;
   const hasItems = itemsLength > 0;
@@ -120,7 +122,7 @@ export default function ConfigurableDrawer<T>({
       <div>
         {expanded && (
           <div className="text-base font-semibold text-gray-900">
-            List is empty
+            {t("ui.listIsEmpty")}
           </div>
         )}
         <p className="text-sm text-gray-600">
@@ -211,7 +213,7 @@ export default function ConfigurableDrawer<T>({
                     to={".."}
                     className={"ms-auto"}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   {/* Submit button */}
                   <Button

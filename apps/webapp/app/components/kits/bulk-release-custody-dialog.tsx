@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { BulkUpdateDialogContent } from "../bulk-update-dialog/bulk-update-dialog";
@@ -8,14 +9,15 @@ export const BulkReleaseKitCustodySchema = z.object({
 });
 
 export default function BulkReleaseCustodyDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkReleaseKitCustody", BulkReleaseKitCustodySchema);
 
   return (
     <BulkUpdateDialogContent
       ref={zo.ref}
       type="release-custody"
-      title="Release custody over kits"
-      description="Are you sure you want to release custody of all selected kits?"
+      title={t("ui.releaseCustodyOverKits")}
+      description={t("ui.areYouSureYouWantToReleaseCustodyOfAllSelect")}
       actionUrl="/api/kits/bulk-actions"
       arrayFieldId="kitIds"
     >
@@ -35,7 +37,7 @@ export default function BulkReleaseCustodyDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -43,7 +45,7 @@ export default function BulkReleaseCustodyDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

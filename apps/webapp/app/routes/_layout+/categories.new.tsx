@@ -4,6 +4,7 @@ import NewCategoryForm, {
   NewCategoryFormSchema,
 } from "~/components/category/new-category-form";
 
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { createCategory } from "~/modules/category/service.server";
@@ -17,8 +18,6 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-const title = "New category";
-
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
   const { userId } = authSession;
@@ -31,8 +30,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       action: PermissionAction.create,
     });
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header = {
-      title,
+      title: t("categories.newCategory"),
     };
 
     return payload({ header });

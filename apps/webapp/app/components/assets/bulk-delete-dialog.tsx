@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -13,6 +14,7 @@ export const BulkDeleteAssetsSchema = z.object({
 });
 
 export default function BulkDeleteDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<AssetIndexLoaderData>();
   const zo = useZorm("BulkDeleteAssets", BulkDeleteAssetsSchema);
 
@@ -47,7 +49,7 @@ export default function BulkDeleteDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -56,7 +58,7 @@ export default function BulkDeleteDialog() {
               disabled={disabled}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

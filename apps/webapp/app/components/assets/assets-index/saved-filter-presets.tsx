@@ -505,12 +505,10 @@ export function SavedFilterPresetsControls() {
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium text-gray-900">
-                    No saved filters yet
+                    {t("ui.noSavedFiltersYet")}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Save your current filter configuration to quickly access it
-                    later. Apply filters, then click Save in the filters menu to
-                    create your first preset.
+                    {t("advancedFilters.savePresetHint")}
                   </p>
                   {hasActiveFilters && (
                     <Button
@@ -522,7 +520,7 @@ export function SavedFilterPresetsControls() {
                     >
                       <div className="flex items-center gap-2">
                         <Save className="size-4" />
-                        Save Filter
+                        {t("ui.saveFilter")}
                       </div>
                     </Button>
                   )}
@@ -545,7 +543,7 @@ export function SavedFilterPresetsControls() {
 
                 {allFilteredPresets.length === 0 ? (
                   <div className="px-3 py-6 text-center text-sm text-gray-500">
-                    No presets found
+                    {t("ui.noPresetsFound")}
                   </div>
                 ) : (
                   <div className="max-h-[400px] space-y-3 overflow-y-auto p-3">
@@ -553,7 +551,7 @@ export function SavedFilterPresetsControls() {
                     {filteredStarredPresets.length > 0 && (
                       <div>
                         <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                          Starred
+                          {t("ui.starred")}
                         </div>
                         <div className="space-y-1">
                           {filteredStarredPresets.map((preset, index) => (
@@ -590,7 +588,7 @@ export function SavedFilterPresetsControls() {
                       <div>
                         {filteredStarredPresets.length > 0 && (
                           <div className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            All presets
+                            {t("ui.allPresets")}
                           </div>
                         )}
                         <div className="space-y-1">

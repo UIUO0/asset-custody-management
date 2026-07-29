@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from "@radix-ui/react-popover";
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { getCurrencyName, ISO_4217_CURRENCIES } from "~/utils/currency";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
@@ -24,6 +25,7 @@ export default function CurrencySelector({
   defaultValue,
   name,
 }: CurrencySelectorProps) {
+  const { t } = useTranslation();
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +45,7 @@ export default function CurrencySelector({
     return ISO_4217_CURRENCIES.filter(
       (c) =>
         c.code.toLowerCase().includes(query) ||
-        c.name.toLowerCase().includes(query)
+        c.name.toLowerCase().includes(query),
     );
   }, [searchQuery]);
 
@@ -61,7 +63,7 @@ export default function CurrencySelector({
   const scrollToIndex = (index: number) => {
     setTimeout(() => {
       const selectedElement = document.getElementById(
-        `currency-option-${index}`
+        `currency-option-${index}`,
       );
       if (selectedElement) {
         selectedElement.scrollIntoView({ block: "nearest" });
@@ -111,7 +113,7 @@ export default function CurrencySelector({
           ref={triggerRef}
           className={tw(
             "flex h-[44px] w-full items-center justify-between rounded-md border px-3 py-2",
-            className
+            className,
           )}
         >
           <span>
@@ -130,7 +132,7 @@ export default function CurrencySelector({
           <div className="flex items-center border-b">
             <SearchIcon className="ms-4 size-4 text-gray-500" />
             <input
-              placeholder="Search currency code or name..."
+              placeholder={t("ui.searchCurrencyCodeOrName")}
               className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
               value={searchQuery}
               onChange={(event) => {
@@ -149,7 +151,7 @@ export default function CurrencySelector({
                 key={currency.code}
                 className={tw(
                   "flex items-center justify-between px-4 py-3 text-sm text-gray-600 hover:cursor-pointer hover:bg-gray-50",
-                  isHovered && "bg-gray-50"
+                  isHovered && "bg-gray-50",
                 )}
                 role="option"
                 aria-selected={isSelected}
@@ -158,7 +160,7 @@ export default function CurrencySelector({
                   handleSelect(currency.code);
                 }}
                 onKeyDown={handleActivationKeyPress(() =>
-                  handleSelect(currency.code)
+                  handleSelect(currency.code),
                 )}
               >
                 <span>
@@ -173,7 +175,7 @@ export default function CurrencySelector({
           })}
           {filteredCurrencies.length === 0 && (
             <div className="px-4 py-2 text-sm text-gray-500">
-              No currency found
+              {t("ui.noCurrencyFound")}
             </div>
           )}
         </PopoverContent>

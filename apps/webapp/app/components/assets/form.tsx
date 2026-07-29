@@ -1,6 +1,26 @@
 import { useMemo, useRef, useState } from "react";
 import type { Asset, Barcode, Qr } from "@prisma/client";
-import { AssetType, ConsumptionType } from "@prisma/client";
+const AssetLifecycleStage = {
+  PENDING: "PENDING",
+  READY: "READY",
+} as const;
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+type AssetLifecycleStage =
+  (typeof AssetLifecycleStage)[keyof typeof AssetLifecycleStage];
+
+const AssetType = {
+  INDIVIDUAL: "INDIVIDUAL",
+  QUANTITY_TRACKED: "QUANTITY_TRACKED",
+} as const;
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+type AssetType = (typeof AssetType)[keyof typeof AssetType];
+
+const ConsumptionType = {
+  ONE_WAY: "ONE_WAY",
+  TWO_WAY: "TWO_WAY",
+} as const;
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+type ConsumptionType = (typeof ConsumptionType)[keyof typeof ConsumptionType];
 import {
   Popover,
   PopoverTrigger,
@@ -23,6 +43,7 @@ import { updateDynamicTitleAtom } from "~/atoms/dynamic-title-atom";
 import { fileErrorAtom, assetImageValidateFileAtom } from "~/atoms/file";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
+import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { getPrimaryKit, isQuantityTracked } from "~/modules/asset/utils";
 import type {
   AssetEditLoaderData,
@@ -34,6 +55,11 @@ import { mergedSchema } from "~/utils/custom-fields";
 import { isFormProcessing } from "~/utils/form";
 import { getValidationErrors } from "~/utils/http";
 import type { DataOrErrorResponse } from "~/utils/http.server";
+import {
+  PermissionAction,
+  PermissionEntity,
+} from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { useBarcodePermissions } from "~/utils/permissions/use-barcode-permissions";
 import { tw } from "~/utils/tw";
 import { AssetImage } from "./asset-image";
@@ -118,6 +144,17 @@ export const NewAssetFormSchema = z.object({
     .optional()
     .transform((val) => val === "true"),
   redirectTo: z.string().optional(),
+
+  /**
+   * Intake stage. Defaults to PENDING so an omitted field — which is what a
+   * role without `asset.approve` submits, since the control is hidden from
+   * them — can never produce a ready-to-distribute asset. The action
+   * re-checks the permission before honouring anything other than PENDING.
+   */
+  lifecycleStage: z
+    .nativeEnum(AssetLifecycleStage)
+    .optional()
+    .default(AssetLifecycleStage.PENDING),
 
   // Tracking method & quantity fields
   type: z.nativeEnum(AssetType).default(AssetType.INDIVIDUAL),
@@ -271,8 +308,19 @@ export const AssetForm = ({
   const { t } = useTranslation();
   const navigation = useNavigation();
   const { canUseBarcodes } = useBarcodePermissions();
+  const { roles } = useUserRoleHelper();
+  /**
+   * Only المستودعات may declare an asset ready on creation. For everyone else
+   * the control is hidden and the zod default (PENDING) applies. The action
+   * enforces the same rule server-side.
+   */
+  const canApproveAssets = userHasPermission({
+    roles,
+    entity: PermissionEntity.asset,
+    action: PermissionAction.approve,
+  });
   // Workspace's current code-display preference — used by PreferredBarcodeSelector
-  // to tell the user what "Workspace default" actually resolves to (and to warn
+  // to tell the user what t("barcodePreference.workspaceDefault") actually resolves to (and to warn
   // about silent fallback when this asset can't satisfy the workspace preference).
   const currentOrganization = useCurrentOrganization();
   const barcodesInputRef = useRef<BarcodesInputRef>(null);
@@ -395,7 +443,7 @@ export const AssetForm = ({
     count: number;
     startNumber: number;
   }>({
-    nameTemplate: bulkMode ? t("assetForm.defaultNameTemplate") : "",
+    nameTemplate: bulkMode ? "Asset {i}" : "",
     count: 5,
     startNumber: 1,
   });
@@ -584,9 +632,7 @@ export const AssetForm = ({
         <div className="flex items-start justify-between border-b pb-5">
           <div className=" ">
             <h2 className="mb-1 text-[18px] font-semibold">
-              {bulkMode
-                ? t("assetForm.bulkCreate")
-                : t("assetForm.basicFields")}
+              {bulkMode ? t("assets.bulkCreate") : t("assetForm.basicFields")}
             </h2>
             <p>
               {bulkMode
@@ -611,7 +657,7 @@ export const AssetForm = ({
           >
             <Input
               ref={titleInputRef}
-              label="Name"
+              label={t("assets.name")}
               hideLabel
               name="title"
               disabled={disabled}
@@ -622,6 +668,22 @@ export const AssetForm = ({
               className="w-full"
               defaultValue={title || ""}
               required={true}
+            />
+          </FormRow>
+        </When>
+
+        {/* Intake stage. Creation only: once an asset exists the stage moves
+            through the explicit approve / send-back actions on the asset page,
+            which record who changed it and why. */}
+        <When truthy={!id && canApproveAssets}>
+          <FormRow
+            rowLabel={t("assetForm.lifecycleStage")}
+            className="border-b-0 pb-[10px]"
+            subHeading={t("assetForm.lifecycleStageHint")}
+          >
+            <LifecycleStageSelect
+              initialValue={AssetLifecycleStage.PENDING}
+              disabled={disabled}
             />
           </FormRow>
         </When>
@@ -845,6 +907,7 @@ export const AssetForm = ({
                   hideLabel
                   name="sequentialIdPrefix"
                   disabled={true}
+                  // why: the sequential-ID prefix is data, not UI copy — never translated.
                   value="SAM"
                   className="w-20 text-center"
                   placeholder="SAM"
@@ -890,9 +953,7 @@ export const AssetForm = ({
                     {t("assetForm.imageHint", { size: 8 })}
                   </HoverCardTrigger>
                   <HoverCardContent side="left">
-                    Images will be automatically resized on upload. Width will
-                    be set at 1200px and height will be adjusted accordingly to
-                    keep the aspect ratio.
+                    {t("assetForm.imageResizeHint")}
                   </HoverCardContent>
                 </HoverCard>
               </p>
@@ -924,7 +985,7 @@ export const AssetForm = ({
             <Input
               inputType="textarea"
               maxLength={1000}
-              label={"Description"}
+              label={t("assets.description")}
               name="description"
               defaultValue={description || ""}
               hideLabel
@@ -969,8 +1030,8 @@ export const AssetForm = ({
             }
             model={{ name: "category", queryKey: "name" }}
             triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
-            contentLabel="Categories"
-            label="Category"
+            contentLabel={t("nav.categories")}
+            label={t("assets.category")}
             hideLabel
             initialDataKey="categories"
             countKey="totalCategories"
@@ -1085,8 +1146,8 @@ export const AssetForm = ({
               triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
               defaultValue={locationId || undefined}
               model={{ name: "location", queryKey: "name" }}
-              contentLabel="Locations"
-              label="Location"
+              contentLabel={t("nav.locations")}
+              label={t("assets.location")}
               hideLabel
               initialDataKey="locations"
               countKey="totalLocations"
@@ -1418,6 +1479,116 @@ function TrackingMethodCards({
  * scope, outside any component — the label is resolved with `t()` at render
  * time inside {@link ConsumptionTypeSelect}.
  */
+/**
+ * Intake stages offered when registering an asset.
+ *
+ * PENDING is first so it reads as the default in the list, matching the
+ * workflow: المستودعات registers, المالية codes, المستودعات then approves.
+ */
+const LIFECYCLE_STAGE_OPTIONS = [
+  {
+    value: AssetLifecycleStage.PENDING,
+    labelKey: "assetForm.lifecyclePendingLabel",
+  },
+  {
+    value: AssetLifecycleStage.READY,
+    labelKey: "assetForm.lifecycleReadyLabel",
+  },
+] as const;
+
+/**
+ * Popover-based select for the intake stage, mirroring
+ * {@link ConsumptionTypeSelect} so the two rows look identical.
+ *
+ * Rendered only for roles holding `asset.approve`. Everyone else submits no
+ * field at all and the zod default (PENDING) applies — the action re-checks
+ * the permission, so hiding the control is convenience, not the guard.
+ */
+function LifecycleStageSelect({
+  initialValue,
+  disabled,
+}: {
+  initialValue: AssetLifecycleStage;
+  disabled: boolean;
+}) {
+  const { t } = useTranslation();
+  const [selected, setSelected] = useState<AssetLifecycleStage>(initialValue);
+  const [open, setOpen] = useState(false);
+
+  const selectedOption = LIFECYCLE_STAGE_OPTIONS.find(
+    (o) => o.value === selected,
+  );
+
+  return (
+    <div className="w-full">
+      <input type="hidden" name="lifecycleStage" value={selected} />
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            disabled={disabled}
+            className={tw(
+              "flex w-full items-center justify-between rounded border border-gray-300 bg-white px-3 py-2.5 text-start text-[14px] text-gray-900",
+              "focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-25",
+              disabled && "cursor-not-allowed opacity-50",
+            )}
+          >
+            <span className="truncate">
+              {selectedOption ? t(selectedOption.labelKey) : ""}
+            </span>
+            <svg
+              className="size-4 shrink-0 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+        </PopoverTrigger>
+        <PopoverPortal>
+          <PopoverContent
+            align="start"
+            className="z-[999999] mt-1 w-[var(--radix-popover-trigger-width)] overflow-auto rounded-md border border-gray-200 bg-white py-1 shadow-md"
+          >
+            {LIFECYCLE_STAGE_OPTIONS.map((option) => (
+              <div
+                key={option.value}
+                role="option"
+                aria-selected={selected === option.value}
+                tabIndex={0}
+                className={tw(
+                  "cursor-pointer px-3 py-2 text-[14px] text-gray-700 hover:bg-gray-50",
+                  selected === option.value &&
+                    "bg-gray-50 font-medium text-gray-900",
+                )}
+                onClick={() => {
+                  setSelected(option.value);
+                  setOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelected(option.value);
+                    setOpen(false);
+                  }
+                }}
+              >
+                {t(option.labelKey)}
+              </div>
+            ))}
+          </PopoverContent>
+        </PopoverPortal>
+      </Popover>
+    </div>
+  );
+}
+
 const CONSUMPTION_OPTIONS = [
   {
     value: ConsumptionType.ONE_WAY,

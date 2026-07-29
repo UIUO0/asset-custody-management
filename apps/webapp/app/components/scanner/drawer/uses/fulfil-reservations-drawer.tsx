@@ -397,12 +397,12 @@ export default function FulfilReservationsDrawer({
 
     return (
       <>
-        {/* Bucket 1: pending synthetic rows (gray "Pending" badge). */}
+        {/* Bucket 1: pending synthetic rows (gray t("assetForm.lifecyclePendingLabel") badge). */}
         {pendingModelRows.map((row) => (
           <PendingModelRow key={row.key} assetModelName={row.assetModelName} />
         ))}
 
-        {/* Bucket 2: matched scanned rows (green "Ready" chip). */}
+        {/* Bucket 2: matched scanned rows (green t("ui.ready") chip). */}
         {matched.map(renderScannedItemRow)}
 
         {/* Bucket 3: duplicate scanned rows (red "Already on this
@@ -485,6 +485,8 @@ function FulfilHeader({
     matched: number;
   }>;
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="border border-b-0 bg-gray-50 p-4">
       <div className="flex flex-col gap-3">
@@ -498,8 +500,7 @@ function FulfilHeader({
               {session.bookingName}
             </Button>
             <p className="text-xs text-gray-600">
-              Scan reserved models to fulfil this booking. Off-model scans are
-              accepted with a warning.
+              {t("scanner.fulfilReservationsHint")}
             </p>
           </div>
         </div>
@@ -551,6 +552,7 @@ function FulfilHeader({
  * scanning a matching QR.
  */
 function PendingModelRow({ assetModelName }: { assetModelName: string }) {
+  const { t } = useTranslation();
   return (
     <Tr skipEntrance>
       <td className="w-full p-0 md:p-0">
@@ -573,7 +575,7 @@ function PendingModelRow({ assetModelName }: { assetModelName: string }) {
                   textColor={BADGE_COLORS.gray.text}
                   withDot={false}
                 >
-                  Pending
+                  {t("assetForm.lifecyclePendingLabel")}
                 </Badge>
               </div>
             </div>
@@ -609,6 +611,7 @@ function ScannedAssetRowBody({
   asset: AssetFromQr;
   bucket: "matched" | "unmatched" | "duplicate";
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
       <ImageWithPreview
@@ -628,7 +631,7 @@ function ScannedAssetRowBody({
               textColor={BADGE_COLORS.green.text}
               withDot={false}
             >
-              Ready
+              {t("ui.ready")}
             </Badge>
           ) : bucket === "duplicate" ? (
             <Badge
@@ -646,7 +649,7 @@ function ScannedAssetRowBody({
               withDot={false}
               className="max-w-full"
             >
-              Will be added to booking and checked out
+              {t("ui.willBeAddedToBookingAndCheckedOut")}
             </Badge>
           )}
         </div>
@@ -670,6 +673,7 @@ function AlreadyIncludedCollapser({
 }: {
   assets: Exclude<FulfilSessionInfo, null>["alreadyIncluded"];
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -730,7 +734,7 @@ function AlreadyIncludedCollapser({
                           textColor={BADGE_COLORS.green.text}
                           withDot={false}
                         >
-                          Already included
+                          {t("ui.alreadyIncluded")}
                         </Badge>
                       </div>
                     </div>
@@ -794,6 +798,7 @@ function FulfilCheckoutForm({
   disableSubmit,
   disabledReason,
 }: FulfilCheckoutFormProps) {
+  const { t } = useTranslation();
   /**
    * Form DOM node ref — used as the portal container for the
    * `CheckoutDialog` alert so its submit buttons render inside this
@@ -829,7 +834,7 @@ function FulfilCheckoutForm({
 
         <div className="flex w-full justify-end gap-2">
           <Button type="button" variant="secondary" to="..">
-            Cancel
+            {t("common.cancel")}
           </Button>
 
           <CheckoutDialog

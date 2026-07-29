@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { Currency, Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { data, type LoaderFunctionArgs, type MetaFunction } from "react-router";
 import { useLoaderData, useNavigation } from "react-router";
 import { Form } from "~/components/custom-form";
@@ -11,6 +12,7 @@ import { Tag } from "~/components/shared/tag";
 import { AUDIT_ADDON, BARCODE_ADDON } from "~/config/addon-copy";
 import { config } from "~/config/shelf.config";
 import { useSearchParams } from "~/hooks/search-params";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getAuditAddonPrices } from "~/modules/audit/addon.server";
 import { getBarcodeAddonPrices } from "~/modules/barcode/addon.server";
 import { getUserByID } from "~/modules/user/service.server";
@@ -65,10 +67,14 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       getBarcodeAddonPrices(),
     ]);
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+
     return data(
       payload({
-        title: "Subscription",
-        subTitle: "Pick an account plan that fits your workflow.",
+        title: t("ui.subscription"),
+        subTitle: t("subscription.pickPlan"),
         /** Filter out the montly and yearly prices to only have prices for team plan */
         prices,
         customer,
@@ -84,6 +90,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
 // react-doctor:no-giant-component — deferred for follow-up refactor
 export default function SelectPlan() {
+  const { t } = useTranslation();
   const { prices, auditPrices, barcodePrices } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   type BillingInterval = "month" | "year";
@@ -150,13 +157,13 @@ export default function SelectPlan() {
 
     let footnote = "";
     if (interval === "year") {
-      footnote = "Billed annually per workspace";
+      footnote = t("subscription.billedAnnuallyPerWorkspace");
     } else if (interval === "month") {
-      footnote = "Billed monthly per workspace";
+      footnote = t("subscription.billedMonthlyPerWorkspace");
     }
 
     return {
-      label: interval === "year" ? "Annual" : "Monthly",
+      label: interval === "year" ? "Annual" : t("audits.monthly"),
       price: `${formattedPrice}/${interval === "year" ? "yr" : "mo"}`,
       footnote,
     };
@@ -177,8 +184,8 @@ export default function SelectPlan() {
   const billingLabel = isYearly ? "yr" : "mo";
 
   const selectedAddons = [
-    wantsAudits && "Audits",
-    wantsBarcodes && "Barcodes",
+    wantsAudits && t("nav.audits"),
+    wantsBarcodes && t("assetForm.barcodes"),
   ].filter(Boolean);
   const trialText =
     selectedAddons.length > 0
@@ -194,7 +201,7 @@ export default function SelectPlan() {
       <ShelfSymbolLogo className="my-4 size-8 md:mt-0" />
       <div className="mb-8 text-center">
         <h3 className="text-2xl font-semibold text-gray-900">
-          Select your payment plan
+          {t("subscription.selectPaymentPlan")}
         </h3>
         <p className="mt-3 text-base text-gray-600">
           No credit card or payment required to start your 7-day trial.{" "}
@@ -208,9 +215,11 @@ export default function SelectPlan() {
       >
         <fieldset
           className="flex items-center justify-between gap-2"
-          aria-label="Billing interval"
+          aria-label={t("subscription.billingInterval")}
         >
-          <legend className="sr-only">Choose billing interval</legend>
+          <legend className="sr-only">
+            {t("subscription.chooseBillingInterval")}
+          </legend>
           {(Object.keys(planPrices) as BillingInterval[]).map((interval) => {
             const price = planPrices[interval];
             if (!price) return null;
@@ -247,7 +256,7 @@ export default function SelectPlan() {
                         " absolute right-2 top-2 bg-orange-100 text-orange-700",
                       )}
                     >
-                      Save 54%
+                      {t("subscription.save54")}
                     </Tag>
                   ) : null}
                   <span className="text-sm font-semibold text-primary-700">
@@ -268,10 +277,10 @@ export default function SelectPlan() {
         <section className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
-              Optional add-ons
+              {t("subscription.optionalAddons")}
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              Advanced capabilities for migrations & IT environments.
+              {t("subscription.enterpriseHint")}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -441,16 +450,18 @@ export default function SelectPlan() {
         <section className="space-y-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
-              Enterprise integrations
+              {t("subscription.enterpriseIntegrations")}
             </h3>
           </div>
           <Card className="flex flex-col gap-3">
             <div>
               <h4 className="text-base font-semibold text-gray-900">
-                SSO Integration (Team only)
+                {t("subscription.ssoIntegration")}
               </h4>
               <div className="mt-1">
-                <GrayBadge className="whitespace-nowrap">Paid add-on</GrayBadge>
+                <GrayBadge className="whitespace-nowrap">
+                  {t("subscription.paidAddon")}
+                </GrayBadge>
               </div>
             </div>
             <p className="text-sm text-gray-600">
@@ -458,7 +469,7 @@ export default function SelectPlan() {
               access.
             </p>
             <p className="text-xs text-gray-500">
-              Available for Team workspaces. Pricing provided during evaluation.
+              {t("subscription.enterprisePricingNote")}
             </p>
           </Card>
         </section>
@@ -505,7 +516,9 @@ export default function SelectPlan() {
               ) : null}
               <div className="border-t border-gray-200 pt-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-gray-900">Total</span>
+                  <span className="font-semibold text-gray-900">
+                    {t("ui.total")}
+                  </span>
                   <span className="font-semibold text-gray-900">
                     {fmtPrice(totalAmount, teamPriceCurrency)}/{billingLabel}
                   </span>

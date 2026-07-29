@@ -14,6 +14,7 @@
  */
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -74,6 +75,7 @@ export function BarChart({
   tooltipFormatter,
   className,
 }: BarChartProps) {
+  const { t } = useTranslation();
   // Transform series data into Recharts format
   // Each data point has { name, series1Value, series2Value, ... }
   const chartData = useMemo(() => {
@@ -98,7 +100,7 @@ export function BarChart({
   if (chartData.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-500">
-        No data available
+        {t("reports.noDataAvailable")}
       </div>
     );
   }

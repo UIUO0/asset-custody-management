@@ -210,9 +210,7 @@ export function PreviewDisplay({
             onClick={onReanalyze}
             disabled={isReanalyzing}
           >
-            {isReanalyzing
-              ? t("assetUpdate.reanalyzing")
-              : t("assetUpdate.reanalyzeFile")}
+            {isReanalyzing ? "Re-analyzing..." : t("assetUpdate.reanalyzeFile")}
           </Button>
         </div>
       )}
@@ -447,11 +445,11 @@ export function PreviewDisplay({
                 </AlertDialogCancel>
                 <Button
                   type="button"
-                  disabled={agreed !== "I AGREE" || isApplyLoading}
+                  disabled={agreed !== t("ui.iAgree") || isApplyLoading}
                   onClick={submitApply}
                 >
                   {isApplyLoading
-                    ? t("assetUpdate.applying")
+                    ? "Applying..."
                     : t("assetUpdate.applyChanges", { count: totalChanges })}
                 </Button>
               </AlertDialogFooter>
@@ -506,11 +504,11 @@ function ConfirmationInput({
       name="agree"
       value={agreed}
       onChange={(e) => setAgreed(e.target.value.toUpperCase())}
-      placeholder="I AGREE"
+      placeholder={t("ui.iAgree")}
       pattern="^I AGREE$"
       required
       onKeyDown={(e) => {
-        if (e.key === "Enter" && agreed === "I AGREE" && !isApplyLoading) {
+        if (e.key === "Enter" && agreed === t("ui.iAgree") && !isApplyLoading) {
           e.preventDefault();
           submitApply();
         }

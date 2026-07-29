@@ -1,5 +1,6 @@
 import { useCallback, useRef, useEffect } from "react";
 import type { BarcodeType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 
 // Cached import - only loads bwip-js once but keeps it in separate chunk
@@ -33,6 +34,8 @@ export function BarcodeDisplay({
   fontSize = 8,
   maxWidth = "300px",
 }: BarcodeDisplayProps) {
+  const { t } = useTranslation();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const generateBarcode = useCallback(
@@ -79,11 +82,15 @@ export function BarcodeDisplay({
           ctx.fillStyle = "#ef4444";
           ctx.font = "12px sans-serif";
           ctx.textAlign = "center";
-          ctx.fillText("Invalid barcode", canvas.width / 2, canvas.height / 2);
+          ctx.fillText(
+            t("barcodesInput.invalidBarcode"),
+            canvas.width / 2,
+            canvas.height / 2,
+          );
         }
       }
     },
-    [type, value, scale, height, displayValue, fontSize]
+    [type, value, scale, height, displayValue, fontSize],
   );
 
   useEffect(() => {

@@ -125,7 +125,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const totalPages = Math.ceil(bookingCount / perPage);
 
     const header: HeaderData = {
-      title: "Bookings",
+      title: t("nav.bookings"),
     };
     const modelName = {
       singular: "booking",

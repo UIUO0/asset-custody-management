@@ -1,4 +1,5 @@
 import { Text, ProgressCircle } from "@tremor/react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ClientOnly } from "remix-utils/client-only";
 import type { loader } from "~/routes/_layout+/home";
@@ -7,6 +8,7 @@ import { DashboardEmptyState } from "./empty-state";
 import FallbackLoading from "./fallback-loading";
 
 export default function InventoryValueChart() {
+  const { t } = useTranslation();
   const { currency, totalAssets, totalValuation, valueKnownAssets, locale } =
     useLoaderData<typeof loader>();
 
@@ -14,7 +16,7 @@ export default function InventoryValueChart() {
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Inventory value
+          {t("ui.inventoryValue")}
         </span>
       </div>
       <div className="flex flex-1 items-center justify-center p-6">
@@ -35,12 +37,12 @@ export default function InventoryValueChart() {
                     className="relative"
                   >
                     <span className="block text-center text-xs font-medium text-gray-600">
-                      Value Known <br />
+                      {t("ui.valueKnown")} <br />
                       <span className="block text-[14px] font-semibold leading-6 text-gray-900">
                         {valueKnownAssets}/{totalAssets} assets
                       </span>
                       {`(${((valueKnownAssets / totalAssets) * 100).toFixed(
-                        2
+                        2,
                       )}%)`}
                     </span>
                   </ProgressCircle>
@@ -48,7 +50,7 @@ export default function InventoryValueChart() {
               </ClientOnly>
               <div className="min-w-0 text-center md:text-end">
                 <Text className="mb-2 !text-[14px] font-medium text-gray-600">
-                  Inventory value
+                  {t("ui.inventoryValue")}
                 </Text>
                 <Text className="mb-3 whitespace-nowrap !text-[22px] font-semibold text-gray-900 md:!text-[30px]">
                   {formatCurrency({
@@ -62,10 +64,10 @@ export default function InventoryValueChart() {
           </div>
         ) : (
           <DashboardEmptyState
-            text="No asset values yet"
-            subText="Add valuations to your assets to see your total inventory value here."
+            text={t("ui.noAssetValuesYet")}
+            subText={t("dashboard.addValuationsHint")}
             ctaTo="/assets"
-            ctaText="Go to assets"
+            ctaText={t("dashboard.goToAssets")}
           />
         )}
       </div>

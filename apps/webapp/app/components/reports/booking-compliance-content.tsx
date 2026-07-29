@@ -29,6 +29,18 @@ import { ReportTable, StatusCell, DateCell, NumberCell } from "./report-table";
  * scope so cell function identities stay stable across renders. See
  * `.claude/rules/react-render-stability.md` for the underlying rule.
  */
+/**
+ * "On time" return-status cell.
+ *
+ * A named component (not an inline string) so it can call `useTranslation` —
+ * TanStack `cell` renderers run per row and are not components, so a hook
+ * cannot live directly inside one.
+ */
+function OnTimeCell() {
+  const { t } = useTranslation();
+  return <StatusCell status={t("reports.onTime")} variant="success" />;
+}
+
 const BOOKING_COMPLIANCE_COLUMNS: ColumnDef<BookingComplianceRow>[] = [
   {
     accessorKey: "bookingName",
@@ -68,7 +80,7 @@ const BOOKING_COMPLIANCE_COLUMNS: ColumnDef<BookingComplianceRow>[] = [
     cell: ({ row }) => {
       const { isOnTime, latenessMs } = row.original;
       if (isOnTime) {
-        return <StatusCell status="On time" variant="success" />;
+        return <OnTimeCell />;
       }
       const lateness = formatLateness(latenessMs);
       return (
@@ -177,7 +189,7 @@ export function BookingComplianceContent({
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">
-            Booking Details
+            {t("ui.bookingDetails")}
           </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalBookings}

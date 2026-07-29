@@ -56,7 +56,7 @@ export default function CompleteAuditDialog({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button disabled={disabled} variant="primary" type="button">
-          Complete Audit
+          {t("audits.completeAudit")}
         </Button>
       </AlertDialogTrigger>
 
@@ -76,7 +76,7 @@ export default function CompleteAuditDialog({
           <AlertDialogHeader>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-5 text-success-500" />
-              <AlertDialogTitle>Complete Audit</AlertDialogTitle>
+              <AlertDialogTitle>{t("audits.completeAudit")}</AlertDialogTitle>
             </div>
             <button
               type="button"
@@ -85,7 +85,7 @@ export default function CompleteAuditDialog({
               disabled={formDisabled}
             >
               <X className="size-4" />
-              <span className="sr-only">Close</span>
+              <span className="sr-only">{t("common.close")}</span>
             </button>
           </AlertDialogHeader>
 
@@ -99,7 +99,7 @@ export default function CompleteAuditDialog({
 
               <div className="rounded-lg bg-gray-50 p-4">
                 <h4 className="mb-2 text-sm font-semibold text-gray-700">
-                  Audit Summary
+                  {t("ui.auditSummary")}
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="flex justify-between">
@@ -132,16 +132,16 @@ export default function CompleteAuditDialog({
                   htmlFor="completion-note"
                   className="text-sm font-medium text-gray-700"
                 >
-                  Completion Note (Optional)
+                  {t("audits.completionNoteOptional")}
                 </label>
                 <p className="text-sm text-gray-500">
-                  Add any final observations or notes about this audit.
+                  {t("ui.addAnyFinalObservationsOrNotesAboutThisAudit")}
                 </p>
                 <textarea
                   ref={textareaRef}
                   id="completion-note"
                   name="note"
-                  placeholder="Add completion notes here..."
+                  placeholder={t("ui.addCompletionNotesHere")}
                   className="min-h-[120px] w-full rounded-md border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-300/20"
                   rows={5}
                 />
@@ -154,7 +154,7 @@ export default function CompleteAuditDialog({
           <AlertDialogFooter className="mt-4">
             <AlertDialogCancel asChild>
               <Button variant="secondary" type="button">
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
             <Button type="submit" variant="primary" disabled={formDisabled}>

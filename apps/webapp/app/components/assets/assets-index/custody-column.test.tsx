@@ -50,7 +50,7 @@ vi.mock("~/hooks/user-user-role-helper", () => ({
 
 // why: permission gating defaults to allow so the column always
 // renders; the column's permission gate is exercised elsewhere.
-vi.mock("~/utils/permissions/permission.validator.client", () => ({
+vi.mock("~/utils/permissions/permission.validator", () => ({
   userHasPermission: () => true,
 }));
 

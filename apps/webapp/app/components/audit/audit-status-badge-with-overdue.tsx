@@ -1,4 +1,5 @@
 import type { AuditStatus } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { BADGE_COLORS } from "~/utils/badge-colors";
 import { AuditStatusBadge } from "./audit-status-badge";
 import { Badge } from "../shared/badge";
@@ -19,6 +20,7 @@ export function AuditStatusBadgeWithOverdue({
   status,
   dueDate,
 }: AuditStatusBadgeWithOverdueProps) {
+  const { t } = useTranslation();
   // Check if audit is overdue
   const isOverdue =
     dueDate &&
@@ -36,7 +38,9 @@ export function AuditStatusBadgeWithOverdue({
           textColor={BADGE_COLORS.red.text}
           withDot={false}
         >
-          <span className="block whitespace-nowrap">Overdue</span>
+          <span className="block whitespace-nowrap">
+            {t("bookings.overdue")}
+          </span>
         </Badge>
       )}
     </div>

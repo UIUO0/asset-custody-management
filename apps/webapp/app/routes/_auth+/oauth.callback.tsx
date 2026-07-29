@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -11,6 +12,7 @@ import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
 import { config } from "~/config/shelf.config";
 import { useSearchParams } from "~/hooks/search-params";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { supabaseClient } from "~/integrations/supabase/client";
 import { refreshAccessToken } from "~/modules/auth/service.server";
 import { setSelectedOrganizationIdCookie } from "~/modules/organization/context.server";
@@ -143,7 +145,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         });
         const isSSO = userOrgs[0]?.user?.sso === true;
         const hasTeamOrgs = userOrgs.some(
-          (uo) => uo.organization.type !== "PERSONAL"
+          (uo) => uo.organization.type !== "PERSONAL",
         );
 
         if (isSSO && !hasTeamOrgs) {
@@ -161,9 +163,12 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 }
 
-export function loader({ context }: LoaderFunctionArgs) {
-  const title = "Signing in via SSO";
-  const subHeading = "Please wait while we connect your account";
+export async function loader({ context, request }: LoaderFunctionArgs) {
+  // The loader owns this copy (it feeds both the page and `meta`), so we
+  // resolve it with the request's locale instead of the React hook.
+  const t = await getFixedT(getLocale(request));
+  const title = t("auth.signingInViaSso");
+  const subHeading = t("auth.connectingAccount");
 
   if (context.isAuthenticated) {
     return redirect("/assets");
@@ -177,6 +182,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function LoginCallback() {
+  const { t } = useTranslation();
   const fetcher = useFetcher<typeof action>();
   const { data } = fetcher;
   const [searchParams] = useSearchParams();
@@ -201,7 +207,7 @@ export default function LoginCallback() {
         const formData = createSSOFormData(
           supabaseSession,
           refreshToken,
-          redirectTo
+          redirectTo,
         );
 
         void fetcher.submit(formData, { method: "post" });
@@ -216,7 +222,7 @@ export default function LoginCallback() {
 
   const validationErrors = useMemo(
     () => data?.error?.additionalData?.validationErrors,
-    [data?.error]
+    [data?.error],
   );
 
   return (
@@ -235,7 +241,7 @@ export default function LoginCallback() {
             <div className="text-sm text-error-500">{data.error.message}</div>
           )}
           <Button to="/" className="mt-4">
-            Back to login
+            {t("auth.backToLogin")}
           </Button>
         </div>
       ) : (

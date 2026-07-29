@@ -203,6 +203,10 @@ model Asset {
   thumbnailImage      String?
   mainImageExpiration DateTime?
   status              AssetStatus @default(AVAILABLE)
+  /// Where the asset sits in the EPDA intake workflow. Deliberately separate
+  /// from `status`, which is derived from custody/bookings and must not be
+  /// overloaded with intake meaning.
+  lifecycleStage      AssetLifecycleStage @default(PENDING)
   valuation           Float?      @map("value") // Field to store the monetary value of an asset
   availableToBook     Boolean     @default(true)
   sequentialId        String? // Sequential identifier for the asset (e.g., "SAM-0001")
@@ -292,6 +296,25 @@ enum AssetStatus {
   AVAILABLE
   IN_CUSTODY
   CHECKED_OUT
+}
+
+/// Intake workflow stage for the EPDA deployment.
+///
+/// Separate from `AssetStatus` on purpose: `status` is *derived* from custody
+/// and bookings (the system computes it), whereas this is *declared* by the
+/// warehouse. Folding the two together would let an asset be marked
+/// "available" while it is physically in someone's custody.
+///
+/// Flow: المستودعات registers the asset (PENDING) → المالية adds financial
+/// coding and depreciation → المستودعات audits and approves (READY). Only READY
+/// assets are visible to, and requestable by, ordinary employees.
+///
+/// @see {@link file://./../../../apps/docs/epda-workflow-and-roles.md}
+enum AssetLifecycleStage {
+  /// قيد الانتظار — registered, awaiting finance coding and warehouse sign-off.
+  PENDING
+  /// جاهز للتوزيع — approved by the warehouse; visible to employees.
+  READY
 }
 
 /** Determines how an asset is tracked throughout the system. Immutable after creation. */

@@ -1,5 +1,6 @@
 import type { ChangeEvent } from "react";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigation } from "react-router";
 
 import Input from "~/components/forms/input";
@@ -12,6 +13,7 @@ import { tw } from "~/utils/tw";
 import { SearchFieldTooltip } from "./search-field-tooltip";
 
 export const SearchForm = ({ className }: { className?: string }) => {
+  const { t } = useTranslation();
   const [_searchParams, setSearchParams] = useSearchParams();
   const { search, modelName, searchFieldLabel } =
     useLoaderData<SearchableIndexResponse>();
@@ -43,7 +45,7 @@ export const SearchForm = ({ className }: { className?: string }) => {
    * Resets page to 1 whenever search query changes
    */
   const debouncedHandleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const searchQuery = e.target.value;
     if (!searchQuery) {
@@ -79,7 +81,7 @@ export const SearchForm = ({ className }: { className?: string }) => {
             icon={disabled ? "spinner" : "x"}
             variant="tertiary"
             disabled={disabled}
-            title="Clear search"
+            title={t("ui.clearSearch")}
             className="absolute right-3.5 top-1/2 !w-auto -translate-y-1/2 cursor-pointer border-0 p-0 text-gray-400 hover:text-gray-700"
             onClick={clearSearch}
           />

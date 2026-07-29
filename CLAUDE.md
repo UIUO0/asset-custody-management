@@ -680,8 +680,8 @@ Province Development Authority). التخصيصات التالية مطبّقة 
 
 ### الهوية البصرية
 
-- الشعار: `public/static/images/epda-logo-full.png` (كامل)،
-  `epda-logo-white-text.png` (للخلفيات الداكنة)، `epda-symbol.png` (الرمز).
+- الشعار: `public/static/images/sda-logo-full.png` (كامل)،
+  `sda-logo-white-text.png` (للخلفيات الداكنة)، `sda-symbol.png` (الرمز).
   المسارات معرّفة في `app/config/shelf.config.ts` → `logoPath`.
 - اللون الأساسي: أزرق الهيئة `#044E8B` (مشتق من الشعار).
 - **لا تُعِد أي مرجع إلى `shelf.nu` أو شعاره** في الواجهة أو الإيميلات.

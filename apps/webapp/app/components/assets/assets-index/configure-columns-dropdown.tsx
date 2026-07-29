@@ -113,14 +113,14 @@ export function ConfigureColumnsDropdown() {
             <div className="content-inner relative mb-[60px] max-h-[412px] overflow-y-scroll">
               <div className="py-[2px]">
                 <div className="px-[10px] py-2 text-gray-500">
-                  Fixed columns
+                  {t("ui.fixedColumns")}
                 </div>
                 <ColumnRow className="flex items-center gap-1 pb-2">
                   <FakeCheckbox
                     checked={true}
                     className={tw("me-1 text-gray-600")}
                   />
-                  Name
+                  {t("assets.name")}
                 </ColumnRow>
               </div>
 
@@ -139,10 +139,7 @@ export function ConfigureColumnsDropdown() {
                 </div>
                 {/* Screen reader instructions */}
                 <div className="sr-only" id="reorder-instructions">
-                  Use Tab to navigate between column labels and drag handles.
-                  Press Space or Enter on a column label to toggle its
-                  visibility. Focus the drag handle and press Alt plus arrow up
-                  or arrow down to reorder columns.
+                  {t("assetsIndex.configureColumnsA11y")}
                 </div>
                 <Reorder.Group
                   values={currentColumns}
@@ -255,7 +252,7 @@ export function ConfigureColumnsDropdown() {
                 variant="secondary"
                 width="full"
               >
-                Apply
+                {t("ui.apply")}
               </Button>
             </footer>
           </fetcher.Form>
@@ -282,6 +279,7 @@ function ColumnsBulkActions({
   onSelectAll: () => void;
   onDeselectAll: () => void;
 }) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -305,7 +303,7 @@ function ColumnsBulkActions({
               setIsOpen(false);
             }}
           >
-            Select all
+            {t("ui.selectAll")}
           </Button>
 
           <Button
@@ -318,7 +316,7 @@ function ColumnsBulkActions({
               setIsOpen(false);
             }}
           >
-            Disselect all
+            {t("ui.disselectAll")}
           </Button>
         </PopoverContent>
       </PopoverPortal>

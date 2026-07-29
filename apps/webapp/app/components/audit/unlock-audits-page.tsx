@@ -5,6 +5,7 @@ import {
   ClipboardCheckIcon,
   SparklesIcon,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { CustomerPortalForm } from "~/components/subscription/customer-portal-form";
 import type { PriceWithProduct } from "~/components/subscription/prices";
@@ -42,8 +43,9 @@ export function UnlockAuditsPage({
   auditSubInfo?: AuditSubInfo;
   hasPaymentMethod?: boolean;
 }) {
+  const { t } = useTranslation();
   const [selectedInterval, setSelectedInterval] = useState<"month" | "year">(
-    "year"
+    "year",
   );
 
   const canStartTrial = isOwner && !usedAuditTrial;
@@ -59,7 +61,7 @@ export function UnlockAuditsPage({
             (yearlyPrice.unit_amount || 0) /
               12 /
               (monthlyPrice.unit_amount || 1)) *
-            100
+            100,
         )
       : null;
 
@@ -82,7 +84,7 @@ export function UnlockAuditsPage({
         {/* Feature list */}
         <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6">
           <h3 className="mb-4 text-lg font-semibold">
-            What you get with Audits
+            {t("audits.whatYouGet")}
           </h3>
           <ul className="space-y-3">
             {features.map((feature) => (
@@ -142,34 +144,37 @@ function PricingSection({
   onIntervalChange: (interval: "month" | "year") => void;
   yearlyDiscount: number | null;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6">
-      <h3 className="mb-4 text-lg font-semibold">Select your pricing plan</h3>
+      <h3 className="mb-4 text-lg font-semibold">
+        {t("audits.selectPricingPlan")}
+      </h3>
       <div className="flex flex-wrap items-stretch gap-4">
         {monthlyPrice && (
           <IntervalCard
-            label="Monthly"
+            label={t("audits.monthly")}
             isSelected={selectedInterval === "month"}
             onSelect={() => onIntervalChange("month")}
             mainPrice={fmtPrice(
               monthlyPrice.unit_amount || 0,
-              monthlyPrice.currency
+              monthlyPrice.currency,
             )}
-            footnote="Billed monthly"
+            footnote={t("welcome.billedMonthly")}
           />
         )}
         {yearlyPrice && (
           <IntervalCard
-            label="Yearly"
+            label={t("audits.yearly")}
             isSelected={selectedInterval === "year"}
             onSelect={() => onIntervalChange("year")}
             mainPrice={fmtPrice(
               Math.round((yearlyPrice.unit_amount || 0) / 12),
-              yearlyPrice.currency
+              yearlyPrice.currency,
             )}
             footnote={`Billed annually ${fmtPrice(
               yearlyPrice.unit_amount || 0,
-              yearlyPrice.currency
+              yearlyPrice.currency,
             )}`}
             discountBadge={
               yearlyDiscount != null && yearlyDiscount > 0
@@ -199,6 +204,8 @@ function IntervalCard({
   footnote: string;
   discountBadge?: string;
 }) {
+  const { t } = useTranslation();
+
   return (
     <button
       type="button"
@@ -207,7 +214,7 @@ function IntervalCard({
         "relative flex flex-1 cursor-pointer flex-col items-center rounded-lg p-4 text-center transition-colors",
         isSelected
           ? "border-2 border-primary-200 bg-primary-25"
-          : "border border-gray-200"
+          : "border border-gray-200",
       )}
     >
       {discountBadge && (
@@ -218,7 +225,7 @@ function IntervalCard({
       <p
         className={tw(
           "mb-1 text-sm font-medium",
-          isSelected ? "text-primary-600" : "text-gray-500"
+          isSelected ? "text-primary-600" : "text-gray-500",
         )}
       >
         {label}
@@ -228,20 +235,23 @@ function IntervalCard({
         <span className="text-sm font-normal text-gray-500">/mo</span>
       </p>
       <p className="text-xs text-gray-500">{footnote}</p>
-      <p className="mt-1 text-xs text-gray-500">per workspace</p>
+      <p className="mt-1 text-xs text-gray-500">
+        {t("subscription.perWorkspace")}
+      </p>
     </button>
   );
 }
 
 /** Shown when the user's audit trial has expired and subscription is paused */
 function TrialExpiredCTA({ auditSubInfo }: { auditSubInfo?: AuditSubInfo }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 text-center">
       <p className="mb-1 font-semibold text-gray-900">
-        Your Audits trial has ended
+        {t("audits.trialEnded")}
       </p>
       <p className="mb-2 text-sm text-gray-600">
-        Add a payment method to continue using Audits.
+        {t("audits.addPaymentToContinue")}
       </p>
       {auditSubInfo && (
         <p className="mb-4 text-sm text-gray-500">
@@ -251,7 +261,7 @@ function TrialExpiredCTA({ auditSubInfo }: { auditSubInfo?: AuditSubInfo }) {
               auditSubInfo.interval === "year"
                 ? Math.round(auditSubInfo.amount / 12)
                 : auditSubInfo.amount,
-              auditSubInfo.currency
+              auditSubInfo.currency,
             )}
             /mo
           </span>
@@ -267,7 +277,7 @@ function TrialExpiredCTA({ auditSubInfo }: { auditSubInfo?: AuditSubInfo }) {
       )}
       {!auditSubInfo && <div className="mb-4" />}
       <CustomerPortalForm
-        buttonText="Add payment method to continue"
+        buttonText={t("audits.addPaymentMethod")}
         buttonProps={{ variant: "primary", width: "full" }}
       />
     </div>
@@ -288,6 +298,7 @@ function OwnerCTAs({
   selectedInterval: "month" | "year";
   hasPaymentMethod: boolean;
 }) {
+  const { t } = useTranslation();
   const trialFetcher = useFetcher();
   const subscribeFetcher = useFetcher();
   const isStartingTrial = trialFetcher.state !== "idle";
@@ -308,10 +319,7 @@ function OwnerCTAs({
               className="mt-0.5 shrink-0"
             />
             <span className="text-[13px] text-gray-600">
-              I understand that after the 7-day free trial, my payment method on
-              file will be automatically charged at the regular subscription
-              rate. I can cancel anytime before the trial ends to avoid being
-              charged.
+              {t("subscription.trialConsent")}
             </span>
           </label>
         </div>
@@ -332,7 +340,9 @@ function OwnerCTAs({
           >
             <span className="item flex gap-2">
               <SparklesIcon className="size-4" />
-              {isStartingTrial ? "Enabling..." : "Enable for free for 7 days"}
+              {isStartingTrial
+                ? "Enabling..."
+                : t("subscription.enableFreeSevenDays")}
             </span>
           </Button>
         </trialFetcher.Form>
@@ -353,11 +363,11 @@ function OwnerCTAs({
               : selectedInterval === "year"
               ? `Subscribe yearly (${fmtPrice(
                   selectedPrice.unit_amount || 0,
-                  selectedPrice.currency
+                  selectedPrice.currency,
                 )}/yr)`
               : `Subscribe monthly (${fmtPrice(
                   selectedPrice.unit_amount || 0,
-                  selectedPrice.currency
+                  selectedPrice.currency,
                 )}/mo)`}
           </Button>
         </subscribeFetcher.Form>

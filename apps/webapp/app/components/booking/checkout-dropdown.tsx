@@ -96,7 +96,7 @@ export default function CheckoutDropdown({
   }
 
   // The quick option adapts to status: a full "Check out" (intent `checkOut`)
-  // while RESERVED, or "Check out remaining" (intent `checkOutRemaining`) while
+  // while RESERVED, or t("bookings.checkoutRemaining") (intent `checkOutRemaining`) while
   // ONGOING/OVERDUE. The two flags are mutually exclusive.
   const hasQuickCheckout = canFullCheckOut || canCheckOutRemaining;
   const quickCheckoutIntent = canCheckOutRemaining
@@ -108,7 +108,7 @@ export default function CheckoutDropdown({
 
   // The full check-out (RESERVED) must validate the WHOLE booking up front, so
   // it carries the strict precondition reasons (in custody, already booked,
-  // some asset already CHECKED_OUT elsewhere). "Check out remaining" only ever
+  // some asset already CHECKED_OUT elsewhere). t("bookings.checkoutRemaining") only ever
   // acts on the still-Booked AVAILABLE assets — partialCheckoutBooking guards
   // those per-asset server-side — so, like the scan entry point, it uses only
   // the generic `disabled` and must NOT inherit `hasCheckedOutAssets` (which is

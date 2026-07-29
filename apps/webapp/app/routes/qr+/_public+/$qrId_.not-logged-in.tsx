@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { z } from "zod";
@@ -5,12 +6,22 @@ import { CuboidIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 import { useSearchParams } from "~/hooks/search-params";
 import { usePosition } from "~/hooks/use-position";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getQrOrganizationLookup } from "~/modules/qr/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError } from "~/utils/error";
 import { error, payload, getParams } from "~/utils/http.server";
 
-export const meta = () => [{ title: appendToMetaTitle("QR not logged in") }];
+export const meta = ({ matches }: { matches: any[] }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match: any) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.qr.notLoggedInTitle) }];
+};
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const { qrId } = getParams(params, z.object({ qrId: z.string() }));
@@ -26,6 +37,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 }
 
 export default function QrNotLoggedIn() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const { qrId, canContactOwner } = useLoaderData<typeof loader>();
   usePosition();
@@ -39,12 +51,12 @@ export default function QrNotLoggedIn() {
           </div>
           <div className="mb-8">
             <h1 className="mb-2 text-[24px] font-semibold">
-              Thank you for scanning
+              {t("ui.thankYouForScanning")}
             </h1>
             <p className="text-gray-600">
               {canContactOwner
-                ? "Log in if you own this item. Contact the owner to report it found if it's lost."
-                : "Log in if you own this item. This code hasn't been claimed yet."}
+                ? t("qr.notLoggedInFoundHint")
+                : t("qr.notLoggedInUnclaimedHint")}
             </p>
           </div>
           <div className="flex flex-col">
@@ -52,10 +64,10 @@ export default function QrNotLoggedIn() {
               variant="primary"
               className="mb-4 max-w-full"
               to={encodeURI(
-                `/login?redirectTo=${searchParams.get("redirectTo")}`
+                `/login?redirectTo=${searchParams.get("redirectTo")}`,
               )}
             >
-              Log In
+              {t("auth.logIn")}
             </Button>
             {canContactOwner ? (
               <Button
@@ -63,7 +75,7 @@ export default function QrNotLoggedIn() {
                 to={`/qr/${qrId}/contact-owner`}
                 className="max-w-full"
               >
-                Contact Owner
+                {t("ui.contactOwner")}
               </Button>
             ) : null}
           </div>
@@ -76,7 +88,7 @@ export default function QrNotLoggedIn() {
           data-test-id="signupButton"
           to={encodeURI(`/join?redirectTo=${searchParams.get("redirectTo")}`)}
         >
-          Sign up
+          {t("ui.signUp")}
         </Button>
       </div>
     </>

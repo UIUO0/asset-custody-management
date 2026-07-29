@@ -151,7 +151,7 @@ function BookingSelect({
                   className="whitespace-nowrap text-xs font-normal text-gray-500 hover:text-gray-600"
                   onClick={() => setSelectedId(undefined)}
                 >
-                  Clear selection
+                  {t("ui.clearSelection")}
                 </Button>
               </When>
             </div>
@@ -345,7 +345,7 @@ export default function AddAssetsToExistingBookingDialog() {
                           className="w-full"
                           variant="secondary"
                         >
-                          Add only the rest of the assets
+                          {t("ui.addOnlyTheRestOfTheAssets")}
                         </Button>
                       </When>
                     </div>
@@ -361,7 +361,7 @@ export default function AddAssetsToExistingBookingDialog() {
                   disabled={disabled}
                   onClick={handleCloseDialog}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -369,7 +369,7 @@ export default function AddAssetsToExistingBookingDialog() {
                   width="full"
                   disabled={disabled}
                 >
-                  Confirm
+                  {t("common.confirm")}
                 </Button>
               </div>
             </div>

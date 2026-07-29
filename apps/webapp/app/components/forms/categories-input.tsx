@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import DynamicSelect from "../dynamic-select/dynamic-select";
 import InlineEntityCreationDialog from "../inline-entity-creation-dialog/inline-entity-creation-dialog";
@@ -33,6 +34,7 @@ export default function CategoriesInput({
   categories: incomingCategories,
   error,
 }: CategoriesInputProps) {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<CategoryRow[]>(() => {
     const source = incomingCategories.length === 0 ? [""] : incomingCategories;
     return source.map((value) => ({ clientKey: makeCategoryKey(), value }));
@@ -57,32 +59,32 @@ export default function CategoriesInput({
                 fieldName={name(i)}
                 defaultValue={category}
                 model={{ name: "category", queryKey: "name" }}
-                contentLabel="Category"
+                contentLabel={t("assets.category")}
                 initialDataKey="categories"
                 countKey="totalCategories"
-                placeholder="Select Category"
+                placeholder={t("ui.selectCategory")}
                 className="flex-1"
                 excludeItems={siblingValues}
                 onChange={(value) => {
                   if (value !== undefined) {
                     setRows((prev) =>
-                      prev.map((r, idx) => (idx === i ? { ...r, value } : r))
+                      prev.map((r, idx) => (idx === i ? { ...r, value } : r)),
                     );
                   }
                 }}
                 extraContent={({ onItemCreated, closePopover }) => (
                   <InlineEntityCreationDialog
                     type="category"
-                    title="Create new category"
-                    buttonLabel="Create new category"
+                    title={t("common.createNewCategory")}
+                    buttonLabel={t("common.createNewCategory")}
                     onCreated={(created) => {
                       if (created?.type !== "category") return;
 
                       const newId = created.entity.id;
                       setRows((prev) =>
                         prev.map((r, idx) =>
-                          idx === i ? { ...r, value: newId } : r
-                        )
+                          idx === i ? { ...r, value: newId } : r,
+                        ),
                       );
                       onItemCreated({
                         id: newId,
@@ -127,7 +129,7 @@ export default function CategoriesInput({
           ]);
         }}
       >
-        Add another category
+        {t("ui.addAnotherCategory")}
       </Button>
     </div>
   );

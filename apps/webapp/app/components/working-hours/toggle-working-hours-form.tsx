@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -13,6 +14,7 @@ export function EnableWorkingHoursForm({
   enabled: boolean;
   header: { title: string; subHeading?: string };
 }) {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const fetcher = useFetcher();
   const zo = useZorm("EnableWorkingHoursForm", WorkingHoursToggleSchema);
@@ -31,7 +33,7 @@ export function EnableWorkingHoursForm({
           <FormRow
             rowLabel={`Enable working hours`}
             subHeading={
-              <div>Working hours will be enabled for your workspace.</div>
+              <div>{t("ui.workingHoursWillBeEnabledForYourWorkspace")}</div>
             }
             className="border-b-0 pb-[10px] pt-0"
           >
@@ -41,13 +43,13 @@ export function EnableWorkingHoursForm({
                 disabled={disabled} // Disable for self service users
                 defaultChecked={enabled}
                 required
-                title={"Toggle working hours"}
+                title={t("ui.toggleWorkingHours")}
               />
               <label
                 htmlFor={`enableWorkingHours-${zo.fields.enableWorkingHours()}`}
                 className=" hidden text-gray-500"
               >
-                Enable working hours
+                {t("ui.enableWorkingHours")}
               </label>
             </div>
             <input type="hidden" value="toggle" name="intent" />

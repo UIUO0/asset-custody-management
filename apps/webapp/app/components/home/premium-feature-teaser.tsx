@@ -1,4 +1,5 @@
 import type React from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../shared/button";
 
 /**
@@ -12,7 +13,7 @@ import { Button } from "../shared/button";
 export function PremiumFeatureTeaser({
   headline,
   description,
-  ctaLabel = "Create a Team workspace",
+  ctaLabel,
   ctaTo = "/account-details/workspace",
   secondaryLabel,
   secondaryTo,
@@ -26,6 +27,10 @@ export function PremiumFeatureTeaser({
   secondaryTo?: string;
   icon?: React.ReactNode;
 }) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `ctaLabel`. */
+  const resolvedCtaLabel = ctaLabel ?? t("home.createTeamWorkspace");
+
   return (
     <div className="flex size-full min-h-[200px] flex-col items-center justify-center gap-3 px-4 text-center">
       {/* Gradient icon circle */}
@@ -58,7 +63,7 @@ export function PremiumFeatureTeaser({
 
       {/* Primary CTA */}
       <Button to={ctaTo} variant="primary" className="mt-1">
-        {ctaLabel}
+        {resolvedCtaLabel}
       </Button>
 
       {/* Optional secondary link */}

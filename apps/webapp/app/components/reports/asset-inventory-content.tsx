@@ -203,7 +203,7 @@ export function AssetInventoryContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Total Assets
+                {t("reports.totalAssets")}
               </span>
             </div>
           </div>
@@ -233,7 +233,9 @@ export function AssetInventoryContent({
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Assigned</span>
+              <span className="text-xs text-gray-500">
+                {t("reports.colAssigned")}
+              </span>
               <span className="text-lg font-medium text-gray-900">
                 {inCustodyCount}
               </span>
@@ -245,7 +247,9 @@ export function AssetInventoryContent({
       {/* Data table */}
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
-          <h3 className="text-sm font-semibold text-gray-900">Assets</h3>
+          <h3 className="text-sm font-semibold text-gray-900">
+            {t("nav.assets")}
+          </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}
           </span>

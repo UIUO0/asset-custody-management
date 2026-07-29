@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { CheckIcon, UserIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { Separator } from "~/components/shared/separator";
 import When from "~/components/when/when";
@@ -29,6 +30,7 @@ export default function AuditTeamMemberSelector({
   error,
   defaultValue,
 }: AuditTeamMemberSelectorProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   // Lazy initializer avoids a false-positive derived-state lint: after mount this
   // state is user-controlled via the selector, so it must NOT re-sync with the prop.
@@ -70,7 +72,7 @@ export default function AuditTeamMemberSelector({
         tm.name.toLowerCase().includes(normalizedQuery) ||
         tm.user?.firstName?.toLowerCase().includes(normalizedQuery) ||
         tm.user?.lastName?.toLowerCase().includes(normalizedQuery) ||
-        tm.user?.email?.includes(normalizedQuery)
+        tm.user?.email?.includes(normalizedQuery),
     );
   }, [data, searchQuery]);
 
@@ -93,7 +95,7 @@ export default function AuditTeamMemberSelector({
         <UserIcon className="size-4 text-gray-500" />
         <input
           type="text"
-          placeholder="Find team members"
+          placeholder={t("ui.findTeamMembers")}
           className="flex-1 border-none p-0 focus:border-none focus:ring-0"
           value={searchQuery}
           onChange={(event) => {
@@ -113,8 +115,8 @@ export default function AuditTeamMemberSelector({
             disabled={selectedTeamMember === currentUserTeamMember.id}
           >
             {selectedTeamMember === currentUserTeamMember.id
-              ? "Assigned to self"
-              : "Assign to self"}
+              ? t("audits.assignedToSelf")
+              : t("audits.assignToSelf")}
           </Button>
         </div>
       )}
@@ -151,7 +153,7 @@ export default function AuditTeamMemberSelector({
       <When truthy={!isLoading}>
         {teamMembers.length === 0 ? (
           <div className="p-6 text-center text-sm text-gray-500">
-            No team members available
+            {t("ui.noTeamMembersAvailable")}
           </div>
         ) : (
           teamMembers.map((teamMember) => {
@@ -162,13 +164,13 @@ export default function AuditTeamMemberSelector({
                 key={teamMember.id}
                 className={tw(
                   "flex cursor-pointer items-center justify-between gap-4 border-b px-6 py-4 hover:bg-gray-100",
-                  isTeamMemberSelected && "bg-gray-100"
+                  isTeamMemberSelected && "bg-gray-100",
                 )}
                 role="button"
                 tabIndex={0}
                 onClick={() => handleTeamMemberSelect(teamMember)}
                 onKeyDown={handleActivationKeyPress(() =>
-                  handleTeamMemberSelect(teamMember)
+                  handleTeamMemberSelect(teamMember),
                 )}
               >
                 <div className="flex items-center gap-2">

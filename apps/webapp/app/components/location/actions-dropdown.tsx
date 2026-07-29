@@ -6,6 +6,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { StartAuditFromContextDialog } from "~/components/audit/start-audit-from-context-dialog";
 import Icon from "~/components/icons/icon";
@@ -17,7 +18,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { DeleteLocation } from "./delete-location";
 import { Button } from "../shared/button";
@@ -39,6 +40,7 @@ const ConditionalActionsDropdown = ({
   assetCount,
   fullWidth,
 }: Props) => {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const hasChildLocations = (location.childCount ?? 0) > 0;
   const { ref: popoverContentRef, open, setOpen } = useControlledDropdownMenu();
@@ -53,7 +55,7 @@ const ConditionalActionsDropdown = ({
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -67,7 +69,7 @@ const ConditionalActionsDropdown = ({
             data-test-id="assetActionsButton"
             className={tw(
               "asset-actions hidden sm:flex",
-              fullWidth ? "w-full" : ""
+              fullWidth ? "w-full" : "",
             )}
           >
             <span className="flex items-center gap-2">
@@ -126,7 +128,7 @@ const ConditionalActionsDropdown = ({
                     }}
                   >
                     <span className="flex items-center gap-2">
-                      <Icon icon="start-audit" /> Create audit
+                      <Icon icon="start-audit" /> {t("audits.createAudit")}
                     </span>
                   </Button>
                 </div>
@@ -160,7 +162,7 @@ const ConditionalActionsDropdown = ({
                       className="justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
                       width="full"
                     >
-                      Delete
+                      {t("common.delete")}
                     </Button>
                   }
                 />
@@ -175,7 +177,7 @@ const ConditionalActionsDropdown = ({
                   width="full"
                   onClick={handleMenuClose}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>

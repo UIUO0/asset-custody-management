@@ -92,7 +92,7 @@ export const loader = async ({
       });
     }
 
-    const { organizationId } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId: authSession.userId,
       request,
       entity: PermissionEntity.qr,
@@ -114,6 +114,12 @@ export const loader = async ({
       locations,
       totalLocations,
     } = await getPaginatedAndFilterableAssets({
+      /**
+       * PENDING assets are invisible to roles scoped to their own records, so
+       * they must not appear in this picker either — otherwise an employee
+       * could attach inventory the warehouse has not released.
+       */
+      onlyReadyAssets: isScopedToOwnRecords,
       request,
       organizationId,
     });
@@ -250,7 +256,7 @@ export default function QrLinkExisting() {
                 className="block max-w-none font-normal  text-gray-500 hover:text-gray-600"
                 type="button"
               >
-                Clear all filters
+                {t("list.clearAllFilters")}
               </Button>
               <div className="text-gray-500"> | </div>
             </div>
@@ -335,7 +341,7 @@ export default function QrLinkExisting() {
       {/* Footer of the modal */}
       <footer className="-mx-4 flex justify-between border-t px-4 pt-3">
         <Button variant="secondary" to={`/qr/${qrId}/link`} width="full">
-          Close
+          {t("common.close")}
         </Button>
       </footer>
     </div>
@@ -386,6 +392,7 @@ export const ConfirmLinkingAssetModal = ({
    */
   onCancel: () => void;
 }) => {
+  const { t } = useTranslation();
   const { items: assets } = useLoaderData<typeof loader>();
   const asset = assets.find((a) => a.id === assetId);
   const fetcher = useFetcher<typeof action>();
@@ -409,15 +416,13 @@ export const ConfirmLinkingAssetModal = ({
             Link QR code with ‘{asset.title}’
           </AlertDialogTitle>
           <AlertDialogDescription className="text-start">
-            Are you sure that you want to do this? The current QR code that is
-            linked to this asset will be unlinked. You can always re-link it
-            with the old QR code.
+            {t("qr.relinkAssetConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel asChild>
             <Button type="button" variant="secondary" disabled={disabled}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
 
@@ -429,7 +434,7 @@ export const ConfirmLinkingAssetModal = ({
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </fetcher.Form>
           {data?.error ? (

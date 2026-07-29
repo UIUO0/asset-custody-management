@@ -35,6 +35,7 @@ import {
   getParams,
   parseData,
 } from "~/utils/http.server";
+import { assertAssetsBelongToOrg } from "~/utils/org-validation.server";
 import {
   PermissionAction,
   PermissionEntity,
@@ -61,7 +62,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         request,
         entity: PermissionEntity.booking,
         action: PermissionAction.update,
-      }
+      },
     );
 
     const isSelfService = role === OrganizationRoles.SELF_SERVICE;
@@ -105,7 +106,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   try {
     assertIsPost(request);
 
-    const { organizationId } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.booking,
@@ -137,7 +138,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           throw new Error("expected object");
         }
         for (const [assetId, rawValue] of Object.entries(
-          parsed as Record<string, unknown>
+          parsed as Record<string, unknown>,
         )) {
           const value =
             typeof rawValue === "number" ? rawValue : Number(rawValue);
@@ -209,8 +210,20 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     // stay standalone.
     const kitSliceAssetIds = new Set(kitSlices.map((s) => s.assetId));
     const standaloneAssetIds = assetIds.filter(
-      (id) => !kitSliceAssetIds.has(id)
+      (id) => !kitSliceAssetIds.has(id),
     );
+
+    /**
+     * Write-side of the intake gate. PENDING assets never appear to roles
+     * scoped to their own records, so an id reaching here for such a user came
+     * from somewhere it shouldn't have — reject it rather than let a scan add
+     * unreleased inventory to a booking. Mirrors the mobile scan endpoint.
+     */
+    await assertAssetsBelongToOrg({
+      assetIds,
+      organizationId,
+      onlyReadyAssets: isScopedToOwnRecords,
+    });
 
     await addScannedAssetsToBooking({
       bookingId,

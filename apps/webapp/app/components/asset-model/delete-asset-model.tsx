@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { AssetModel } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -24,6 +25,7 @@ export const DeleteAssetModel = ({
   };
   trigger?: ReactNode;
 }) => {
+  const { t } = useTranslation();
   const assetCount = assetModel._count?.assets ?? 0;
   const fetcher = useFetcher();
   const disabled = isFormProcessing(fetcher.state);
@@ -36,7 +38,7 @@ export const DeleteAssetModel = ({
       type="button"
       className="text-[12px]"
       icon={"trash"}
-      title={"Delete"}
+      title={t("common.delete")}
     />
   );
 
@@ -52,8 +54,7 @@ export const DeleteAssetModel = ({
           </span>
           <AlertDialogTitle>Delete {assetModel.name}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this asset model? This action cannot
-            be undone.
+            {t("assetModels.deleteConfirm")}
           </AlertDialogDescription>
           {assetCount > 0 ? (
             <div className="rounded-md border border-warning-200 bg-warning-25 p-3 text-sm text-warning-700">
@@ -66,7 +67,7 @@ export const DeleteAssetModel = ({
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
             <Button type="button" variant="secondary">
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
           <fetcher.Form method="delete" action="/settings/asset-models">
@@ -76,7 +77,7 @@ export const DeleteAssetModel = ({
               type="submit"
               disabled={disabled}
             >
-              {disabled ? "Deleting..." : "Delete"}
+              {disabled ? "Deleting..." : t("common.delete")}
             </Button>
           </fetcher.Form>
         </AlertDialogFooter>

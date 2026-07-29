@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import type { MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -7,6 +8,8 @@ import { AuditNotes } from "~/components/audit/notes";
 import { NoPermissionsIcon } from "~/components/icons/library";
 import TextualDivider from "~/components/shared/textual-divider";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getAuditNotes } from "~/modules/audit/note-service.server";
 import {
   getAuditSessionDetails,
@@ -19,12 +22,24 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "Audit Activity" },
-];
+export const meta: MetaFunction<typeof loader> = ({ data, matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [
+    {
+      title: data
+        ? appendToMetaTitle(data.header.title)
+        : resources.audits.activityTitle,
+    },
+  ];
+};
 
 export const handle = {
   breadcrumb: () => "Activity",
@@ -81,6 +96,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 }
 
 export default function AuditActivity() {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const canReadAuditNotes = userHasPermission({
     roles,
@@ -92,7 +108,10 @@ export default function AuditActivity() {
     <div className="w-full">
       {canReadAuditNotes ? (
         <>
-          <TextualDivider text="Activity" className="mb-8 lg:hidden" />
+          <TextualDivider
+            text={t("bookings.tabActivity")}
+            className="mb-8 lg:hidden"
+          />
           <AuditNotes />
         </>
       ) : (
@@ -101,8 +120,8 @@ export default function AuditActivity() {
             <div className="mb-4 inline-flex size-8 items-center justify-center  rounded-full bg-primary-100 p-2 text-primary-600">
               <NoPermissionsIcon />
             </div>
-            <h5>Insufficient permissions</h5>
-            <p>You are not allowed to view audit activity</p>
+            <h5>{t("team.insufficientPermissions")}</h5>
+            <p>{t("ui.youAreNotAllowedToViewAuditActivity")}</p>
           </div>
         </div>
       )}

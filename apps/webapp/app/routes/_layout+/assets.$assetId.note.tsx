@@ -1,8 +1,14 @@
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router";
+import type {
+  LoaderFunctionArgs,
+  ActionFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import { data, redirect } from "react-router";
 import { z } from "zod";
 import { MarkdownNoteSchema } from "~/components/notes/markdown-note-form";
 import { db } from "~/database/db.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { createNote, deleteNote } from "~/modules/note/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { sendNotification } from "~/utils/emitter/send-notification.server";
@@ -20,7 +26,15 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Asset notes") }];
+export const meta: MetaFunction = ({ matches }: { matches: any[] }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match: any) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.assets.notesTitle) }];
+};
 
 export function loader({ params }: LoaderFunctionArgs) {
   const { assetId } = getParams(params, z.object({ assetId: z.string() }));
@@ -69,7 +83,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           MarkdownNoteSchema,
           {
             additionalData: { userId, assetId },
-          }
+          },
         );
 
         sendNotification({
@@ -96,7 +110,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           }),
           {
             additionalData: { userId, assetId },
-          }
+          },
         );
 
         sendNotification({

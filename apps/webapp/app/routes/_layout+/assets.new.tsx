@@ -1,4 +1,5 @@
-import { TagUseFor } from "@prisma/client";
+const AssetLifecycleStage = { PENDING: "PENDING", READY: "READY" } as const;
+const TagUseFor = { ASSET: "ASSET", BOOKING: "BOOKING" } as const;
 import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
@@ -11,6 +12,7 @@ import {
 } from "~/components/assets/form";
 import Header from "~/components/layout/header";
 import { useSearchParams } from "~/hooks/search-params";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { estimateNextSequentialId } from "~/modules/asset/sequential-id.server";
@@ -49,13 +51,9 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { slugify } from "~/utils/slugify";
-
-const title = "New asset";
-const header = {
-  title,
-};
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -97,6 +95,13 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       estimateNextSequentialId(organizationId),
       getAssetModels({ organizationId, page: 1, perPage: 100 }),
     ]);
+
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+    const header = {
+      title: t("assetForm.newAsset"),
+    };
 
     return payload({
       header,
@@ -145,7 +150,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
   try {
     assertIsPost(request);
 
-    const { organizationId, canUseBarcodes } = await requirePermission({
+    const { organizationId, canUseBarcodes, role } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.asset,
@@ -216,6 +221,21 @@ export async function action({ context, request }: LoaderFunctionArgs) {
     /** This checks if tags are passed and build the  */
     const tags = buildTagsSet(payload.tags);
 
+    /**
+     * The stage control is hidden from roles without `asset.approve`, but the
+     * field travels in the form body — so re-check here rather than trusting
+     * it. A caller who cannot approve always lands on PENDING, whatever they
+     * posted. Applies to both the bulk and single-asset branches below.
+     */
+    const canApprove = userHasPermission({
+      roles: role ? [role] : [],
+      entity: PermissionEntity.asset,
+      action: PermissionAction.approve,
+    });
+    const requestedStage = canApprove
+      ? payload.lifecycleStage
+      : AssetLifecycleStage.PENDING;
+
     // ── Bulk-create branch ────────────────────────────────────────────
     // When the form was submitted in bulk mode (`bulk=1` hidden input),
     // route through bulkCreateAssetsFromModel instead of createAsset.
@@ -241,6 +261,9 @@ export async function action({ context, request }: LoaderFunctionArgs) {
       const nameTemplate = (payload.nameTemplate ?? "").trim();
 
       const result = await bulkCreateAssetsFromModel({
+        // Same gate as the single-asset path below — a caller who cannot
+        // approve always produces PENDING assets, however the form was posted.
+        lifecycleStage: requestedStage,
         assetModelId: validatedModelId,
         count,
         nameTemplate,
@@ -290,6 +313,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
 
     const asset = await createAsset({
       organizationId,
+      lifecycleStage: requestedStage,
       title,
       description,
       userId: authSession.userId,

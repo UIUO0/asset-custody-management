@@ -7,6 +7,7 @@ import {
   PopoverContent,
 } from "@radix-ui/react-popover";
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ChevronRight } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
@@ -29,6 +30,7 @@ export function FieldSelector({
   filters: Filter[];
   setFilter: (name: string) => void;
 }) {
+  const { t } = useTranslation();
   const { settings } = useLoaderData<AssetIndexLoaderData>();
   const columns = settings.columns as Column[];
   const [fieldName, setFieldName] = useState<string>("");
@@ -42,7 +44,7 @@ export function FieldSelector({
 
   const baseAvailableColumns = useMemo(
     () => getAvailableColumns(columns, filters, "filter"),
-    [columns, filters]
+    [columns, filters],
   );
 
   const filteredColumns = useMemo(() => {
@@ -51,7 +53,7 @@ export function FieldSelector({
     return baseAvailableColumns.filter((column) =>
       parseColumnName(column.name)
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+        .includes(searchQuery.toLowerCase()),
     );
   }, [baseAvailableColumns, searchQuery]);
 
@@ -98,7 +100,7 @@ export function FieldSelector({
   };
 
   const displayText = filter.isNew
-    ? "Select column"
+    ? t("advancedFilters.selectColumnShort")
     : parseColumnName(fieldName);
 
   return (
@@ -117,14 +119,14 @@ export function FieldSelector({
         <PopoverContent
           align="start"
           className={tw(
-            "z-[999999] mt-2 max-h-[400px] overflow-scroll rounded-md border border-gray-200 bg-white"
+            "z-[999999] mt-2 max-h-[400px] overflow-scroll rounded-md border border-gray-200 bg-white",
           )}
         >
           <div className="flex items-center border-b">
             <Search className="ms-4 size-4 text-gray-500" />
             <input
               ref={searchInputRef}
-              placeholder="Search column..."
+              placeholder={t("advancedFilters.searchColumn")}
               className="border-0 px-4 py-2 ps-2 text-[14px] focus:border-0 focus:ring-0"
               value={searchQuery}
               onChange={handleSearch}
@@ -147,7 +149,7 @@ export function FieldSelector({
                   // Bottom border - exclude for last item
                   index !== filteredColumns.length - 1 &&
                     "after:absolute after:inset-x-0 after:bottom-0 after:border-b after:border-gray-200",
-                ]
+                ],
               )}
               role="option"
               aria-selected={selectedIndex === index}
@@ -165,7 +167,7 @@ export function FieldSelector({
           ))}
           {filteredColumns.length === 0 && (
             <div className="px-4 py-2 text-[14px] text-gray-500">
-              No columns found
+              {t("ui.noColumnsFound")}
             </div>
           )}
         </PopoverContent>

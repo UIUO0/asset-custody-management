@@ -8,7 +8,7 @@ export function LogoForEmail() {
     <div style={{ margin: "0 auto", display: "flex" }}>
       <Img
         src={`${SERVER_URL}${
-          logoPath?.fullLogo ?? "/static/images/epda-logo-full.png"
+          logoPath?.fullLogo ?? "/static/images/sda-logo-full.png"
         }`}
         alt="شعار هيئة تطوير المنطقة الشرقية"
         width="auto"

@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -11,9 +12,10 @@ export const BulkRemoveAssetsFromAuditSchema = z.object({
 });
 
 export default function BulkRemoveAssetsFromAuditDialog() {
+  const { t } = useTranslation();
   const zo = useZorm(
     "BulkRemoveAssetsFromAudit",
-    BulkRemoveAssetsFromAuditSchema
+    BulkRemoveAssetsFromAuditSchema,
   );
   const totalSelectedItems = useAtomValue(selectedBulkItemsCountAtom);
   const { session } = useLoaderData<{
@@ -49,7 +51,7 @@ export default function BulkRemoveAssetsFromAuditDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -58,7 +60,7 @@ export default function BulkRemoveAssetsFromAuditDialog() {
               disabled={disabled}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:!bg-error-800"
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

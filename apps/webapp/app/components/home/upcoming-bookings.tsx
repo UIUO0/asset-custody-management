@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useCanUseBookings } from "~/hooks/use-can-use-bookings";
 import type { loader } from "~/routes/_layout+/home";
@@ -15,6 +16,7 @@ type BookingItem = ReturnType<
 >["upcomingBookings"][number];
 
 export default function UpcomingBookings() {
+  const { t } = useTranslation();
   const { upcomingBookings } = useLoaderData<typeof loader>();
   const canUseBookings = useCanUseBookings();
 
@@ -22,7 +24,7 @@ export default function UpcomingBookings() {
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Upcoming bookings
+          {t("ui.upcomingBookings")}
         </span>
         <div className="flex items-center gap-2">
           {canUseBookings && (
@@ -31,7 +33,7 @@ export default function UpcomingBookings() {
               variant="block-link-gray"
               className="!mt-0 text-xs"
             >
-              View all
+              {t("audits.viewAll")}
             </Button>
           )}
         </div>
@@ -39,8 +41,8 @@ export default function UpcomingBookings() {
       {!canUseBookings ? (
         <div className="flex flex-1 items-center justify-center p-4">
           <PremiumFeatureTeaser
-            headline="Schedule & track checkouts"
-            description="Reserve assets ahead of time and never double-book equipment again."
+            headline={t("home.upcomingBookingsTagline")}
+            description={t("ui.reserveAssetsAheadOfTimeAndNeverDoubleBookEq")}
           />
         </div>
       ) : upcomingBookings.length > 0 ? (
@@ -103,10 +105,10 @@ export default function UpcomingBookings() {
       ) : (
         <div className="flex flex-1 items-center justify-center p-4">
           <DashboardEmptyState
-            text="No planned bookings"
-            subText="Bookings with Reserved status will appear here."
+            text={t("ui.noPlannedBookings")}
+            subText={t("home.upcomingBookingsEmpty")}
             ctaTo="/bookings/new"
-            ctaText="Create a booking"
+            ctaText={t("bookings.createBooking")}
           />
         </div>
       )}

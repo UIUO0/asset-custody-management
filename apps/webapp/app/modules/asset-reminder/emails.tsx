@@ -9,6 +9,7 @@ import {
   Row,
   Text,
 } from "@react-email/components";
+import { useTranslation } from "react-i18next";
 import colors from "tailwindcss/colors";
 import { config } from "~/config/shelf.config";
 import { CustomEmailFooter } from "~/emails/components/custom-footer";
@@ -81,6 +82,7 @@ function AssetAlertEmailTemplate({
   isOwner,
   customEmailFooter,
 }: AssetAlertEmailProps) {
+  const { t } = useTranslation();
   const userName = resolveUserDisplayName(user);
 
   const isEmailExpired = isAssetImageExpired(asset.mainImageExpiration);
@@ -88,7 +90,7 @@ function AssetAlertEmailTemplate({
   return (
     <Html>
       <Head>
-        <title>Asset Reminder Notice</title>
+        <title>{t("ui.assetReminderNotice")}</title>
       </Head>
 
       <Container
@@ -109,7 +111,7 @@ function AssetAlertEmailTemplate({
         </div>
 
         <div style={{ paddingTop: "8px" }}>
-          <Text style={styles.h1}>Asset Reminder Notice</Text>
+          <Text style={styles.h1}>{t("ui.assetReminderNotice")}</Text>
 
           <Text style={{ marginBottom: "20px", ...styles.p }}>
             Hi {userName}, your asset reminder date has been reached. Please
@@ -175,7 +177,7 @@ function AssetAlertEmailTemplate({
               marginBottom: "30px",
             }}
           >
-            Open asset page
+            {t("ui.openAssetPage")}
           </Button>
 
           {isOwner ? (
@@ -193,8 +195,7 @@ function AssetAlertEmailTemplate({
                 <span style={{ fontWeight: "bold" }}>{workspaceName}</span>.
               </Text>
               <Text style={{ ...styles.p, marginBottom: "48px" }}>
-                If you think you weren't supposed to have received this email
-                please contact the owner of the workspace.
+                {t("reminders.wrongRecipientHint")}
               </Text>
             </>
           )}

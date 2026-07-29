@@ -16,6 +16,7 @@
  * @see {@link file://./../../routes/_layout+/assets.new.tsx} bulk branch
  */
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../shared/button";
 import {
   AlertDialog,
@@ -73,6 +74,7 @@ function BulkCreateSuccessDialog({
   success: BulkCreateSuccess;
   sampleTitles?: string[];
 }) {
+  const { t } = useTranslation();
   // Local dismissal flag — fresh per `key` change above, so the next
   // submit's payload remounts with `dismissed=false` automatically.
   const [dismissed, setDismissed] = useState(false);
@@ -114,13 +116,13 @@ function BulkCreateSuccessDialog({
             variant="secondary"
             onClick={() => setDismissed(true)}
           >
-            Close
+            {t("common.close")}
           </Button>
           <Button
             to={`/assets?assetModel=${success.assetModelId}`}
             onClick={() => setDismissed(true)}
           >
-            View assets
+            {t("assetUpdate.viewAssets")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

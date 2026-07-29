@@ -245,6 +245,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           orderBy: "title",
           orderDirection: "asc",
           perPage: 8,
+          // Search must not be a side channel around the intake gate.
+          onlyReadyAssets: isScopedToOwnRecords,
           extraInclude: {
             barcodes: {
               select: { id: true, value: true, type: true },

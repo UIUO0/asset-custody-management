@@ -413,7 +413,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
 
   const { data } = fetcher;
   const isSubmitting = useDisabled(fetcher);
-  const disabled = isSubmitting || agreed !== "I AGREE";
+  const disabled = isSubmitting || agreed !== t("ui.iAgree");
   const isSuccessful = data && !data.error;
   //
 
@@ -491,7 +491,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                   name="agree"
                   value={agreed}
                   onChange={(e) => setAgreed(e.target.value.toUpperCase())}
-                  placeholder="I AGREE"
+                  placeholder={t("ui.iAgree")}
                   pattern="^I AGREE$" // We use a regex to make sure the user types the exact string
                   required
                   onKeyDown={(e) => {
@@ -668,9 +668,7 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                   }}
                   disabled={disabled}
                 >
-                  {isSubmitting
-                    ? t("assetImport.importing")
-                    : t("common.import")}
+                  {isSubmitting ? "Importing..." : t("common.import")}
                 </Button>
               </>
             )}

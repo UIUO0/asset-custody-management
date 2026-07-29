@@ -85,8 +85,8 @@ export function AssetModelFormRow({
           model={{ name: "assetModel", queryKey: "name" }}
           triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
           placeholder={t("assetForm.selectAssetModel")}
-          contentLabel="Asset Models"
-          label="Asset Model"
+          contentLabel={t("assetModels.title")}
+          label={t("assetForm.assetModel")}
           hideLabel
           initialDataKey="assetModels"
           countKey="totalAssetModels"
@@ -96,9 +96,9 @@ export function AssetModelFormRow({
           onChange={onChange}
           extraContent={({ onItemCreated, closePopover }) => (
             <InlineEntityCreationDialog
-              title="Create new asset model"
+              title={t("ui.createNewAssetModel")}
               type="assetModel"
-              buttonLabel="Create new asset model"
+              buttonLabel={t("ui.createNewAssetModel")}
               onCreated={(created) => {
                 if (created?.type !== "assetModel") return;
                 const model = created.entity;

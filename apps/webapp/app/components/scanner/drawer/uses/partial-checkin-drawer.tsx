@@ -878,8 +878,8 @@ export default function PartialCheckinDrawer({
       count: assetsNotInBookingIds.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong> not
-          part of this booking.
+          <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong>{" "}
+          {t("scanner.blockerNotPartOfBooking")}
         </>
       ),
       onResolve: () => removeAssetsFromList(assetsNotInBookingIds),
@@ -931,7 +931,7 @@ export default function PartialCheckinDrawer({
           already covered by scanned kit QR codes.
         </>
       ),
-      description: "Kit QR codes include all kit assets automatically",
+      description: t("ui.kitQrCodesIncludeAllKitAssetsAutomatically"),
       onResolve: () => removeItemsFromList(qrIdsOfRedundantAssets),
     },
     {
@@ -939,8 +939,8 @@ export default function PartialCheckinDrawer({
       count: kitsNotInBooking.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong> not
-          part of this booking.
+          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
+          {t("scanner.blockerNotPartOfBooking")}
         </>
       ),
       onResolve: () => removeItemsFromList(qrIdsOfKitsNotInBooking),
@@ -950,7 +950,7 @@ export default function PartialCheckinDrawer({
       count: errors.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} QR codes `}</strong> are invalid.
+          <strong>{`${count} QR codes `}</strong> {t("scanner.blockerInvalid")}
         </>
       ),
       onResolve: () => removeItemsFromList(errors.map(([qrId]) => qrId)),
@@ -1692,8 +1692,8 @@ function ReconciledKitGroup({
                 <div className="flex flex-wrap items-center gap-1">
                   <span className={assetTypePillClass}>kit</span>
                   <AvailabilityBadge
-                    badgeText="Checked in"
-                    tooltipTitle="Already checked in"
+                    badgeText={t("bookings.qtyCheckedIn")}
+                    tooltipTitle={t("scanAvailability.alreadyCheckedIn")}
                     tooltipContent={t("scanner.allKitAssetsReconciled")}
                     className="border-green-200 bg-green-50 text-green-700"
                   />
@@ -1727,8 +1727,8 @@ function ReconciledKitGroup({
                       <div className="flex flex-wrap items-center gap-1">
                         <span className={assetTypePillClass}>asset</span>
                         <AvailabilityBadge
-                          badgeText="Checked in"
-                          tooltipTitle="Already checked in"
+                          badgeText={t("bookings.qtyCheckedIn")}
+                          tooltipTitle={t("scanAvailability.alreadyCheckedIn")}
                           tooltipContent={
                             asset.kind === "QUANTITY_TRACKED"
                               ? t("scanner.allUnitsReconciled")
@@ -1784,16 +1784,20 @@ function ReconciledQtySummary({
           <div className="flex flex-col gap-1 text-xs">
             <div className="font-semibold text-gray-900">
               {remaining === 0
-                ? "All units checked in"
+                ? t("bookings.allUnitsCheckedIn")
                 : t("scanner.partiallyCheckedIn")}
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-gray-600">Booked</span>
+              <span className="text-gray-600">
+                {t("bookings.legendBooked")}
+              </span>
               <span className="tabular-nums text-gray-900">{booked}</span>
             </div>
             {breakdown.returned > 0 ? (
               <div className="flex items-center justify-between gap-3">
-                <span className="text-gray-600">Returned</span>
+                <span className="text-gray-600">
+                  {t("bookings.legendReturned")}
+                </span>
                 <span className="tabular-nums text-emerald-700">
                   {breakdown.returned}
                 </span>
@@ -1801,7 +1805,9 @@ function ReconciledQtySummary({
             ) : null}
             {breakdown.consumed > 0 ? (
               <div className="flex items-center justify-between gap-3">
-                <span className="text-gray-600">Consumed</span>
+                <span className="text-gray-600">
+                  {t("bookings.qtyConsumed")}
+                </span>
                 <span className="tabular-nums text-gray-900">
                   {breakdown.consumed}
                 </span>
@@ -1817,14 +1823,18 @@ function ReconciledQtySummary({
             ) : null}
             {breakdown.damaged > 0 ? (
               <div className="flex items-center justify-between gap-3">
-                <span className="text-gray-600">Damaged</span>
+                <span className="text-gray-600">
+                  {t("bookings.qtyDamaged")}
+                </span>
                 <span className="tabular-nums text-amber-700">
                   {breakdown.damaged}
                 </span>
               </div>
             ) : null}
             <div className="mt-1 flex items-center justify-between gap-3 border-t border-gray-100 pt-1">
-              <span className="text-gray-600">Remaining</span>
+              <span className="text-gray-600">
+                {t("bookings.qtyRemaining")}
+              </span>
               <span
                 className={tw(
                   "tabular-nums",
@@ -1869,8 +1879,8 @@ function renderAlreadyReconciledAsset(
               <div className="flex flex-wrap items-center gap-1">
                 <span className={assetTypePillClass}>asset</span>
                 <AvailabilityBadge
-                  badgeText="Checked in"
-                  tooltipTitle="Already checked in"
+                  badgeText={t("bookings.qtyCheckedIn")}
+                  tooltipTitle={t("scanAvailability.alreadyCheckedIn")}
                   tooltipContent={
                     asset.kind === "QUANTITY_TRACKED"
                       ? t("scanner.allUnitsReconciled")
@@ -2121,7 +2131,7 @@ function QuantityDispositionBlock({
     parsed.lost > 0 ||
     parsed.damaged > 0;
 
-  const primaryLabel = isOneWay ? "Consumed" : "Returned";
+  const primaryLabel = isOneWay ? "Consumed" : t("bookings.legendReturned");
 
   const primaryInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -2204,7 +2214,9 @@ function QuantityDispositionBlock({
               the primary input for returned, so this slot is hidden. */}
           {isOneWay ? (
             <label className="flex items-center gap-2">
-              <span className="text-gray-600">Returned</span>
+              <span className="text-gray-600">
+                {t("bookings.legendReturned")}
+              </span>
               <input
                 type="number"
                 min={0}
@@ -2237,7 +2249,7 @@ function QuantityDispositionBlock({
             />
           </label>
           <label className="flex items-center gap-2">
-            <span className="text-gray-600">Damaged</span>
+            <span className="text-gray-600">{t("bookings.qtyDamaged")}</span>
             <input
               type="number"
               min={0}
@@ -2299,7 +2311,7 @@ function ScannedKitQtyMemberRow({ asset }: { asset: QtyExpectedAsset }) {
               <span className={assetTypePillClass}>asset</span>
               <AvailabilityBadge
                 badgeText={t("scanner.fromKit")}
-                tooltipTitle="Quantity-tracked kit member"
+                tooltipTitle={t("ui.quantityTrackedKitMember")}
                 tooltipContent={t("scanner.kitQtyDispositionHint")}
                 className="border-indigo-200 bg-indigo-50 text-indigo-700"
               />
@@ -2487,7 +2499,7 @@ const CustomForm = ({
 
         {/* Cancel button */}
         <Button type="button" variant="secondary" to=".." className="ms-auto">
-          Cancel
+          {t("common.cancel")}
         </Button>
 
         {/* Submit button - conditional based on early check-in */}

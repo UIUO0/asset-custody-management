@@ -102,7 +102,7 @@ export default function ListTitle({
               onClick={clearSelectedItems}
               variant="secondary"
               className="p-[2px] text-[14px]"
-              aria-label="Clear selected items"
+              aria-label={t("ui.clearSelectedItems")}
             >
               <X size={12} strokeWidth={3} className="text-gray-600" />
             </Button>

@@ -20,13 +20,13 @@ export function NewAuditInfoDialog() {
           open={open}
           onClose={handleClose}
           className="w-full sm:w-[500px]"
-          title={<h3 className="text-lg font-semibold">Create a New Audit</h3>}
+          title={
+            <h3 className="text-lg font-semibold">{t("ui.createANewAudit")}</h3>
+          }
         >
           <div className="px-6 pb-6">
             <p className="mb-6 text-sm text-gray-600">
-              Audits help you verify your asset inventory by checking that
-              expected assets are in their designated locations. Choose how
-              you'd like to create your audit:
+              {t("audits.infoIntro")}
             </p>
 
             <div className="space-y-4">
@@ -38,13 +38,10 @@ export function NewAuditInfoDialog() {
                   </div>
                   <div className="flex-1">
                     <h4 className="mb-1 font-medium text-gray-900">
-                      From Assets list (advanced mode)
+                      {t("audits.fromAssetsList")}
                     </h4>
                     <p className="mb-3 text-sm text-gray-600">
-                      Select specific assets from your inventory to include in
-                      the audit. Perfect for targeted checks of particular
-                      items. Use the actions menu on the Assets page to get
-                      started.
+                      {t("audits.fromAssetsListHint")}
                     </p>
                     <Button
                       to="/assets"
@@ -52,7 +49,7 @@ export function NewAuditInfoDialog() {
                       size="xs"
                       onClick={handleClose}
                     >
-                      Go to Assets
+                      {t("ui.goToAssets")}
                     </Button>
                   </div>
                 </div>
@@ -66,7 +63,7 @@ export function NewAuditInfoDialog() {
                   </div>
                   <div className="flex-1">
                     <h4 className="mb-1 font-medium text-gray-900">
-                      From Locations
+                      {t("ui.fromLocations")}
                     </h4>
                     <p className="mb-3 text-sm text-gray-600">
                       Audit the assets across one or more locations. Ideal for
@@ -80,7 +77,7 @@ export function NewAuditInfoDialog() {
                       size="xs"
                       onClick={handleClose}
                     >
-                      Go to Locations
+                      {t("ui.goToLocations")}
                     </Button>
                   </div>
                 </div>
@@ -94,7 +91,7 @@ export function NewAuditInfoDialog() {
                   </div>
                   <div className="flex-1">
                     <h4 className="mb-1 font-medium text-gray-900">
-                      From Kits
+                      {t("ui.fromKits")}
                     </h4>
                     <p className="mb-3 text-sm text-gray-600">
                       Audit the assets across one or more kits. Great for
@@ -107,7 +104,7 @@ export function NewAuditInfoDialog() {
                       size="xs"
                       onClick={handleClose}
                     >
-                      Go to Kits
+                      {t("ui.goToKits")}
                     </Button>
                   </div>
                 </div>

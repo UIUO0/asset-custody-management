@@ -46,6 +46,7 @@ import When from "~/components/when/when";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { isQuantityTracked } from "~/modules/asset/utils";
 import { resolveDisplayCode } from "~/modules/barcode/display";
 import { resolveLocationAssetIds } from "~/modules/location/bulk-select.server";
@@ -66,13 +67,13 @@ import {
   parseData,
 } from "~/utils/http.server";
 import { getParamsValues } from "~/utils/list";
-import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
-import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator";
+import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { resolveTeamMemberName } from "~/utils/user";
 
@@ -226,9 +227,11 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         });
 
         if (resolvedAssetIds.length === 0) {
+          // Surfaced to the user, so resolve with the request's locale.
+          const t = await getFixedT(getLocale(request));
           return payload({
             success: true,
-            message: "No assets matched the current selection",
+            message: t("assets.noAssetsMatched"),
           });
         }
 
@@ -282,7 +285,7 @@ export default function LocationAssets() {
       <ContextualSidebar />
       <ContextualModal />
 
-      <TextualDivider text="Assets" className="mb-4 lg:hidden" />
+      <TextualDivider text={t("nav.assets")} className="mb-4 lg:hidden" />
       <div className="flex flex-col md:gap-2">
         <Filters
           className="responsive-filters mb-2 lg:mb-0"
@@ -297,7 +300,7 @@ export default function LocationAssets() {
                   <DynamicDropdown
                     trigger={
                       <div className="flex items-center gap-2">
-                        Custodian
+                        {t("assets.custodian")}
                         <ChevronRight className="rotate-90" />
                       </div>
                     }
@@ -338,7 +341,7 @@ export default function LocationAssets() {
                 width="full"
                 className="whitespace-nowrap"
               >
-                Add assets
+                {t("bookings.addAssets")}
               </Button>
             </When>
           </div>
@@ -355,21 +358,19 @@ export default function LocationAssets() {
           }
           headerChildren={
             <>
-              <Th>Category</Th>
-              <Th>Tags</Th>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("nav.tags")}</Th>
               <Th className="flex items-center gap-1 whitespace-nowrap md:border-b-0">
                 Custodian{" "}
                 <InfoTooltip
                   iconClassName="size-4"
                   content={
                     <>
-                      <h6>Asset custody</h6>
+                      <h6>{t("assets.custodyTooltipTitle")}</h6>
                       <p>
-                        This column shows if a user has custody of the asset
-                        either via direct assignment or via a booking. If you
-                        see <GrayBadge>private</GrayBadge> that means you don't
-                        have the permissions to see who has custody of the
-                        asset.
+                        {t("assets.custodyColumnHint")}{" "}
+                        <GrayBadge>private</GrayBadge>{" "}
+                        {t("assets.noCustodyPermissionHint")}
                       </p>
                     </>
                   }
@@ -384,7 +385,7 @@ export default function LocationAssets() {
             title: t("locations.noAssetsAtLocation"),
             text: t("locations.addAssetsInLocation"),
             newButtonRoute: "manage-assets",
-            newButtonContent: "Add asset",
+            newButtonContent: t("assets.addAsset"),
           }}
         />
       </div>

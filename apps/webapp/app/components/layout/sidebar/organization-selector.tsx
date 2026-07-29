@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDownIcon } from "@radix-ui/react-icons";
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import invariant from "tiny-invariant";
 import { Button } from "~/components/shared/button";
@@ -25,6 +26,7 @@ import {
 } from "./sidebar";
 
 export default function OrganizationSelector() {
+  const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const { open, openMobile, isMobile } = useSidebar();
@@ -36,11 +38,11 @@ export default function OrganizationSelector() {
   const isSwitchingOrg = isFormProcessing(fetcher.state);
 
   const currentOrganization = organizations.find(
-    (org) => org.id === currentOrganizationId
+    (org) => org.id === currentOrganizationId,
   );
   invariant(
     typeof currentOrganization !== "undefined",
-    "Something went wrong. Current organization is not in the list of organizations."
+    t("errors.orgNotInList"),
   );
 
   function handleSwitchOrganization(organizationId: string) {
@@ -65,7 +67,7 @@ export default function OrganizationSelector() {
             <SidebarMenuButton
               className={tw(
                 "size-full truncate !p-1 data-[state=open]:bg-gray-50 data-[state=open]:text-sidebar-accent-foreground hover:bg-gray-50",
-                open || openMobile ? "border" : ""
+                open || openMobile ? "border" : "",
               )}
             >
               {currentOrganization.type === "PERSONAL" ? (
@@ -113,7 +115,7 @@ export default function OrganizationSelector() {
                 className={tw(
                   "gap-2 rounded-sm p-2",
                   currentOrganization.id === organization.id &&
-                    "bg-gray-50 text-sidebar-accent-foreground"
+                    "bg-gray-50 text-sidebar-accent-foreground",
                 )}
                 onClick={() => {
                   if (organization.id !== currentOrganizationId) {
@@ -142,7 +144,7 @@ export default function OrganizationSelector() {
               className=" w-full select-none justify-start rounded p-2 text-start font-medium text-gray-900 outline-none  hover:bg-gray-50 hover:text-gray-800 "
               onClick={closeDropdown}
             >
-              Manage workspaces
+              {t("ui.manageWorkspaces")}
             </Button>
           </DropdownMenuContent>
         </DropdownMenu>

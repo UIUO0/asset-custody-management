@@ -128,7 +128,7 @@ export function ExportAssetsButton() {
   const countSuffix = disabled
     ? ""
     : allSelected
-    ? t("list.allParens")
+    ? "(All)"
     : `(${selectedAssets.length})`;
   const title = `${t("list.exportSelection")} ${countSuffix}`;
 
@@ -291,9 +291,7 @@ export function ExportAssetsButton() {
             onClick={handleExport}
             disabled={isDownloading}
           >
-            {isDownloading
-              ? t("assets.exportPreparing")
-              : t("assets.exportDownloadCsv")}
+            {isDownloading ? "Preparing…" : t("assets.exportDownloadCsv")}
           </Button>
         </PopoverContent>
       </PopoverPortal>

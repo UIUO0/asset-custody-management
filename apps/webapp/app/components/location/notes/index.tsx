@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import type { NoteWithUser } from "~/components/assets/notes/note";
 import { Note } from "~/components/assets/notes/note";
@@ -15,6 +16,7 @@ export const LocationNotes = ({
   canCreate?: boolean;
   canDelete?: boolean;
 } = {}) => {
+  const { t } = useTranslation();
   const { location, notes } = useLoaderData<typeof loader>();
 
   /* Using user data here for the Note component generated for frontend only as per the optimistic UI approach */
@@ -61,7 +63,7 @@ export const LocationNotes = ({
           download
           reloadDocument
         >
-          Export activity CSV
+          {t("bookings.exportActivityCsv")}
         </Button>
       ) : null}
       {canCreate ? <NewLocationNote fetcher={fetcher} /> : null}
@@ -97,16 +99,16 @@ export const LocationNotes = ({
           <div className="flex flex-col items-center justify-center p-[16px] text-center md:p-[50px]">
             <img
               src="/static/images/no-notes.svg"
-              alt="Graphic for no notes"
+              alt={t("bookings.noNotesImageAlt")}
               className="mb-6 w-[172px]"
             />
-            <h4>No Notes</h4>
+            <h4>{t("bookings.noNotesTitle")}</h4>
             <p>
               Your location{" "}
-              <span className="font-semibold">{location?.name ?? "—"}</span> has
-              no notes
+              <span className="font-semibold">{location?.name ?? "—"}</span>{" "}
+              {t("notes.hasNoNotes")}
               <br />
-              attached to it.
+              {t("notes.attachedToIt")}
             </p>
           </div>
         </div>

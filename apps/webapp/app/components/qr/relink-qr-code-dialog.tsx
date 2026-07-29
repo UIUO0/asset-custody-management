@@ -104,7 +104,7 @@ export function RelinkQrCodeDialog({
           <>
             <When truthy={currentState === "initial"}>
               <div>
-                <h3>Change QR Code</h3>
+                <h3>{t("qr.changeQrCodeTitle")}</h3>
                 <p className="text-gray-600">{itemName}</p>
               </div>
             </When>
@@ -135,7 +135,7 @@ export function RelinkQrCodeDialog({
 
             <div className="flex items-center justify-center gap-4 border-b border-gray-200 p-4">
               <div className="flex-1 truncate text-end">
-                <p className="uppercase text-gray-500">Current code</p>
+                <p className="uppercase text-gray-500">{t("qr.currentCode")}</p>
                 <p
                   className="truncate font-medium"
                   title={currentQrId ? currentQrId : t("qr.notLinkedYet")}
@@ -147,7 +147,7 @@ export function RelinkQrCodeDialog({
                 <ArrowRightIcon />
               </div>
               <div className="flex-1 truncate">
-                <p className="uppercase text-gray-500">New code</p>
+                <p className="uppercase text-gray-500">{t("ui.newCode")}</p>
                 <p
                   className="truncate font-medium"
                   title={newQrId ? newQrId : t("qr.scanToLink")}
@@ -185,7 +185,7 @@ export function RelinkQrCodeDialog({
                   }
                 }}
               >
-                Rescan
+                {t("ui.rescan")}
               </Button>
               <Button
                 type="button"
@@ -203,7 +203,7 @@ export function RelinkQrCodeDialog({
         <When truthy={currentState === "qr-selected"}>
           <div className="p-6">
             <div className="mb-5">
-              <h3>Change QR code</h3>
+              <h3>{t("qr.changeQrCode")}</h3>
               <p>
                 Are you sure you want to relink the code for{" "}
                 <span className="font-bold">{itemName}</span>? The current code
@@ -216,7 +216,7 @@ export function RelinkQrCodeDialog({
                 <ArrowLeftIcon />
               </div>
               <div>
-                <p className="uppercase text-gray-600">Current code</p>
+                <p className="uppercase text-gray-600">{t("qr.currentCode")}</p>
                 <p className="font-medium">{currentQrId ?? "N/A"}</p>
               </div>
             </div>
@@ -225,7 +225,7 @@ export function RelinkQrCodeDialog({
                 <ArrowRightIcon />
               </div>
               <div>
-                <p className="uppercase text-gray-600">New code</p>
+                <p className="uppercase text-gray-600">{t("ui.newCode")}</p>
                 <p className="font-medium">{newQrId}</p>
               </div>
             </div>
@@ -247,7 +247,7 @@ export function RelinkQrCodeDialog({
                   setErrorMessage("");
                 }}
               >
-                Rescan
+                {t("ui.rescan")}
               </Button>
               <Form method="post" className="flex-1">
                 <input type="hidden" value={newQrId} name="newQrId" />
@@ -258,7 +258,7 @@ export function RelinkQrCodeDialog({
                   type="submit"
                   disabled={isSubmitting}
                 >
-                  Confirm
+                  {t("common.confirm")}
                 </Button>
               </Form>
             </div>

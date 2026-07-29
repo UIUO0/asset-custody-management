@@ -1,10 +1,15 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "../shared/button";
 
-export const CategorySelectNoCategories = () => (
-  <div>
-    You don't seem to have any categories yet.{" "}
-    <Button to={"/categories/new"} variant="link" className="">
-      Create your first category
-    </Button>
-  </div>
-);
+export const CategorySelectNoCategories = () => {
+  const { t } = useTranslation();
+
+  return (
+    <div>
+      {t("categories.noneYet")}{" "}
+      <Button to={"/categories/new"} variant="link" className="">
+        {t("categories.emptyCta")}
+      </Button>
+    </div>
+  );
+};

@@ -15,6 +15,7 @@ import type {
   BarcodeType,
 } from "@prisma/client";
 import {
+  AssetLifecycleStage,
   AssetStatus,
   AssetType,
   BookingStatus,
@@ -178,6 +179,7 @@ import {
   createAssetQuantityChangeNote,
   createAssetValuationChangeNote,
   createNote,
+  createNotes,
   createTagChangeNoteIfNeeded,
   type TagSummary,
 } from "../note/service.server";
@@ -405,7 +407,7 @@ async function validateKitCustodyConflicts({
     if (custodians.size > 1) {
       const custodiansArray = Array.from(custodians);
       const assetsForThisKit = conflictCandidates.filter(
-        (asset) => asset.kit === kitName
+        (asset) => asset.kit === kitName,
       );
 
       for (const asset of assetsForThisKit) {
@@ -414,7 +416,7 @@ async function validateKitCustodyConflicts({
           custodian: asset.custodian!,
           kit: asset.kit!,
           issue: `Kit has assets with multiple custodians: ${custodiansArray.join(
-            ", "
+            ", ",
           )}`,
         });
       }
@@ -470,19 +472,30 @@ export async function getAsset<T extends Prisma.AssetInclude | undefined>({
   userOrganizations,
   request,
   include,
+  onlyReadyAssets = false,
 }: Pick<Asset, "id"> & {
   organizationId: Asset["organizationId"];
   userOrganizations?: Pick<UserOrganization, "organizationId">[];
   request?: Request;
   include?: T;
+  /**
+   * Treat assets still awaiting warehouse approval as non-existent. Set for
+   * roles scoped to their own records so a guessed or shared asset URL 404s
+   * instead of exposing an asset that is not in circulation yet.
+   */
+  onlyReadyAssets?: boolean;
 }): Promise<AssetWithInclude<T>> {
   try {
     const otherOrganizationIds = userOrganizations?.map(
-      (org) => org.organizationId
+      (org) => org.organizationId,
     );
 
     const asset = await db.asset.findFirstOrThrow({
       where: {
+        // ANDs with the OR below: the asset must be reachable *and* released.
+        ...(onlyReadyAssets
+          ? { lifecycleStage: AssetLifecycleStage.READY }
+          : {}),
         OR: [
           { id, organizationId },
           ...(userOrganizations?.length
@@ -511,7 +524,7 @@ export async function getAsset<T extends Prisma.AssetInclude | undefined>({
         additionalData: {
           model: "asset",
           organization: userOrganizations.find(
-            (org) => org.organizationId === asset.organizationId
+            (org) => org.organizationId === asset.organizationId,
           ),
           redirectTo,
         },
@@ -609,6 +622,12 @@ export async function getAssets(params: {
   hideUnavailableToAddToKit?: boolean;
   assetKitFilter?: string | null;
   availableToBookOnly?: boolean;
+  /**
+   * Hide assets still awaiting warehouse approval (`lifecycleStage: PENDING`).
+   * Set for roles scoped to their own records — ordinary employees must not
+   * see an asset before المستودعات release it.
+   */
+  onlyReadyAssets?: boolean;
 }) {
   let {
     organizationId,
@@ -629,6 +648,7 @@ export async function getAssets(params: {
     extraInclude,
     assetKitFilter,
     availableToBookOnly,
+    onlyReadyAssets,
   } = params;
 
   try {
@@ -651,6 +671,12 @@ export async function getAssets(params: {
 
     if (availableToBookOnly) {
       where.availableToBook = true;
+    }
+
+    // why: PENDING assets are not yet part of the visible inventory; filtering
+    // in the query (not after) keeps `totalAssets` and paging consistent.
+    if (onlyReadyAssets) {
+      where.lifecycleStage = AssetLifecycleStage.READY;
     }
 
     if (search) {
@@ -1138,6 +1164,7 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   getBookings = false,
   canUseBarcodes = false,
   availableToBookOnly = false,
+  onlyReadyAssets = false,
   preParsedFilters,
 }: {
   request: LoaderFunctionArgs["request"];
@@ -1149,6 +1176,8 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   getBookings?: boolean;
   canUseBarcodes?: boolean;
   availableToBookOnly?: boolean;
+  /** Hide assets awaiting warehouse approval — see {@link getAssets} */
+  onlyReadyAssets?: boolean;
   /** Pre-parsed filters — pass these to skip redundant parseFiltersWithHierarchy call */
   preParsedFilters?: Filter[];
 }) {
@@ -1166,7 +1195,7 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   const isUpcomingBookingsColumnVisible =
     settings.mode === "ADVANCED" &&
     settingColumns?.some(
-      (col) => col.name === "upcomingBookings" && col.visible
+      (col) => col.name === "upcomingBookings" && col.visible,
     );
 
   try {
@@ -1177,7 +1206,7 @@ export async function getAdvancedPaginatedAndFilterableAssets({
       (await parseFiltersWithHierarchy(
         filters,
         settingColumns,
-        organizationId
+        organizationId,
       ));
 
     const whereClause = generateWhereClause(
@@ -1185,7 +1214,8 @@ export async function getAdvancedPaginatedAndFilterableAssets({
       search,
       parsedFilters,
       assetIds,
-      availableToBookOnly
+      availableToBookOnly,
+      onlyReadyAssets,
     );
     const sortByValues = searchParams.getAll("sortBy");
     const { orderByInner, customFieldSortings } =
@@ -1301,6 +1331,7 @@ export async function createAsset({
   consumptionType,
   unitOfMeasure,
   assetModelId,
+  lifecycleStage,
 }: Pick<
   Asset,
   "description" | "title" | "categoryId" | "userId" | "valuation"
@@ -1323,6 +1354,13 @@ export async function createAsset({
   consumptionType?: Asset["consumptionType"];
   unitOfMeasure?: Asset["unitOfMeasure"];
   assetModelId?: string;
+  /**
+   * Intake stage. Omitted means PENDING (the Prisma default) — an asset only
+   * becomes visible to employees once المستودعات approves it. Callers must
+   * have already checked `asset.approve` before passing READY; this function
+   * trusts its input.
+   */
+  lifecycleStage?: Asset["lifecycleStage"];
 }) {
   // Server-side validation for quantity-tracked assets
   if (isQuantityTracked(type)) {
@@ -1427,6 +1465,8 @@ export async function createAsset({
         minQuantity,
         consumptionType,
         unitOfMeasure,
+        // Undefined falls through to the schema default (PENDING).
+        lifecycleStage,
       };
 
       /**
@@ -1445,7 +1485,7 @@ export async function createAsset({
             organizationId,
             type,
             quantity,
-          })
+          }),
         );
       }
 
@@ -1517,7 +1557,7 @@ export async function createAsset({
       /** If custom fields are passed, create them */
       if (customFieldsValues && customFieldsValues.length > 0) {
         const customFieldValuesToAdd = customFieldsValues.filter(
-          (cf) => !!cf.value
+          (cf) => !!cf.value,
         );
 
         // SECURITY (cross-org IDOR): these ids get connected to a CustomField
@@ -1537,7 +1577,7 @@ export async function createAsset({
                 value && {
                   value,
                   customFieldId: id,
-                }
+                },
             ),
           },
         });
@@ -1546,7 +1586,7 @@ export async function createAsset({
       /** If barcodes are passed, handle reusing orphaned barcodes or creating new ones */
       if (barcodes && barcodes.length > 0) {
         const barcodesToAdd = barcodes.filter(
-          (barcode) => !!barcode.value && !!barcode.type
+          (barcode) => !!barcode.value && !!barcode.type,
         );
 
         if (barcodesToAdd.length > 0) {
@@ -1587,7 +1627,7 @@ export async function createAsset({
         // when there are no custom-field ids).
         await assertCustomFieldsBelongToOrg(
           { customFieldIds: customFieldIdsToValidate, organizationId },
-          tx
+          tx,
         );
 
         // SECURITY (cross-org IDOR): the kitId comes from form/CSV input and is
@@ -1632,7 +1672,7 @@ export async function createAsset({
             entityId: created.id,
             assetId: created.id,
           },
-          tx
+          tx,
         );
 
         // Re-read so the returned shape has the pivot we just created
@@ -1677,7 +1717,7 @@ export async function createAsset({
           barcodes.length > 0
         ) {
           const barcodesToAdd = barcodes.filter(
-            (barcode) => !!barcode.value && !!barcode.type
+            (barcode) => !!barcode.value && !!barcode.type,
           );
           if (barcodesToAdd.length > 0) {
             // Use existing validation function for detailed error messages
@@ -1729,7 +1769,7 @@ const BULK_NAME_TEMPLATE_TOKEN = /\{i\}/g;
  */
 export function renderBulkAssetTitle(
   template: string,
-  indexValue: number
+  indexValue: number,
 ): string {
   if (template.includes("{i}")) {
     return template
@@ -1805,6 +1845,7 @@ export async function bulkCreateAssetsFromModel({
   mainImage,
   mainImageExpiration,
   availableToBook,
+  lifecycleStage,
 }: {
   assetModelId: string;
   count: number;
@@ -1822,6 +1863,12 @@ export async function bulkCreateAssetsFromModel({
   mainImage?: Asset["mainImage"];
   mainImageExpiration?: Asset["mainImageExpiration"];
   availableToBook?: boolean;
+  /**
+   * Intake stage for every asset in the batch. Omitted → Prisma's PENDING
+   * default, matching single-asset creation; the caller re-checks
+   * `asset.approve` before passing anything else.
+   */
+  lifecycleStage?: Asset["lifecycleStage"];
 }): Promise<{
   createdAssetIds: Asset["id"][];
   failedAt?: number;
@@ -1869,7 +1916,7 @@ export async function bulkCreateAssetsFromModel({
   const strippedTemplate = protectedTemplate.replace(/[{%}]/g, "");
   const sanitisedTemplate = strippedTemplate.replace(
     new RegExp(I_TOKEN_PLACEHOLDER, "g"),
-    "{i}"
+    "{i}",
   );
   const trimmedTemplate = sanitisedTemplate.trim();
   if (!trimmedTemplate || trimmedTemplate === "{i}") {
@@ -1887,7 +1934,7 @@ export async function bulkCreateAssetsFromModel({
   }
 
   const titles = Array.from({ length: count }, (_, i) =>
-    renderBulkAssetTitle(trimmedTemplate, startNumber + i)
+    renderBulkAssetTitle(trimmedTemplate, startNumber + i),
   );
   if (titles.some((t) => t.length === 0)) {
     throw new ShelfError({
@@ -1965,6 +2012,7 @@ export async function bulkCreateAssetsFromModel({
         mainImage,
         mainImageExpiration,
         availableToBook: availableToBook ?? true,
+        lifecycleStage,
         type: AssetType.INDIVIDUAL,
       });
       createdAssetIds.push(created.id);
@@ -2002,7 +2050,7 @@ export async function bulkCreateAssetsFromModel({
  */
 function resolveNewLocationQuantity(
   asset: { type: AssetType; quantity: number | null },
-  submitted?: number
+  submitted?: number,
 ): number {
   if (asset.type !== AssetType.QUANTITY_TRACKED) return 1;
   if (typeof submitted === "number") return submitted;
@@ -2135,7 +2183,7 @@ export async function updateAsset({
         typeof minQuantity !== "undefined" ||
         typeof consumptionType !== "undefined" ||
         typeof unitOfMeasure !== "undefined" ||
-        typeof preferredBarcodeId !== "undefined"
+        typeof preferredBarcodeId !== "undefined",
     );
 
     const assetBeforeUpdate = await fetchAssetBeforeUpdate({
@@ -2308,11 +2356,11 @@ export async function updateAsset({
         });
 
       const customFieldValuesToAdd = customFieldsValuesFromForm.filter(
-        (cf) => !!cf.value
+        (cf) => !!cf.value,
       );
 
       const customFieldValuesToRemove = customFieldsValuesFromForm.filter(
-        (cf) => !cf.value
+        (cf) => !cf.value,
       );
 
       // SECURITY (cross-org IDOR): the create/updateMany writes below connect
@@ -2341,7 +2389,7 @@ export async function updateAsset({
         currentCustomFieldsValuesWithFields.map((ccfv) => [
           ccfv.customFieldId,
           ccfv.id,
-        ])
+        ]),
       );
 
       const customFieldsToCreate = customFieldValuesToAdd
@@ -2483,7 +2531,7 @@ export async function updateAsset({
       // membership) — the original P1 from Codex.
       if (isMember && barcodes !== undefined) {
         isMember = barcodes.some(
-          (bc) => typeof bc.id === "string" && bc.id === targetPreferred
+          (bc) => typeof bc.id === "string" && bc.id === targetPreferred,
         );
       }
 
@@ -2530,7 +2578,7 @@ export async function updateAsset({
         if (newLocationId) {
           locationChangeQuantity = resolveNewLocationQuantity(
             updated,
-            newLocationQuantity
+            newLocationQuantity,
           );
         } else {
           // Removal: name the manual row being dropped at the prior
@@ -2538,7 +2586,7 @@ export async function updateAsset({
           locationChangeQuantity =
             updated.assetLocations.find(
               (al) =>
-                al.locationId === currentLocationId && al.assetKitId == null
+                al.locationId === currentLocationId && al.assetKitId == null,
             )?.quantity ?? null;
         }
 
@@ -2561,7 +2609,7 @@ export async function updateAsset({
               organizationId,
               quantity: resolveNewLocationQuantity(
                 updated,
-                newLocationQuantity
+                newLocationQuantity,
               ),
             },
           });
@@ -2613,7 +2661,7 @@ export async function updateAsset({
         previousPreferred !== null &&
         barcodes !== undefined &&
         !barcodes.some(
-          (bc) => typeof bc.id === "string" && bc.id === previousPreferred
+          (bc) => typeof bc.id === "string" && bc.id === previousPreferred,
         );
 
       // Wrap the read + update + audit in one transaction so the *write*
@@ -2668,7 +2716,7 @@ export async function updateAsset({
               fromValue: previousPreferred,
               toValue: targetPreferred,
             },
-            tx
+            tx,
           );
           return true;
         }
@@ -2773,16 +2821,16 @@ export async function updateAsset({
       if (newLocation) {
         const newLocLink = wrapLinkForNote(
           `/locations/${newLocation.id}`,
-          newLocation.name
+          newLocation.name,
         );
         const assetMarkup = wrapAssetWithCountForNote(
           assetForCount,
-          locationChangeQuantity
+          locationChangeQuantity,
         );
         const movedFrom = currentLocation
           ? ` Moved from ${wrapLinkForNote(
               `/locations/${currentLocation.id}`,
-              currentLocation.name
+              currentLocation.name,
             )}.`
           : "";
         await createSystemLocationNote({
@@ -2795,16 +2843,16 @@ export async function updateAsset({
       if (currentLocation && currentLocation.id !== newLocation?.id) {
         const prevLocLink = wrapLinkForNote(
           `/locations/${currentLocation.id}`,
-          currentLocation.name
+          currentLocation.name,
         );
         const assetMarkup = wrapAssetWithCountForNote(
           assetForCount,
-          locationChangeQuantity
+          locationChangeQuantity,
         );
         const movedTo = newLocation
           ? ` Moved to ${wrapLinkForNote(
               `/locations/${newLocation.id}`,
-              newLocation.name
+              newLocation.name,
             )}.`
           : "";
         await createSystemLocationNote({
@@ -2982,7 +3030,7 @@ export async function updateAsset({
       // Early detection of potential changes to avoid unnecessary DB queries
       const potentialChanges = detectPotentialChanges(
         currentCustomFieldsValuesWithFields,
-        customFieldsValuesFromForm
+        customFieldsValuesFromForm,
       );
 
       if (potentialChanges.length > 0) {
@@ -3009,7 +3057,7 @@ export async function updateAsset({
         const changes = detectCustomFieldChanges(
           currentCustomFieldsValuesWithFields,
           customFieldsValuesFromForm,
-          customFieldsFromForm
+          customFieldsFromForm,
         );
 
         // Batch create all notes in parallel if we have changes
@@ -3025,7 +3073,7 @@ export async function updateAsset({
               userId,
               organizationId,
               isFirstTimeSet: change.isFirstTimeSet,
-            })
+            }),
           );
 
           await Promise.all(notePromises);
@@ -3043,7 +3091,7 @@ export async function updateAsset({
               fromValue: (change.previousValue ?? null) as any,
               toValue: (change.newValue ?? null) as any,
               meta: { isFirstTimeSet: change.isFirstTimeSet },
-            }))
+            })),
           );
         }
       }
@@ -3097,7 +3145,7 @@ export async function deleteAsset({
           entityId: id,
           assetId: id,
         },
-        tx
+        tx,
       );
 
       return deleted;
@@ -3194,7 +3242,7 @@ export async function replaceAssetPlacements({
     // alone but exceeds Asset.quantity once kit rows are counted gets
     // rejected up-front instead of failing at the DEFERRED trigger.
     const manualPlacements = asset.assetLocations.filter(
-      (al) => al.assetKitId === null
+      (al) => al.assetKitId === null,
     );
     const kitDrivenSum = asset.assetLocations
       .filter((al) => al.assetKitId !== null)
@@ -3319,17 +3367,17 @@ export async function replaceAssetPlacements({
     //    the same location as a kit-driven row creates a SECOND row
     //    (manual, `assetKitId = null`) — the two coexist.
     const currentByLocation = new Map(
-      manualPlacements.map((al) => [al.locationId, al])
+      manualPlacements.map((al) => [al.locationId, al]),
     );
     const submittedByLocation = new Map(
-      placements.map((p) => [p.locationId, p])
+      placements.map((p) => [p.locationId, p]),
     );
 
     const toCreate = placements.filter(
-      (p) => !currentByLocation.has(p.locationId)
+      (p) => !currentByLocation.has(p.locationId),
     );
     const toDelete = manualPlacements.filter(
-      (al) => !submittedByLocation.has(al.locationId)
+      (al) => !submittedByLocation.has(al.locationId),
     );
     const toUpdate = placements.filter((p) => {
       const existing = currentByLocation.get(p.locationId);
@@ -3442,7 +3490,7 @@ export async function replaceAssetPlacements({
       // names from the manualPlacements snapshot so we don't need a
       // second query.
       const manualByLocation = new Map(
-        manualPlacements.map((al) => [al.locationId, al])
+        manualPlacements.map((al) => [al.locationId, al]),
       );
 
       // The qty-change note is inline (not via `createLocationChangeNote`)
@@ -3464,7 +3512,7 @@ export async function replaceAssetPlacements({
         });
         const locationLink = wrapLinkForNote(
           `/locations/${locationMeta.id}`,
-          locationMeta.name.trim()
+          locationMeta.name.trim(),
         );
         return [
           createNote({
@@ -3508,7 +3556,7 @@ export async function replaceAssetPlacements({
             type: asset.type,
             unitOfMeasure: asset.unitOfMeasure,
             quantity: al.quantity,
-          })
+          }),
         ),
         ...qtyChangeNoteCalls,
       ]);
@@ -3544,7 +3592,7 @@ export async function updateAssetMainImage({
       request,
       bucketName: "assets",
       newFileName: `${userId}/${assetId}/main-image-${dateTimeInUnix(
-        Date.now()
+        Date.now(),
       )}`,
       resizeOptions: {
         width: 1200,
@@ -3678,7 +3726,7 @@ export async function deleteOtherImages({
     ).filter(
       (image) =>
         // Keep the current main image and its thumbnail
-        image !== currentImage && image !== currentThumbnail
+        image !== currentImage && image !== currentThumbnail,
     );
 
     // Delete the images
@@ -3686,8 +3734,8 @@ export async function deleteOtherImages({
       imagesToDelete.map((image) =>
         getSupabaseAdmin()
           .storage.from("assets")
-          .remove([`${userId}/${assetId}/${image}`])
-      )
+          .remove([`${userId}/${assetId}/${image}`]),
+      ),
     );
   } catch (cause) {
     // Image cleanup is non-critical — the asset duplication still succeeds.
@@ -3700,7 +3748,7 @@ export async function deleteOtherImages({
         additionalData: { assetId, userId },
         label,
         shouldBeCaptured: false,
-      })
+      }),
     );
   }
 }
@@ -3708,7 +3756,7 @@ export async function deleteOtherImages({
 export async function uploadDuplicateAssetMainImage(
   mainImageUrl: string,
   assetId: string,
-  userId: string
+  userId: string,
 ) {
   try {
     const originalPath = extractStoragePath(mainImageUrl, "assets");
@@ -3755,7 +3803,7 @@ export async function uploadDuplicateAssetMainImage(
       .upload(
         `${userId}/${assetId}/main-image-${dateTimeInUnix(Date.now())}`,
         imageBuffer,
-        { contentType: detectedFormat, upsert: true }
+        { contentType: detectedFormat, upsert: true },
       );
 
     if (error) {
@@ -3782,7 +3830,7 @@ export function createCustomFieldsPayloadFromAsset(
       tags: true;
       customFields: true;
     };
-  }>
+  }>,
 ) {
   if (!asset?.customFields || asset?.customFields?.length === 0) {
     return {};
@@ -3794,7 +3842,7 @@ export function createCustomFieldsPayloadFromAsset(
         const rawValue = (value as { raw: string })?.raw ?? value ?? "";
         return { ...obj, [`cf-${customFieldId}`]: rawValue };
       },
-      {} as Record<string, any>
+      {} as Record<string, any>,
     ) || {}
   );
 }
@@ -3880,7 +3928,7 @@ export async function duplicateAsset({
           const imagePath = await uploadDuplicateAssetMainImage(
             asset.mainImage,
             duplicatedAsset.id,
-            userId
+            userId,
           );
 
           if (typeof imagePath === "string") {
@@ -3906,7 +3954,7 @@ export async function duplicateAsset({
               },
               label,
               shouldBeCaptured: false,
-            })
+            }),
           );
         }
       }
@@ -4011,6 +4059,7 @@ export async function getPaginatedAndFilterableAssets({
   excludeLocationQuery = false,
   filters = "",
   isSelfService,
+  onlyReadyAssets,
   userId,
 }: {
   request: LoaderFunctionArgs["request"];
@@ -4025,6 +4074,8 @@ export async function getPaginatedAndFilterableAssets({
   filters?: string;
 
   isSelfService?: boolean;
+  /** Hide assets awaiting warehouse approval — see {@link getAssets} */
+  onlyReadyAssets?: boolean;
   userId?: string;
 }) {
   const currentFilterParams = new URLSearchParams(filters || "");
@@ -4033,10 +4084,17 @@ export async function getPaginatedAndFilterableAssets({
     : getCurrentSearchParams(request);
 
   const paramsValues = getParamsValues(searchParams);
-  const status =
+  let status =
     searchParams.get("status") === "ALL" // If the value is "ALL", we just remove the param
       ? null
       : (searchParams.get("status") as AssetStatus | null);
+
+  // For standard users (BASE / SELF_SERVICE), we force them to only see AVAILABLE assets
+  // in the global index, hiding assets currently checked out by others (or themselves).
+  // They can still see their checked-out assets in "My Assets" because isSelfService is false there.
+  if (isSelfService) {
+    status = AssetStatus.AVAILABLE;
+  }
   const getAllEntries = searchParams.getAll("getAll") as AllowedModelNames[];
   const {
     page,
@@ -4108,6 +4166,7 @@ export async function getPaginatedAndFilterableAssets({
         extraInclude,
         assetKitFilter,
         availableToBookOnly: isSelfService,
+        onlyReadyAssets,
       }),
     ]);
 
@@ -4284,7 +4343,7 @@ type ParsedQtyTrackedCsvRow = {
  * @throws {ShelfError} 400 on any column-format failure
  */
 function parseQtyTrackedCsvRow(
-  asset: CreateAssetFromContentImportPayload
+  asset: CreateAssetFromContentImportPayload,
 ): ParsedQtyTrackedCsvRow {
   return validateQtyTrackedFields(
     {
@@ -4298,7 +4357,7 @@ function parseQtyTrackedCsvRow(
     {
       rowLabel: `asset "${asset.title}"`,
       additionalData: { assetKey: asset.key },
-    }
+    },
   );
 }
 
@@ -4443,7 +4502,7 @@ export async function createAssetsFromContentImport({
           try {
             const value = buildCustomFieldValue(
               { raw: asset[key] },
-              definition
+              definition,
             );
 
             if (value) {
@@ -4472,14 +4531,14 @@ export async function createAssetsFromContentImport({
                   // Add asset context after the field name using regex to be precise
                   message = error.message.replace(
                     /^(Custom field '[^']+')(:)/,
-                    `$1 (asset: '${asset.title}')$2`
+                    `$1 (asset: '${asset.title}')$2`,
                   );
                 }
               } else {
                 message = formatInvalidNumericCustomFieldMessage(
                   definition.name,
                   asset[key],
-                  { assetTitle: asset.title }
+                  { assetTitle: asset.title },
                 );
               }
 
@@ -4521,7 +4580,7 @@ export async function createAssetsFromContentImport({
             });
           }
           const filename = `${userId}/${assetId}/main-image-${dateTimeInUnix(
-            Date.now()
+            Date.now(),
           )}`;
 
           const path = await uploadImageFromUrl(
@@ -4535,7 +4594,7 @@ export async function createAssetsFromContentImport({
                 withoutEnlargement: true,
               },
             },
-            imageCache
+            imageCache,
           );
 
           if (path) {
@@ -4555,7 +4614,7 @@ export async function createAssetsFromContentImport({
                 : `Unexpected error during image processing for asset ${asset.title}`,
               additionalData: { imageUrl: asset.imageUrl, assetId },
               label: "Assets",
-            })
+            }),
           );
 
           // Continue with asset creation without the image
@@ -4648,6 +4707,14 @@ export async function createAssetsFromContentImport({
       }
 
       await createAsset({
+        /**
+         * Imported rows describe inventory that already exists physically and
+         * has already been through المالية outside the system, so they land
+         * READY rather than in the intake queue. `asset.import` is held only by
+         * roles that also hold `asset.approve`, so this grants nothing the
+         * importer could not do one asset at a time.
+         */
+        lifecycleStage: AssetLifecycleStage.READY,
         id: assetId, // Pass the pre-generated ID
         qrId: qrCodesPerAsset.find((item) => item?.key === asset.key)?.qrId,
         organizationId,
@@ -5035,7 +5102,7 @@ export async function createAssetsFromBackupImport({
               res.push({ ...rest, options, userId, organizationId });
               return res;
             },
-            [] as Array<CustomFieldDraftPayload>
+            [] as Array<CustomFieldDraftPayload>,
           );
 
           const cfIds = await upsertCustomField(customFieldDef);
@@ -5080,7 +5147,7 @@ export async function createAssetsFromBackupImport({
             })),
           });
         }
-      })
+      }),
     );
   } catch (cause) {
     throw new ShelfError({
@@ -5088,6 +5155,122 @@ export async function createAssetsFromBackupImport({
       message: "Something went wrong while creating assets from backup import",
       additionalData: { userId, organizationId },
       label,
+    });
+  }
+}
+
+/**
+ * Moves an asset between intake stages (`PENDING` <-> `READY`) and records the
+ * move on the asset's note timeline.
+ *
+ * The workflow: المالية finish the financial coding on a newly-registered
+ * asset, then المستودعات mark it READY, which is the point it becomes visible
+ * and requestable by ordinary employees. Sending an asset back to PENDING
+ * pulls it out of circulation, so a reason is mandatory in that direction —
+ * the note is the only record of why an asset employees could see yesterday
+ * disappeared today.
+ *
+ * Callers must have already checked `asset.approve`; this function does not
+ * re-check permissions, it only enforces the data rules of the transition.
+ *
+ * @param id - Asset id
+ * @param organizationId - Owning organization (scopes the update)
+ * @param userId - Actor, recorded as the note author
+ * @param stage - Target stage
+ * @param reason - Why the asset is being sent back; required for READY -> PENDING
+ * @returns The updated asset
+ * @throws {ShelfError} If the asset is not found in the org, if the asset is
+ *   already at the target stage, or if a send-back is missing its reason
+ */
+export async function updateAssetLifecycleStage({
+  id,
+  organizationId,
+  userId,
+  stage,
+  reason,
+}: Pick<Asset, "id" | "organizationId"> & {
+  userId: User["id"];
+  stage: Asset["lifecycleStage"];
+  reason?: string | null;
+}) {
+  try {
+    const asset = await db.asset.findFirst({
+      where: { id, organizationId },
+      select: { id: true, title: true, lifecycleStage: true },
+    });
+
+    if (!asset) {
+      throw new ShelfError({
+        cause: null,
+        message: "Asset not found",
+        status: 404,
+        additionalData: { id, organizationId },
+        label: "Assets",
+      });
+    }
+
+    if (asset.lifecycleStage === stage) {
+      throw new ShelfError({
+        cause: null,
+        message: "The asset is already in this stage.",
+        status: 400,
+        additionalData: { id, stage },
+        label: "Assets",
+      });
+    }
+
+    const trimmedReason = reason?.trim() || "";
+    const isSendBack = stage === AssetLifecycleStage.PENDING;
+
+    // why: a send-back removes an asset employees could already see, so the
+    // "why" has to exist before the row changes — not as an optional extra.
+    if (isSendBack && !trimmedReason) {
+      throw new ShelfError({
+        cause: null,
+        message: "A reason is required when sending an asset back for review.",
+        status: 400,
+        additionalData: { id },
+        label: "Assets",
+      });
+    }
+
+    const updatedAsset = await db.asset.update({
+      where: { id, organizationId },
+      data: { lifecycleStage: stage },
+    });
+
+    const user = await db.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: {
+        id: true,
+        displayName: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+    const actor = wrapUserLinkForNote(user);
+
+    await createNote({
+      content: isSendBack
+        ? `${actor} sent this asset **back for review**. Reason: ${trimmedReason}`
+        : `${actor} marked this asset as **ready for distribution**.${
+            trimmedReason ? ` Note: ${trimmedReason}` : ""
+          }`,
+      type: "UPDATE",
+      userId,
+      assetId: id,
+      organizationId,
+    });
+
+    return updatedAsset;
+  } catch (cause) {
+    throw new ShelfError({
+      cause,
+      message: isLikeShelfError(cause)
+        ? cause.message
+        : "Something went wrong while updating the asset stage.",
+      additionalData: { id, organizationId, stage },
+      label: "Assets",
     });
   }
 }
@@ -5139,7 +5322,7 @@ export function updateAssetsWithBookingCustodians<
   },
 >(assets: T[]) {
   const checkedOutAssetIds = new Set(
-    assets.filter((a) => a.status === "CHECKED_OUT").map((a) => a.id)
+    assets.filter((a) => a.status === "CHECKED_OUT").map((a) => a.id),
   );
 
   if (checkedOutAssetIds.size === 0) {
@@ -5163,7 +5346,7 @@ export function updateAssetsWithBookingCustodians<
           "booking" in ba &&
           ba.booking &&
           "status" in ba.booking &&
-          (ba.booking.status === "ONGOING" || ba.booking.status === "OVERDUE")
+          (ba.booking.status === "ONGOING" || ba.booking.status === "OVERDUE"),
       ) ?? a.bookingAssets?.[0];
     const booking = bookingAsset?.booking;
     const custodianUser = booking?.custodianUser;
@@ -5206,7 +5389,7 @@ export function updateAssetsWithBookingCustodians<
         message: "Couldn't find custodian for asset",
         additionalData: { assetId: a.id, status: a.status },
         label,
-      })
+      }),
     );
 
     return a;
@@ -5267,7 +5450,7 @@ export async function refreshExpiredAssetImages<
     (a) =>
       a.mainImage &&
       a.mainImageExpiration &&
-      new Date(a.mainImageExpiration) < now
+      new Date(a.mainImageExpiration) < now,
   );
 
   if (expiredAssets.length === 0) return assets;
@@ -5314,7 +5497,7 @@ export async function refreshExpiredAssetImages<
               bucketName: "assets",
             }).catch(() => {
               Logger.info(
-                `Failed to refresh thumbnail for asset ${asset.id}, proceeding with mainImage only`
+                `Failed to refresh thumbnail for asset ${asset.id}, proceeding with mainImage only`,
               );
               return null;
             })
@@ -5361,7 +5544,7 @@ export async function refreshExpiredAssetImages<
       // File deleted from storage — expected, not a bug
       if (isStorageObjectNotFound(error)) {
         Logger.info(
-          `Image file not found in storage for asset ${asset.id}, applying backoff`
+          `Image file not found in storage for asset ${asset.id}, applying backoff`,
         );
         await applyBackoff(asset);
         return null;
@@ -5383,7 +5566,7 @@ export async function refreshExpiredAssetImages<
           additionalData: { assetId: asset.id },
           label: "Assets",
           shouldBeCaptured: shouldCapture,
-        })
+        }),
       );
 
       await applyBackoff(asset);
@@ -5401,7 +5584,7 @@ export async function refreshExpiredAssetImages<
   for (let i = 0; i < expiredAssets.length; i += BATCH_SIZE) {
     const batch = expiredAssets.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.allSettled(
-      batch.map((asset) => refreshAsset(asset))
+      batch.map((asset) => refreshAsset(asset)),
     );
     refreshResults.push(...batchResults);
   }
@@ -5558,7 +5741,7 @@ export async function bulkDeleteAssets({
                 assetId: asset.id,
                 meta: { title: asset.title },
               })),
-              tx
+              tx,
             );
           }
 
@@ -5567,7 +5750,7 @@ export async function bulkDeleteAssets({
             where: { id: { in: assets.map((asset) => asset.id) } },
           });
         },
-        { timeout: 15000 }
+        { timeout: 15000 },
       );
 
       /** Deleting images of the assets (if any) */
@@ -5578,8 +5761,8 @@ export async function bulkDeleteAssets({
             userId,
             assetId: asset.id,
             data: { path: `main-image-${asset.id}.jpg` },
-          })
-        )
+          }),
+        ),
       );
     } catch (cause) {
       throw new ShelfError({
@@ -5734,7 +5917,7 @@ export async function bulkCheckOutAssets({
     }
 
     const assetsNotAvailable = assets.some(
-      (asset) => asset.status !== "AVAILABLE"
+      (asset) => asset.status !== "AVAILABLE",
     );
 
     if (assetsNotAvailable) {
@@ -5760,7 +5943,7 @@ export async function bulkCheckOutAssets({
       // organization, preventing a cross-tenant IDOR via the bulk endpoint.
       await assertTeamMemberBelongsToOrg(
         { teamMemberId: custodianId, organizationId },
-        tx
+        tx,
       );
 
       /** Clean up any stale custody records that may exist despite AVAILABLE status.
@@ -5822,7 +6005,7 @@ export async function bulkCheckOutAssets({
           teamMemberId: custodianId,
           targetUserId: custodianTeamMember?.user?.id ?? undefined,
         })),
-        tx
+        tx,
       );
     });
 
@@ -5928,7 +6111,7 @@ export async function bulkCheckInAssets({
     }
 
     const hasAssetsWithoutCustody = assets.some(
-      (asset) => !hasCustody(asset.custody)
+      (asset) => !hasCustody(asset.custody),
     );
 
     if (hasAssetsWithoutCustody) {
@@ -5949,7 +6132,7 @@ export async function bulkCheckInAssets({
     if (
       role === OrganizationRoles.SELF_SERVICE &&
       assets.some((asset) =>
-        (asset.custody ?? []).some((c) => c.custodian?.userId !== userId)
+        (asset.custody ?? []).some((c) => c.custodian?.userId !== userId),
       )
     ) {
       throw new ShelfError({
@@ -6026,7 +6209,7 @@ export async function bulkCheckInAssets({
             teamMemberId: primaryCustody?.custodian?.id,
           };
         }),
-        tx
+        tx,
       );
     });
 
@@ -6115,7 +6298,7 @@ export async function bulkUpdateAssetLocation({
      * summarising the skip so users know what happened.
      */
     const nonQtyTracked = assets.filter(
-      (a) => a.type !== AssetType.QUANTITY_TRACKED
+      (a) => a.type !== AssetType.QUANTITY_TRACKED,
     );
     const skippedQuantityTracked = assets.length - nonQtyTracked.length;
     if (nonQtyTracked.length === 0 && skippedQuantityTracked > 0) {
@@ -6140,11 +6323,11 @@ export async function bulkUpdateAssetLocation({
     // caps an INDIVIDUAL at one AssetLocation row, so we can't
     // additively place it elsewhere via this bulk path.
     const assetsInKits = nonQtyTracked.filter(
-      (asset) => asset.assetKits?.[0]?.kit
+      (asset) => asset.assetKits?.[0]?.kit,
     );
     if (assetsInKits.length > 0) {
       const kitNames = Array.from(
-        new Set(assetsInKits.map((asset) => asset.assetKits?.[0]?.kit?.name))
+        new Set(assetsInKits.map((asset) => asset.assetKits?.[0]?.kit?.name)),
       ).join(", ");
       throw new ShelfError({
         cause: null,
@@ -6180,7 +6363,7 @@ export async function bulkUpdateAssetLocation({
     // Filter out assets already at the target location (qty-tracked
     // already filtered above; only INDIVIDUAL reach this point).
     const assetsToUpdate = nonQtyTracked.filter(
-      (a) => getPrimaryLocation(a)?.id !== newLocation?.id
+      (a) => getPrimaryLocation(a)?.id !== newLocation?.id,
     );
 
     await db.$transaction(async (tx) => {
@@ -6258,7 +6441,7 @@ export async function bulkUpdateAssetLocation({
             fromValue: getPrimaryLocation(asset)?.id ?? null,
             toValue: newLocation?.id ?? null,
           })),
-          tx
+          tx,
         );
       }
     });
@@ -6271,7 +6454,7 @@ export async function bulkUpdateAssetLocation({
     });
     // Filter out assets already at the target location
     const actuallyChanged = assets.filter(
-      (a) => getPrimaryLocation(a)?.id !== newLocation?.id
+      (a) => getPrimaryLocation(a)?.id !== newLocation?.id,
     );
     const assetData = actuallyChanged.map((a) => ({
       id: a.id,
@@ -6301,12 +6484,12 @@ export async function bulkUpdateAssetLocation({
     if (newLocation && assetData.length > 0) {
       const newLocLink = wrapLinkForNote(
         `/locations/${newLocation.id}`,
-        newLocation.name
+        newLocation.name,
       );
       const assetMarkup = wrapAssetsWithDataForNote(assetData, "added");
 
       const prevLocLinks = [...byPrevLocation.entries()].map(([id, { name }]) =>
-        wrapLinkForNote(`/locations/${id}`, name)
+        wrapLinkForNote(`/locations/${id}`, name),
       );
       const movedFromSuffix =
         prevLocLinks.length > 0
@@ -6327,7 +6510,7 @@ export async function bulkUpdateAssetLocation({
       const movedToSuffix = newLocation
         ? ` Moved to ${wrapLinkForNote(
             `/locations/${newLocation.id}`,
-            newLocation.name
+            newLocation.name,
           )}.`
         : "";
       await createSystemLocationNote({
@@ -6395,7 +6578,7 @@ export async function bulkUpdateAssetCategory({
     });
 
     const assetsThatChange = assetsBeforeUpdate.filter(
-      (asset) => (asset.category?.id ?? null) !== newCategoryId
+      (asset) => (asset.category?.id ?? null) !== newCategoryId,
     );
 
     if (assetsThatChange.length === 0) {
@@ -6445,7 +6628,7 @@ export async function bulkUpdateAssetCategory({
           fromValue: asset.category?.id ?? null,
           toValue: newCategoryId,
         })),
-        tx
+        tx,
       );
     });
 
@@ -6461,8 +6644,8 @@ export async function bulkUpdateAssetCategory({
           previousCategory: asset.category,
           newCategory,
           loadUserForNotes,
-        })
-      )
+        }),
+      ),
     );
 
     return true;
@@ -6551,7 +6734,7 @@ export async function bulkAssignAssetTags({
         assets.reduce<Map<string, TagSummary[]>>((acc, asset) => {
           acc.set(asset.id, asset.tags);
           return acc;
-        }, new Map())
+        }, new Map()),
       );
 
     // Defense-in-depth: this issues one `asset.update` per selected asset
@@ -6574,8 +6757,8 @@ export async function bulkAssignAssetTags({
               include: {
                 tags: { select: { id: true, name: true } },
               },
-            })
-          )
+            }),
+          ),
         );
 
         // Activity events — one ASSET_TAGS_CHANGED per asset whose tag set
@@ -6608,7 +6791,7 @@ export async function bulkAssignAssetTags({
 
         return results;
       },
-      { timeout: 15000 }
+      { timeout: 15000 },
     );
 
     await Promise.all(
@@ -6620,8 +6803,8 @@ export async function bulkAssignAssetTags({
           previousTags: previousTagsByAssetId.get(asset.id) ?? [],
           currentTags: asset.tags,
           loadUserForNotes,
-        })
-      )
+        }),
+      ),
     );
 
     // ASSET_TAGS_CHANGED events are emitted inside the $transaction above
@@ -6639,6 +6822,100 @@ export async function bulkAssignAssetTags({
         ? cause.message
         : "Something went wrong while bulk updating tags.",
       additionalData: { userId, assetIds, organizationId, tagsIds },
+      label,
+    });
+  }
+}
+
+/**
+ * Moves many assets to `READY` in one pass — the bulk twin of
+ * {@link updateAssetLifecycleStage}.
+ *
+ * Only the release direction is offered in bulk. Sending assets back requires a
+ * reason per asset, and a single reason pasted across a hundred rows would make
+ * the note trail worthless, so the return direction stays one asset at a time.
+ *
+ * Assets already at `READY` are skipped by the `where` clause rather than
+ * rejected, so a select-all over a mixed page does the sensible thing. A note
+ * is written for each asset actually moved.
+ *
+ * Callers must have already checked `asset.approve`.
+ *
+ * @param organizationId - Owning organization (scopes the update)
+ * @param assetIds - Selected ids, or `ALL_SELECTED_KEY` resolved via settings
+ * @param userId - Actor, recorded as the note author
+ * @param currentSearchParams - Active filters, for the select-all case
+ * @param settings - Index settings, needed to resolve select-all in both modes
+ * @returns The number of assets actually moved
+ * @throws {ShelfError} If the update fails
+ */
+export async function bulkApproveAssets({
+  organizationId,
+  assetIds,
+  userId,
+  currentSearchParams,
+  settings,
+}: {
+  organizationId: Asset["organizationId"];
+  assetIds: Asset["id"][];
+  userId: User["id"];
+  currentSearchParams?: string | null;
+  settings: AssetIndexSettings;
+}) {
+  try {
+    const resolvedIds = await resolveAssetIdsForBulkOperation({
+      assetIds,
+      organizationId,
+      currentSearchParams,
+      settings,
+    });
+
+    // Read the pending subset first: `updateMany` returns only a count, and we
+    // need the exact ids to write one note per asset that actually moved.
+    const pendingAssets = await db.asset.findMany({
+      where: {
+        id: { in: resolvedIds },
+        organizationId,
+        lifecycleStage: AssetLifecycleStage.PENDING,
+      },
+      select: { id: true },
+    });
+
+    if (pendingAssets.length === 0) {
+      return 0;
+    }
+
+    const pendingIds = pendingAssets.map((asset) => asset.id);
+
+    await db.asset.updateMany({
+      where: {
+        id: { in: pendingIds },
+        organizationId,
+        lifecycleStage: AssetLifecycleStage.PENDING,
+      },
+      data: { lifecycleStage: AssetLifecycleStage.READY },
+    });
+
+    const user = await db.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { id: true, displayName: true, firstName: true, lastName: true },
+    });
+    const actor = wrapUserLinkForNote(user);
+
+    await createNotes({
+      content: `${actor} marked this asset as **ready for distribution**.`,
+      type: "UPDATE",
+      userId,
+      assetIds: pendingIds,
+      organizationId,
+    });
+
+    return pendingIds.length;
+  } catch (cause) {
+    throw new ShelfError({
+      cause,
+      message: "Something went wrong while approving the selected assets.",
+      additionalData: { assetIds, organizationId },
       label,
     });
   }
@@ -6798,7 +7075,7 @@ export async function getUserAssetsTabLoaderData({
     const { filters } = await getFiltersFromRequest(
       request,
       organizationId,
-      { name: "assetFilter_v2", path: "/" } // Use root path for RR7 single fetch
+      { name: "assetFilter_v2", path: "/" }, // Use root path for RR7 single fetch
     );
 
     const filtersSearchParams = new URLSearchParams(filters);
@@ -7361,7 +7638,7 @@ export async function checkOutQuantity({
           targetUserId: custodianTeamMember?.user?.id ?? undefined,
           meta: { quantity, viaQuantity: true },
         },
-        tx
+        tx,
       );
 
       /** Step 9: Return the refreshed asset */
@@ -7577,7 +7854,7 @@ export async function releaseQuantity({
           targetUserId: custodianTeamMember?.user?.id ?? undefined,
           meta: { quantity, viaQuantity: true },
         },
-        tx
+        tx,
       );
 
       /** Step 9: Return the refreshed asset */
@@ -7633,7 +7910,7 @@ export async function releaseQuantity({
  * @throws {ShelfError} 404 if either location is not in the org
  */
 export async function moveAssetLocationUnits(
-  args: MoveAssetLocationUnitsArgs
+  args: MoveAssetLocationUnitsArgs,
 ): Promise<MoveUnitsResult> {
   const {
     assetId,
@@ -7685,7 +7962,7 @@ export async function moveAssetLocationUnits(
        */
       await assertAssetsBelongToOrg(
         { assetIds: [assetId], organizationId },
-        tx
+        tx,
       );
 
       /** Step 2: Lock the asset row so concurrent placement edits serialize. */
@@ -7726,11 +8003,11 @@ export async function moveAssetLocationUnits(
       /** Step 5: Org-scope the two location ids (request input). */
       await assertLocationBelongsToOrg(
         { locationId: fromLocationId, organizationId },
-        tx
+        tx,
       );
       await assertLocationBelongsToOrg(
         { locationId: toLocationId, organizationId },
-        tx
+        tx,
       );
 
       /**
@@ -7879,7 +8156,7 @@ export async function moveAssetLocationUnits(
             },
           },
         ],
-        tx
+        tx,
       );
 
       /** Returned to the caller so we can write notes outside the tx. */
@@ -7969,11 +8246,11 @@ export async function moveAssetLocationUnits(
       const assetMarkup = wrapAssetWithCountForNote(assetForCount, quantity);
       const fromLink = wrapLinkForNote(
         `/locations/${fromLocation.id}`,
-        fromLocation.name
+        fromLocation.name,
       );
       const toLink = wrapLinkForNote(
         `/locations/${toLocation.id}`,
-        toLocation.name
+        toLocation.name,
       );
 
       await Promise.all([
@@ -8042,7 +8319,7 @@ export async function moveAssetLocationUnits(
  * @throws {ShelfError} 404 if the destination location is not in the org
  */
 export async function placeUnplacedUnits(
-  args: PlaceUnplacedUnitsArgs
+  args: PlaceUnplacedUnitsArgs,
 ): Promise<PlaceUnplacedUnitsResult> {
   const { assetId, organizationId, userId, toLocationId, quantity } = args;
 
@@ -8062,7 +8339,7 @@ export async function placeUnplacedUnits(
     const txResult = await db.$transaction(async (tx) => {
       await assertAssetsBelongToOrg(
         { assetIds: [assetId], organizationId },
-        tx
+        tx,
       );
 
       const asset = await lockAssetForQuantityUpdate(tx, assetId);
@@ -8090,7 +8367,7 @@ export async function placeUnplacedUnits(
 
       await assertLocationBelongsToOrg(
         { locationId: toLocationId, organizationId },
-        tx
+        tx,
       );
 
       /**
@@ -8191,7 +8468,7 @@ export async function placeUnplacedUnits(
             },
           },
         ],
-        tx
+        tx,
       );
 
       return {
@@ -8250,7 +8527,7 @@ export async function placeUnplacedUnits(
       const assetMarkup = wrapAssetWithCountForNote(assetForCount, quantity);
       const toLink = wrapLinkForNote(
         `/locations/${toLocation.id}`,
-        toLocation.name
+        toLocation.name,
       );
 
       await createSystemLocationNote({

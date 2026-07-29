@@ -73,7 +73,7 @@ export default function BulkAddToKitDialog() {
               name={zo.fields.kit()}
               kits={data?.kits || []}
               placeholder={
-                isLoading ? t("common.loading") : t("bulkActions.selectAKit")
+                isLoading ? "Loading..." : t("bulkActions.selectAKit")
               }
               isLoading={isLoading}
               error={zo.errors.kit()?.message || error || fetcherError}

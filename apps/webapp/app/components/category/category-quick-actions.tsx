@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Category } from "@prisma/client";
 import { PencilIcon, Trash2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import When from "~/components/when/when";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
@@ -8,7 +9,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { DeleteCategory } from "./delete-category";
 
@@ -23,6 +24,7 @@ export default function CategoryQuickActions({
   style,
   category,
 }: CategoryQuickActionsProps) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
 
   return (
@@ -39,8 +41,8 @@ export default function CategoryQuickActions({
           variant="secondary"
           className={"p-2"}
           to={`${category.id}/edit`}
-          aria-label="Edit category"
-          tooltip="Edit category"
+          aria-label={t("categories.editTitle")}
+          tooltip={t("categories.editTitle")}
         >
           <PencilIcon className="size-4" />
         </Button>
@@ -61,8 +63,8 @@ export default function CategoryQuickActions({
               size="sm"
               variant="secondary"
               className={"p-2"}
-              aria-label="Delete category"
-              tooltip="Delete category"
+              aria-label={t("ui.deleteCategory")}
+              tooltip={t("ui.deleteCategory")}
             >
               <Trash2Icon className="size-4" />
             </Button>

@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
@@ -36,6 +37,7 @@ export function AssetsListComponent({
   ids,
   action: _action,
 }: AssetsListComponentProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   // Use useApiQuery hook for fetching assets
@@ -92,7 +94,7 @@ export function AssetsListComponent({
           <div className="flex items-center justify-center py-4">
             <Spinner className="size-4" />
             <span className="ms-2 text-sm text-gray-500">
-              Loading assets...
+              {t("ui.loadingAssets")}
             </span>
           </div>
         )}
@@ -129,12 +131,14 @@ export function AssetsListComponent({
 
         {!isLoading && error && (
           <div className="py-2 text-sm text-gray-500">
-            Failed to load asset details
+            {t("ui.failedToLoadAssetDetails")}
           </div>
         )}
 
         {!isLoading && data?.assets.length === 0 && (
-          <div className="py-2 text-sm text-gray-500">No assets found</div>
+          <div className="py-2 text-sm text-gray-500">
+            {t("ui.noAssetsFound")}
+          </div>
         )}
       </PopoverContent>
     </Popover>

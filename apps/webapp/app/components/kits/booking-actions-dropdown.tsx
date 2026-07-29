@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { BookLink } from "~/components/shared/generic-add-to-bookings-actions-dropdown";
 import { GenericBookActionsDropdown } from "~/components/shared/generic-add-to-bookings-actions-dropdown";
@@ -6,6 +7,7 @@ import type { loader } from "~/routes/_layout+/kits.$kitId";
 import { isPersonalOrg } from "~/utils/organization";
 
 export default function BookingActionsDropdown() {
+  const { t } = useTranslation();
   const { kit } = useLoaderData<typeof loader>();
   const organization = useCurrentOrganization();
 
@@ -13,20 +15,18 @@ export default function BookingActionsDropdown() {
 
   const noAssets = kit.assetKits.length === 0;
   const someAssetIsNotAvailable = kit.assetKits.some(
-    (ak) => !ak.asset.availableToBook
+    (ak) => !ak.asset.availableToBook,
   );
 
   const disabled = noAssets
     ? {
-        reason:
-          "Kit has no assets. Please add some assets to be able to book this kit.",
+        reason: t("kits.noAssetsForBooking"),
       }
     : false;
 
   const disabledTrigger = someAssetIsNotAvailable
     ? {
-        reason:
-          "Some assets in this kit have been marked as unavailable for bookings.",
+        reason: t("kits.someAssetsUnavailable"),
       }
     : false;
 
@@ -35,14 +35,14 @@ export default function BookingActionsDropdown() {
       indexType: "kit",
       id: kit.id,
       disabled,
-      label: "Create new booking",
+      label: t("bookings.createNewBooking"),
       icon: "bookings",
       to: "assets/create-new-booking",
     },
     {
       indexType: "kit",
       id: kit.id,
-      label: "Add to existing booking",
+      label: t("assetActions.addToExistingBooking"),
       icon: "booking-exist",
       disabled,
       to: `/kits/${kit.id}/assets/add-to-existing-booking`,
@@ -54,7 +54,7 @@ export default function BookingActionsDropdown() {
       <GenericBookActionsDropdown
         links={links}
         key={"kit"}
-        label={"Book"}
+        label={t("assetOverview.book")}
         disabledTrigger={disabledTrigger}
       />
     </div>

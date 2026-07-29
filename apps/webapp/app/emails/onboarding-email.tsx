@@ -24,7 +24,7 @@ export const onboardingEmailText = ({
   firstName: string;
 }) => `Hi ${firstName},
 
-Welcome to ${config.appName} — the asset management system of the Eastern Province Development Authority.
+Welcome to ${config.appName} — the asset management system of the Sharqia Development Authority.
 
 You can now:
 
@@ -35,5 +35,5 @@ You can now:
 If you need access to something you cannot see, or a permission you believe you should have, contact the IT department.
 
 ${config.appName}
-Eastern Province Development Authority
+Sharqia Development Authority
 `;

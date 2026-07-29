@@ -79,9 +79,7 @@ export default function TeamSettings() {
       <When truthy={!params.userId}>
         <div className="rounded border bg-white p-4 md:px-10 md:py-8">
           <h1 className="text-[18px] font-semibold">
-            {isPersonalOrg
-              ? t("team.title")
-              : t("team.orgTeam", { name: orgName })}
+            {isPersonalOrg ? "Team" : t("team.orgTeam", { name: orgName })}
           </h1>
           <p className="mb-6 text-sm text-gray-600">{t("team.manageDesc")}</p>
           <HorizontalTabs items={TABS} />

@@ -221,7 +221,7 @@ export function QuantityCustodyDialog({
             </AlertDialogCancel>
 
             <Button type="submit" variant="primary" disabled={disabled}>
-              {isSubmitting ? t("quantity.assigning") : t("quantity.assign")}
+              {isSubmitting ? "Assigning..." : t("quantity.assign")}
             </Button>
           </AlertDialogFooter>
         </fetcher.Form>

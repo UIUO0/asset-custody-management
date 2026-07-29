@@ -13,7 +13,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import BulkAssignCustodyDialog from "./bulk-assign-custody-dialog";
 import BulkDeleteDialog from "./bulk-delete-dialog";
@@ -165,7 +165,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -177,7 +179,7 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -226,7 +228,7 @@ function ConditionalDropdown() {
                     !allKitsInCustody || disableReleaseCustody
                       ? {
                           reason: disableReleaseCustody
-                            ? t("kitActions.selfServiceReleaseReason")
+                            ? t("bulkActions.selfServiceReleaseReason")
                             : t("kitActions.notInCustodyReason"),
                         }
                       : isLoading
@@ -238,7 +240,7 @@ function ConditionalDropdown() {
                   type="assign-custody"
                   label={
                     isSelfService
-                      ? t("kitActions.takeCustody")
+                      ? t("assetActions.takeCustody")
                       : t("kitActions.assignCustody")
                   }
                   onClick={closeMenu}
@@ -279,7 +281,7 @@ function ConditionalDropdown() {
               >
                 <BulkUpdateDialogTrigger
                   type="trash"
-                  label="Delete"
+                  label={t("common.delete")}
                   onClick={closeMenu}
                   disabled={
                     someKitsCheckedOut
@@ -301,7 +303,7 @@ function ConditionalDropdown() {
                 width="full"
                 onClick={closeMenu}
               >
-                Close
+                {t("common.close")}
               </Button>
             </DropdownMenuItem>
           </div>

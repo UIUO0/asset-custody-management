@@ -56,6 +56,7 @@ export function getQueryFieldType(fieldName: string): QueryFieldType {
       return "array";
     case "type":
     case "assetModel":
+    case "lifecycleStage":
       return "enum";
     default:
       return "string";

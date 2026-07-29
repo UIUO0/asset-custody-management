@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { cloneElement } from "react";
 import type { Kit } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { isFormProcessing } from "~/utils/form";
 import { Form } from "../custom-form";
@@ -23,6 +24,7 @@ type DeleteKitProps = {
 };
 
 export default function DeleteKit({ kit, trigger }: DeleteKitProps) {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
 
@@ -39,7 +41,7 @@ export default function DeleteKit({ kit, trigger }: DeleteKitProps) {
             className="justify-start rounded-sm px-4 py-3 text-sm font-semibold text-gray-700 outline-none  hover:bg-slate-100 hover:text-gray-700"
             width="full"
           >
-            Delete
+            {t("common.delete")}
           </Button>
         )}
       </AlertDialogTrigger>
@@ -53,16 +55,14 @@ export default function DeleteKit({ kit, trigger }: DeleteKitProps) {
           </div>
           <AlertDialogTitle>Delete {kit.name}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this kit? This action cannot be
-            undone. Deleting a kit will not delete the assets. If the kit is
-            checked out, assets will be made available again.
+            {t("kits.deleteConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -76,7 +76,7 @@ export default function DeleteKit({ kit, trigger }: DeleteKitProps) {
                 className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
                 disabled={disabled}
               >
-                Delete
+                {t("common.delete")}
               </Button>
             </Form>
           </div>

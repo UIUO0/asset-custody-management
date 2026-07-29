@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
@@ -7,6 +9,8 @@ import { LocationMarkerIcon } from "~/components/icons/library";
 import { LocationSelect } from "~/components/location/location-select";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   getAsset,
   getLocationsForCreateAndEdit,
@@ -31,7 +35,15 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Update location") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.assets.updateLocationTitle) }];
+};
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -88,7 +100,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
             locationId: primaryLocation.id,
             quantity:
               asset.assetLocations.find(
-                (al) => al.locationId === primaryLocation.id
+                (al) => al.locationId === primaryLocation.id,
               )?.quantity ?? null,
           }
         : null;
@@ -138,7 +150,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
          * `NaN`. The service-layer validator runs the MAX check.
          */
         newLocationQuantity: z.coerce.number().int().positive().optional(),
-      })
+      }),
     );
 
     await updateAsset({
@@ -170,6 +182,7 @@ export function links() {
 }
 
 export default function Custody() {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const {
     asset,
@@ -206,8 +219,8 @@ export default function Custody() {
             <LocationMarkerIcon />
           </div>
           <div className="mb-5">
-            <h4>Update location</h4>
-            <p>Adjust the location of this asset.</p>
+            <h4>{t("assetActions.updateLocation")}</h4>
+            <p>{t("ui.adjustTheLocationOfThisAsset")}</p>
           </div>
           <div className=" relative z-50 mb-8">
             <LocationSelect
@@ -222,7 +235,7 @@ export default function Custody() {
                 htmlFor="newLocationQuantity"
                 className="mb-1 block text-sm font-medium text-gray-700"
               >
-                Quantity to place at this location
+                {t("ui.quantityToPlaceAtThisLocation")}
               </label>
               <div className="flex items-center gap-2">
                 <input
@@ -258,11 +271,11 @@ export default function Custody() {
 
           {showMultiPlacementWarning ? (
             <div className="mb-6 rounded-md border border-warning-200 bg-warning-50 px-3 py-2 text-sm text-warning-800">
-              <strong>Multi-placement notice:</strong> This asset is currently
-              placed at {placementCount} locations. Saving will replace all
-              placements with a single placement at the selected location. Use
-              the location&apos;s manage-assets picker if you want to keep
-              multiple placements.
+              <strong>{t("assets.multiPlacementNotice")}</strong> This asset is
+              currently placed at {placementCount} locations. Saving will
+              replace all placements with a single placement at the selected
+              location. Use the location&apos;s manage-assets picker if you want
+              to keep multiple placements.
             </div>
           ) : null}
 
@@ -279,7 +292,7 @@ export default function Custody() {
               width="full"
               disabled={disabled}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="primary"
@@ -287,7 +300,7 @@ export default function Custody() {
               type="submit"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

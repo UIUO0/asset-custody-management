@@ -10,7 +10,7 @@
   "background_color": "#FFFFFF",
   "icons": [
     {
-      "src": "/static/images/epda-symbol.png",
+      "src": "/static/images/sda-symbol.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

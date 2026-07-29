@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Prisma } from "@prisma/client";
 import { PencilIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { VerticalDotsIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 import {
@@ -21,6 +22,7 @@ type ActionsDropdownProps = {
 };
 
 export default function ActionsDropdown({ reminder }: ActionsDropdownProps) {
+  const { t } = useTranslation();
   const [isDropdownOpem, setIsDropdownOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
@@ -50,7 +52,7 @@ export default function ActionsDropdown({ reminder }: ActionsDropdownProps) {
                 setIsDropdownOpen(false);
                 setIsEditDialogOpen(true);
               }}
-              aria-label="Edit Reminder"
+              aria-label={t("ui.editReminder")}
             >
               <span className="flex items-center gap-2">
                 <PencilIcon className="size-4" /> Edit

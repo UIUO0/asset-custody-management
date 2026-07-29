@@ -69,7 +69,7 @@ export type CSVData = [string[], ...string[][]] | [];
 /** Guesses the delimiter of csv based on the most common delimiter found in the file */
 function guessDelimiters(csv: string, delimiters: string[]) {
   const delimiterCounts = delimiters.map(
-    (delimiter) => csv.split(delimiter).length
+    (delimiter) => csv.split(delimiter).length,
   );
 
   const max = Math.max(...delimiterCounts);
@@ -224,7 +224,7 @@ export const buildCsvBackupDataFromAssets = ({
                 return "";
               }
               return value;
-            })
+            }),
           );
           break;
         case "description":
@@ -281,7 +281,7 @@ export async function exportAssetsBackupToCsv({
 
     /** Get the headers from the first row and filter out the keys to skip */
     const headers = Object.keys(assets[0]).filter(
-      (header) => !keysToSkip.includes(header)
+      (header) => !keysToSkip.includes(header),
     );
 
     /** Add the header column */
@@ -353,7 +353,7 @@ async function resolveExportAssets({
           await getAdvancedFiltersFromRequest(
             request,
             currentOrganization.id,
-            settings
+            settings,
           )
         ).filters;
 
@@ -532,7 +532,7 @@ export const buildCsvExportDataFromAssets = ({
 
   // Create headers row using column names
   const headers = visibleColumns.map((col) =>
-    formatValueForCsv(parseColumnName(col.name))
+    formatValueForCsv(parseColumnName(col.name)),
   );
 
   // Create date formatter for reminder dates
@@ -667,7 +667,7 @@ export const buildCsvExportDataFromAssets = ({
           case "barcode_EAN13": {
             value =
               asset.barcodes?.find(
-                (b) => b.type === columnsLabelsMap[fieldName].replace(/ /g, "")
+                (b) => b.type === columnsLabelsMap[fieldName].replace(/ /g, ""),
               )?.value ?? "";
             break;
           }
@@ -689,6 +689,9 @@ export const buildCsvExportDataFromAssets = ({
           case "assetModel":
             value = asset.assetModelName ?? "";
             break;
+          case "lifecycleStage":
+            value = asset.lifecycleStage ?? "";
+            break;
           case "actions":
             value = "";
             break;
@@ -700,7 +703,7 @@ export const buildCsvExportDataFromAssets = ({
         // Handle custom fields
         const fieldName = column.name.replace("cf_", "");
         const customField = asset.customFields?.find(
-          (cf) => cf.customField.name === fieldName
+          (cf) => cf.customField.name === fieldName,
         );
         if (!customField) {
           value = "";
@@ -710,14 +713,14 @@ export const buildCsvExportDataFromAssets = ({
           value = formatCustomFieldForCsv(
             fieldValue,
             column.cfType,
-            currentOrganization
+            currentOrganization,
           );
         }
       }
 
       const isMarkdown = column.cfType === CustomFieldType.MULTILINE_TEXT;
       return formatValueForCsv(value, isMarkdown);
-    })
+    }),
   );
 
   // Return headers followed by data rows
@@ -768,7 +771,10 @@ export const formatValueForCsv = (value: any, isMarkdown = false): string => {
 const formatCustomFieldForCsv = (
   fieldValue: ShelfAssetCustomFieldValueType["value"],
   cfType: CustomFieldType | undefined,
-  currentOrganization: Pick<Organization, "id" | "barcodesEnabled" | "currency">
+  currentOrganization: Pick<
+    Organization,
+    "id" | "barcodesEnabled" | "currency"
+  >,
 ): string => {
   if (!fieldValue || fieldValue.raw === undefined || fieldValue.raw === null) {
     return "";
@@ -983,14 +989,14 @@ export async function exportBookingsFromIndexToCsv({
     // batched query (avoids an N+1 across the selection) so the export can
     // surface which assets are still checked out vs already returned.
     const checkinsByBooking = await buildBookingCheckinMap(
-      bookings.map((booking) => booking.id)
+      bookings.map((booking) => booking.id),
     );
 
     // Pass both assets and columns to the build function
     const csvData = buildCsvExportDataFromBookings(
       bookings as FlexibleBooking[],
       request,
-      checkinsByBooking
+      checkinsByBooking,
     );
 
     // Join rows with CRLF as per CSV spec
@@ -1240,7 +1246,7 @@ type BookingCheckinInfo = {
  *   partial check-ins are simply absent from the map
  */
 async function buildBookingCheckinMap(
-  bookingIds: string[]
+  bookingIds: string[],
 ): Promise<Map<string, BookingCheckinInfo>> {
   const map = new Map<string, BookingCheckinInfo>();
 
@@ -1319,7 +1325,7 @@ const formatBookingAssetForCsv = (ba: {
 export const buildCsvExportDataFromBookings = (
   bookings: FlexibleBooking[],
   request: Request,
-  checkinsByBooking: Map<string, BookingCheckinInfo> = new Map()
+  checkinsByBooking: Map<string, BookingCheckinInfo> = new Map(),
 ): string[][] => {
   if (!bookings.length) return [];
 
@@ -1384,12 +1390,12 @@ export const buildCsvExportDataFromBookings = (
     const uniqueAssetIdCount = new Set(
       (booking.bookingAssets ?? [])
         .map((ba) => ba.asset.id)
-        .filter((id): id is string => Boolean(id))
+        .filter((id): id is string => Boolean(id)),
     ).size;
     const progress = calculatePartialCheckinProgress(
       uniqueAssetIdCount,
       [...checkedInAssetIds],
-      booking.status
+      booking.status,
     );
 
     bookingAssetRows.forEach((ba, index) => {
@@ -1406,7 +1412,7 @@ export const buildCsvExportDataFromBookings = (
             asset.id
               ? formatBookingAssetForCsv(ba)
               : asset.title ?? "No assets",
-            false
+            false,
           );
         }
         if (column === "assetCheckinStatus") {
@@ -1414,7 +1420,7 @@ export const buildCsvExportDataFromBookings = (
             ? getBookingAssetCheckinLabel(
                 asset.id,
                 checkedInAssetIds,
-                booking.status
+                booking.status,
               )
             : "";
           return formatValueForCsv(label, false);
@@ -1425,7 +1431,7 @@ export const buildCsvExportDataFromBookings = (
             : undefined;
           return formatValueForCsv(
             checkinDate ? format(checkinDate) : "",
-            false
+            false,
           );
         }
 

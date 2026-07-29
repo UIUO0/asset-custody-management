@@ -112,9 +112,14 @@ function ListContent({
   }>;
   extraProps: { isAssetReminderPage: boolean };
 }) {
+  const { t } = useTranslation();
+
   const now = new Date();
-  const status =
-    now < new Date(item.alertDateTime) ? "Pending" : "Reminder sent";
+  /** Derived from the date, so the flag drives both the label and the badge. */
+  const isAlreadySent = now >= new Date(item.alertDateTime);
+  const status = isAlreadySent
+    ? t("reminders.sent")
+    : t("reminders.statusPending");
 
   return (
     <>
@@ -147,7 +152,7 @@ function ListContent({
       <Td>
         <ReminderTeamMembers
           teamMembers={item.teamMembers}
-          isAlreadySent={status === "Reminder sent"}
+          isAlreadySent={isAlreadySent}
         />
       </Td>
       <Td>

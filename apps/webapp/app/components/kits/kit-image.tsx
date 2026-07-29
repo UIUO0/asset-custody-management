@@ -1,6 +1,7 @@
 import type { ImgHTMLAttributes } from "react";
 import { useEffect, useState } from "react";
 import type { Kit } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { action } from "~/routes/api+/kit.refresh-image";
 import { DIALOG_CLOSE_SHORTCUT } from "~/utils/constants";
@@ -26,6 +27,7 @@ export default function KitImage({
   withPreview = false,
   ...rest
 }: KitImageProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<typeof action>();
 
   const { kitId, image, imageExpiration, alt } = kit;
@@ -54,7 +56,7 @@ export default function KitImage({
             {
               method: "post",
               action: "/api/kit/refresh-image",
-            }
+            },
           );
         }, jitter);
       }
@@ -92,7 +94,7 @@ export default function KitImage({
       window.addEventListener("keydown", handleKeydown);
       return () => window.removeEventListener("keydown", handleKeydown);
     },
-    [isDialogOpen, withPreview]
+    [isDialogOpen, withPreview],
   );
 
   return (
@@ -102,7 +104,7 @@ export default function KitImage({
           <div
             className={tw(
               "absolute inset-0 flex items-center justify-center bg-gray-100",
-              "transition-opacity" // Fallback animation
+              "transition-opacity", // Fallback animation
             )}
           >
             <Spinner className="[&_.spinner]:before:border-t-gray-400" />
@@ -126,7 +128,7 @@ export default function KitImage({
           src={url}
           className={tw(
             "size-full object-cover",
-            withPreview && "cursor-pointer"
+            withPreview && "cursor-pointer",
           )}
           alt={alt}
           onLoad={handleImageLoad}
@@ -162,14 +164,14 @@ export default function KitImage({
               </div>
               <div className="flex w-full justify-center gap-3 px-6 py-3 md:justify-end">
                 <Button to={`/kits/${kitId}/edit`} variant="secondary">
-                  Edit image(s)
+                  {t("ui.editImages")}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={handleCloseDialog}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>

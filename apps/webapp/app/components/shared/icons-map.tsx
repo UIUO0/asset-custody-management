@@ -138,7 +138,8 @@ export type IconType =
   | "mouse-pointer-click"
   | "add-to-kit"
   | "remove-from-kit"
-  | "adjust-quantity";
+  | "adjust-quantity"
+  | "approve";
 
 type IconsMap = {
   [key in IconType]: JSX.Element;
@@ -214,6 +215,7 @@ export const iconsMap: IconsMap = {
   "start-audit": <ClipboardList />,
   "add-to-audit": <ClipboardList />,
   "delete-audit": <TrashIcon />,
+  approve: <CheckIcon />,
 };
 
 export default iconsMap;

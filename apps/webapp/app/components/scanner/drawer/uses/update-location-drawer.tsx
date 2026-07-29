@@ -248,7 +248,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
 
         <div className="px-4 md:ps-0">
           <div className="relative z-50 my-8">
-            <h5 className="mb-1">Update location:</h5>
+            <h5 className="mb-1">{t("scanner.updateLocationTo")}</h5>
             <LocationSelect
               isBulk
               hideClearButton
@@ -268,7 +268,7 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
               width="full"
               disabled={disabled || disableSubmit || idsTotalCount === 0}
             >
-              Update location
+              {t("assetActions.updateLocation")}
             </Button>
           </div>
         </div>
@@ -368,6 +368,7 @@ function SubmittingDialog({
   locationState: LocationState;
   cleanupState: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <AlertDialog
       open={open}
@@ -378,7 +379,7 @@ function SubmittingDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Adding to location</AlertDialogTitle>
+          <AlertDialogTitle>{t("scanner.addingToLocation")}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="flex flex-col gap-4">
               <SubmissionState
@@ -424,9 +425,7 @@ function SubmissionState({
         <span className="text-green-700">
           <CheckmarkIcon />
         </span>
-        <div className="font-mono">
-          Assets/kit successfully added to location
-        </div>
+        <div className="font-mono">{t("scanner.addToLocationSuccess")}</div>
       </div>
     );
   } else if (status === "error") {
@@ -434,7 +433,7 @@ function SubmissionState({
       <div>
         <div className="flex flex-row items-center gap-2 text-start">
           <CircleX className="size-[18px] text-error-500" />
-          <div className="font-mono">Failed to add assets/kit to location</div>
+          <div className="font-mono">{t("scanner.addToLocationFailed")}</div>
         </div>
         {errorMessage && (
           <span className="text-[12px] text-error-500">

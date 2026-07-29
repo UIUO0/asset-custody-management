@@ -77,7 +77,7 @@ const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
       row.original.lastBookedAt ? (
         <DateCell date={row.original.lastBookedAt} />
       ) : (
-        <span className="text-gray-400">Never</span>
+        <span className="text-gray-400">"Never"</span>
       ),
   },
   {

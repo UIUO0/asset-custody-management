@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { CSSProperties } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { CHANGE_CURRENT_ORGANIZATION_ACTION } from "~/modules/organization/constants";
 import { isFormProcessing } from "~/utils/form";
@@ -26,6 +27,7 @@ export default function Error404Handler({
   style,
   additionalData,
 }: Error404HandlerProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const disabled = isFormProcessing(fetcher.state);
 
@@ -43,16 +45,19 @@ export default function Error404Handler({
           <div className="flex flex-col items-center text-center">
             <div className="w-full md:max-w-screen-sm">
               <h2 className="mb-2">
-                <span className="capitalize">{modelLabel}</span> belongs to
-                another workspace.
+                {t("errors.modelBelongsToAnotherWorkspace", {
+                  model: modelLabel,
+                })}
               </h2>
               <p className="mb-4">
-                The {modelLabel} you are trying to view belongs to a different
-                workspace you are part of. Would you like to switch to workspace{" "}
-                <span className="font-bold">
-                  "{additionalData.organization.organization.name}"
-                </span>{" "}
-                to view the {modelLabel}?
+                <Trans
+                  i18nKey="errors.modelBelongsBody"
+                  values={{
+                    model: modelLabel,
+                    workspace: additionalData.organization.organization.name,
+                  }}
+                  components={{ 1: <span className="font-bold" /> }}
+                />
               </p>
               <fetcher.Form
                 action={CHANGE_CURRENT_ORGANIZATION_ACTION}
@@ -69,7 +74,7 @@ export default function Error404Handler({
                   value={additionalData.redirectTo}
                 />
                 <Button type="submit" disabled={disabled}>
-                  Switch workspace
+                  {t("ui.switchWorkspace")}
                 </Button>
               </fetcher.Form>
             </div>
@@ -86,14 +91,9 @@ export default function Error404Handler({
           <div className="flex flex-col items-center text-center">
             <div className="w-full md:max-w-screen-sm">
               <h2 className="mb-2">
-                <span className="capitalize">Team Member</span> belongs to
-                another workspace(s).
+                {t("errors.teamMemberBelongsToAnotherWorkspace")}
               </h2>
-              <p className="mb-4">
-                The team member you are trying to view belongs to one/some of
-                your different workspace you are part of. Would you like to
-                switch to workspace to view the team member?
-              </p>
+              <p className="mb-4">{t("errors.teamMemberBelongsBody")}</p>
               <fetcher.Form
                 action={CHANGE_CURRENT_ORGANIZATION_ACTION}
                 method="POST"
@@ -101,7 +101,9 @@ export default function Error404Handler({
               >
                 <Select name="organizationId" disabled={disabled}>
                   <SelectTrigger className="mb-4 max-w-80 px-3.5 py-2 text-start text-gray-500">
-                    <SelectValue placeholder="Select workspace to switch" />
+                    <SelectValue
+                      placeholder={t("ui.selectWorkspaceToSwitch")}
+                    />
                   </SelectTrigger>
                   <SelectContent
                     position="popper"
@@ -125,7 +127,7 @@ export default function Error404Handler({
                   value={additionalData.redirectTo}
                 />
                 <Button type="submit" disabled={disabled}>
-                  Switch workspace
+                  {t("ui.switchWorkspace")}
                 </Button>
               </fetcher.Form>
             </div>
@@ -137,7 +139,7 @@ export default function Error404Handler({
         return null;
       }
     }
-  }, [additionalData, disabled, fetcher]);
+  }, [additionalData, disabled, fetcher, t]);
 
   return (
     <div

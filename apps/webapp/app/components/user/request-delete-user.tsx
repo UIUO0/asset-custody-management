@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -27,6 +28,7 @@ const Schema = z.object({
 });
 
 export const RequestDeleteUser = () => {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const user = useUserData();
   const actionData = useActionData<typeof action>();
@@ -48,7 +50,7 @@ export const RequestDeleteUser = () => {
           variant="danger"
           className="mt-3"
         >
-          Send delete request
+          {t("ui.sendDeleteRequest")}
         </Button>
       </AlertDialogTrigger>
 
@@ -61,26 +63,24 @@ export const RequestDeleteUser = () => {
               </span>
             </div>
             <AlertDialogTitle>
-              Are you sure you want to delete your account?
+              {t("ui.areYouSureYouWantToDeleteYourAccount")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              In order to delete your account you need to send a request that
-              will be fulfilled within the next 72 hours. Account deletion is
-              final and cannot be undone.
+              {t("accountDetails.deleteAccountRequestHint")}
               <br />
               <br />
               <strong className="text-gray-900">
-                Deleting the user will also delete:
+                {t("team.deleteUserWillAlsoDelete")}
               </strong>
             </AlertDialogDescription>
             <ul className="!mt-0 list-inside list-disc">
-              <li>All the user's data</li>
-              <li>All user's workspaces</li>
+              <li>{t("ui.allTheUserSData")}</li>
+              <li>{t("ui.allUserSWorkspaces")}</li>
             </ul>
             <Input
               inputType="textarea"
               name="reason"
-              label="Reason for deleting your account"
+              label={t("ui.reasonForDeletingYourAccount")}
               required
               error={zo.errors.reason()?.message}
             />
@@ -89,7 +89,7 @@ export const RequestDeleteUser = () => {
             <div className="flex justify-center gap-2">
               <AlertDialogCancel asChild>
                 <Button variant="secondary" disabled={disabled} type="button">
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </AlertDialogCancel>
 
@@ -104,7 +104,7 @@ export const RequestDeleteUser = () => {
                 name="intent"
                 value="deleteUser"
               >
-                Confirm
+                {t("common.confirm")}
               </Button>
             </div>
           </AlertDialogFooter>

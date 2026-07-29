@@ -1,6 +1,6 @@
 <div align="right">
 
-<img src="./apps/webapp/public/static/images/epda-logo-full.png" alt="هيئة تطوير المنطقة الشرقية" width="320" />
+<img src="./apps/webapp/public/static/images/sda-logo-full.png" alt="هيئة تطوير المنطقة الشرقية" width="320" />
 
 # نظام إدارة الأصول
 

@@ -156,7 +156,9 @@ export default function TransferOwnershipCard({
             </Button>
           </AlertDialogTrigger>
 
-          <AlertDialogContent aria-describedby="Transfer ownership">
+          <AlertDialogContent
+            aria-describedby={t("transferOwnership.transferButton")}
+          >
             <AlertDialogHeader>
               <AlertDialogTitle>
                 {t("transferOwnership.dialogTitle")}
@@ -237,9 +239,7 @@ export default function TransferOwnershipCard({
                           <span className="font-semibold">
                             {sub.subscriptionName}
                           </span>
-                          {sub.type === "addon"
-                            ? t("transferOwnership.addon")
-                            : ""}
+                          {sub.type === "addon" ? " (add-on)" : ""}
                         </li>
                       ))}
                     </ul>

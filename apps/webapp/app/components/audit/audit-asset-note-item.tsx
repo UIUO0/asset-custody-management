@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Trash, ImagePlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { MarkdownViewer } from "~/components/markdown/markdown-viewer";
 import { Button } from "~/components/shared/button";
@@ -64,6 +65,7 @@ export function AuditAssetNoteItem({
   currentImageCount = 0,
   maxImageCount = 3,
 }: AuditAssetNoteItemProps) {
+  const { t } = useTranslation();
   // Unique fetcher key prevents abort signals when multiple notes submit simultaneously
   const fetcher = useFetcher<typeof action>({
     key: `audit-asset-note-${note.id}`,
@@ -127,7 +129,7 @@ export function AuditAssetNoteItem({
   }, [fetcher.state, fetcher.data]);
 
   const handleDelete = () => {
-    if (!confirm("Are you sure you want to delete this note?")) {
+    if (!confirm(t("bookings.deleteNoteTitle"))) {
       return;
     }
 
@@ -162,7 +164,7 @@ export function AuditAssetNoteItem({
               disabled={!canAttachImages}
               title={
                 canAttachImages
-                  ? "Attach images to this note"
+                  ? t("audits.attachImagesToThisNote")
                   : `Maximum ${maxImageCount} images allowed`
               }
             >
@@ -176,7 +178,7 @@ export function AuditAssetNoteItem({
               <fetcher.Form
                 method="POST"
                 onSubmit={(e) => {
-                  if (!confirm("Are you sure you want to delete this note?")) {
+                  if (!confirm(t("bookings.deleteNoteTitle"))) {
                     e.preventDefault();
                     return;
                   }

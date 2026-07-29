@@ -6,6 +6,7 @@ import type {
   ResourceLabelContentArg,
 } from "@fullcalendar/resource/index.js";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ClientOnly } from "remix-utils/client-only";
 import { CalendarNavigation } from "~/components/calendar/calendar-navigation";
@@ -40,6 +41,7 @@ export default function AvailabilityCalendar({
   events: EventInput[];
   resourceLabelContent: CustomContentGenerator<ResourceLabelContentArg>;
 }) {
+  const { t } = useTranslation();
   const { items, modelName, totalItems, perPage, timeZone } =
     useLoaderData<AssetIndexLoaderData>();
   const { singular, plural } = modelName;
@@ -110,8 +112,8 @@ export default function AvailabilityCalendar({
 
           <ViewButtonGroup
             views={[
-              { label: "Month", value: "resourceTimelineMonth" },
-              { label: "Week", value: "resourceTimelineWeek" },
+              { label: t("reports.colMonth"), value: "resourceTimelineMonth" },
+              { label: t("ui.week"), value: "resourceTimelineWeek" },
               { label: "Day", value: "resourceTimelineDay" },
             ]}
             currentView={calendarView}
@@ -149,7 +151,7 @@ export default function AvailabilityCalendar({
                 <div className="px-2 py-1">
                   <div
                     className={tw(
-                      "text-start text-text-sm font-semibold capitalize text-gray-900"
+                      "text-start text-text-sm font-semibold capitalize text-gray-900",
                     )}
                   >
                     {plural}
@@ -206,13 +208,13 @@ export default function AvailabilityCalendar({
                 const viewType = eventInfo.view.type;
                 const isOneDay = isOneDayEvent(
                   eventInfo.event.start,
-                  eventInfo.event.end
+                  eventInfo.event.end,
                 );
 
                 return getStatusClasses(
                   eventInfo.event.extendedProps.status,
                   isOneDay,
-                  viewType
+                  viewType,
                 );
               }}
               nowIndicatorDidMount={handleNowIndicatorDidMount}
@@ -230,11 +232,12 @@ export default function AvailabilityCalendar({
 }
 
 function CalendarLoadingFallback() {
+  const { t } = useTranslation();
   return (
     <div className="absolute inset-0 z-10 flex justify-center bg-white/90">
       <div className="flex flex-col items-center gap-4 pt-[300px]">
         <FallbackLoading className="size-16" />
-        <p className="text-sm text-gray-600">Loading calendar...</p>
+        <p className="text-sm text-gray-600">{t("ui.loadingCalendar")}</p>
       </div>
     </div>
   );

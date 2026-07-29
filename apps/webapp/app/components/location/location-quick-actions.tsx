@@ -1,12 +1,13 @@
 import type { CSSProperties } from "react";
 import type { Location } from "@prisma/client";
 import { MapIcon, PencilIcon, QrCodeIcon, Trash2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { DeleteLocation } from "./delete-location";
 import { Button } from "../shared/button";
@@ -23,6 +24,7 @@ export default function LocationQuickActions({
   style,
   location,
 }: LocationQuickActionsProps) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
 
   const canUpdate = userHasPermission({
@@ -51,8 +53,8 @@ export default function LocationQuickActions({
           variant="secondary"
           className="p-2"
           to={`/locations/${location.id}/edit`}
-          aria-label="Edit location"
-          tooltip="Edit location"
+          aria-label={t("locations.editTitle")}
+          tooltip={t("locations.editTitle")}
         >
           <PencilIcon className="size-4" />
         </Button>
@@ -64,8 +66,8 @@ export default function LocationQuickActions({
           variant="secondary"
           className="p-2"
           to={`/locations/${location.id}/assets/manage-assets`}
-          aria-label="Manage location assets"
-          tooltip="Manage location assets"
+          aria-label={t("ui.manageLocationAssets")}
+          tooltip={t("ui.manageLocationAssets")}
         >
           <MapIcon className="size-4" />
         </Button>
@@ -77,8 +79,8 @@ export default function LocationQuickActions({
           variant="secondary"
           className="p-2"
           to={`/locations/${location.id}/scan-assets-kits`}
-          aria-label="Scan assets or kits"
-          tooltip="Scan assets or kits"
+          aria-label={t("ui.scanAssetsOrKits")}
+          tooltip={t("ui.scanAssetsOrKits")}
         >
           <QrCodeIcon className="size-4" />
         </Button>
@@ -96,8 +98,8 @@ export default function LocationQuickActions({
               size="sm"
               variant="secondary"
               className="p-2"
-              aria-label="Delete location"
-              tooltip="Delete location"
+              aria-label={t("ui.deleteLocation")}
+              tooltip={t("ui.deleteLocation")}
             >
               <Trash2Icon className="size-4" />
             </Button>

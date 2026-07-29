@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   LoaderFunctionArgs,
   ShouldRevalidateFunctionArgs,
@@ -52,7 +53,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           ...update,
           content: parseMarkdownToReact(update.content),
         })),
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -61,6 +62,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 }
 
 export default function UpdatesPage() {
+  const { t } = useTranslation();
   const { updates } = useLoaderData<typeof loader>();
 
   return (
@@ -69,11 +71,11 @@ export default function UpdatesPage() {
       <div className="mb-16 text-center">
         <img
           src="/static/images/new.gif"
-          alt="Updates"
+          alt={t("nav.updates")}
           className="mx-auto mb-6"
         />
         <h1 className="text-5xl font-bold tracking-tight text-gray-900">
-          Latest Updates
+          {t("ui.latestUpdates")}
         </h1>
       </div>
 

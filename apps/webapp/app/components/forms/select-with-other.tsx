@@ -9,6 +9,7 @@ import {
 } from "@radix-ui/react-popover";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import Input from "~/components/forms/input";
 import When from "~/components/when/when";
 import { handleActivationKeyPress } from "~/utils/keyboard";
@@ -75,7 +76,7 @@ export function SelectWithOther({
   options,
   error,
   defaultValue,
-  placeholder = "Select an option",
+  placeholder: placeholderProp,
   required,
   children,
   otherInputLabel,
@@ -83,12 +84,15 @@ export function SelectWithOther({
   onValueChange,
   className,
 }: SelectWithOtherProps) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `placeholder`. */
+  const placeholder = placeholderProp ?? t("list.selectAnOption");
   const triggerRef = useRef<HTMLButtonElement>(null);
   const inputId = `${name}-other`;
 
   const { selection: initialSelection, customValue: initialOther } = useMemo(
     () => resolveSelectState(options, defaultValue ?? undefined),
-    [options, defaultValue]
+    [options, defaultValue],
   );
 
   const [isOpen, setIsOpen] = useState(false);
@@ -120,7 +124,7 @@ export function SelectWithOther({
   const scrollToIndex = (index: number) => {
     setTimeout(() => {
       const selectedElement = document.getElementById(
-        `${name}-option-${index}`
+        `${name}-option-${index}`,
       );
       if (selectedElement) {
         selectedElement.scrollIntoView({ block: "nearest" });
@@ -157,7 +161,8 @@ export function SelectWithOther({
 
   const selectedLabel = useMemo(() => {
     if (!selection) return placeholder;
-    if (selection === OTHER_OPTION_VALUE) return otherValue || "Other";
+    if (selection === OTHER_OPTION_VALUE)
+      return otherValue || t("reports.other");
     return selection;
   }, [selection, otherValue, placeholder]);
 
@@ -185,7 +190,7 @@ export function SelectWithOther({
               !selection && "text-gray-500",
               error &&
                 "border-error-300 focus:border-error-300 focus:ring-error-100",
-              className
+              className,
             )}
             aria-label={typeof label === "string" ? label : undefined}
           >
@@ -211,13 +216,13 @@ export function SelectWithOther({
                   key={option}
                   className={tw(
                     "flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:cursor-pointer hover:bg-gray-50",
-                    isHovered && "bg-gray-50"
+                    isHovered && "bg-gray-50",
                   )}
                   role="button"
                   tabIndex={0}
                   onClick={() => handleSelect(option)}
                   onKeyDown={handleActivationKeyPress(() =>
-                    handleSelect(option)
+                    handleSelect(option),
                   )}
                 >
                   <span className="font-medium">{option}</span>
@@ -231,16 +236,16 @@ export function SelectWithOther({
               id={`${name}-option-${options.length}`}
               className={tw(
                 "flex items-center justify-between px-4 py-3 text-sm text-gray-700 hover:cursor-pointer hover:bg-gray-50",
-                selectedIndex === options.length && "bg-gray-50"
+                selectedIndex === options.length && "bg-gray-50",
               )}
               role="button"
               tabIndex={0}
               onClick={() => handleSelect(OTHER_OPTION_VALUE)}
               onKeyDown={handleActivationKeyPress(() =>
-                handleSelect(OTHER_OPTION_VALUE)
+                handleSelect(OTHER_OPTION_VALUE),
               )}
             >
-              <span className="font-medium">Other</span>
+              <span className="font-medium">{t("reports.other")}</span>
               <When truthy={selection === OTHER_OPTION_VALUE}>
                 <CheckIcon className="size-4 text-primary" />
               </When>

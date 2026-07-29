@@ -74,7 +74,7 @@ export function ComplianceTrend({
         )}
       >
         <p className="text-sm text-gray-500">
-          No completed bookings in this period.
+          {t("ui.noCompletedBookingsInThisPeriod")}
         </p>
       </div>
     );
@@ -90,7 +90,7 @@ export function ComplianceTrend({
         )}
       >
         <p className="text-sm text-gray-500">
-          Not enough periods with data to show trend.
+          {t("ui.notEnoughPeriodsWithDataToShowTrend")}
         </p>
       </div>
     );
@@ -107,7 +107,7 @@ export function ComplianceTrend({
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold text-gray-900">
-            Compliance Trend
+            {t("ui.complianceTrend")}
           </h3>
           {timeframeLabel && (
             <span className="text-xs text-gray-400">{timeframeLabel}</span>
@@ -237,20 +237,21 @@ function calculateTrend(
  * Trend indicator badge.
  */
 function TrendIndicator({ trend }: { trend: "up" | "down" | "stable" }) {
+  const { t } = useTranslation();
   const config = {
     up: {
       icon: TrendingUp,
-      label: "Improving",
+      label: t("ui.improving"),
       className: "bg-green-50 text-green-700",
     },
     down: {
       icon: TrendingDown,
-      label: "Declining",
+      label: t("ui.declining"),
       className: "bg-red-50 text-red-700",
     },
     stable: {
       icon: Minus,
-      label: "Stable",
+      label: t("ui.stable"),
       className: "bg-gray-50 text-gray-600",
     },
   };

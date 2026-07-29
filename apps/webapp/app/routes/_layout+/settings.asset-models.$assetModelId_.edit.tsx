@@ -13,6 +13,7 @@ import { z } from "zod";
 import AssetModelForm, {
   AssetModelFormSchema,
 } from "~/components/asset-model/form";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getCategoriesForCreateAndEdit } from "~/modules/asset/service.server";
@@ -29,8 +30,6 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-
-const title = "Edit asset model";
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -59,7 +58,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       }),
     ]);
 
-    const header = { title };
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+    const header = {
+      title: t("assetModels.editAssetModelTitle"),
+    };
 
     return payload({
       header,

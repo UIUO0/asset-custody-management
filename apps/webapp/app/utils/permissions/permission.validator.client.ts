@@ -1,54 +1,17 @@
-import { OrganizationRoles } from "@prisma/client";
-import {
-  Role2PermissionMap,
-  type PermissionAction,
-  type PermissionEntity,
-} from "./permission.data";
+/**
+ * Backwards-compatible re-export.
+ *
+ * `userHasPermission` used to be implemented here. The `.client` suffix makes
+ * React Router's vite plugin stub every export of this module to `undefined` in
+ * the server bundle, which crashed any server-rendered component that called it
+ * — see the docblock in `permission.validator.ts` for the full story.
+ *
+ * The implementation now lives in the neutral `permission.validator.ts`. This
+ * file stays so the existing import sites keep working; prefer importing from
+ * `~/utils/permissions/permission.validator` in new code, and move call sites
+ * over opportunistically.
+ *
+ * @see {@link file://./permission.validator.ts}
+ */
 
-type UserHasPermissionArgs = {
-  /** Role of the user for which we have to check for permission */
-  roles: OrganizationRoles[] | undefined;
-
-  /** Entity for which we have to check for permission */
-  entity: PermissionEntity;
-
-  /**
-   * The  actions which we have to check. It can be a string of type PermissionAction or an array.
-   * If an array is provided, then any single permission match will return `true`
-   */
-  action: PermissionAction | PermissionAction[];
-};
-
-export function userHasPermission({
-  roles,
-  action,
-  entity,
-}: UserHasPermissionArgs) {
-  if (!roles || !roles.length) return false;
-
-  if (
-    roles.includes(OrganizationRoles.ADMIN) ||
-    roles.includes(OrganizationRoles.OWNER)
-  ) {
-    //owner and admin can do anything for now
-    return true;
-  }
-
-  const actionsToCheck = typeof action === "string" ? [action] : action;
-
-  const validRoles = roles.filter((role) => {
-    const entityPermMap = Role2PermissionMap[role];
-
-    if (!entityPermMap) {
-      return false;
-    }
-
-    const permissions = entityPermMap[entity];
-
-    return permissions.some((permission) =>
-      actionsToCheck.includes(permission)
-    );
-  });
-
-  return validRoles.length > 0;
-}
+export { userHasPermission } from "./permission.validator";

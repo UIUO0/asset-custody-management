@@ -73,7 +73,7 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
             )}
           </div>
           <span className="ms-6 text-xs text-gray-400">
-            Bookings ending in the next 3 days
+            {t("reports.bookingsEndingSoon")}
           </span>
         </div>
       </div>
@@ -89,7 +89,7 @@ export function AtRiskBookings({ bookings, className }: AtRiskBookingsProps) {
               {t("reports.allClear")}
             </p>
             <p className="text-xs text-gray-500">
-              No bookings at risk of becoming overdue
+              {t("ui.noBookingsAtRiskOfBecomingOverdue")}
             </p>
           </div>
         ) : (

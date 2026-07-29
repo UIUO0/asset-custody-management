@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { Roles } from "@prisma/client";
 import { useAtom } from "jotai";
 import { ScanBarcodeIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   LinksFunction,
   LoaderFunctionArgs,
@@ -16,7 +17,6 @@ import {
   useFetchers,
   useLoaderData,
 } from "react-router";
-import { useHydrated } from "remix-utils/use-hydrated";
 import { AtomsResetHandler } from "~/atoms/atoms-reset-handler";
 import { feedbackModalOpenAtom } from "~/atoms/feedback";
 import { ErrorContent } from "~/components/errors";
@@ -42,6 +42,8 @@ import { MissingPaymentMethodBanner } from "~/components/subscription/missing-pa
 import { NoSubscription } from "~/components/subscription/no-subscription";
 import { UnpaidInvoiceBanner } from "~/components/subscription/unpaid-invoice-banner";
 import { config } from "~/config/shelf.config";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getBookingSettingsForOrganization } from "~/modules/booking-settings/service.server";
 import { CHANGE_CURRENT_ORGANIZATION_ACTION } from "~/modules/organization/constants";
 import {
@@ -136,7 +138,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     if (user.customerId && stripe) {
       const customer = (await getStripeCustomer(
-        user.customerId
+        user.customerId,
       )) as CustomerWithSubscriptions;
       subscription = getCustomerActiveSubscription({ customer });
       await validateSubscriptionIsActive({ user, subscription });
@@ -168,7 +170,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     // Get current user's organization role for updates filtering
     const currentOrganizationUserRoles = user?.userOrganizations.find(
-      (userOrg) => userOrg.organization.id === organizationId
+      (userOrg) => userOrg.organization.id === organizationId,
     )?.roles;
 
     // Check if current user has OWNER or ADMIN role in the organization
@@ -243,7 +245,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
             ? [setCookie(await setSelectedOrganizationIdCookie(organizationId))]
             : []),
         ],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId: authSession.userId });
@@ -251,12 +253,18 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   }
 }
 
-export const meta: MetaFunction<typeof loader> = ({ error }) => {
+export const meta: MetaFunction<typeof loader> = ({ error, matches }) => {
   if (!error) {
     return [{ title: "" }];
   }
 
-  let title = "Something went wrong";
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  let title = resources.errors.somethingWentWrong;
 
   if (isRouteError(error)) {
     title = error.data.error?.title ?? "";
@@ -273,6 +281,7 @@ export const meta: MetaFunction<typeof loader> = ({ error }) => {
 };
 
 export default function App() {
+  const { t } = useTranslation();
   useCrisp();
   const {
     disabledTeamOrg,
@@ -283,27 +292,29 @@ export default function App() {
     currentOrganizationId,
   } = useLoaderData<typeof loader>();
   const fetchers = useFetchers();
-  const isHydrated = useHydrated();
-  // Several authenticated routes (assets._index, kits._index, locations.*, …)
-  // call `userHasPermission` from `permission.validator.client` during their
-  // component render. That module is `.client.ts`, so RR7's vite plugin
-  // stubs every export to `undefined` in the server bundle — calling them
-  // during SSR throws `TypeError: userHasPermission is not a function`.
-  // Until those call sites are lifted into loaders (or wrapped in
-  // ClientOnly), we suppress route SSR rendering by showing the workspace
-  // spinner until the client has hydrated. This matches the prior status
-  // quo, when `switchingWorkspaceAtom` defaulted to `true` and produced the
-  // same one-frame spinner on every full reload.
-  // TODO: lift `userHasPermission` checks into route loaders so SSR works.
-  const workspaceSwitching =
-    !isHydrated ||
-    fetchers.some(
-      (f) =>
-        f.formAction === CHANGE_CURRENT_ORGANIZATION_ACTION &&
-        (f.state === "submitting" || f.state === "loading")
-    );
+  /**
+   * This used to also be forced true until hydration.
+   *
+   * The reason: authenticated routes call `userHasPermission` during render,
+   * and it lived in a `.client.ts` module that RR7's vite plugin stubs to
+   * `undefined` on the server — so SSR threw
+   * `TypeError: userHasPermission is not a function`. Suppressing route SSR
+   * until hydration hid that, but only for routes inside this subtree: the
+   * sidebar and command palette render outside it and still crashed the whole
+   * document with a bare 500.
+   *
+   * The validator now lives in a neutral module (`permission.validator.ts`)
+   * that is safe on both sides, so the suppression is gone and these routes
+   * server-render normally again. Keep it that way — if a permission check
+   * ever breaks SSR again, fix the module, don't re-add the spinner.
+   */
+  const workspaceSwitching = fetchers.some(
+    (f) =>
+      f.formAction === CHANGE_CURRENT_ORGANIZATION_ACTION &&
+      (f.state === "submitting" || f.state === "loading"),
+  );
   const [feedbackModalOpen, setFeedbackModalOpen] = useAtom(
-    feedbackModalOpenAtom
+    feedbackModalOpenAtom,
   );
 
   return (
@@ -320,23 +331,23 @@ export default function App() {
           ) : workspaceSwitching ? (
             <div className="flex size-full flex-col items-center justify-center text-center">
               <Spinner />
-              <p className="mt-2">Activating workspace...</p>
+              <p className="mt-2">{t("ui.activatingWorkspace")}</p>
             </div>
           ) : (
             <>
               <header className="flex items-center justify-between border-b bg-white py-4 md:hidden">
-                <Link to="." title="Home" className="block h-8">
+                <Link to="." title={t("nav.home")} className="block h-8">
                   <ShelfMobileLogo />
                 </Link>
                 <div className="flex items-center space-x-2">
                   <CommandPaletteButton variant="icon" />
                   <NavLink
                     to="/scanner"
-                    title="Scan QR Code"
+                    title={t("ui.scanQrCode")}
                     className={({ isActive }) =>
                       tw(
                         "relative flex items-center justify-center px-2 transition",
-                        isActive ? "text-primary-600" : "text-gray-500"
+                        isActive ? "text-primary-600" : "text-gray-500",
                       )
                     }
                   >

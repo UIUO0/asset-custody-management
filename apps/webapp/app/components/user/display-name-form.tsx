@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { useZorm } from "react-zorm";
 import z from "zod";
@@ -20,31 +21,31 @@ export function DisplayNameForm({
 }: {
   user: ReturnType<typeof getUserWithContact>;
 }) {
+  const { t } = useTranslation();
   const zo = useZorm("DisplayNameForm", DisplayNameFormSchema);
   const data = useActionData<UserPageActionData>();
   const disabled = useDisabled();
 
   const validationErrors = getValidationErrors<typeof DisplayNameFormSchema>(
-    data?.error
+    data?.error,
   );
 
   return (
     <Card className="my-0">
       <div className="mb-6">
-        <h3 className="text-text-lg font-semibold">Display name</h3>
+        <h3 className="text-text-lg font-semibold">{t("ui.displayName")}</h3>
         <p className="text-sm text-gray-600">
-          Set a custom display name to override your SSO-provided name across
-          the platform.
+          {t("accountDetails.customDisplayNameHint")}
         </p>
       </div>
       <Form method="post" ref={zo.ref} replace>
         <FormRow
-          rowLabel="Display name"
+          rowLabel={t("ui.displayName")}
           className="border-b-0 border-t"
           required={false}
         >
           <Input
-            label="Display name"
+            label={t("ui.displayName")}
             hideLabel
             type="text"
             name={zo.fields.displayName()}

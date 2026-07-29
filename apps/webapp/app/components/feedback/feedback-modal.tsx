@@ -65,9 +65,14 @@ const INITIAL_FEEDBACK_STATE: FeedbackState = {
   fileError: null,
 };
 
+/**
+ * Toggle options for the feedback type. `labelKey` stores an i18n key rather
+ * than a literal because this array lives at module scope, where hooks cannot
+ * run; it is resolved with `t()` inside `TypeToggle`.
+ */
 const TYPE_OPTIONS = [
-  { value: "issue", label: "Issue", Icon: TriangleAlertIcon },
-  { value: "idea", label: "Idea", Icon: LightbulbIcon },
+  { value: "issue", labelKey: "feedback.issue", Icon: TriangleAlertIcon },
+  { value: "idea", labelKey: "feedback.idea", Icon: LightbulbIcon },
 ] as const;
 
 /** Issue/Idea selector rendered as two toggle buttons */
@@ -78,11 +83,15 @@ function TypeToggle({
   value: "issue" | "idea";
   onChange: (value: "issue" | "idea") => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-medium text-gray-700">Type</legend>
+      <legend className="mb-2 text-sm font-medium text-gray-700">
+        {t("feedback.type")}
+      </legend>
       <div className="flex gap-2">
-        {TYPE_OPTIONS.map(({ value: option, label, Icon }) => (
+        {TYPE_OPTIONS.map(({ value: option, labelKey, Icon }) => (
           <button
             key={option}
             type="button"
@@ -96,7 +105,7 @@ function TypeToggle({
             aria-pressed={value === option}
           >
             <Icon className="size-4" />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -150,7 +159,7 @@ function ScreenshotField({
           className="flex items-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-50"
         >
           <ImageIcon className="size-4" />
-          Attach a screenshot
+          {t("feedback.attachScreenshot")}
         </button>
       )}
 
@@ -389,10 +398,10 @@ export default function FeedbackModal({
                 />
               </svg>
             </div>
-            <p className="text-lg font-semibold text-gray-900">Thank you!</p>
-            <p className="text-sm text-gray-600">
-              Your feedback has been submitted.
+            <p className="text-lg font-semibold text-gray-900">
+              {t("feedback.thankYou")}
             </p>
+            <p className="text-sm text-gray-600">{t("feedback.submitted")}</p>
           </div>
         ) : (
           <fetcher.Form
@@ -469,7 +478,7 @@ export default function FeedbackModal({
               {/* Message textarea */}
               <Input
                 inputType="textarea"
-                label="Message"
+                label={t("feedback.message")}
                 name={zo.fields.message()}
                 placeholder={
                   errorContext
@@ -500,8 +509,7 @@ export default function FeedbackModal({
               {/* The error variant discloses this in its banner instead */}
               {!errorContext ? (
                 <p className="text-xs text-gray-500">
-                  Your current page and browser details are included
-                  automatically to help us debug.
+                  {t("feedback.contextHint")}
                 </p>
               ) : null}
             </div>
@@ -517,7 +525,7 @@ export default function FeedbackModal({
                 className="flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-700"
               >
                 <MessageCircleIcon className="size-4" />
-                Chat with us
+                {t("feedback.chatWithUs")}
               </button>
 
               <Button type="submit" disabled={disabled}>

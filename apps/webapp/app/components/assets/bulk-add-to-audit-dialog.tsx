@@ -153,9 +153,7 @@ export default function BulkAddToAuditDialog() {
                     name={zo.fields.auditId()}
                     audits={data?.audits || []}
                     placeholder={
-                      isLoading
-                        ? t("common.loading")
-                        : t("bulkActions.selectAnAudit")
+                      isLoading ? "Loading..." : t("bulkActions.selectAnAudit")
                     }
                     isLoading={isLoading}
                     error={
@@ -180,9 +178,7 @@ export default function BulkAddToAuditDialog() {
                     width="full"
                     disabled={disabled}
                   >
-                    {disabled
-                      ? t("bulkActions.adding")
-                      : t("bulkActions.addToAudit")}
+                    {disabled ? "Adding..." : t("bulkActions.addToAudit")}
                   </Button>
                 </div>
               </>

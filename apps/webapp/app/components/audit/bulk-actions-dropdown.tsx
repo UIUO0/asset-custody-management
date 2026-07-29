@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsCountAtom } from "~/atoms/list";
 import { useControlledDropdownMenu } from "~/hooks/use-controlled-dropdown-menu";
@@ -15,12 +16,13 @@ import {
 import { MobileDropdownStyles } from "../shared/mobile-dropdown-styles";
 
 export default function BulkActionsDropdown() {
+  const { t } = useTranslation();
   const isHydrated = useHydrated();
 
   if (!isHydrated) {
     return (
       <Button variant="secondary" to="#">
-        <span className="flex items-center gap-2">Actions</span>
+        <span className="flex items-center gap-2">{t("common.actions")}</span>
       </Button>
     );
   }
@@ -33,6 +35,7 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const selectedItemCount = useAtomValue(selectedBulkItemsCountAtom);
 
   const disabled = selectedItemCount === 0;
@@ -54,7 +57,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -76,7 +79,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -88,13 +93,13 @@ function ConditionalDropdown() {
           disabled={
             disabled
               ? {
-                  reason: "No items selected",
+                  reason: t("list.noItemsSelected"),
                 }
               : undefined
           }
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -114,7 +119,7 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="trash"
-                label="Remove from audit"
+                label={t("ui.removeFromAudit")}
                 onClick={closeMenu}
               />
             </DropdownMenuItem>

@@ -10,7 +10,6 @@
 
 import type { RefObject } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useReactToPrint } from "react-to-print";
 
 import { Dialog, DialogPortal } from "~/components/layout/dialog";

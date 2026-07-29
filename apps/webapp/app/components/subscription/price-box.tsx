@@ -1,4 +1,5 @@
 import type { JSX } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import type { PriceType } from "./prices";
 import {
@@ -16,6 +17,7 @@ import {
 } from "../shared/tooltip";
 
 export const PriceBox = ({ price }: { price: PriceType }) => {
+  const { t } = useTranslation();
   const amount = price.unit_amount ?? null;
 
   const { shelf_tier } = price.product.metadata;
@@ -51,14 +53,16 @@ export const PriceBox = ({ price }: { price: PriceType }) => {
               ) : null}
             </div>
             <div className="text-xs text-gray-500">
-              {price?.recurring?.interval === "year" && "Billed annually"}
+              {price?.recurring?.interval === "year" &&
+                t("subscription.billedAnnually")}
 
-              {price?.recurring?.interval === "month" && "Billed monthly"}
+              {price?.recurring?.interval === "month" &&
+                t("welcome.billedMonthly")}
 
               {shelf_tier === "tier_2" && (
                 <div className="flex items-center justify-center gap-1">
                   <div className="text-xs font-normal text-gray-500">
-                    per workspace
+                    {t("subscription.perWorkspace")}
                   </div>{" "}
                   <PerWorkspaceTooltip />
                 </div>
@@ -90,12 +94,12 @@ export const PerWorkspaceTooltip = () => (
       </TooltipTrigger>
       <TooltipContent side="bottom">
         <p className="text-xs font-medium text-gray-500">
-          To enable multiple workspaces for your account, <br />
-          please{" "}
-          <CrispButton variant="link" className="!w-auto text-xs">
-            contact sales
-          </CrispButton>
-          .
+          <Trans
+            i18nKey="subscription.multipleWorkspacesHint"
+            components={{
+              1: <CrispButton variant="link" className="!w-auto text-xs" />,
+            }}
+          />
         </p>
       </TooltipContent>
     </Tooltip>

@@ -19,6 +19,7 @@ const DEFAULT_STATE: Record<BulkDialogType, boolean> = {
   cancel: false,
   available: false,
   unavailable: false,
+  approve: false,
   bookings: false,
   "booking-exist": false,
   "download-qr": false,
@@ -45,7 +46,7 @@ export const openBulkDialogAtom = atom<null, BulkDialogType[], unknown>(
   null,
   (_, set, update) => {
     set(bulkDialogAtom, (prev) => ({ ...prev, [update]: true }));
-  }
+  },
 );
 
 /**
@@ -56,5 +57,5 @@ export const closeBulkDialogAtom = atom<null, BulkDialogType[], unknown>(
   null,
   (_, set, update) => {
     set(bulkDialogAtom, (prev) => ({ ...prev, [update]: false }));
-  }
+  },
 );

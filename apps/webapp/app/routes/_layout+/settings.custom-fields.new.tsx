@@ -9,6 +9,7 @@ import {
   NewCustomFieldFormSchema,
 } from "~/components/custom-fields/form";
 import Header from "~/components/layout/header";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getCategoriesForCreateAndEdit } from "~/modules/asset/service.server";
@@ -25,8 +26,6 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 import { assertUserCanCreateMoreCustomFields } from "~/utils/subscription.server";
-
-const title = "New Custom Field";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -53,8 +52,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     ]);
     const { categories, totalCategories } = categoriesResult;
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header = {
-      title,
+      title: t("settings.newCustomFieldTitle"),
     };
 
     return payload({

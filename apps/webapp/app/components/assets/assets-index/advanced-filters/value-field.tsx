@@ -1,6 +1,6 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AssetStatus } from "@prisma/client";
+import { AssetLifecycleStage, AssetStatus } from "@prisma/client";
 import {
   Popover,
   PopoverContent,
@@ -137,6 +137,8 @@ function resolveFilterDefault(
   if (filter.type === "boolean") return true;
   if (filter.type === "enum") {
     if (filter.name === "type") return "INDIVIDUAL";
+    // The queue is what this filter is for — default to it.
+    if (filter.name === "lifecycleStage") return AssetLifecycleStage.PENDING;
     if (filter.name === "status") return Object.values(AssetStatus)[0];
     if (filter.name.startsWith("cf_")) {
       const options =
@@ -337,13 +339,10 @@ export function ValueField({
                     <TooltipContent side="bottom" className="z-[9999999]">
                       <div className="max-w-[260px] sm:max-w-[320px]">
                         <h6 className="mb-1 text-xs font-semibold text-gray-700">
-                          Barcode scanner ready
+                          {t("advancedFilters.barcodeScannerReady")}
                         </h6>
                         <p className="text-xs font-medium text-gray-500">
-                          This fields supports barcode scanners. Simply place
-                          your cursor in the field and scan a QR code with your
-                          barcode scanner. The value will be automatically
-                          filled in for you.
+                          {t("advancedFilters.barcodeScannerHint")}
                         </p>
                       </div>
                     </TooltipContent>
@@ -547,7 +546,7 @@ export function ValueField({
         <Input
           {...commonInputProps}
           type="text"
-          label="Values"
+          label={t("advancedFilters.values")}
           value={
             Array.isArray(filter.value)
               ? filter.value.join(", ")
@@ -847,8 +846,7 @@ function EnumField({
           >
             {options.length === 0 ? (
               <div className="max-w-[400px] p-4">
-                No options available. Please contact support if you believe this
-                is an error.
+                {t("advancedFilters.noOptionsAvailable")}
               </div>
             ) : (
               options.map((option, index) => {
@@ -989,7 +987,7 @@ function CustodyEnumField({
     placeholder: t("list.searchTeamMembers"),
     withValueItem: {
       id: "in-custody",
-      name: "In custody",
+      name: t("status.IN_CUSTODY"),
     },
     withoutValueItem: {
       id: "without-custody",
@@ -1021,7 +1019,7 @@ function CustodyEnumField({
                   ? selectedIds
                       .map((id) => {
                         if (id === "in-custody") {
-                          return "In custody";
+                          return t("status.IN_CUSTODY");
                         }
                         if (id === "without-custody") {
                           return t("advancedFilters.withoutCustody");
@@ -1073,7 +1071,7 @@ function CustodyEnumField({
       closeOnSelect={true}
       triggerWrapperClassName="w-full text-gray-700"
       className="z-[999999]"
-      contentLabel="Custodian"
+      contentLabel={t("assets.custodian")}
     />
   );
 }
@@ -1126,7 +1124,7 @@ function CategoryEnumField({
     placeholder: t("list.searchCategories"),
     withoutValueItem: {
       id: "uncategorized",
-      name: "Uncategorized",
+      name: t("common.uncategorized"),
     },
     disabled,
   };
@@ -1156,7 +1154,7 @@ function CategoryEnumField({
                   ? selectedIds
                       .map((id) => {
                         if (id === "uncategorized") {
-                          return "Uncategorized";
+                          return t("common.uncategorized");
                         }
                         const category = data.categories?.find(
                           (cat) => cat.id === id,
@@ -1200,7 +1198,7 @@ function CategoryEnumField({
       closeOnSelect={true}
       triggerWrapperClassName="w-full text-gray-700"
       className="z-[999999]"
-      contentLabel="Category"
+      contentLabel={t("assets.category")}
     />
   );
 }
@@ -1455,7 +1453,7 @@ function LocationEnumField({
       closeOnSelect={true}
       triggerWrapperClassName="w-full text-gray-700"
       className="z-[999999]"
-      contentLabel="Location"
+      contentLabel={t("assets.location")}
     />
   );
 }
@@ -1588,7 +1586,7 @@ function KitEnumField({
       closeOnSelect={true}
       triggerWrapperClassName="w-full text-gray-700"
       className="z-[999999]"
-      contentLabel="Kit"
+      contentLabel={t("reports.colKit")}
     />
   );
 }
@@ -1722,7 +1720,7 @@ function UpcomingBookingsEnumField({
       closeOnSelect={true}
       triggerWrapperClassName="w-full text-gray-700"
       className="z-[999999]"
-      contentLabel="Booking"
+      contentLabel={t("bookings.booking")}
     />
   );
 }
@@ -1763,7 +1761,7 @@ function TagsField({
     hideCounter: true,
     withoutValueItem: {
       id: "untagged",
-      name: "Untagged",
+      name: t("advancedFilters.untagged"),
     },
     disabled,
   };
@@ -1793,9 +1791,11 @@ function TagsField({
                   ? selectedIds
                       .map((id) => {
                         if (id === "untagged") {
-                          return "Untagged";
+                          return t("advancedFilters.untagged");
                         }
-                        const tag = data.tags?.find((t) => t.id === id);
+                        const tag = data.tags?.find(
+                          (tagOption) => tagOption.id === id,
+                        );
                         return tag?.name || "";
                       })
                       .join(", ")
@@ -1844,30 +1844,30 @@ function TagsField({
  * Fixed enum field for the asset tracking type (INDIVIDUAL vs QUANTITY_TRACKED).
  * Uses a simple Popover-based select with two hardcoded options.
  */
-function TrackingTypeEnumField({
+function StaticEnumField({
   value,
   handleChange,
   name,
   disabled = false,
+  options,
+  placeholder,
 }: {
   value: string;
   handleChange: (value: string) => void;
   name?: string;
   disabled?: boolean;
+  /** Fixed option list — enum members, not data fetched per workspace */
+  options: { id: string; label: string }[];
+  /** Shown when nothing is selected yet */
+  placeholder: string;
 }) {
   const { t } = useTranslation();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-  const options = [
-    { id: "INDIVIDUAL", label: "Individual" },
-    { id: "QUANTITY_TRACKED", label: t("advancedFilters.trackedByQuantity") },
-  ];
-
   /** Find the label for the currently selected value */
   const selectedLabel =
-    options.find((opt) => opt.id === value)?.label ||
-    t("advancedFilters.selectType");
+    options.find((opt) => opt.id === value)?.label || placeholder;
 
   // Sync the keyboard-highlight index when the popover opens. Done in
   // the open handler (not a useEffect) so react-doctor's
@@ -1965,6 +1965,55 @@ function TrackingTypeEnumField({
         </PopoverPortal>
       </Popover>
     </>
+  );
+}
+
+/**
+ * Tracking-method filter (INDIVIDUAL / QUANTITY_TRACKED).
+ */
+function TrackingTypeEnumField(
+  props: Omit<Parameters<typeof StaticEnumField>[0], "options" | "placeholder">,
+) {
+  const { t } = useTranslation();
+  return (
+    <StaticEnumField
+      {...props}
+      options={[
+        { id: "INDIVIDUAL", label: t("advancedFilters.individual") },
+        {
+          id: "QUANTITY_TRACKED",
+          label: t("advancedFilters.trackedByQuantity"),
+        },
+      ]}
+      placeholder={t("advancedFilters.selectType")}
+    />
+  );
+}
+
+/**
+ * Intake-stage filter (PENDING / READY) — how المستودعات find the approval
+ * queue. Ordinary employees never see PENDING rows, so for them this filter
+ * can only ever return the same set.
+ */
+function LifecycleStageEnumField(
+  props: Omit<Parameters<typeof StaticEnumField>[0], "options" | "placeholder">,
+) {
+  const { t } = useTranslation();
+  return (
+    <StaticEnumField
+      {...props}
+      options={[
+        {
+          id: AssetLifecycleStage.PENDING,
+          label: t("assetForm.lifecyclePendingLabel"),
+        },
+        {
+          id: AssetLifecycleStage.READY,
+          label: t("assetForm.lifecycleReadyLabel"),
+        },
+      ]}
+      placeholder={t("assetLifecycle.selectStage")}
+    />
   );
 }
 
@@ -2083,6 +2132,20 @@ function ValueEnumField({
     return (
       <>
         <TrackingTypeEnumField
+          value={value}
+          handleChange={handleChange}
+          name={name}
+          disabled={disabled}
+        />
+        {error && <div className="mt-1 text-[12px] text-red-500">{error}</div>}
+      </>
+    );
+  }
+
+  if (fieldName === "lifecycleStage") {
+    return (
+      <>
+        <LifecycleStageEnumField
           value={value}
           handleChange={handleChange}
           name={name}
@@ -2325,6 +2388,7 @@ function MultiDateInput({
   name?: string;
   error?: string;
 }) {
+  const { t } = useTranslation();
   /**
    * Each row has a stable `id` so we can key the list by it. Using array
    * index as the key would cause React to reuse DOM nodes across reorders
@@ -2408,7 +2472,9 @@ function MultiDateInput({
         <div className="me-1 inline-block size-[14px] align-middle">
           <PlusIcon />
         </div>
-        <span className="inline-block align-middle">Add another date</span>
+        <span className="inline-block align-middle">
+          {t("advancedFilters.addAnotherDate")}
+        </span>
       </Button>
     </div>
   );

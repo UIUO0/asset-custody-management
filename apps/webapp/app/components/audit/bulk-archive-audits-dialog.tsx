@@ -10,6 +10,7 @@
  * @see {@link file://./audit-index-bulk-actions-dropdown.tsx} - Triggers this dialog
  */
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -29,6 +30,7 @@ export const BulkArchiveAuditsSchema = z.object({
  * Shows the count of selected audits and submits a bulk-archive request.
  */
 export default function BulkArchiveAuditsDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<AuditsIndexLoaderData>();
 
   const auditsSelected = useAtomValue(selectedBulkItemsAtom);
@@ -63,7 +65,7 @@ export default function BulkArchiveAuditsDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -72,7 +74,7 @@ export default function BulkArchiveAuditsDialog() {
               disabled={disabled}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

@@ -1,24 +1,38 @@
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { ErrorIcon } from "~/components/errors";
 import { Button } from "~/components/shared/button";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 
-export const meta = () => [{ title: appendToMetaTitle("Not found") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.errors.notFoundShort) }];
+};
 
 export default function LayoutSplat() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex size-full h-dvh items-center justify-center">
       <div className="flex flex-col items-center text-center">
         <span className="mb-5 size-14 text-primary">
           <ErrorIcon />
         </span>
-        <h2 className="mb-2">Page not found</h2>
+        <h2 className="mb-2">{t("errors.notFound")}</h2>
         <p className="max-w-[550px]">
-          We couldn't find the page you were looking for.
+          {t("ui.weCouldnTFindThePageYouWereLookingFor")}
         </p>
 
         <div className=" mt-8 flex gap-3">
           <Button to="/" variant="secondary" icon="home">
-            Back to home
+            {t("ui.backToHome")}
           </Button>
         </div>
       </div>

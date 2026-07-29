@@ -23,7 +23,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import AddAssetsToExistingBookingDialog from "./add-assets-to-existing-booking-dialog";
 import CreateBookingForSelectedAssetsDialog from "./create-booking-for-selected-assets-dialog";
@@ -62,7 +62,7 @@ function ConditionalActionsDropdown() {
     !selectedAssets.length
       ? ""
       : allSelected
-      ? t("list.allParens")
+      ? "(All)"
       : `(${selectedAssets.length})`
   }`;
 
@@ -100,7 +100,19 @@ function ConditionalActionsDropdown() {
     setOpen(false);
   }
 
-  if (isPersonalOrg(organization)) {
+  const canCreateBooking = userHasPermission({
+    roles,
+    entity: PermissionEntity.booking,
+    action: PermissionAction.create,
+  });
+
+  const canUpdateBooking = userHasPermission({
+    roles,
+    entity: PermissionEntity.booking,
+    action: PermissionAction.update,
+  });
+
+  if (isPersonalOrg(organization) || (!canCreateBooking && !canUpdateBooking)) {
     return null;
   }
 

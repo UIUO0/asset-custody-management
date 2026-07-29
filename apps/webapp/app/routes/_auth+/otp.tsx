@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -12,6 +13,7 @@ import { ShelfOTP } from "~/components/forms/otp-input";
 import { Button } from "~/components/shared/button";
 import { useSearchParams } from "~/hooks/search-params";
 import { useDisabled } from "~/hooks/use-disabled";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { verifyOtpAndSignin } from "~/modules/auth/service.server";
 import {
   getSelectedOrganization,
@@ -35,10 +37,13 @@ import { getOtpPageData, type OtpVerifyMode } from "~/utils/otp";
 import { tw } from "~/utils/tw";
 import type { action as resendOtpAction } from "./resend-otp";
 
-export function loader({ context, request }: LoaderFunctionArgs) {
+export async function loader({ context, request }: LoaderFunctionArgs) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get("mode") as OtpVerifyMode;
-  const title = getOtpPageData(mode).title;
+  // The title feeds `meta`, which runs outside React, so we resolve it here
+  // with the request's locale instead of the hook.
+  const t = await getFixedT(getLocale(request));
+  const title = t(getOtpPageData(mode).titleKey);
 
   if (context.isAuthenticated) {
     return redirect("/assets");
@@ -76,9 +81,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
                 shouldBeCaptured: false,
                 status: 400,
               }),
-              false
+              false,
             ),
-            { status: 400 }
+            { status: 400 },
           );
         }
 
@@ -138,6 +143,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 type resendAction = typeof resendOtpAction;
 
 export default function OtpPage() {
+  const { t } = useTranslation();
   const [message, setMessage] = useState<{
     message: string;
     type: "success" | "error";
@@ -153,7 +159,7 @@ export default function OtpPage() {
       zo.ref(el);
       formRef.current = el;
     },
-    [zo]
+    [zo],
   );
   const fetcherDisabled = isFormProcessing(fetcher.state);
   const disabled = useDisabled();
@@ -174,7 +180,7 @@ export default function OtpPage() {
       });
     } catch {
       setMessage({
-        message: "Something went wrong. Please try again.",
+        message: t("otp.resendFailed"),
         type: "error",
       });
     }
@@ -190,12 +196,12 @@ export default function OtpPage() {
         });
       } else {
         setMessage({
-          message: "Email sent successfully. Please check your inbox.",
+          message: t("otp.resendSuccess"),
           type: "success",
         });
       }
     }
-  }, [fetcher]);
+  }, [fetcher, t]);
 
   return (
     <>
@@ -221,7 +227,7 @@ export default function OtpPage() {
                   " text-sm",
                   message.type === "error"
                     ? "text-error-500"
-                    : "text-success-500"
+                    : "text-success-500",
                 )}
               >
                 {message.message}
@@ -234,7 +240,7 @@ export default function OtpPage() {
               className="w-full "
               disabled={fetcherDisabled || disabled}
             >
-              {pageData.buttonTitle}
+              {t(pageData.buttonTitleKey)}
             </Button>
           </Form>
 
@@ -242,9 +248,9 @@ export default function OtpPage() {
             className="mt-6 w-full text-center text-sm font-semibold"
             onClick={handleResendOtp}
           >
-            Did not receive a code?{" "}
+            {t("otp.didNotReceiveCode")}{" "}
             <span className="text-primary-500">
-              {fetcherDisabled ? "Sending code..." : "Send again"}
+              {fetcherDisabled ? t("otp.sendingCode") : t("otp.sendAgain")}
             </span>
           </button>
         </div>

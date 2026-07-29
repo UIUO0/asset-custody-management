@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import * as Toast from "@radix-ui/react-toast";
 
 import { useAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useEventSource } from "remix-utils/sse/react";
 import {
   clearNotificationAtom,
@@ -13,6 +14,7 @@ import { iconsMap } from "./icons-map";
 import When from "../when/when";
 
 export const Toaster = () => {
+  const { t } = useTranslation();
   const [, clearNotification] = useAtom(clearNotificationAtom);
   const [notification, showNotification] = useAtom(showNotificationAtom);
 
@@ -32,7 +34,7 @@ export const Toaster = () => {
   /** New notification coming from the server */
   const newNotification = useEventSource(
     `/api/sse/notification${tabId ? `?tabId=${tabId}` : ""}`,
-    { event: "new-notification" }
+    { event: "new-notification" },
   );
   /** When the stream sends us a new notification update the state so it displays */
   useEffect(() => {
@@ -45,7 +47,7 @@ export const Toaster = () => {
       <Toast.Root
         className={tw(
           "flex gap-4 rounded border border-gray-100 bg-white p-3 shadow-xl",
-          "data-[swipe=cancel]:translate-x-0 data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[state=closed]:animate-hide data-[state=open]:animate-slideIn data-[swipe=end]:animate-swipeOut data-[swipe=cancel]:transition-[transform_200ms_ease-out]"
+          "data-[swipe=cancel]:translate-x-0 data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[state=closed]:animate-hide data-[state=open]:animate-slideIn data-[swipe=end]:animate-swipeOut data-[swipe=cancel]:transition-[transform_200ms_ease-out]",
         )}
         open={open}
         onOpenChange={clearNotification}
@@ -57,7 +59,7 @@ export const Toaster = () => {
             className={tw(
               variants[icon.variant],
               " flex size-10 items-center justify-center rounded-full border-[6px] ",
-              icon.className
+              icon.className,
             )}
           >
             {iconsMap[icon.name]}
@@ -79,7 +81,7 @@ export const Toaster = () => {
           className="flex"
           onClick={clearNotification}
           data-test-id="closeToast"
-          aria-label="Close notification"
+          aria-label={t("ui.closeNotification")}
         >
           {iconsMap["x"]}
         </Toast.Close>

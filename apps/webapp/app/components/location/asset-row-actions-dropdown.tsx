@@ -1,4 +1,5 @@
 import type { Asset } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import RemoveAssetFromLocation from "./remove-asset-from-location";
 import { VerticalDotsIcon } from "../icons/library";
@@ -17,10 +18,11 @@ export default function AssetRowActionsDropdown({
   asset,
   fullWidth,
 }: AssetRowActionsDropdownProps) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
-        aria-label="Actions Trigger"
+        aria-label={t("bookings.actionsTrigger")}
         className={tw("asset-actions", fullWidth ? "w-full" : "")}
       >
         <span className="flex items-center gap-2">

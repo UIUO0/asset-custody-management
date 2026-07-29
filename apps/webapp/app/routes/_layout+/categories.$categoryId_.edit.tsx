@@ -15,6 +15,7 @@ import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getCategory, updateCategory } from "~/modules/category/service.server";
@@ -36,8 +37,6 @@ export const UpdateCategoryFormSchema = z.object({
   description: z.string(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
 });
-
-const title = "Edit category";
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -63,7 +62,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     const colorFromServer = category.color;
 
-    const header = { title };
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+    const header = {
+      title: t("categories.editTitle"),
+    };
 
     return payload({ header, colorFromServer, category });
   } catch (cause) {

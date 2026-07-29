@@ -1,6 +1,7 @@
 import type { ChangeEvent, FocusEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAtom, type PrimitiveAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -17,7 +18,7 @@ export const MarkdownNoteSchema = z.object({
     .min(3, "Content is required")
     .max(
       NOTE_MAX_CONTENT_LENGTH,
-      `Note must be ${NOTE_MAX_CONTENT_LENGTH} characters or fewer`
+      `Note must be ${NOTE_MAX_CONTENT_LENGTH} characters or fewer`,
     ),
 });
 
@@ -52,11 +53,18 @@ export function MarkdownNoteForm({
   editingAtom,
   action,
   formId,
-  placeholder = "Leave a note",
-  submitLabel = "Create note",
-  cancelLabel = "Cancel",
+  placeholder: placeholderProp,
+  submitLabel: submitLabelProp,
+  cancelLabel: cancelLabelProp,
   editorLabel = "note",
 }: MarkdownNoteFormProps) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `placeholder`. */
+  const placeholder = placeholderProp ?? t("ui.leaveANote");
+  /** Falls back to the translated default when the caller omits `submitLabel`. */
+  const submitLabel = submitLabelProp ?? t("notes.createNote");
+  /** Falls back to the translated default when the caller omits `cancelLabel`. */
+  const cancelLabel = cancelLabelProp ?? t("common.cancel");
   const zo = useZorm(formId, MarkdownNoteSchema);
   const hasError = zo.errors.content()?.message;
   const [isEditing, setIsEditing] = useAtom(editingAtom);
@@ -98,7 +106,7 @@ export function MarkdownNoteForm({
    * - User clicks outside the editor controls
    */
   const handleBlur = (
-    event: ChangeEvent<HTMLTextAreaElement> & FocusEvent<HTMLTextAreaElement>
+    event: ChangeEvent<HTMLTextAreaElement> & FocusEvent<HTMLTextAreaElement>,
   ) => {
     const content = event.currentTarget.value;
     const clickedTarget =
@@ -137,7 +145,7 @@ export function MarkdownNoteForm({
       }
       return false; // Event not handled
     },
-    [fetcher, formElement, setIsEditing]
+    [fetcher, formElement, setIsEditing],
   );
 
   /**
@@ -174,7 +182,7 @@ export function MarkdownNoteForm({
       setFormElement(node);
       zo.ref(node);
     },
-    [zo]
+    [zo],
   );
 
   return (

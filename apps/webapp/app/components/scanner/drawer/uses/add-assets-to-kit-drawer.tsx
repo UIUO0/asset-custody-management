@@ -177,8 +177,8 @@ export default function AddAssetsToKitDrawer({
       count: kitQrIds.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} kit${count > 1 ? "s" : ""}`}</strong> detected.
-          Kits cannot be added to other kits.
+          <strong>{`${count} kit${count > 1 ? "s" : ""}`}</strong>{" "}
+          {t("scanner.blockerKitsCannotNest")}
         </>
       ),
       description: t("scanner.noteOnlyIndividualToKits"),

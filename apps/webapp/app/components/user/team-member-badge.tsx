@@ -1,8 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserData } from "~/hooks/use-user-data";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
-import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
-import { userCanViewSpecificCustody } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator";
+import { userCanViewSpecificCustody } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import { tw } from "~/utils/tw";
 import { resolveTeamMemberName } from "~/utils/user";
 import { GrayBadge } from "../shared/gray-badge";
@@ -30,6 +31,7 @@ export function TeamMemberBadge({
   teamMember: TeamMemberForBadge | undefined | null;
   hidePrivate?: boolean;
 }) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const organization = useCurrentOrganization();
   const user = useUserData();
@@ -52,7 +54,7 @@ export function TeamMemberBadge({
                 "/static/images/default_pfp.jpg"
               }
               className="me-1 size-4 rounded-full"
-              alt={"Team member profile"}
+              alt={t("ui.teamMemberProfile")}
             />
           ) : null}
           <span className="mt-px">

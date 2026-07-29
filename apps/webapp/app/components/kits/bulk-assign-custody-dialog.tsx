@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -16,6 +17,7 @@ export const BulkAssignKitCustodySchema = z.object({
 });
 
 export default function BulkAssignCustodyDialog() {
+  const { t } = useTranslation();
   const zo = useZorm("BulkAssignKitCustody", BulkAssignKitCustodySchema);
 
   const { isSelfService } = useUserRoleHelper();
@@ -55,10 +57,10 @@ export default function BulkAssignCustodyDialog() {
                   deletedAt: null,
                 }}
                 fieldName="custodian"
-                contentLabel="Team members"
+                contentLabel={t("bookingForm.teamMembers")}
                 initialDataKey="teamMembers"
                 countKey="totalTeamMembers"
-                placeholder="Select a team member"
+                placeholder={t("bookingForm.selectTeamMember")}
                 closeOnSelect
                 transformItem={(item) => ({
                   ...item,
@@ -88,7 +90,7 @@ export default function BulkAssignCustodyDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -96,7 +98,7 @@ export default function BulkAssignCustodyDialog() {
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

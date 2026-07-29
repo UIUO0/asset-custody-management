@@ -201,7 +201,7 @@ export function QuantityOverviewCard({
     consumptionType === "ONE_WAY"
       ? t("quantity.usedUpOneWay")
       : consumptionType === "TWO_WAY"
-      ? t("quantity.returnableTwoWay")
+      ? t("assets.returnableTwoWay")
       : t("quantity.notApplicable");
 
   return (
@@ -218,7 +218,7 @@ export function QuantityOverviewCard({
             availableQuantity={custodyAvailableQuantity ?? available}
             trigger={
               <Button type="button" variant="secondary" size="sm">
-                Adjust
+                {t("quantity.adjust")}
               </Button>
             }
           />
@@ -236,10 +236,10 @@ export function QuantityOverviewCard({
         warning={isLowStock}
       />
       {/* Render the kit allocation total only when the asset is actually
-          in a kit. Mirrors the same conditional pattern used for "Reserved"
-          / "Checked out" below — clutter-free for assets that don't belong
+          in a kit. Mirrors the same conditional pattern used for t("bookings.reserved")
+          / t("assets.checkedOut") below — clutter-free for assets that don't belong
           to any kit. The detailed per-kit breakdown lives in the dedicated
-          "Included in kits" card. */}
+          t("assetOverview.includedInKits") card. */}
       {inKits > 0 ? (
         <OverviewRow
           label={t("quantity.inKits")}
@@ -248,9 +248,9 @@ export function QuantityOverviewCard({
       ) : null}
       {/* "In locations" mirrors "In kits": only renders when > 0 so
           assets with no placements stay uncluttered. Always sits next
-          to "Unplaced" for the at-a-glance placed/unplaced split.
+          to t("quantity.unplaced") for the at-a-glance placed/unplaced split.
           Detailed per-location breakdown lives in the dedicated
-          "Placed at locations" card. */}
+          t("assetOverview.placedAtLocations") card. */}
       {inLocations > 0 ? (
         <OverviewRow
           label={t("quantity.inLocations")}

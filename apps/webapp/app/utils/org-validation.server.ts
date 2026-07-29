@@ -45,7 +45,12 @@ const label = "Request validation";
 export type OrgValidationTxClient = {
   asset: {
     findMany: (args: {
-      where: { id: { in: string[] }; organizationId: string };
+      where: {
+        id: { in: string[] };
+        organizationId: string;
+        /** Optional intake-stage filter — see `assertAssetsBelongToOrg` */
+        lifecycleStage?: "READY";
+      };
       select: { id: true };
     }) => Promise<{ id: string }[]>;
   };
@@ -121,17 +126,29 @@ export type OrgValidationTxClient = {
  * Dedupes the input first so duplicate IDs don't inflate the expected count
  * (findMany returns unique rows). A no-op for an empty list.
  *
+ * Callers acting on behalf of a role scoped to its own records should also
+ * pass `onlyReadyAssets`, which additionally rejects assets still awaiting
+ * warehouse approval. Those assets are hidden from such users on every read
+ * path, so accepting their IDs on a write would be a way around the gate.
+ *
  * @param params.assetIds - Asset IDs sourced from request/form input
  * @param params.organizationId - The caller's (validated) organization ID
+ * @param params.onlyReadyAssets - Also reject assets at the PENDING stage
  * @param tx - Optional Prisma transaction client; defaults to the global `db`
- * @throws {ShelfError} 400 if any ID is missing or belongs to another org
+ * @throws {ShelfError} 400 if any ID is missing, belongs to another org, or —
+ *   when `onlyReadyAssets` is set — has not been released by the warehouse
  */
 export async function assertAssetsBelongToOrg(
   {
     assetIds,
     organizationId,
-  }: { assetIds: Asset["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient
+    onlyReadyAssets = false,
+  }: {
+    assetIds: Asset["id"][];
+    organizationId: string;
+    onlyReadyAssets?: boolean;
+  },
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (assetIds.length === 0) return;
 
@@ -139,7 +156,11 @@ export async function assertAssetsBelongToOrg(
   const uniqueIds = [...new Set(assetIds)];
 
   const found = await client.asset.findMany({
-    where: { id: { in: uniqueIds }, organizationId },
+    where: {
+      id: { in: uniqueIds },
+      organizationId,
+      ...(onlyReadyAssets ? { lifecycleStage: "READY" } : {}),
+    },
     select: { id: true },
   });
 
@@ -147,8 +168,9 @@ export async function assertAssetsBelongToOrg(
     throw new ShelfError({
       cause: null,
       title: "Invalid assets",
-      message:
-        "Some of the selected assets do not exist in your workspace. Please reload and try again.",
+      message: onlyReadyAssets
+        ? "بعض الأصول المحددة غير موجودة في مساحة العمل الخاصة بك أو لا تزال قيد الانتظار ولم تُعتمد بعد. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى."
+        : "بعض الأصول المحددة غير موجودة في مساحة العمل الخاصة بك. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.",
       label,
       status: 400,
       shouldBeCaptured: false,
@@ -177,7 +199,7 @@ export async function assertAssetKitsBelongToOrg(
     assetKitIds,
     organizationId,
   }: { assetKitIds: string[]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (assetKitIds.length === 0) return;
 
@@ -217,7 +239,7 @@ export async function assertAssetKitsBelongToOrg(
  */
 export async function assertKitsBelongToOrg(
   { kitIds, organizationId }: { kitIds: Kit["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (kitIds.length === 0) return;
 
@@ -261,7 +283,7 @@ export async function assertLocationsBelongToOrg(
     locationIds,
     organizationId,
   }: { locationIds: Location["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (locationIds.length === 0) return;
 
@@ -307,7 +329,7 @@ export async function assertCustomFieldsBelongToOrg(
     customFieldIds,
     organizationId,
   }: { customFieldIds: string[]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (customFieldIds.length === 0) return;
 
@@ -343,7 +365,7 @@ export async function assertCustomFieldsBelongToOrg(
  */
 export async function assertTagsBelongToOrg(
   { tagIds, organizationId }: { tagIds: Tag["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (tagIds.length === 0) return;
 
@@ -388,7 +410,7 @@ export async function assertTagsBelongToOrg(
  */
 export async function assertTagsAssignableToAssets(
   { tagIds, organizationId }: { tagIds: Tag["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   if (tagIds.length === 0) return;
 
@@ -432,7 +454,7 @@ export async function assertTeamMemberBelongsToOrg(
     teamMemberId,
     organizationId,
   }: { teamMemberId: TeamMember["id"]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   const client = tx ?? db;
 
@@ -467,7 +489,7 @@ export async function assertCategoryBelongsToOrg(
     categoryId,
     organizationId,
   }: { categoryId: Category["id"]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   const client = tx ?? db;
 
@@ -503,7 +525,7 @@ export async function assertLocationBelongsToOrg(
     locationId,
     organizationId,
   }: { locationId: Location["id"]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   const client = tx ?? db;
 
@@ -544,7 +566,7 @@ export async function assertAssetModelBelongsToOrg(
     assetModelId,
     organizationId,
   }: { assetModelId: AssetModel["id"]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   const client = tx ?? db;
 
@@ -582,7 +604,7 @@ export async function assertAssetModelBelongsToOrg(
  */
 export async function assertUserBelongsToOrg(
   { userId, organizationId }: { userId: User["id"]; organizationId: string },
-  tx?: OrgValidationTxClient
+  tx?: OrgValidationTxClient,
 ): Promise<void> {
   const client = tx ?? db;
 

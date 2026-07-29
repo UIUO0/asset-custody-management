@@ -362,7 +362,7 @@ function AssetTitleAndStatus({
 
   /**
    * Sidebar mirrors the booking-row badge precedence:
-   *  1. Fully reconciled → `PARTIALLY_CHECKED_IN` ("Already checked in",
+   *  1. Fully reconciled → `PARTIALLY_CHECKED_IN` (t("scanAvailability.alreadyCheckedIn"),
    *     blue).
    *  2. Partly reconciled (some disposition, more outstanding) →
    *     `PARTIALLY_CHECKED_OUT_QTY` (violet, "returns underway").

@@ -823,7 +823,11 @@ export async function createBooking({
       // runs with the active `tx` so it commits atomically with the create.
       if (dedupedAssetIds.length > 0) {
         await assertAssetsBelongToOrg(
-          { assetIds: dedupedAssetIds, organizationId: booking.organizationId },
+          {
+            assetIds: dedupedAssetIds,
+            organizationId: booking.organizationId,
+            onlyReadyAssets: true,
+          },
           tx,
         );
       }
@@ -839,6 +843,7 @@ export async function createBooking({
           {
             assetIds: slices.map((s) => s.assetId),
             organizationId: booking.organizationId,
+            onlyReadyAssets: true,
           },
           tx,
         );
@@ -7528,7 +7533,11 @@ export async function updateBookingAssets({
       // kit-driven invariant below (INDIVIDUAL assets can't legitimately be
       // both in the same booking).
       const validAssets = await tx.asset.findMany({
-        where: { id: { in: uniqueAssetIds }, organizationId },
+        where: {
+          id: { in: uniqueAssetIds },
+          organizationId,
+          lifecycleStage: "READY",
+        },
         select: { id: true, type: true },
       });
       const validAssetIds = validAssets.map((a) => a.id);
@@ -7537,7 +7546,7 @@ export async function updateBookingAssets({
         throw new ShelfError({
           cause: null,
           message:
-            "None of the selected assets exist. They may have been deleted.",
+            "None of the selected assets exist or they are pending approval.",
           label,
           shouldBeCaptured: false,
           status: 400,
@@ -7548,7 +7557,7 @@ export async function updateBookingAssets({
         throw new ShelfError({
           cause: null,
           message:
-            "Some of the selected assets no longer exist. Please reload and try again.",
+            "Some of the selected assets no longer exist or are pending approval. Please reload and try again.",
           label,
           shouldBeCaptured: false,
           status: 400,

@@ -29,7 +29,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { useCurrentOrganization } from "./use-current-organization";
 import { useUserRoleHelper } from "./user-user-role-helper";
 
@@ -119,13 +119,11 @@ export function useSidebarNavItems() {
     return {
       reason: (
         <div>
-          <h5>Disabled</h5>
-          <p>
-            Booking is a premium feature only available for Team workspaces.
-          </p>
+          <h5>{t("ui.disabled")}</h5>
+          <p>{t("ui.bookingIsAPremiumFeatureOnlyAvailableForTeam")}</p>
 
           <When truthy={!!subscription} fallback={<UpgradeMessage />}>
-            <p>Please switch to your team workspace to access this feature.</p>
+            <p>{t("ui.pleaseSwitchToYourTeamWorkspaceToAccessThisF")}</p>
           </When>
         </div>
       ),

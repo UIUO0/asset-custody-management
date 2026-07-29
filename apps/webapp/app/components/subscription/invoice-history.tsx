@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "../shared/button";
 import { DateS } from "../shared/date";
 
@@ -27,6 +28,7 @@ export function InvoiceHistory({
   paidInvoices,
   upcomingInvoices,
 }: InvoiceHistoryProps) {
+  const { t } = useTranslation();
   const hasUpcoming = upcomingInvoices.length > 0;
   const hasPaid = paidInvoices.length > 0;
 
@@ -36,21 +38,26 @@ export function InvoiceHistory({
 
   return (
     <div className="mt-8">
-      <h3 className="mb-4 text-text-lg font-semibold">Billing History</h3>
+      <h3 className="mb-4 text-text-lg font-semibold">
+        {t("ui.billingHistory")}
+      </h3>
 
       {hasUpcoming && (
         <div className="mb-6 rounded border border-gray-300">
           <div className="border-b border-gray-300 bg-gray-50 px-4 py-3">
             <div className="text-sm font-medium uppercase text-gray-500">
-              Upcoming {upcomingInvoices.length > 1 ? "Invoices" : "Invoice"}
+              Upcoming{" "}
+              {upcomingInvoices.length > 1 ? "Invoices" : t("ui.invoice")}
             </div>
           </div>
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 text-start text-sm text-gray-500">
-                <th className="px-4 py-3 font-medium">Subscription</th>
-                <th className="px-4 py-3 font-medium">Billing Date</th>
-                <th className="px-4 py-3 font-medium">Amount</th>
+                <th className="px-4 py-3 font-medium">
+                  {t("ui.subscription")}
+                </th>
+                <th className="px-4 py-3 font-medium">{t("ui.billingDate")}</th>
+                <th className="px-4 py-3 font-medium">{t("ui.amount")}</th>
               </tr>
             </thead>
             <tbody>
@@ -79,16 +86,16 @@ export function InvoiceHistory({
         <div className="rounded border border-gray-300">
           <div className="border-b border-gray-300 bg-gray-50 px-4 py-3">
             <div className="text-sm font-medium uppercase text-gray-500">
-              Past Invoices
+              {t("ui.pastInvoices")}
             </div>
           </div>
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-200 text-start text-sm text-gray-500">
-                <th className="px-4 py-3 font-medium">Invoice</th>
-                <th className="px-4 py-3 font-medium">Date Paid</th>
-                <th className="px-4 py-3 font-medium">Amount</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">{t("ui.invoice")}</th>
+                <th className="px-4 py-3 font-medium">{t("ui.datePaid")}</th>
+                <th className="px-4 py-3 font-medium">{t("ui.amount")}</th>
+                <th className="px-4 py-3 font-medium">{t("assets.status")}</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
@@ -125,7 +132,7 @@ export function InvoiceHistory({
                         rel="noopener noreferrer"
                         variant="link-gray"
                       >
-                        View invoice
+                        {t("subscription.viewInvoice")}
                       </Button>
                     )}
                   </td>

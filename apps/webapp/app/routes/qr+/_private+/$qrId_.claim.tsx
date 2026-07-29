@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -130,6 +131,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function QrLink() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
   return (
@@ -141,10 +143,10 @@ export default function QrLink() {
           </div>
           <div className="mb-8">
             <h1 className="mb-2 text-[24px] font-semibold">
-              Unclaimed QR Code
+              {t("ui.unclaimedQrCode")}
             </h1>
             <p className="text-gray-600">
-              Select the workspace for which you want to claim the QR code.
+              {t("ui.selectTheWorkspaceForWhichYouWantToClaimTheQ")}
             </p>
           </div>
           <div className="flex flex-col justify-center gap-2">
@@ -157,7 +159,7 @@ export default function QrLink() {
                   type="submit"
                   disabled={disabled}
                 >
-                  Confirm
+                  {t("common.confirm")}
                 </Button>
                 <Button
                   variant="secondary"
@@ -167,7 +169,7 @@ export default function QrLink() {
                   type="button"
                   disabled={disabled}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </div>
             </Form>

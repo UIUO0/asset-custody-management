@@ -3,6 +3,7 @@
  * Renders the confirmation dialog content used by the bulk actions dropdown.
  */
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -17,6 +18,7 @@ export const BulkDeleteAssetModelSchema = z.object({
 });
 
 export default function AssetModelBulkDeleteDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<typeof loader>();
 
   const zo = useZorm("BulkDeleteAssetModels", BulkDeleteAssetModelSchema);
@@ -52,7 +54,7 @@ export default function AssetModelBulkDeleteDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -61,7 +63,7 @@ export default function AssetModelBulkDeleteDialog() {
               disabled={disabled}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </>

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import ImageWithPreview from "~/components/image-with-preview/image-with-preview";
 import { Spinner } from "~/components/shared/spinner";
 import useApiQuery from "~/hooks/use-api-query";
@@ -32,6 +33,7 @@ export const AuditImagesComponent = React.memo(
     ids,
     disablePortal,
   }: AuditImagesComponentProps) {
+    const { t } = useTranslation();
     // Cheap string interpolation — safe to inline (recomputed each render)
     const apiUrl = `/api/audit-images?ids=${ids}`;
 
@@ -71,9 +73,11 @@ export const AuditImagesComponent = React.memo(
                 <div
                   key={`deleted-${i}`}
                   className="flex size-16 items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50"
-                  title="Image deleted"
+                  title={t("ui.imageDeleted")}
                 >
-                  <span className="text-xs text-gray-400">Deleted</span>
+                  <span className="text-xs text-gray-400">
+                    {t("ui.deleted")}
+                  </span>
                 </div>
               ))}
             </div>
@@ -83,7 +87,9 @@ export const AuditImagesComponent = React.memo(
 
       // No images expected or error
       return (
-        <div className="my-2 text-sm text-gray-500">No images attached</div>
+        <div className="my-2 text-sm text-gray-500">
+          {t("ui.noImagesAttached")}
+        </div>
       );
     }
 
@@ -96,7 +102,7 @@ export const AuditImagesComponent = React.memo(
               key={image.id}
               imageUrl={image.imageUrl}
               thumbnailUrl={image.thumbnailUrl}
-              alt={image.description || "Audit image"}
+              alt={image.description || t("audits.auditImage")}
               withPreview
               className="size-16"
               disablePortal={disablePortal}
@@ -104,7 +110,7 @@ export const AuditImagesComponent = React.memo(
                 id: img.id,
                 imageUrl: img.imageUrl,
                 thumbnailUrl: img.thumbnailUrl,
-                alt: img.description || "Audit image",
+                alt: img.description || t("audits.auditImage"),
               }))}
               currentImageId={image.id}
             />
@@ -115,9 +121,9 @@ export const AuditImagesComponent = React.memo(
               <div
                 key={`deleted-${i}`}
                 className="flex size-16 items-center justify-center rounded border border-dashed border-gray-300 bg-gray-50"
-                title="Image deleted"
+                title={t("ui.imageDeleted")}
               >
-                <span className="text-xs text-gray-400">Deleted</span>
+                <span className="text-xs text-gray-400">{t("ui.deleted")}</span>
               </div>
             ))}
         </div>
@@ -127,5 +133,5 @@ export const AuditImagesComponent = React.memo(
   (prevProps, nextProps) =>
     // Only re-render if ids or disablePortal actually changed
     prevProps.ids === nextProps.ids &&
-    prevProps.disablePortal === nextProps.disablePortal
+    prevProps.disablePortal === nextProps.disablePortal,
 );

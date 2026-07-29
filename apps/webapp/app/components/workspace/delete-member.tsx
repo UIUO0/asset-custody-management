@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { Prisma, TeamMember } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { Button } from "~/components/shared/button";
 
@@ -32,9 +33,10 @@ export const DeleteMember = ({
     };
   }>;
 }) => {
+  const { t } = useTranslation();
   const hasCustodies = useMemo(
     () => teamMember?._count.custodies > 0,
-    [teamMember]
+    [teamMember],
   );
   return (
     <>
@@ -49,7 +51,7 @@ export const DeleteMember = ({
           >
             <span className="flex items-center gap-2">
               <TrashIcon />
-              Delete
+              {t("common.delete")}
             </span>
           </Button>
         </AlertDialogTrigger>
@@ -67,16 +69,16 @@ export const DeleteMember = ({
 };
 
 const DeleteMemberContent = ({ id }: { id: TeamMember["id"] }) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
 
   return (
     <AlertDialogContent className="relative">
       <AlertDialogHeader className="mb-8">
-        <AlertDialogTitle>Delete team member</AlertDialogTitle>
+        <AlertDialogTitle>{t("ui.deleteTeamMember")}</AlertDialogTitle>
         <AlertDialogDescription>
-          After deleting a team member you will no longer be able to give them
-          custody over an asset.
+          {t("team.deleteMemberHint")}
         </AlertDialogDescription>
         <AlertDialogCancel
           asChild
@@ -91,7 +93,7 @@ const DeleteMemberContent = ({ id }: { id: TeamMember["id"] }) => {
           <Button
             className={tw(
               "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800",
-              disabled ? "pointer-events-none opacity-50" : ""
+              disabled ? "pointer-events-none opacity-50" : "",
             )}
             type="submit"
             width="full"
@@ -100,7 +102,7 @@ const DeleteMemberContent = ({ id }: { id: TeamMember["id"] }) => {
             name="intent"
             value="delete"
           >
-            Delete team member
+            {t("ui.deleteTeamMember")}
           </Button>
         </Form>
       </AlertDialogFooter>
@@ -112,28 +114,32 @@ const UnableToDeleteMemberContent = ({
   custodiesCount,
 }: {
   custodiesCount: number;
-}) => (
-  <AlertDialogContent className="relative">
-    <AlertDialogHeader className="mb-8">
-      <AlertDialogTitle>Unable to delete team member</AlertDialogTitle>
-      <AlertDialogDescription>
-        The team member you are trying to delete has custody over{" "}
-        {custodiesCount} assets. Please release custody or check-in those assets
-        before deleting the user.
-      </AlertDialogDescription>
-      <AlertDialogCancel
-        asChild
-        className="absolute right-5 top-5 cursor-pointer"
-      >
-        <XIcon />
-      </AlertDialogCancel>
-    </AlertDialogHeader>
-    <AlertDialogFooter>
-      <AlertDialogCancel asChild>
-        <Button type="button" variant="secondary" width="full">
-          Close
-        </Button>
-      </AlertDialogCancel>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-);
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <AlertDialogContent className="relative">
+      <AlertDialogHeader className="mb-8">
+        <AlertDialogTitle>{t("ui.unableToDeleteTeamMember")}</AlertDialogTitle>
+        <AlertDialogDescription>
+          The team member you are trying to delete has custody over{" "}
+          {custodiesCount} assets. Please release custody or check-in those
+          assets before deleting the user.
+        </AlertDialogDescription>
+        <AlertDialogCancel
+          asChild
+          className="absolute right-5 top-5 cursor-pointer"
+        >
+          <XIcon />
+        </AlertDialogCancel>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel asChild>
+          <Button type="button" variant="secondary" width="full">
+            {t("common.close")}
+          </Button>
+        </AlertDialogCancel>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  );
+};

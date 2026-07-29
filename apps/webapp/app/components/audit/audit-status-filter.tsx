@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useSearchParams } from "~/hooks/search-params";
 import { isFormProcessing } from "~/utils/form";
@@ -20,6 +21,7 @@ type AuditStatusFilterProps = {
  * Default filter is ALL (shows all assets).
  */
 export function AuditStatusFilter(props: AuditStatusFilterProps) {
+  const { t } = useTranslation();
   const { statusItems, name = "auditStatus" } = props;
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
@@ -47,10 +49,10 @@ export function AuditStatusFilter(props: AuditStatusFilterProps) {
         disabled={disabled}
       >
         <SelectTrigger
-          aria-label="Filter by audit status"
+          aria-label={t("ui.filterByAuditStatus")}
           className="mt-2 px-3.5 py-2 text-start text-base text-gray-500 md:mt-0 md:max-w-fit"
         >
-          <SelectValue placeholder="Filter by status" />
+          <SelectValue placeholder={t("list.filterByStatus")} />
         </SelectTrigger>
         <SelectContent
           position="popper"

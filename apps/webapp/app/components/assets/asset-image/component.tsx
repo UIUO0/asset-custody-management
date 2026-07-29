@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useState, useCallback, useRef } from "react";
 
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogPortal } from "~/components/layout/dialog";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
@@ -77,7 +78,7 @@ const INITIAL_ASSET_IMAGE_STATE: AssetImageState = {
 
 function assetImageReducer(
   state: AssetImageState,
-  action: AssetImageAction
+  action: AssetImageAction,
 ): AssetImageState {
   switch (action.type) {
     case "load_success":
@@ -144,9 +145,10 @@ export const AssetImage = ({
   alt,
   ...rest
 }: AssetImageProps) => {
+  const { t } = useTranslation();
   const [state, dispatch] = useReducer(
     assetImageReducer,
-    INITIAL_ASSET_IMAGE_STATE
+    INITIAL_ASSET_IMAGE_STATE,
   );
   const {
     isLoading,
@@ -227,7 +229,7 @@ export const AssetImage = ({
         const params = new URLSearchParams({ assetId, mainImage });
         const response = await fetch(
           `/api/asset/refresh-main-image?${params.toString()}`,
-          { signal }
+          { signal },
         );
 
         // The asset changed mid-flight — drop this response entirely so it can't
@@ -260,7 +262,7 @@ export const AssetImage = ({
         }
       }
     },
-    [assetId, mainImage]
+    [assetId, mainImage],
   );
 
   /**
@@ -286,7 +288,7 @@ export const AssetImage = ({
         const params = new URLSearchParams({ assetId });
         const response = await fetch(
           `/api/asset/generate-thumbnail?${params.toString()}`,
-          { signal }
+          { signal },
         );
 
         if (signal?.aborted) {
@@ -313,7 +315,7 @@ export const AssetImage = ({
         }
       }
     },
-    [assetId]
+    [assetId],
   );
 
   const handleImageLoad = () => {
@@ -372,7 +374,7 @@ export const AssetImage = ({
           timerIds.push(
             setTimeout(() => {
               void refreshImage(controller.signal);
-            }, jitter)
+            }, jitter),
           );
         }
       } catch (e) {
@@ -395,7 +397,7 @@ export const AssetImage = ({
       timerIds.push(
         setTimeout(() => {
           void generateThumbnail(controller.signal);
-        }, jitter)
+        }, jitter),
       );
     }
 
@@ -435,7 +437,7 @@ export const AssetImage = ({
       window.addEventListener("keydown", handleKeydown);
       return () => window.removeEventListener("keydown", handleKeydown);
     },
-    [isDialogOpen, withPreview]
+    [isDialogOpen, withPreview],
   );
 
   return (
@@ -446,7 +448,7 @@ export const AssetImage = ({
           <div
             className={tw(
               "absolute inset-0 flex items-center justify-center bg-gray-100",
-              "transition-opacity"
+              "transition-opacity",
             )}
           >
             <Spinner className="[&_.spinner]:before:border-t-gray-400" />
@@ -475,7 +477,7 @@ export const AssetImage = ({
           height={108}
           className={tw(
             "size-full object-cover",
-            withPreview && "cursor-pointer"
+            withPreview && "cursor-pointer",
           )}
           alt={alt}
           onLoad={handleImageLoad}
@@ -511,14 +513,14 @@ export const AssetImage = ({
               </div>
               <div className="flex w-full justify-center gap-3 px-6 py-3 md:justify-end">
                 <Button to={`/assets/${assetId}/edit`} variant="secondary">
-                  Edit image(s)
+                  {t("ui.editImages")}
                 </Button>
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={handleCloseDialog}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>

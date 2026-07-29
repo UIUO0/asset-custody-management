@@ -107,7 +107,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export const handle = {
-  breadcrumb: () => <Link to="/import">Import</Link>,
+  breadcrumb: () => <Link to="/import">"Import"</Link>,
 };
 
 export default function AssetsImport() {

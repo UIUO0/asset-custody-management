@@ -142,7 +142,7 @@ export function AssetUtilizationContent({
                   {avgUtilization}%
                 </span>
                 <span className="text-sm font-medium text-gray-500">
-                  average usage
+                  {t("reports.averageUsage")}
                 </span>
               </div>
               <div className="h-2 w-48 overflow-hidden rounded-full bg-gray-200">
@@ -179,7 +179,7 @@ export function AssetUtilizationContent({
         <div className="border-t border-gray-100 bg-gray-50 px-4 py-3 md:px-6">
           <p className="text-xs text-gray-500">
             <span className="font-medium text-gray-700">
-              How it's calculated:
+              {t("reports.howCalculated")}
             </span>{" "}
             Usage rate = (total days booked ÷ days in period) × 100. Rates above
             100% indicate overlapping bookings where the asset was reserved
@@ -192,7 +192,7 @@ export function AssetUtilizationContent({
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">
-            Asset Usage Rates
+            {t("ui.assetUsageRates")}
           </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}

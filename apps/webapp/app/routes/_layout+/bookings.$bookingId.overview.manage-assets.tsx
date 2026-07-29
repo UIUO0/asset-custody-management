@@ -183,6 +183,7 @@ export const meta: MetaFunction = ({ matches }) => {
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
+  const t = await getFixedT(getLocale(request));
   const authSession = context.getSession();
   const { userId } = authSession;
   const { bookingId: id } = getParams(
@@ -225,6 +226,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       getPaginatedAndFilterableAssets({
         request,
         organizationId,
+        /**
+         * An employee building a booking must not be offered assets the
+         * warehouse has not released yet — they would appear bookable and then
+         * fail, or worse, get reserved before the intake workflow is done.
+         */
+        onlyReadyAssets: isScopedToOwnRecords,
         extraInclude: {
           assetLocations: {
             select: { quantity: true, location: LOCATION_WITH_HIERARCHY },
@@ -357,7 +364,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         message: isNotAllowedStatus
           ? "Changing of assets is not allowed for current status of booking."
           : isScopedToOwnRecords
-          ? "You are unable to add assets at this point because the booking is already reserved. Cancel this booking and create another one if you need to make changes."
+          ? t("bookings.cantManageReserved")
           : "Changing of assets is not allowed for current status of booking.",
         shouldBeCaptured: false,
         additionalData: {
@@ -399,7 +406,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     // why: loaders run outside React, so `useTranslation` is unavailable —
     // `getFixedT` gives the same `t` bound to the request's locale.
-    const t = await getFixedT(getLocale(request));
 
     return payload({
       header: {
@@ -455,6 +461,7 @@ const quantitiesSchema = z.record(
 );
 
 export async function action({ context, request, params }: ActionFunctionArgs) {
+  const t = await getFixedT(getLocale(request));
   const authSession = context.getSession();
   const { userId } = authSession;
   const { bookingId } = getParams(params, z.object({ bookingId: z.string() }), {
@@ -973,15 +980,16 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     }
 
     // Send email to custodian about asset changes
+    // Note copy is written server-side, so resolve with the request's locale.
     const assetChanges: string[] = [];
     if (newAssetIds.length > 0) {
-      assetChanges.push("Assets were added to the booking");
+      assetChanges.push(t("bookings.assetsAdded"));
     }
     if (removedAssetIds.length > 0) {
-      assetChanges.push("Assets were removed from the booking");
+      assetChanges.push(t("bookings.assetsRemoved"));
     }
     if (assetChanges.length > 0) {
-      assetChanges.push("View booking activity for full details");
+      assetChanges.push(t("bookings.viewActivityForDetails"));
       void sendBookingUpdatedEmail({
         bookingId,
         organizationId,

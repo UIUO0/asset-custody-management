@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { tw } from "~/utils/tw";
 import { resolveTeamMemberName } from "~/utils/user";
@@ -42,6 +43,8 @@ export default function ReminderTeamMembers({
   extraContent,
   isAlreadySent = false,
 }: ReminderTeamMembersProps) {
+  const { t } = useTranslation();
+
   return (
     <div className={tw("flex items-center", className)} style={style}>
       {teamMembers.map((teamMember) => {
@@ -57,7 +60,7 @@ export default function ReminderTeamMembers({
                   className={tw(
                     "-ms-1 flex size-6 shrink-0 items-center justify-center overflow-hidden rounded border border-static-white",
                     imgClassName,
-                    isAccessRevoed && "border-error-500"
+                    isAccessRevoed && "border-error-500",
                   )}
                 >
                   <img
@@ -75,10 +78,7 @@ export default function ReminderTeamMembers({
 
                 <When truthy={isAccessRevoed && !isAlreadySent}>
                   <p className="mt-2 text-error-500">
-                    This team member has been removed from the workspace. As a
-                    fallback the reminder email will be sent to the workspace
-                    Owner. You can always edit the reminder to assign it to a
-                    different user.
+                    {t("reminders.removedMemberHint")}
                   </p>
                 </When>
               </TooltipContent>

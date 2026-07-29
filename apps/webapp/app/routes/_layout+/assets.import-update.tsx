@@ -6,6 +6,7 @@
  * @see {@link file://./../../components/assets/bulk-update/index.tsx} UI component
  * @see {@link file://./../../utils/import-update.server.ts} Server-side logic
  */
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   MetaFunction,
@@ -159,10 +160,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
   { title: data ? appendToMetaTitle(data.header.title) : "" },
 ];
 
+/** Breadcrumb for the import-update page (component so it can use the hook). */
+function ImportUpdateBreadcrumb() {
+  const { t } = useTranslation();
+  return (
+    <Link to="/assets/import-update">{t("assets.importUpdateTitle")}</Link>
+  );
+}
+
 export const handle = {
-  breadcrumb: () => (
-    <Link to="/assets/import-update">Update existing assets</Link>
-  ),
+  breadcrumb: () => <ImportUpdateBreadcrumb />,
 };
 
 export default function AssetsImportUpdate() {

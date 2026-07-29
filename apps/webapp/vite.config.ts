@@ -22,7 +22,7 @@ const buildHash = process.env.BUILD_HASH || createHash();
 const prismaClientDir = dirname(require.resolve("@prisma/client/package.json"));
 const prismaClientIndexBrowser = resolve(
   prismaClientDir,
-  "../../.prisma/client/index-browser.js"
+  "../../.prisma/client/index-browser.js",
 );
 
 // Fail fast if the Prisma browser bundle is missing. Without it, enums like
@@ -30,7 +30,7 @@ const prismaClientIndexBrowser = resolve(
 if (!existsSync(prismaClientIndexBrowser)) {
   throw new Error(
     `Prisma browser bundle not found at ${prismaClientIndexBrowser}. ` +
-      `Run "prisma generate" or check that the .prisma/client path is correct.`
+      `Run "prisma generate" or check that the .prisma/client path is correct.`,
   );
 }
 
@@ -63,9 +63,7 @@ export default defineConfig({
       ],
     },
   },
-  optimizeDeps: {
-    include: ["./app/routes/**/*.tsx", "./app/routes/**/*.ts"],
-  },
+
   build: {
     target: "ES2022",
     assetsDir: `file-assets`,

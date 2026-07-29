@@ -21,11 +21,15 @@
  * @see {@link file://./../../modules/asset/service.server.ts} — `replaceAssetPlacements`
  * @see {@link file://./assets.$assetId.overview.update-location.tsx} — single-placement quick-set dialog
  */
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 import { ManagePlacementsForm } from "~/components/assets/manage-placements-form";
 import { LocationMarkerIcon } from "~/components/icons/library";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   getAsset,
   getLocationsForCreateAndEdit,
@@ -50,7 +54,15 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Manage placements") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.assets.managePlacementsTitle) }];
+};
 
 export function links() {
   return [{ rel: "stylesheet", href: styles }];
@@ -225,7 +237,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const { placements } = parseData(
       await request.formData(),
       z.object({ placements: PlacementsSchema }),
-      { additionalData: { userId, organizationId, id } }
+      { additionalData: { userId, organizationId, id } },
     );
 
     await replaceAssetPlacements({
@@ -250,6 +262,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function ManagePlacementsRoute() {
+  const { t } = useTranslation();
   const {
     isQty,
     assetQuantity,
@@ -270,11 +283,11 @@ export default function ManagePlacementsRoute() {
         <LocationMarkerIcon />
       </div>
       <div className="mb-5">
-        <h4>Manage placements</h4>
+        <h4>{t("assetActions.managePlacements")}</h4>
         <p className="text-sm text-gray-600">
           {isQty
-            ? "Spread this asset across one or more locations. Units not placed anywhere stay in the unplaced pool."
-            : "Set the single location this asset sits at."}
+            ? t("assets.multiPlacementHint")
+            : t("assets.singlePlacementHint")}
         </p>
       </div>
       <ManagePlacementsForm

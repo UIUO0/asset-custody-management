@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -21,24 +22,38 @@ interface SequentialIdMigrationModalProps {
 
 type MigrationState = "starting" | "running" | "completed" | "error";
 
-/** Combined migration state — keeps the status and user-facing message in a
- *  single atom so they cannot drift and we avoid cascading setState calls. */
+/**
+ * Combined migration state — keeps the status and user-facing message in a
+ * single atom so they cannot drift and we avoid cascading setState calls.
+ *
+ * The message arrives one of two ways, so exactly one of these is set:
+ * - `messageKey` for copy this component owns (resolved with `t()` at render)
+ * - `message` for copy the server already localised via `getFixedT`
+ */
 type MigrationStatus = {
   state: MigrationState;
-  message: string;
+  messageKey?: string;
+  message?: string;
 };
 
+/**
+ * Seed status for the migration modal.
+ *
+ * `messageKey` holds an i18n key (not a translated string) because this lives at
+ * module scope, where the `useTranslation` hook cannot run.
+ */
 const INITIAL_STATUS: MigrationStatus = {
   state: "starting",
-  message: "Setting up sequential IDs for your organization...",
+  messageKey: "settings.settingUpSequentialIds",
 };
 
 export function SequentialIdMigrationModal(
   // `organizationId` is consumed by the parent as `key` to remount this modal
   // when the organization changes; no internal read is required.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _: SequentialIdMigrationModalProps
+  _: SequentialIdMigrationModalProps,
 ) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<typeof action>();
   // Status is stored as a single object so each transition is one setState.
   const [status, setStatus] = useState<MigrationStatus>(INITIAL_STATUS);
@@ -48,11 +63,11 @@ export function SequentialIdMigrationModal(
     if (status.state === "starting") {
       setStatus({
         state: "running",
-        message: "Setting up sequential IDs for your organization...",
+        messageKey: "settings.settingUpSequentialIds",
       });
       void fetcher.submit(
         {},
-        { action: "/api/generate-sequential-ids", method: "post" }
+        { action: "/api/generate-sequential-ids", method: "post" },
       );
     }
   }, [status.state, fetcher]);
@@ -65,14 +80,17 @@ export function SequentialIdMigrationModal(
       // hasSequentialIdsMigrated becomes true.
       setStatus({ state: "completed", message: fetcher.data.message });
     } else {
-      setStatus({
-        state: "error",
-        message: fetcher.data.message || "Failed to generate sequential IDs",
-      });
+      setStatus(
+        fetcher.data.message
+          ? { state: "error", message: fetcher.data.message }
+          : { state: "error", messageKey: "settings.sequentialIdsFailed" },
+      );
     }
   }, [fetcher.data]);
 
-  const { state, message } = status;
+  const { state, message, messageKey } = status;
+  /** Server-provided copy is already localised; our own copy is a key. */
+  const displayMessage = messageKey ? t(messageKey) : message;
 
   return (
     <AlertDialog open={true}>
@@ -84,13 +102,13 @@ export function SequentialIdMigrationModal(
               <span className="text-green-600">✅</span>
             )}
             {state === "error" && <span className="text-red-600">❌</span>}
-            Sequential Asset IDs
+            {t("settings.sequentialAssetIds")}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-start">
-            {message}
+            {displayMessage}
             {state === "running" && (
               <div className="mt-3 text-sm text-gray-500">
-                This may take a moment depending on the number of assets...
+                {t("ui.thisMayTakeAMomentDependingOnTheNumberOfAsse")}
               </div>
             )}
             {state === "error" && (
@@ -101,7 +119,7 @@ export function SequentialIdMigrationModal(
                   size="sm"
                   variant="secondary"
                 >
-                  Try Again
+                  {t("ui.tryAgain")}
                 </Button>
               </div>
             )}
@@ -114,7 +132,7 @@ export function SequentialIdMigrationModal(
               variant="secondary"
               disabled={state !== "completed"}
             >
-              Close
+              {t("common.close")}
             </Button>
           </AlertDialogCancel>
         </AlertDialogFooter>

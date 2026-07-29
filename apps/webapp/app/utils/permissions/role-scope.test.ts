@@ -143,6 +143,16 @@ describe("Role2PermissionMap coverage for EPDA roles", () => {
     expect(Role2PermissionMap.FINANCE?.asset).not.toContain("delete");
   });
 
+  it("lets FINANCE edit assets but never create them", () => {
+    // why: finance annotates assets the warehouse registered. `import` is part
+    // of this assertion because `assets.import` (bulk CREATE) and
+    // `assets.import-update` share the `asset.import` action — granting it
+    // would be creation through the back door.
+    expect(Role2PermissionMap.FINANCE?.asset).toContain("update");
+    expect(Role2PermissionMap.FINANCE?.asset).not.toContain("create");
+    expect(Role2PermissionMap.FINANCE?.asset).not.toContain("import");
+  });
+
   it("gives approval rights to WAREHOUSE only", () => {
     expect(Role2PermissionMap.WAREHOUSE?.asset).toContain("approve");
     expect(Role2PermissionMap.FINANCE?.asset).not.toContain("approve");

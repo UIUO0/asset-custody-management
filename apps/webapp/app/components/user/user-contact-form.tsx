@@ -42,23 +42,21 @@ export function UserContactDetailsForm({
   return (
     <Card className="my-0">
       <div className="mb-6">
-        <h3 className="text-text-lg font-semibold">Contact Information</h3>
-        <p className="text-sm text-gray-600">
-          Update your contact details and address information here. This
-          information will be visible to other users within your workspace and
-          may be used for communication purposes.
-        </p>
+        <h3 className="text-text-lg font-semibold">
+          {t("userForm.contactInformation")}
+        </h3>
+        <p className="text-sm text-gray-600">{t("userForm.contactHint")}</p>
       </div>
       <Form method="post" ref={zo.ref} className="" replace>
         <FormRow
-          rowLabel="Phone number"
+          rowLabel={t("ui.phoneNumber")}
           className="border-t"
           required={zodFieldIsRequired(
             UserContactDetailsFormSchema.shape.phone,
           )}
         >
           <Input
-            label="Phone"
+            label={t("ui.phone")}
             type="tel"
             autoComplete="tel"
             hideLabel
@@ -82,7 +80,7 @@ export function UserContactDetailsForm({
           )}
         >
           <Input
-            label="Street"
+            label={t("ui.street")}
             type="text"
             autoComplete="street-address"
             name={zo.fields.street()}
@@ -100,11 +98,11 @@ export function UserContactDetailsForm({
         </FormRow>
 
         <FormRow
-          rowLabel="City"
+          rowLabel={t("userForm.city")}
           required={zodFieldIsRequired(UserContactDetailsFormSchema.shape.city)}
         >
           <Input
-            label="City"
+            label={t("userForm.city")}
             type="text"
             hideLabel
             autoComplete="city"
@@ -137,7 +135,7 @@ export function UserContactDetailsForm({
                 validationErrors?.stateProvince?.message ||
                 zo.errors.stateProvince()?.message
               }
-              placeholder="California"
+              placeholder={t("ui.california")}
               required={zodFieldIsRequired(
                 UserContactDetailsFormSchema.shape.stateProvince,
               )}

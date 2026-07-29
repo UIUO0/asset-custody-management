@@ -16,7 +16,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export const handle = {
-  breadcrumb: () => <Link to="/reports">Reports</Link>,
+  breadcrumb: () => <Link to="/reports">"Reports"</Link>,
 };
 
 export default function ReportsLayout() {

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { m } from "framer-motion";
 import { ChevronUpIcon } from "lucide-react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { useRouteLoaderData } from "react-router";
 import { Button } from "~/components/shared/button";
 import { useViewportHeight } from "~/hooks/use-viewport-height";
@@ -48,13 +49,14 @@ export default function BaseDrawer({
   headerContent,
   collapsedHeight = 170,
 }: BaseDrawerProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(
-    defaultExpanded !== undefined ? defaultExpanded : false
+    defaultExpanded !== undefined ? defaultExpanded : false,
   );
   const { vh } = useViewportHeight();
 
   const minimizedSidebar = useRouteLoaderData<typeof layoutLoader>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   )?.minimizedSidebar;
 
   const itemsListRef = useRef<HTMLDivElement>(null);
@@ -128,7 +130,7 @@ export default function BaseDrawer({
         className={tw(
           "fixed inset-x-0 bottom-0 rounded-t-3xl border bg-white transition-all duration-300 ease-in-out lg:right-[20px]",
           minimizedSidebar ? "lg:left-[68px]" : "lg:left-[278px]",
-          className
+          className,
         )}
         style={{
           height: expanded
@@ -161,7 +163,7 @@ export default function BaseDrawer({
               <ChevronUpIcon
                 className={tw(
                   "mx-auto text-gray-500",
-                  expanded && "rotate-180 "
+                  expanded && "rotate-180 ",
                 )}
               />
             </m.div>
@@ -183,7 +185,7 @@ export default function BaseDrawer({
                   onClick={onClear}
                   className="text-[12px] font-normal text-gray-500"
                 >
-                  Clear list
+                  {t("ui.clearList")}
                 </Button>
               )}
             </div>

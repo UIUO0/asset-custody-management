@@ -33,6 +33,7 @@ export function SubscriptionsOverview({
    * Pass the viewed user's organizations when rendering in admin context. */
   organizations?: { id: string; name: string }[];
 }) {
+  const { t } = useTranslation();
   // Separate subscriptions into workspace plans and addons
   const { workspaceSubscriptions, addonSubscriptions } = useMemo(() => {
     const workspace: Stripe.Subscription[] = [];
@@ -66,12 +67,7 @@ export function SubscriptionsOverview({
   }, [subscriptions, prices]);
 
   if (!customer) {
-    return (
-      <div>
-        Your account doesn't have a customer id. Please contact support to get
-        this issue resolved
-      </div>
-    );
+    return <div>{t("subscription.noCustomerId")}</div>;
   }
 
   // Calculate group totals (include all non-canceled subscriptions)
@@ -98,7 +94,7 @@ export function SubscriptionsOverview({
       {workspaceSubscriptions.length > 0 && (
         <div>
           <h4 className="mb-3 text-sm font-medium uppercase text-gray-500">
-            Workspace Subscriptions
+            {t("ui.workspaceSubscriptions")}
           </h4>
           {workspaceSubscriptions.map((subscription) => (
             <SubscriptionBox
@@ -122,7 +118,7 @@ export function SubscriptionsOverview({
       {addonSubscriptions.length > 0 && (
         <div>
           <h4 className="mb-3 text-sm font-medium uppercase text-gray-500">
-            Add-ons
+            {t("ui.addOns")}
           </h4>
           {addonSubscriptions.map((subscription) => (
             <SubscriptionBox
@@ -206,7 +202,7 @@ function Item({
       return product.name;
     }
     // Last resort: use nickname from price or generic label
-    return item.price?.nickname || "Subscription";
+    return item.price?.nickname || t("ui.subscription");
   }, [subscriptionPrice, item.price]);
 
   // Look up workspace name for addon subscriptions.
@@ -250,7 +246,7 @@ function Item({
       { id: "displayName", content: displayName },
       {
         id: "status",
-        content: formatSubscriptionStatus(subscription.status),
+        content: t(formatSubscriptionStatus(subscription.status)),
       },
       {
         id: "billing",
@@ -268,7 +264,8 @@ function Item({
         id: "legacyPricing",
         content: (
           <div className="flex items-center gap-1">
-            <span>Legacy pricing</span> <LegacyPricingTooltip />
+            <span>{t("subscription.legacyPricing")}</span>{" "}
+            <LegacyPricingTooltip />
           </div>
         ),
       });
@@ -304,26 +301,34 @@ function Item({
           <div className="flex gap-2">
             {/* Start */}
             <div>
-              <span className="font-medium">ACQUIRED ON:</span>{" "}
+              <span className="font-medium">
+                {t("subscription.acquiredOn")}
+              </span>{" "}
               <DateS date={new Date(subscription.created * 1000)} />
             </div>{" "}
             {/* End */}
             <div>
               {isTrial && (
                 <>
-                  <span className="font-medium">DAYS LEFT ON TRIAL:</span>{" "}
+                  <span className="font-medium">
+                    {t("subscription.daysLeftOnTrial")}
+                  </span>{" "}
                   {calculateDaysLeft(subscription.trial_end as number)}
                 </>
               )}
               {isActive && (
                 <>
-                  <span className="font-medium">RENEWS ON:</span>{" "}
+                  <span className="font-medium">
+                    {t("subscription.renewsOn")}
+                  </span>{" "}
                   <DateS date={new Date(item.current_period_end * 1000)} />
                 </>
               )}
               {isPaused && (
                 <>
-                  <span className="font-medium">PAUSED ON:</span>{" "}
+                  <span className="font-medium">
+                    {t("subscription.pausedOn")}
+                  </span>{" "}
                   <DateS date={new Date(item.current_period_end * 1000)} />
                 </>
               )}
@@ -376,15 +381,16 @@ function SubscriptionCost({
   isTrial,
   trialEnded,
 }: SubscriptionCostProps) {
+  const { t } = useTranslation();
   /** Cost for singular price. To get the total we still need to multiply by quantity */
   if (trialEnded) {
     return (
       <>
-        <div>Trial ended</div>
+        <div>{t("subscription.trialEnded")}</div>
 
         <div className="text-gray-500">
           <CustomerPortalForm
-            buttonText="Add payment"
+            buttonText={t("ui.addPayment")}
             buttonProps={{
               variant: "link",
               className: tw("font-normal underline"),
@@ -396,7 +402,7 @@ function SubscriptionCost({
       </>
     );
   }
-  if (isPaused) return <>Paused</>;
+  if (isPaused) return <>{t("ui.paused")}</>;
   return (
     <>
       <div>
@@ -409,7 +415,7 @@ function SubscriptionCost({
 
       {isTrial && (
         <div className="text-gray-500">
-          after trial ends <TrialPaymentTooltip />
+          {t("subscription.afterTrialEnds")} <TrialPaymentTooltip />
         </div>
       )}
     </>
@@ -446,6 +452,8 @@ function TrialPaymentTooltip() {
 }
 
 function LegacyPricingTooltip() {
+  const { t } = useTranslation();
+
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
@@ -456,11 +464,8 @@ function LegacyPricingTooltip() {
         </TooltipTrigger>
         <TooltipContent side="bottom" className="max-w-[300px]">
           <p>
-            You are on a legacy pricing plan. We have since updated our pricing
-            plans. <br />
-            You can view the new pricing plans in the customer portal. If you
-            cancel your subscription, you will not be able to renew it. For any
-            questions - get in touch with support
+            {t("subscription.legacyPlanNotice")} <br />
+            {t("subscription.legacyPlanHint")}
           </p>
         </TooltipContent>
       </Tooltip>
@@ -512,17 +517,26 @@ function getSubscriptionStatus(subscription: Stripe.Subscription) {
   };
 }
 
-/** Maps Stripe subscription status to a human-friendly label */
+/**
+ * Maps a Stripe subscription status to the i18n key of its user-facing label.
+ *
+ * Returns a key rather than a translated string because this is a plain helper
+ * (no React context) — callers resolve it with `t()`. Unknown statuses fall
+ * back to the raw Stripe value.
+ *
+ * @param status - The Stripe subscription status
+ * @returns An i18n key, or the raw status when Stripe adds a new one
+ */
 function formatSubscriptionStatus(status: Stripe.Subscription.Status): string {
   const statusMap: Record<Stripe.Subscription.Status, string> = {
-    active: "Active",
-    past_due: "Past due",
-    unpaid: "Unpaid",
-    canceled: "Canceled",
-    incomplete: "Incomplete",
-    incomplete_expired: "Expired",
-    trialing: "Trialing",
-    paused: "Paused",
+    active: "subscription.statusActive",
+    past_due: "subscription.statusPastDue",
+    unpaid: "subscription.statusUnpaid",
+    canceled: "subscription.statusCanceled",
+    incomplete: "subscription.statusIncomplete",
+    incomplete_expired: "subscription.statusIncompleteExpired",
+    trialing: "subscription.statusTrialing",
+    paused: "subscription.statusPaused",
   };
   return statusMap[status] || status;
 }

@@ -10,12 +10,14 @@
 import type React from "react";
 import * as LucideIcons from "lucide-react";
 import { Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { data, Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import Header from "~/components/layout/header";
 import { ListContentWrapper } from "~/components/list/content-wrapper";
 
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   REPORTS,
   REPORT_CATEGORIES,
@@ -31,7 +33,7 @@ import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: appendToMetaTitle(data?.header?.title || "Reports") },
+  { title: appendToMetaTitle(data?.header?.title ?? "") },
 ];
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -50,9 +52,12 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const reportsByCategory = getReportsByCategory();
 
   // Standard header object for app Header component
+  // Header copy is rendered server-side, so we resolve it with the request's
+  // locale instead of the React hook.
+  const t = await getFixedT(getLocale(request));
   const header = {
-    title: "Reports",
-    subHeading: "Track and analyze your asset management operations",
+    title: t("nav.reports"),
+    subHeading: t("reports.subHeading"),
   };
 
   return data({
@@ -71,7 +76,7 @@ export default function ReportsIndex() {
     ([categoryKey, reports]) => {
       const category = categories[categoryKey as keyof typeof categories];
       return category && reports.length > 0;
-    }
+    },
   );
 
   return (
@@ -111,6 +116,7 @@ export default function ReportsIndex() {
 }
 
 function ReportCard({ report }: { report: ReportDefinition }) {
+  const { t } = useTranslation();
   // Dynamically get the icon from Lucide
   const IconComponent =
     (
@@ -126,7 +132,7 @@ function ReportCard({ report }: { report: ReportDefinition }) {
         "group relative rounded-lg border bg-white p-5 transition-all",
         report.enabled
           ? "cursor-pointer border-gray-200 hover:border-gray-300 hover:shadow-sm"
-          : "cursor-not-allowed border-gray-100 bg-gray-50 opacity-75"
+          : "cursor-not-allowed border-gray-100 bg-gray-50 opacity-75",
       )}
     >
       {/* Icon - uses primary orange accent like Home page */}
@@ -135,7 +141,7 @@ function ReportCard({ report }: { report: ReportDefinition }) {
           "mb-3 flex size-10 items-center justify-center rounded-lg",
           report.enabled
             ? "bg-primary-50 text-primary-600"
-            : "bg-gray-100 text-gray-400"
+            : "bg-gray-100 text-gray-400",
         )}
       >
         <IconComponent className="size-5" />
@@ -145,7 +151,7 @@ function ReportCard({ report }: { report: ReportDefinition }) {
       <h4
         className={tw(
           "text-sm font-semibold",
-          report.enabled ? "text-gray-900" : "text-gray-500"
+          report.enabled ? "text-gray-900" : "text-gray-500",
         )}
       >
         {report.title}
@@ -161,7 +167,7 @@ function ReportCard({ report }: { report: ReportDefinition }) {
         <div className="absolute right-3 top-3">
           <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
             <Lock className="size-2.5" />
-            Coming soon
+            {t("ui.comingSoon")}
           </span>
         </div>
       )}

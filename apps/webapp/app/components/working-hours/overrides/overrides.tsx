@@ -1,4 +1,5 @@
 import type { WorkingHoursOverride } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import { NewOverrideDialog } from "./override-dialog";
 import { OverridePreview } from "./override-preview";
@@ -9,13 +10,16 @@ export function Overrides({
 }: {
   overrides: WorkingHoursOverride[];
 }) {
+  const { t } = useTranslation();
   return (
     <Card className={tw("my-0")}>
       <div className="flex w-full items-start justify-between border-b pb-4">
         <div className="">
-          <h3 className="text-text-lg font-semibold">Date overrides</h3>
+          <h3 className="text-text-lg font-semibold">
+            {t("ui.dateOverrides")}
+          </h3>
           <p className="text-sm text-gray-600">
-            Add dates when working hours change from your daily hours.
+            {t("ui.addDatesWhenWorkingHoursChangeFromYourDailyH")}
           </p>
         </div>
         <NewOverrideDialog />
@@ -25,9 +29,9 @@ export function Overrides({
       <div className="">
         {overrides.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
-            <p>No date overrides configured.</p>
+            <p>{t("ui.noDateOverridesConfigured")}</p>
             <p className="text-sm">
-              Click "Add override" to create your first one.
+              Click t("ui.addOverride") to create your first one.
             </p>
           </div>
         ) : (

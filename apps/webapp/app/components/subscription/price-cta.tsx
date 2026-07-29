@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { config } from "~/config/shelf.config";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -7,6 +8,8 @@ import { Form } from "../custom-form";
 import { Button } from "../shared/button";
 
 export const PriceCta = ({ price }: { price: PriceType }) => {
+  const { t } = useTranslation();
+
   const { usedFreeTrial } = useLoaderData<typeof loader>();
   const disabled = useDisabled();
 
@@ -43,7 +46,7 @@ export const PriceCta = ({ price }: { price: PriceType }) => {
             disabled={disabled}
           >
             {disabled
-              ? "Starting trial..."
+              ? t("subscription.startingTrial")
               : `Start ${config.freeTrialDays} day free trial`}
           </Button>
         )}

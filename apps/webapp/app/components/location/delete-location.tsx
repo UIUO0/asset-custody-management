@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Location } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { Button } from "~/components/shared/button";
 
@@ -27,6 +28,7 @@ type DeleteLocationProps = {
 };
 
 export const DeleteLocation = ({ location, trigger }: DeleteLocationProps) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
   return (
@@ -41,7 +43,7 @@ export const DeleteLocation = ({ location, trigger }: DeleteLocationProps) => {
             className="justify-start rounded-sm px-2 py-1.5 text-sm font-medium text-gray-700 outline-none hover:bg-slate-100 hover:text-gray-700"
             width="full"
           >
-            Delete
+            {t("common.delete")}
           </Button>
         )}
       </AlertDialogTrigger>
@@ -53,16 +55,20 @@ export const DeleteLocation = ({ location, trigger }: DeleteLocationProps) => {
               <TrashIcon />
             </span>
           </div>
-          <AlertDialogTitle>Delete {location.name}</AlertDialogTitle>
+          <AlertDialogTitle>
+            {t("locations.deleteTitle", { name: location.name })}
+          </AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this Location? This action cannot be
-            undone.
+            {t("locations.deleteConfirm")}
           </AlertDialogDescription>
           {location.childCount && location.childCount > 0 ? (
             <div className="rounded border border-warning-200 bg-warning-50 p-3 text-sm text-warning-900">
-              This location has <strong>{location.childCount}</strong> child
-              {location.childCount > 1 ? " locations" : " location"}. They will
-              move to the root level if you delete this location.
+              <Trans
+                i18nKey="locations.hasChildLocations"
+                count={location.childCount}
+                values={{ count: location.childCount }}
+                components={{ 1: <strong /> }}
+              />
             </div>
           ) : null}
         </AlertDialogHeader>
@@ -70,7 +76,7 @@ export const DeleteLocation = ({ location, trigger }: DeleteLocationProps) => {
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary">
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -81,7 +87,7 @@ export const DeleteLocation = ({ location, trigger }: DeleteLocationProps) => {
                 data-test-id="confirmdeleteLocationButton"
                 disabled={disabled}
               >
-                Delete
+                {t("common.delete")}
               </Button>
             </Form>
           </div>

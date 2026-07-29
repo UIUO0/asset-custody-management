@@ -9,7 +9,7 @@
  *
  * Web sources mirrored here (byte-for-byte semantics):
  * - `userHasCustodyViewPermission`
- *   (~/utils/permissions/custody-and-bookings-permissions.validator.client.ts:39-80):
+ *   (~/utils/permissions/custody-and-bookings-permissions.validator.ts:39-80):
  *   custody.read permission (ADMIN/OWNER) OR the org overrides
  *   `Organization.selfServiceCanSeeCustody` / `Organization.baseUserCanSeeCustody`.
  *   The identical server-side computation already exists in
@@ -125,7 +125,7 @@ export function filterMobileCustodyListForViewer<
  * Whether the viewer may see the legacy single `custody` field.
  *
  * Mirrors the web's `userCanViewSpecificCustody`
- * (~/utils/permissions/custody-and-bookings-permissions.validator.client.ts:90-103),
+ * (~/utils/permissions/custody-and-bookings-permissions.validator.ts:90-103),
  * which the asset detail page applies to its single-custodian card:
  * `assets.$assetId.overview.tsx:1826-1836` passes
  * `hasPermission={userCanViewSpecificCustody(...)}` and `CustodyCard`

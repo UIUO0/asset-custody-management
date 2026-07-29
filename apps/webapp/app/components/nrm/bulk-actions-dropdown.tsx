@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { useControlledDropdownMenu } from "~/hooks/use-controlled-dropdown-menu";
@@ -36,12 +37,13 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const selectedNRMs = useAtomValue(selectedBulkItemsAtom);
 
   const actionsButtonDisabled = selectedNRMs.length === 0;
 
   const someNRMHasCustody = selectedNRMs.some(
-    (nrm) => nrm?._count?.custodies > 0
+    (nrm) => nrm?._count?.custodies > 0,
   );
 
   const {
@@ -61,7 +63,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -83,7 +85,9 @@ function ConditionalDropdown() {
           disabled={actionsButtonDisabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -95,7 +99,7 @@ function ConditionalDropdown() {
           disabled={actionsButtonDisabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -115,12 +119,12 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="trash"
-                label="Delete"
+                label={t("common.delete")}
                 onClick={closeMenu}
                 disabled={
                   someNRMHasCustody
                     ? {
-                        reason: "Some team members have custodies over assets.",
+                        reason: t("team.membersHaveCustodies"),
                       }
                     : false
                 }

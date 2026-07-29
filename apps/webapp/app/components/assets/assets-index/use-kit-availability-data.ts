@@ -7,8 +7,8 @@ import type { KitIndexLoaderData } from "~/routes/_layout+/kits._index";
 import { getStatusClasses, isOneDayEvent } from "~/utils/calendar";
 import { useHints } from "~/utils/client-hints";
 import { toIsoDateTimeToUserTimezone } from "~/utils/date-fns";
-import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
-import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator";
+import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import { resolveUserDisplayName } from "~/utils/user";
 
 type Items = NonNullable<
@@ -107,7 +107,7 @@ export function useKitAvailabilityData(items: Items) {
         resourceId: bookingWithRelations.kitId,
         start: toIsoDateTimeToUserTimezone(
           bookingWithRelations.from!,
-          timeZone
+          timeZone,
         ),
         end: toIsoDateTimeToUserTimezone(bookingWithRelations.to!, timeZone),
         classNames: [
@@ -116,9 +116,9 @@ export function useKitAvailabilityData(items: Items) {
             bookingWithRelations.status,
             isOneDayEvent(
               bookingWithRelations.from as Date,
-              bookingWithRelations.to as Date
+              bookingWithRelations.to as Date,
             ),
-            "px-1"
+            "px-1",
           ),
         ],
         extendedProps: {

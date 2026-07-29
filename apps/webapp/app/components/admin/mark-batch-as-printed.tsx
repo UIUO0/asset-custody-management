@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigation } from "react-router";
 import type { loader } from "~/routes/_layout+/admin-dashboard+/qrs";
 import { isFormProcessing } from "~/utils/form";
@@ -12,12 +13,13 @@ import {
 import { Button } from "../shared/button";
 
 export const MarkBatchAsPrinted = () => {
+  const { t } = useTranslation();
   const { batches } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
   return (
     <div className="flex w-[400px] flex-col gap-2 bg-gray-200 p-4">
-      <h3>Mark batch as printed</h3>
+      <h3>{t("ui.markBatchAsPrintedX")}</h3>
       <Form className="flex flex-col gap-2" method="post">
         <Select name={`batch`} disabled={disabled}>
           <SelectTrigger className="mt-2 px-3.5 py-2 text-start text-base text-gray-500 md:mt-0 ">
@@ -52,11 +54,10 @@ export const MarkBatchAsPrinted = () => {
           name="intent"
           value="markBatchAsPrinted"
         >
-          Mark Batch as printed
+          {t("ui.markBatchAsPrinted")}
         </Button>
         <p className="mt-2 text-sm text-gray-500">
-          Be careful. This is a one time action that doesn't require
-          confirmation
+          {t("admin.oneTimeActionWarning")}
         </p>
       </Form>
     </div>

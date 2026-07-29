@@ -39,7 +39,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { resolveUserDisplayName } from "~/utils/user";
 
@@ -91,7 +91,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const totalPages = Math.ceil(totalAudits / perPage);
 
     const header: HeaderData = {
-      title: "Audits",
+      title: t("nav.audits"),
     };
 
     const modelName = {

@@ -1,4 +1,5 @@
 import { OrganizationRoles } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -24,6 +25,8 @@ import { Th } from "~/components/table";
 import { db } from "~/database/db.server";
 import { useSearchParams } from "~/hooks/search-params";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getAuditFilterMetadata } from "~/modules/audit/audit-filter-utils";
 import type { AuditFilterType } from "~/modules/audit/audit-filter-utils";
 import { completeAuditWithImages } from "~/modules/audit/complete-audit-with-images.server";
@@ -45,7 +48,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 import { resolveUserDisplayName } from "~/utils/user";
@@ -59,9 +62,21 @@ const AUDIT_STATUS_ITEMS = {
   UNEXPECTED: "UNEXPECTED",
 };
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "Audit Overview" },
-];
+export const meta: MetaFunction<typeof loader> = ({ data, matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [
+    {
+      title: data
+        ? appendToMetaTitle(data.header.title)
+        : resources.audits.overviewTitle,
+    },
+  ];
+};
 
 export const handle = {
   breadcrumb: () => "Overview",
@@ -278,6 +293,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
 // react-doctor:no-giant-component — deferred for follow-up refactor
 export default function AuditOverview() {
+  const { t } = useTranslation();
   const { session, totalItems, generalImages, assetImages, canRemoveAssets } =
     useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
@@ -307,30 +323,30 @@ export default function AuditOverview() {
         {/* Left Column: Stats Cards */}
         <div className="flex-1">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Statistics</h2>
+            <h2 className="text-lg font-semibold">{t("ui.statistics")}</h2>
             {currentFilter && currentFilter !== "ALL" && <ClearFilterButton />}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <StatCard
-              label="Expected"
+              label={t("audits.expected")}
               value={expectedCount}
               filterType="EXPECTED"
               isActive={currentFilter === "EXPECTED"}
             />
             <StatCard
-              label="Found"
+              label={t("audits.found")}
               value={foundCount}
               filterType="FOUND"
               isActive={currentFilter === "FOUND"}
             />
             <StatCard
-              label="Missing"
+              label={t("audits.missing")}
               value={missingCount}
               filterType="MISSING"
               isActive={currentFilter === "MISSING"}
             />
             <StatCard
-              label="Unexpected"
+              label={t("audits.unexpected")}
               value={unexpectedCount}
               filterType="UNEXPECTED"
               isActive={currentFilter === "UNEXPECTED"}
@@ -340,12 +356,14 @@ export default function AuditOverview() {
 
         {/* Right Column: Audit Information */}
         <div className="flex-1">
-          <h2 className="mb-4 text-lg font-semibold">Audit Information</h2>
+          <h2 className="mb-4 text-lg font-semibold">
+            {t("audits.auditInformation")}
+          </h2>
           <Card className="mt-0 px-[-4] py-[-5] md:border">
             <ul className="item-information">
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                  Status
+                  {t("assets.status")}
                 </span>
                 <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                   <AuditStatusBadgeWithOverdue
@@ -356,7 +374,7 @@ export default function AuditOverview() {
               </li>
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                  Created
+                  {t("audits.created")}
                 </span>
                 <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                   <DateS
@@ -368,7 +386,7 @@ export default function AuditOverview() {
               {session.dueDate && (
                 <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                    Due date
+                    {t("audits.dueDate")}
                   </span>
                   <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                     <DateS
@@ -381,7 +399,7 @@ export default function AuditOverview() {
               {session.startedAt && (
                 <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                    Started
+                    {t("audits.started")}
                   </span>
                   <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                     <DateS
@@ -394,7 +412,7 @@ export default function AuditOverview() {
               {session.completedAt && (
                 <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                   <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                    Completed
+                    {t("audits.completed")}
                   </span>
                   <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                     <DateS
@@ -406,7 +424,7 @@ export default function AuditOverview() {
               )}
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                  Created by
+                  {t("audits.createdBy")}
                 </span>
                 <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                   <UserBadge
@@ -424,7 +442,7 @@ export default function AuditOverview() {
               </li>
               <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
                 <span className="w-2/5 text-[14px] font-medium text-gray-900">
-                  Assigned to
+                  {t("reports.assignedTo")}
                 </span>
                 <div className="mt-1 w-3/5 text-[14px] text-gray-600 md:mt-0">
                   <div className="flex flex-col gap-2">
@@ -445,13 +463,12 @@ export default function AuditOverview() {
                       ))
                     ) : (
                       <span className="flex items-center gap-1">
-                        Not assigned
+                        {t("audits.notAssigned")}
                         <InfoTooltip
                           iconClassName="size-4"
                           content={
                             <p className="text-sm text-gray-600">
-                              Any user with access can perform this audit
-                              because it has no specific assignee.
+                              {t("audits.noAssigneeHint")}
                             </p>
                           }
                         />
@@ -472,9 +489,7 @@ export default function AuditOverview() {
               iconClassName="size-4"
               content={
                 <p className="mb-3 text-sm text-gray-600">
-                  Images captured during the audit. General images are
-                  associated with the audit itself, while asset images are
-                  linked to specific assets.
+                  {t("audits.imagesHint")}
                 </p>
               }
             />
@@ -487,7 +502,7 @@ export default function AuditOverview() {
                 <span className="flex size-5 items-center justify-center rounded bg-primary-50 text-xs text-primary-600">
                   {generalImages.length}
                 </span>
-                General Audit Images
+                {t("audits.generalAuditImages")}
               </h3>
               <Card className="mt-0 md:border">
                 <div className="flex flex-wrap gap-3">
@@ -496,14 +511,14 @@ export default function AuditOverview() {
                       key={image.id}
                       imageUrl={image.imageUrl}
                       thumbnailUrl={image.thumbnailUrl}
-                      alt={image.description || "General audit image"}
+                      alt={image.description || t("audits.generalImageAlt")}
                       withPreview
                       className="size-24 rounded border"
                       images={generalImages.map((img) => ({
                         id: img.id,
                         imageUrl: img.imageUrl,
                         thumbnailUrl: img.thumbnailUrl,
-                        alt: img.description || "General audit image",
+                        alt: img.description || t("audits.generalImageAlt"),
                       }))}
                       currentImageId={image.id}
                     />
@@ -520,7 +535,7 @@ export default function AuditOverview() {
                 <span className="flex size-5 items-center justify-center rounded bg-blue-50 text-xs text-blue-600">
                   {assetImages.length}
                 </span>
-                Asset-Specific Images
+                {t("audits.assetSpecificImages")}
               </h3>
               <Card className="mt-0 md:border">
                 <div className="flex flex-wrap gap-3">
@@ -533,7 +548,7 @@ export default function AuditOverview() {
                       alt={
                         image.auditAsset?.asset?.title
                           ? `Asset: ${image.auditAsset.asset.title}`
-                          : image.description || "Asset image"
+                          : image.description || t("audits.assetImageAlt")
                       }
                       withPreview
                       className="size-24 rounded border"
@@ -543,7 +558,7 @@ export default function AuditOverview() {
                         thumbnailUrl: img.thumbnailUrl,
                         alt: img.auditAsset?.asset?.title
                           ? `Asset: ${img.auditAsset.asset.title}`
-                          : img.description || "Asset image",
+                          : img.description || t("audits.assetImageAlt"),
                       }))}
                       currentImageId={image.id}
                     />
@@ -557,7 +572,7 @@ export default function AuditOverview() {
           {generalImages.length === 0 && assetImages.length === 0 && (
             <Card className="mt-0 md:border">
               <div className="px-4 py-6 text-center text-sm text-gray-500">
-                No images uploaded
+                {t("audits.noImagesUploaded")}
               </div>
             </Card>
           )}
@@ -584,12 +599,12 @@ export default function AuditOverview() {
           headerChildren={
             <>
               {showAuditStatusColumn && (
-                <Th className="whitespace-nowrap">Audit Status</Th>
+                <Th className="whitespace-nowrap">{t("audits.auditStatus")}</Th>
               )}
-              <Th>Location</Th>
+              <Th>{t("assets.location")}</Th>
               <CustodianHeader />
-              <Th>Category</Th>
-              <Th>Tags</Th>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("nav.tags")}</Th>
               {canRemoveAssets && <Th className="w-[60px]" />}
             </>
           }
@@ -606,6 +621,7 @@ export default function AuditOverview() {
 // `AssetListItem` body that lived here is removed in favour of the
 // extracted component so the route has one source of truth.
 function ClearFilterButton() {
+  const { t } = useTranslation();
   const [, setSearchParams] = useSearchParams();
 
   const handleClick = () => {
@@ -622,12 +638,13 @@ function ClearFilterButton() {
       className="text-sm "
       onClick={handleClick}
     >
-      View all
+      {t("audits.viewAll")}
     </Button>
   );
 }
 
 function CustodianHeader() {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const canReadCustody = userHasPermission({
     roles,
@@ -640,10 +657,10 @@ function CustodianHeader() {
   return (
     <Th>
       <div className="flex items-center gap-1">
-        Custodian
+        {t("assets.custodian")}
         <InfoTooltip
           iconClassName="size-4"
-          content="The team member currently in custody of this asset."
+          content={t("audits.currentCustodian")}
         />
       </div>
     </Th>

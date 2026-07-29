@@ -1,8 +1,10 @@
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, Link, Outlet, useRouteLoaderData } from "react-router";
 import { ErrorContent } from "~/components/errors";
 import Header from "~/components/layout/header";
 import HorizontalTabs from "~/components/layout/horizontal-tabs";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import type { loader as layoutLoader } from "~/routes/_layout+/_layout";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError } from "~/utils/error";
@@ -13,8 +15,14 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
+/** Breadcrumb for account details (component so it can use the translation hook). */
+function AccountDetailsBreadcrumb() {
+  const { t } = useTranslation();
+  return <Link to="/account-details">{t("accountDetails.title")}</Link>;
+}
+
 export const handle = {
-  breadcrumb: () => <Link to="/account-details">Account Details</Link>,
+  breadcrumb: () => <AccountDetailsBreadcrumb />,
 };
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -28,8 +36,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const title = "Account Details";
-    const subHeading = "Manage your preferences here.";
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+    const title = t("accountDetails.title");
+    const subHeading = t("settings.subHeading");
     const header = {
       title,
       subHeading,
@@ -49,18 +60,19 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 export const shouldRevalidate = () => false;
 
 export default function AccountDetailsPage() {
+  const { t } = useTranslation();
   const items = [
-    { to: "general", content: "General" },
-    { to: "workspace", content: "Workspaces" },
-    { to: "calendars", content: "Calendars" },
+    { to: "general", content: t("nav.general") },
+    { to: "workspace", content: t("ui.workspaces") },
+    { to: "calendars", content: t("ui.calendars") },
   ];
 
   const enablePremium = useRouteLoaderData<typeof layoutLoader>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   )?.enablePremium;
 
   if (enablePremium) {
-    items.push({ to: "subscription", content: "Subscription" });
+    items.push({ to: "subscription", content: t("ui.subscription") });
   }
 
   return (

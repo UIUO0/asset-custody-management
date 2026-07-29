@@ -111,7 +111,7 @@ export function useFilterPreview(options?: {
     if (!options.query) {
       return (
         <div className="text-sm text-gray-700">
-          No active filters or sorting
+          {t("ui.noActiveFiltersOrSorting")}
         </div>
       );
     }

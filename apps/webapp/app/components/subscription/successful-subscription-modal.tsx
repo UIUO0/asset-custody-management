@@ -1,5 +1,6 @@
 import { BellIcon } from "@radix-ui/react-icons";
 import { AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { useBlocker } from "react-router";
 import { useSearchParams } from "~/hooks/search-params";
 
@@ -15,6 +16,7 @@ import {
 import { WarningBox } from "../shared/warning-box";
 
 export default function SuccessfulSubscriptionModal() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const success = searchParams.get("success") || false;
   const isTeam = searchParams.get("team") === "true";
@@ -45,21 +47,21 @@ export default function SuccessfulSubscriptionModal() {
                 </video>
                 <div className="mb-8 text-center">
                   <h4 className="mb-1 text-[18px] font-semibold">
-                    You are all set!
+                    {t("subscription.allSet")}
                   </h4>
                   <p className="text-gray-600">
                     {isTeam ? "Team" : "Plus"} features unlocked.{" "}
                     {isTeam && !hasExistingWorkspace
-                      ? "Now, it is time to create your team workspace and start adding assets."
-                      : "Now, it is time to start adding assets. Make sure you are in the right workspace."}
+                      ? t("subscription.successCreateWorkspace")
+                      : t("subscription.successAddAssets")}
                   </p>
                 </div>
                 {isTeam && !hasExistingWorkspace ? (
                   <>
                     <div className="my-4 text-gray-700">
-                      <strong>IMPORTANT</strong>: To use the Team features you
-                      need to use your Team workspace. Make sure to create it
-                      before you continue.
+                      <strong>{t("subscription.important")}</strong>: To use the
+                      Team features you need to use your Team workspace. Make
+                      sure to create it before you continue.
                     </div>
                     <Button
                       type="button"
@@ -73,12 +75,12 @@ export default function SuccessfulSubscriptionModal() {
                       }}
                       variant="primary"
                     >
-                      Create Team workspace
+                      {t("subscription.createTeamWorkspace")}
                     </Button>
                   </>
                 ) : (
                   <Button width="full" to="/assets" variant="primary">
-                    Get started
+                    {t("subscription.getStarted")}
                   </Button>
                 )}
               </div>
@@ -92,6 +94,7 @@ export default function SuccessfulSubscriptionModal() {
 }
 
 function AreYouSureModal({ shouldBlock }: { shouldBlock: boolean }) {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const isTrial = searchParams.get("trial") === "true";
 
@@ -109,22 +112,21 @@ function AreYouSureModal({ shouldBlock }: { shouldBlock: boolean }) {
               <BellIcon />
             </span>
           </div>
-          <AlertDialogTitle>Leaving page</AlertDialogTitle>
+          <AlertDialogTitle>{t("subscription.leavingPage")}</AlertDialogTitle>
           <AlertDialogDescription>
             You just got your{" "}
             <span className="font-semibold">
               Team subscription{isTrial ? " trial" : ""}
             </span>
             . <br />
-            Do you want to create your Team workspace to get the full benefit of
-            your subscription?
+            {t("subscription.createTeamWorkspacePrompt")}
           </AlertDialogDescription>
           <WarningBox className="my-4 ">
             <>
               {" "}
-              <strong>IMPORTANT</strong>: To use the Team features you need to
-              use your Team workspace. Make sure to create it before you
-              continue.
+              <strong>{t("subscription.important")}</strong>: To use the Team
+              features you need to use your Team workspace. Make sure to create
+              it before you continue.
             </>
           </WarningBox>
         </AlertDialogHeader>
@@ -136,7 +138,7 @@ function AreYouSureModal({ shouldBlock }: { shouldBlock: boolean }) {
               width="full"
               onClick={() => blocker.reset()}
             >
-              Yes, I want to create a Team workspace
+              {t("subscription.yesCreateTeam")}
             </Button>
 
             <Button
@@ -144,7 +146,7 @@ function AreYouSureModal({ shouldBlock }: { shouldBlock: boolean }) {
               className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
               onClick={() => blocker.proceed()}
             >
-              No, I will create it later
+              {t("subscription.noCreateLater")}
             </Button>
           </div>
         </AlertDialogFooter>

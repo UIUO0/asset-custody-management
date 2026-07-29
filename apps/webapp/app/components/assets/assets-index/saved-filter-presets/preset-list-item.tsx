@@ -115,7 +115,7 @@ export function PresetListItem({
             onRename(preset);
           }}
           className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-          title="Rename"
+          title={t("ui.rename")}
         >
           <Pencil className="size-3.5" />
         </button>
@@ -131,7 +131,7 @@ export function PresetListItem({
               }
             }}
             className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
-            title="Delete"
+            title={t("common.delete")}
           >
             <Trash2 className="size-3.5" />
           </button>

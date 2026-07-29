@@ -5,6 +5,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import Icon from "~/components/icons/icon";
 import type {
@@ -39,6 +40,7 @@ const ConditionalActionsDropdown = ({
   label: string;
   disabledTrigger?: DisabledProp;
 }) => {
+  const { t } = useTranslation();
   const {
     ref: popoverContentRef,
     open,
@@ -49,7 +51,7 @@ const ConditionalActionsDropdown = ({
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -127,7 +129,7 @@ const ConditionalActionsDropdown = ({
                   width="full"
                   onClick={() => setOpen(false)}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>

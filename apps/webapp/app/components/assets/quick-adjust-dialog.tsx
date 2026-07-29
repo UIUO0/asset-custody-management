@@ -215,7 +215,7 @@ export function QuickAdjustDialog({
             onClick={() => handleSubmit("subtract")}
             disabled={disabled}
           >
-            {isSubmitting ? t("quantity.removing") : t("common.remove")}
+            {isSubmitting ? "Removing..." : t("common.remove")}
           </Button>
 
           <Button
@@ -224,7 +224,7 @@ export function QuickAdjustDialog({
             onClick={() => handleSubmit("add")}
             disabled={disabled}
           >
-            {isSubmitting ? t("quantity.adding") : t("common.add")}
+            {isSubmitting ? "Adding..." : t("common.add")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

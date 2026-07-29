@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import {
   data,
@@ -17,6 +19,8 @@ import Header from "~/components/layout/header";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { duplicateAsset, getAsset } from "~/modules/asset/service.server";
 import styles from "~/styles/layout/custom-modal.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -32,7 +36,15 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Duplicate asset") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.assets.duplicateTitle) }];
+};
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -150,6 +162,7 @@ export function links() {
 }
 
 export default function DuplicateAsset() {
+  const { t } = useTranslation();
   const zo = useZorm("DuplicateAsset", DuplicateAssetSchema);
   const { asset } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
@@ -195,10 +208,10 @@ export default function DuplicateAsset() {
 
           <Input
             type="number"
-            label="Amount of duplicates"
+            label={t("ui.amountOfDuplicates")}
             name={zo.fields.amountOfDuplicates()}
             defaultValue={1}
-            placeholder="How many duplicates assets you want to create for this asset ?"
+            placeholder={t("ui.howManyDuplicatesAssetsYouWantToCreateForThi")}
             className="w-full"
             disabled={isProcessing}
             required
@@ -218,7 +231,7 @@ export default function DuplicateAsset() {
             width="full"
             disabled={isProcessing}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="primary"

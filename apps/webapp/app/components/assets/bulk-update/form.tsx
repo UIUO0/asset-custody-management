@@ -307,9 +307,7 @@ export function UpdateImportForm({
 
         {stage === "upload" && (
           <Button type="submit" disabled={!canAnalyze} className="my-4">
-            {isPreviewLoading
-              ? t("assetUpdate.analyzing")
-              : t("assetUpdate.analyzeFile")}
+            {isPreviewLoading ? "Analyzing..." : t("assetUpdate.analyzeFile")}
           </Button>
         )}
       </previewFetcher.Form>

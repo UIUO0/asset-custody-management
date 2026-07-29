@@ -18,6 +18,7 @@ import { Badge } from "~/components/shared/badge";
 import { Button } from "~/components/shared/button";
 import { Th, Td } from "~/components/table";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getAssetModels } from "~/modules/asset-model/service.server";
@@ -34,7 +35,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -62,8 +63,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     });
     const totalPages = Math.ceil(totalAssetModels / perPage);
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header: HeaderData = {
-      title: "Asset Models",
+      title: t("assetModels.indexTitle"),
       subHeading:
         "Asset models are templates for grouping similar assets. Use them to define default values and track groups of identical items like laptop models or equipment types.",
     };

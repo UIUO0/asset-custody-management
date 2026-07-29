@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogPortal } from "~/components/layout/dialog";
 import {
   Tabs,
@@ -26,6 +27,7 @@ export function AddBarcodeDialog({
   item,
   onRefetchData,
 }: AddBarcodeDialogProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("input");
 
   const handleSuccess = () => {
@@ -61,8 +63,8 @@ export function AddBarcodeDialog({
               className={activeTab === "scan" ? "flex h-full flex-col" : ""}
             >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="input">Input code</TabsTrigger>
-                <TabsTrigger value="scan">Scan code</TabsTrigger>
+                <TabsTrigger value="input">{t("ui.inputCode")}</TabsTrigger>
+                <TabsTrigger value="scan">{t("ui.scanCode")}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="input">

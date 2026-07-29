@@ -46,7 +46,7 @@ export default function App() {
       <aside className="relative hidden h-full flex-col items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-primary-600 p-8 lg:flex lg:w-[700px] xl:w-[900px]">
         <img
           className="relative z-10 w-[420px] max-w-full"
-          src="/static/images/epda-logo-white-text.png"
+          src="/static/images/sda-logo-white-text.png"
           alt={t("common.appName")}
         />
         <p className="relative z-10 mt-6 text-center text-sm text-static-white/70">

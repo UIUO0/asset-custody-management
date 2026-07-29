@@ -73,13 +73,13 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
         encType="multipart/form-data"
       >
         <FormRow
-          rowLabel={"Name"}
+          rowLabel={t("assets.name")}
           subHeading={t("workspaceForm2.nameHint")}
           className="border-b-0 pb-[10px] pt-0"
           required={zodFieldIsRequired(NewWorkspaceFormSchema.shape.name)}
         >
           <Input
-            label="Name"
+            label={t("assets.name")}
             hideLabel
             name={zo.fields.name()}
             disabled={disabled}
@@ -99,9 +99,7 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
           subHeading={t("workspaceForm2.imageHint")}
         >
           <div>
-            <p className="hidden lg:block">
-              Accepts PNG, JPG, JPEG, or WebP (max.4 MB)
-            </p>
+            <p className="hidden lg:block">{t("locationForm.imageHint")}</p>
             <Input
               // disabled={disabled}
               accept={ACCEPT_SUPPORTED_IMAGES}
@@ -114,19 +112,17 @@ export const WorkspaceForm = ({ name, currency, children }: Props) => {
               className="mt-2"
               inputClassName="border-0 shadow-none p-0 rounded-none"
             />
-            <p className="mt-2 lg:hidden">
-              Accepts PNG, JPG, JPEG, or WebP (max.4 MB)
-            </p>
+            <p className="mt-2 lg:hidden">{t("locationForm.imageHint")}</p>
           </div>
         </FormRow>
 
         <div>
           <FormRow
-            rowLabel={"Currency"}
+            rowLabel={t("workspaceForm.currency")}
             className={children ? "border-b-0" : ""}
             subHeading={t("workspaceForm2.currencyHint")}
           >
-            <InnerLabel hideLg>Currency</InnerLabel>
+            <InnerLabel hideLg>{t("workspaceForm.currency")}</InnerLabel>
 
             <Select
               defaultValue={currency || "USD"}

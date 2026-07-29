@@ -30,6 +30,7 @@ import When from "~/components/when/when";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { resolveLocationKitIds } from "~/modules/location/bulk-select.server";
 import {
   getLocationKits,
@@ -48,14 +49,14 @@ import {
   parseData,
 } from "~/utils/http.server";
 import { getParamsValues } from "~/utils/list";
-import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
-import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator";
+import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { resolveTeamMemberName } from "~/utils/user";
 
@@ -195,9 +196,11 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         });
 
         if (resolvedKitIds.length === 0) {
+          // Surfaced to the user, so resolve with the request's locale.
+          const t = await getFixedT(getLocale(request));
           return payload({
             success: true,
-            message: "No kits matched the current selection",
+            message: t("kits.noKitsMatched"),
           });
         }
 
@@ -250,7 +253,7 @@ export default function LocationKits() {
       <ContextualSidebar />
       <ContextualModal />
 
-      <TextualDivider text="Kits" className="mb-4 lg:hidden" />
+      <TextualDivider text={t("nav.kits")} className="mb-4 lg:hidden" />
       <div className="flex flex-col md:gap-2">
         <Filters
           className="responsive-filters mb-2 lg:mb-0"
@@ -261,7 +264,7 @@ export default function LocationKits() {
                   <DynamicDropdown
                     trigger={
                       <div className="flex items-center gap-2">
-                        Custodian
+                        {t("assets.custodian")}
                         <ChevronRight className="rotate-90" />
                       </div>
                     }
@@ -303,7 +306,7 @@ export default function LocationKits() {
                   width="full"
                   className="whitespace-nowrap"
                 >
-                  Add kits
+                  {t("ui.addKits")}
                 </Button>
               </div>
             </When>
@@ -322,19 +325,18 @@ export default function LocationKits() {
           }
           headerChildren={
             <>
-              <Th>Category</Th>
+              <Th>{t("assets.category")}</Th>
               <Th className="flex items-center gap-1 whitespace-nowrap md:border-b-0">
                 Custodian{" "}
                 <InfoTooltip
                   iconClassName="size-4"
                   content={
                     <>
-                      <h6>Kit custody</h6>
+                      <h6>{t("ui.kitCustody")}</h6>
                       <p>
-                        This column shows if a user has custody of the kit
-                        either via direct assignment or via a booking. If you
-                        see <GrayBadge>private</GrayBadge> that means you don't
-                        have the permissions to see who has custody of the kit.
+                        {t("kits.custodyColumnHint")}{" "}
+                        <GrayBadge>private</GrayBadge>{" "}
+                        {t("kits.noCustodyPermissionHint")}
                       </p>
                     </>
                   }
@@ -346,10 +348,10 @@ export default function LocationKits() {
             </>
           }
           customEmptyStateContent={{
-            title: "You haven't added any kits yet.",
-            text: "What are you waiting for? Add your first kit now!",
+            title: t("kits.pickerEmptyTitleKits"),
+            text: t("ui.whatAreYouWaitingForAddYourFirstKitNow"),
             newButtonRoute: "manage-kits",
-            newButtonContent: "Add kit",
+            newButtonContent: t("kits.addKit"),
           }}
         />
       </div>

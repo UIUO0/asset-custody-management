@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Tag } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 
@@ -24,6 +25,7 @@ export const DeleteTag = ({
   tag: Pick<Tag, "name" | "id">;
   trigger?: ReactNode;
 }) => {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const disabled = isFormProcessing(fetcher.state);
 
@@ -35,7 +37,7 @@ export const DeleteTag = ({
       type="button"
       className="text-[12px]"
       icon={"trash"}
-      title={"Delete"}
+      title={t("common.delete")}
       data-test-id="deleteCategoryButton"
     />
   );
@@ -52,14 +54,13 @@ export const DeleteTag = ({
           </span>
           <AlertDialogTitle>Delete {tag.name}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this tag? This action cannot be
-            undone.
+            {t("tags.deleteConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel asChild>
             <Button type="button" variant="secondary">
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
           <Form method="delete" action="/tags">
@@ -69,7 +70,7 @@ export const DeleteTag = ({
               type="submit"
               data-test-id="confirmDeleteCategoryButton"
             >
-              Delete
+              {t("common.delete")}
             </Button>
           </Form>
         </AlertDialogFooter>

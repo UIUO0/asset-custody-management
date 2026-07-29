@@ -1,5 +1,6 @@
 import type { WorkingHoursOverride } from "@prisma/client";
 import { TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
@@ -12,17 +13,18 @@ interface OverridePreviewProps {
 }
 
 export function OverridePreview({ override }: OverridePreviewProps) {
+  const { t } = useTranslation();
   const deleteFetcher = useFetcher();
   const disabled = useDisabled(deleteFetcher);
 
   const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this override?")) {
+    if (window.confirm(t("workingHours.deleteOverrideConfirm"))) {
       void deleteFetcher.submit(
         {
           intent: "deleteOverride",
           overrideId: override.id,
         },
-        { method: "post" }
+        { method: "post" },
       );
     }
   };
@@ -52,10 +54,10 @@ export function OverridePreview({ override }: OverridePreviewProps) {
               "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
               override.isOpen
                 ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
+                : "bg-red-100 text-red-800",
             )}
           >
-            {override.isOpen ? "Open" : "Closed"}
+            {override.isOpen ? "Open" : t("ui.closed")}
           </span>
         </div>
         <div className="mt-1 flex items-center gap-4 text-sm text-gray-600">
@@ -65,7 +67,7 @@ export function OverridePreview({ override }: OverridePreviewProps) {
               closeTime={override.closeTime || undefined}
             />
           ) : (
-            <span>Closed all day</span>
+            <span>{t("workingHours.closedAllDay")}</span>
           )}
           {override.reason && (
             <>
@@ -80,7 +82,7 @@ export function OverridePreview({ override }: OverridePreviewProps) {
         variant="secondary"
         disabled={disabled}
         onClick={handleDelete}
-        title="Delete override"
+        title={t("ui.deleteOverride")}
       >
         <TrashIcon className="size-4" />
       </Button>

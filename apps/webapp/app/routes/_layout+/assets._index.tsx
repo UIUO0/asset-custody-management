@@ -53,7 +53,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
 export type AssetIndexLoaderData = typeof loader;
@@ -124,7 +124,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         cause: null,
         title: "Not allowed",
         message:
-          "You don't have permission to access the advanced mode. We will automatically switch you back to 'simple' mode. Please reload the page.",
+          "ليس لديك الصلاحية للوصول إلى الوضع المتقدم. سيتم إعادتك تلقائياً للوضع المبسط. يرجى إعادة تحميل الصفحة.",
         label: "Assets",
         status: 403,
         shouldBeCaptured: false,

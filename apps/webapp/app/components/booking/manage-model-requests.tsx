@@ -445,7 +445,7 @@ function ExistingRequestRow({
                 name: request.assetModelName,
               })}
             >
-              {isUpdating ? t("common.saving") : t("common.update")}
+              {isUpdating ? "Saving..." : t("common.update")}
             </Button>
           </updateFetcher.Form>
 
@@ -466,7 +466,7 @@ function ExistingRequestRow({
                 name: request.assetModelName,
               })}
             >
-              {isRemoving ? t("bookings.removing") : t("common.remove")}
+              {isRemoving ? "Removing..." : t("common.remove")}
             </Button>
           </removeFetcher.Form>
         </div>
@@ -727,7 +727,7 @@ function AddRequestRow({
             aria-label={t("bookings.addModelReservation")}
             className="h-[38px] w-full sm:w-auto"
           >
-            {disabled ? t("bookings.adding") : t("common.add")}
+            {disabled ? "Adding..." : t("common.add")}
           </Button>
         </div>
       </fetcher.Form>

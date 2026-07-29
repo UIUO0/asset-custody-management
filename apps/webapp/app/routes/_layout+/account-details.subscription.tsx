@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CustomTierLimit, Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -22,6 +23,7 @@ import { SubscriptionsOverview } from "~/components/subscription/subscriptions-o
 import SuccessfulSubscriptionModal from "~/components/subscription/successful-subscription-modal";
 import { db } from "~/database/db.server";
 import { useUserData } from "~/hooks/use-user-data";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getUserTierLimit } from "~/modules/tier/service.server";
 
 import { getUserByID } from "~/modules/user/service.server";
@@ -44,7 +46,7 @@ import {
   getOrCreateCustomerId,
 } from "~/utils/stripe.server";
 
-export async function loader({ context }: LoaderFunctionArgs) {
+export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
   const { userId } = authSession;
 
@@ -131,12 +133,16 @@ export async function loader({ context }: LoaderFunctionArgs) {
       };
     });
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
+
     return payload({
-      title: `Subscriptions`,
+      title: t("subscription.title"),
       subTitle:
         customer?.subscriptions.data.length === 0
-          ? "Pick an account plan that fits your workflow."
-          : "Manage your account plan.",
+          ? t("subscription.pickPlan")
+          : t("subscription.manageAccountPlan"),
       tier: user.tierId,
       tierLimit,
       prices,
@@ -274,11 +280,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const handle = {
   breadcrumb: () => (
-    <Link to="/account-details/subscription">Subscription</Link>
+    <Link to="/account-details/subscription">"Subscription"</Link>
   ),
 };
 
 export default function SubscriptionPage() {
+  const { t } = useTranslation();
   const {
     title,
     subTitle,
@@ -327,19 +334,20 @@ export default function SubscriptionPage() {
           You’re currently using the{" "}
           {isEnterprise ? (
             <>
-              <span className="font-semibold">ENTERPRISE</span> version
+              <span className="font-semibold">{t("ui.enterprise")}</span>{" "}
+              version
             </>
           ) : (
             <>
-              <span className="font-semibold">CUSTOM</span> plan
+              <span className="font-semibold">{t("ui.custom")}</span> plan
             </>
           )}
           .
           <br />
-          {isEnterprise && <>That means you have a custom plan. </>}
+          {isEnterprise && <>{t("subscription.customPlanNote")} </>}
           To get more information about your plan, please{" "}
           <CrispButton variant="link" className="inline w-auto">
-            contact support
+            {t("subscription.contactSupport")}
           </CrispButton>
           .
         </p>
@@ -368,7 +376,7 @@ export default function SubscriptionPage() {
                   </p>
                 </div>
                 <h3 className="text-text-lg font-semibold">
-                  Choose your workspace plan
+                  {t("subscription.chooseWorkspacePlan")}
                 </h3>
                 <PricingTable prices={prices} />
               </>
@@ -381,11 +389,10 @@ export default function SubscriptionPage() {
                     </div>
                     <div>
                       <p className="text-[14px] font-medium text-gray-700">
-                        You have no workspace plan
+                        {t("subscription.noWorkspacePlan")}
                       </p>
                       <p className="text-[13px] text-gray-500">
-                        Upgrade to a workspace plan to unlock the full potential
-                        of the system alongside your add-ons.
+                        {t("subscription.upgradePrompt")}
                       </p>
                     </div>
                   </div>
@@ -395,7 +402,7 @@ export default function SubscriptionPage() {
                     className="whitespace-nowrap"
                     onClick={() => setPricingOpen(true)}
                   >
-                    View workspace plans
+                    {t("subscription.viewWorkspacePlans")}
                   </Button>
                 </div>
                 <DialogPortal>
@@ -405,7 +412,7 @@ export default function SubscriptionPage() {
                     className="h-[90vh] w-[90vw]"
                     title={
                       <h3 className="text-text-lg font-semibold">
-                        Choose your workspace plan
+                        {t("subscription.chooseWorkspacePlan")}
                       </h3>
                     }
                   >
@@ -425,7 +432,9 @@ export default function SubscriptionPage() {
             <p className="text-sm text-gray-600">{subTitle}</p>
           </div>
           {!hasNoSubscription && (
-            <CustomerPortalForm buttonText="Manage subscriptions" />
+            <CustomerPortalForm
+              buttonText={t("subscription.manageSubscriptions")}
+            />
           )}
         </div>
 
@@ -458,10 +467,11 @@ type OpenInvoice = {
 };
 
 function UnpaidInvoiceWarning({ invoices }: { invoices: OpenInvoice[] }) {
+  const { t } = useTranslation();
   return (
     <WarningBox className="mb-8 mt-3">
       <div>
-        <h4 className="font-semibold">Unpaid invoice/s</h4>
+        <h4 className="font-semibold">{t("subscription.unpaidInvoices")}</h4>
         <p className="mt-1 text-gray-800">
           We were unable to process your latest payment. If payment is not
           resolved, your subscription will be fully canceled. Any existing
@@ -507,7 +517,7 @@ function UnpaidInvoiceWarning({ invoices }: { invoices: OpenInvoice[] }) {
                         rel="noopener noreferrer"
                         variant="link-gray"
                       >
-                        View invoice
+                        {t("subscription.viewInvoice")}
                       </Button>
                     ) : null}
                   </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   data,
   useParams,
@@ -25,6 +26,7 @@ import When from "~/components/when/when";
 import { db } from "~/database/db.server";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
 import { resolveDisplayCode } from "~/modules/barcode/display";
 import { getAssetsForKits } from "~/modules/kit/service.server";
@@ -36,7 +38,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -75,8 +77,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       }),
     ]);
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header: HeaderData = {
-      title: kit ? `${kit.name}'s assets` : "Kit assets",
+      title: kit
+        ? t("kits.assetsOfTitle", { name: kit.name })
+        : t("kits.assetsTitle"),
     };
 
     const modelName = {
@@ -96,6 +103,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 }
 
 export default function KitAssets() {
+  const { t } = useTranslation();
   const assetSortingOptions = useAssetSortingOptions();
   const { roles } = useUserRoleHelper();
 
@@ -138,7 +146,7 @@ export default function KitAssets() {
                 width="full"
                 className="whitespace-nowrap"
               >
-                Add assets
+                {t("bookings.addAssets")}
               </Button>
             </div>
           </When>
@@ -147,12 +155,10 @@ export default function KitAssets() {
         <List
           ItemComponent={ListContent}
           customEmptyStateContent={{
-            title: "Not assets in kit",
-            text: userRoleCanManageAssets
-              ? "Start by adding your first asset."
-              : "",
+            title: t("ui.notAssetsInKit"),
+            text: userRoleCanManageAssets ? t("kits.startByAddingAsset") : "",
             newButtonContent: userRoleCanManageAssets
-              ? "Add assets"
+              ? t("bookings.addAssets")
               : undefined,
             newButtonRoute: userRoleCanManageAssets
               ? "manage-assets?status=AVAILABLE"
@@ -160,9 +166,9 @@ export default function KitAssets() {
           }}
           headerChildren={
             <>
-              <Th>Category</Th>
-              <Th>Location</Th>
-              <Th>Tags</Th>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("assets.location")}</Th>
+              <Th>{t("nav.tags")}</Th>
             </>
           }
         />

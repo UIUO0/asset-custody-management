@@ -1,6 +1,7 @@
 import type { ChangeEvent } from "react";
 import { useState, useEffect, useMemo } from "react";
 import { BarcodeType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
@@ -31,12 +32,13 @@ export function AddBarcodeForm({
   initialBarcodeType = BarcodeType.Code128,
   initialBarcodeValue = "",
 }: AddBarcodeFormProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher<{ error?: string; success?: boolean }>();
   const disabled = useDisabled(fetcher);
   // Lazy initializers avoid a false-positive derived-state lint: after mount these
   // are user-controlled form inputs, so they must NOT re-sync with the initial props.
   const [barcodeType, setBarcodeType] = useState<BarcodeType>(
-    () => initialBarcodeType
+    () => initialBarcodeType,
   );
   const [barcodeValue, setBarcodeValue] = useState(() => initialBarcodeValue);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function AddBarcodeForm({
     if (hideFields && initialBarcodeValue) {
       const error = validateBarcodeValue(
         initialBarcodeType,
-        initialBarcodeValue
+        initialBarcodeValue,
       );
       setValidationError(error);
     }
@@ -96,7 +98,7 @@ export function AddBarcodeForm({
 
   const helpText = useMemo(() => {
     const option = BARCODE_TYPE_OPTIONS.find(
-      (opt) => opt.value === barcodeType
+      (opt) => opt.value === barcodeType,
     );
     return option ? option.description : undefined;
   }, [barcodeType]);
@@ -114,7 +116,7 @@ export function AddBarcodeForm({
             htmlFor="barcodeType"
             className="mb-1 block text-sm font-medium text-gray-700"
           >
-            Barcode Type
+            {t("ui.barcodeType")}
           </label>
           <select
             id="barcodeType"
@@ -137,12 +139,12 @@ export function AddBarcodeForm({
       {/* Barcode Value Input */}
       {!hideFields && (
         <Input
-          label="Barcode Value"
+          label={t("barcodesInput.barcodeValue")}
           value={barcodeValue}
           onChange={handleValueChange}
           error={validationError || fetcher.data?.error}
           disabled={disabled}
-          placeholder="Enter barcode value"
+          placeholder={t("barcodesInput.enterValue")}
           required
         />
       )}
@@ -164,14 +166,14 @@ export function AddBarcodeForm({
           onClick={onCancel}
           disabled={disabled}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button
           type="submit"
           disabled={disabled || !!validationError || !barcodeValue.trim()}
           loading={fetcher.state === "submitting"}
         >
-          Add Barcode
+          {t("ui.addBarcode")}
         </Button>
       </div>
     </fetcher.Form>

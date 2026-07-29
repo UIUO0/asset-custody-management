@@ -8,8 +8,8 @@ import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
 import { getStatusClasses, isOneDayEvent } from "~/utils/calendar";
 import { useHints } from "~/utils/client-hints";
 import { toIsoDateTimeToUserTimezone } from "~/utils/date-fns";
-import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
-import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator";
+import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import { resolveUserDisplayName } from "~/utils/user";
 
 type Items = NonNullable<
@@ -97,7 +97,7 @@ export function useAssetAvailabilityData(items: Items) {
                 assetKitId: ba.assetKitId ?? null,
                 kitName: ba.kitName ?? null,
                 quantity: ba.quantity ?? 1,
-              })
+              }),
             )
           : "bookings" in asset && asset.bookings
           ? (asset.bookings as unknown as AdvancedAssetBooking[]).map((b) => ({
@@ -146,7 +146,7 @@ export function useAssetAvailabilityData(items: Items) {
         }));
         const bookedTotal = availabilitySlices.reduce(
           (sum, s) => sum + s.quantity,
-          0
+          0,
         );
 
         return {
@@ -159,7 +159,7 @@ export function useAssetAvailabilityData(items: Items) {
             ...getStatusClasses(
               booking.status,
               isOneDayEvent(new Date(booking.from), new Date(booking.to)),
-              "px-1"
+              "px-1",
             ),
           ],
           extendedProps: {

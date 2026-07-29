@@ -575,7 +575,7 @@ export default function Onboarding() {
             required
             data-test-id="firstName"
             type="text"
-            placeholder="Zaans"
+            placeholder={t("ui.zaans")}
             name={zo.fields.firstName()}
             error={zo.errors.firstName()?.message}
             className="mb-5 md:mb-0 md:flex-1"
@@ -586,7 +586,7 @@ export default function Onboarding() {
             required
             data-test-id="lastName"
             type="text"
-            placeholder="Huisje"
+            placeholder={t("ui.huisje")}
             name={zo.fields.lastName()}
             error={zo.errors.lastName()?.message}
             className="md:flex-1"
@@ -594,7 +594,7 @@ export default function Onboarding() {
         </div>
         <div>
           <Input
-            label="Username"
+            label={t("ui.username")}
             addOn="@"
             autoComplete="username"
             required
@@ -614,7 +614,7 @@ export default function Onboarding() {
           <>
             <PasswordInput
               required
-              label="Password"
+              label={t("auth.password")}
               placeholder="********"
               data-test-id="password"
               name={zo.fields.password()}
@@ -704,7 +704,7 @@ export default function Onboarding() {
                 className="flex w-full items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-start font-medium text-gray-700 hover:bg-gray-100"
               >
                 <span>
-                  Help us customize your workspace
+                  {t("ui.helpUsCustomizeYourWorkspace")}
                   <span className="ms-1 text-sm font-normal text-gray-500">
                     (optional)
                   </span>
@@ -760,7 +760,7 @@ export default function Onboarding() {
             width="full"
             disabled={disabled}
           >
-            Submit
+            {t("bookings.submit")}
           </Button>
         </div>
       </Form>

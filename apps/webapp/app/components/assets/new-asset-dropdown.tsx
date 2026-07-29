@@ -59,7 +59,7 @@ export function NewAssetDropdown({
         <PopoverTrigger asChild>
           <Button
             type="button"
-            aria-label="More create options"
+            aria-label={t("ui.moreCreateOptions")}
             // Mirror the main button's height (size=sm → py-2) so the two
             // halves line up; flex-center the caret so the chevron sits in
             // the middle regardless of its intrinsic SVG bounds.

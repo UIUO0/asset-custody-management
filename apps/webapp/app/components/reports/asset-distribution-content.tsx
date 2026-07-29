@@ -82,7 +82,7 @@ export function AssetDistributionContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Total Assets
+                {t("reports.totalAssets")}
               </span>
               <span className="text-xs text-gray-500">
                 Across {totalCategories} categories, {totalLocations} locations

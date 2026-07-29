@@ -86,7 +86,7 @@ export const triggerEmail = async ({
       // module's tests mock `~/utils/env` with only the two vars they need —
       // the extra named imports then fail at collection time. This is a
       // last-resort default anyway: real deployments set SMTP_FROM.
-      from: from || SMTP_FROM || `"EPDA Assets" <hello@example.com>`, // sender address
+      from: from || SMTP_FROM || `"SDA Assets" <hello@example.com>`, // sender address
       replyTo: replyTo || SUPPORT_EMAIL, // reply to
       to, // list of receivers
       subject, // Subject line

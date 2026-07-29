@@ -1,4 +1,5 @@
 import type { MouseEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher, useParams } from "react-router";
 import { useClientNotification } from "~/hooks/use-client-notification";
 import type { action } from "~/routes/api+/asset.scan";
@@ -16,6 +17,7 @@ export const UpdateGpsCoordinatesForm = ({
 }: {
   callback: () => void;
 }) => {
+  const { t } = useTranslation();
   const fetcher = useFetcher<typeof action>();
   const { assetId } = useParams();
   const [sendNotification] = useClientNotification();
@@ -47,7 +49,7 @@ export const UpdateGpsCoordinatesForm = ({
             enableHighAccuracy: true,
             timeout: 5000,
             maximumAge: 0,
-          }
+          },
         );
       } else {
         reject();
@@ -72,7 +74,7 @@ export const UpdateGpsCoordinatesForm = ({
         {
           method: "POST",
           action: "/api/asset/scan",
-        }
+        },
       );
     } catch {
       // We dont need to do anything here because we are already showing a notification when the location permissions are rejected
@@ -84,13 +86,13 @@ export const UpdateGpsCoordinatesForm = ({
       type="button"
       variant="link"
       className={tw(
-        "justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
+        "justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700",
       )}
       width="full"
       onClick={handleSubmit}
     >
       <span className="flex items-center gap-2">
-        <Icon icon="gps" /> Update GPS coordinates
+        <Icon icon="gps" /> {t("ui.updateGpsCoordinates")}
       </span>
     </Button>
   );

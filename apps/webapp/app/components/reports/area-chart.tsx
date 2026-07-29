@@ -14,6 +14,7 @@
  */
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AreaChart as RechartsAreaChart,
   Area,
@@ -71,6 +72,7 @@ export function AreaChart({
   tooltipFormatter,
   className,
 }: AreaChartProps) {
+  const { t } = useTranslation();
   // Flatten series data for Recharts
   const chartData = useMemo(() => {
     if (series.length === 0) return [];
@@ -88,7 +90,7 @@ export function AreaChart({
   if (chartData.length === 0) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-gray-500">
-        No data available
+        {t("reports.noDataAvailable")}
       </div>
     );
   }
@@ -195,7 +197,7 @@ export function AreaChart({
           <Area
             type="monotone"
             dataKey="compareValue"
-            name="Previous period"
+            name={t("reports.previousPeriod")}
             stroke={CHART_COLORS.compare}
             strokeWidth={1.5}
             strokeDasharray="4 4"

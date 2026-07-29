@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import {
   data,
   redirect,
@@ -13,6 +15,8 @@ import { SuccessIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { usePosition } from "~/hooks/use-position";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getQrOrganizationLookup } from "~/modules/qr/service.server";
 import {
   createReport,
@@ -30,7 +34,15 @@ import {
 } from "~/utils/http.server";
 import { tw } from "~/utils/tw";
 
-export const meta = () => [{ title: appendToMetaTitle("Contact owner") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.qr.contactOwnerTitle) }];
+};
 
 export const NewReportSchema = z.object({
   email: z
@@ -155,6 +167,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 }
 
 export default function ContactOwner() {
+  const { t } = useTranslation();
   const zo = useZorm("NewQuestionWizardScreen", NewReportSchema);
   const data = useActionData<typeof action>();
   const navigation = useNavigation();
@@ -166,9 +179,11 @@ export default function ContactOwner() {
     <>
       <div className="flex-1 py-8">
         <div className="mb-8">
-          <h1 className="mb-2 text-[24px] font-semibold">Contact Owner</h1>
+          <h1 className="mb-2 text-[24px] font-semibold">
+            {t("ui.contactOwner")}
+          </h1>
           <p className="text-gray-600">
-            Assist the owner by sharing your contact information.
+            {t("ui.assistTheOwnerBySharingYourContactInformatio")}
           </p>
         </div>
         <Form
@@ -177,7 +192,7 @@ export default function ContactOwner() {
           className={tw("text-start", isReported ? "hidden" : "")}
         >
           <Input
-            label="Email"
+            label={t("ui.email")}
             className="mb-3"
             type="email"
             autoComplete="email"
@@ -188,15 +203,14 @@ export default function ContactOwner() {
           />
           <div className="mb-8">
             <Input
-              label="Message"
+              label={t("reminders.message")}
               inputType="textarea"
               name={zo.fields.content()}
               error={zo.errors.content()?.message}
               disabled={disabled}
             />
             <p className="mt-2.5 text-center text-gray-600">
-              By leaving your contact information you agree that the owner of
-              the asset can contact you.
+              {t("qr.contactOwnerConsent")}
             </p>
           </div>
           <Button type="submit" width="full" disabled={disabled}>
@@ -206,12 +220,12 @@ export default function ContactOwner() {
         <div
           className={tw(
             "rounded-xl border border-solid border-success-300 bg-success-25 p-4 text-center leading-none",
-            isReported ? "block" : "hidden"
+            isReported ? "block" : "hidden",
           )}
         >
           <p className="inline-flex items-center gap-2 font-semibold leading-none text-success-700">
             <SuccessIcon />
-            Your message has been sent
+            {t("ui.yourMessageHasBeenSent")}
           </p>
         </div>
       </div>

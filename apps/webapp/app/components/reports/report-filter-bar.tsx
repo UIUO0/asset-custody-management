@@ -113,10 +113,11 @@ export function ReportFilterBar({ reportId, timeframe, isLoading }: Props) {
 
 /** Spinner + label shown next to the active control while navigating. */
 function FilterLoadingIndicator() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2 text-xs text-gray-500">
       <div className="animate-spin size-3 rounded-full border-2 border-gray-300 border-t-gray-600" />
-      <span>Updating...</span>
+      <span>{t("ui.updating")}</span>
     </div>
   );
 }

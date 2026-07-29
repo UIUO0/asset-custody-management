@@ -177,7 +177,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                   placeholder={t("auth.emailSample")}
                   disabled={disabled}
                   className="w-full"
-                  label="New email address"
+                  label={t("ui.newEmailAddress")}
                   error={emailZo.errors.email()?.message}
                 />
 
@@ -214,7 +214,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                     disabled={disabled}
                     variant="secondary"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -260,7 +260,7 @@ export const ChangeEmailForm = ({ currentEmail }: { currentEmail: string }) => {
                     disabled={disabled}
                     variant="secondary"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -295,7 +295,7 @@ function ResendCodeForm({
     <div className="flex items-center justify-center gap-2">
       {/* @ts-expect-error */}
       {fetcher?.data?.success ? (
-        <div className="text-success-500">Code has been resent.</div>
+        <div className="text-success-500">{t("changeEmail.codeResent")}</div>
       ) : null}
       <Button
         variant="block-link-gray"

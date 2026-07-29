@@ -220,7 +220,7 @@ export function ManagePlacementsForm({
       {kitDriven.length > 0 ? (
         <div className="mb-4 space-y-2">
           <p className="text-xs font-medium text-gray-500">
-            Placements managed by kits (read-only)
+            {t("assets.placementsManagedByKits")}
           </p>
           {kitDriven.map((p) => (
             <div
@@ -321,14 +321,14 @@ export function ManagePlacementsForm({
           </div>
           {kitDrivenSum > 0 ? (
             <div className="flex justify-between text-blue-700">
-              <span>Via kits</span>
+              <span>{t("ui.viaKits")}</span>
               <span className="tabular-nums">
                 {kitDrivenSum} {unit}
               </span>
             </div>
           ) : null}
           <div className="flex justify-between text-gray-500">
-            <span>Unplaced</span>
+            <span>{t("quantity.unplaced")}</span>
             <span className="tabular-nums">
               {unplaced} {unit}
             </span>
@@ -352,7 +352,7 @@ export function ManagePlacementsForm({
 
       <div className="flex gap-3">
         <Button to=".." variant="secondary" width="full" disabled={disabled}>
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button
           type="submit"
@@ -360,7 +360,7 @@ export function ManagePlacementsForm({
           width="full"
           disabled={disabled || !!clientError}
         >
-          Save placements
+          {t("ui.savePlacements")}
         </Button>
       </div>
     </Form>

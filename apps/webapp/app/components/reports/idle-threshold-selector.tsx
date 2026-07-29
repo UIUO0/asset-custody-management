@@ -14,6 +14,7 @@
  * @see {@link file://./../../routes/_layout+/reports.$reportId.tsx}
  */
 
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 
 /** Props for {@link IdleThresholdSelector}. */
@@ -35,39 +36,36 @@ export function IdleThresholdSelector({
   onChange,
   disabled = false,
 }: Props) {
-  const thresholds = [
-    { days: 30, label: "30 days" },
-    { days: 60, label: "60 days" },
-    { days: 90, label: "90 days" },
-  ];
+  const { t } = useTranslation();
+  const thresholds = [{ days: 30 }, { days: 60 }, { days: 90 }];
 
   return (
     <div className="flex items-center gap-3">
       <span id="idle-threshold-label" className="text-sm text-gray-600">
-        Unused for:
+        {t("reports.unusedForLabel")}
       </span>
       <div
         role="group"
         aria-labelledby="idle-threshold-label"
         className="flex items-center gap-1 rounded border border-gray-200 bg-white p-1"
       >
-        {thresholds.map((t) => (
+        {thresholds.map((threshold) => (
           <button
-            key={t.days}
+            key={threshold.days}
             type="button"
-            aria-pressed={value === t.days}
-            onClick={() => onChange(t.days)}
+            aria-pressed={value === threshold.days}
+            onClick={() => onChange(threshold.days)}
             disabled={disabled}
             className={tw(
               "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1",
               "disabled:cursor-not-allowed disabled:opacity-50",
-              value === t.days
+              value === threshold.days
                 ? "bg-primary-600 text-static-white"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
             )}
           >
-            {t.label}
+            {t("reports.daysCount", { count: threshold.days })}
           </button>
         ))}
       </div>

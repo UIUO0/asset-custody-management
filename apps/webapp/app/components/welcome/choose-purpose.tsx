@@ -95,15 +95,24 @@ const PLAN_ICONS: Record<SignupPlan, React.ReactNode> = {
   ),
 };
 
+/**
+ * Plan card copy is stored as i18n keys (not literals) because this map lives at
+ * module scope, where the `useTranslation` hook cannot be called. The keys are
+ * resolved with `t()` at render time inside `ChoosePurpose`.
+ */
 const PLAN_DETAILS: Record<
   SignupPlan,
   {
-    title: string;
-    description: string;
-    chip: string;
+    /** i18n key for the plan card title. */
+    titleKey: string;
+    /** i18n key for the plan card description. */
+    descriptionKey: string;
+    /** i18n key for the small chip shown next to the title. */
+    chipKey: string;
     /** i18n key for the helper line under the plan cards. */
     helperKey?: string;
-    badge?: string;
+    /** i18n key for the optional "Recommended" badge. */
+    badgeKey?: string;
     analytics: string;
     /** i18n key for the primary CTA label. */
     ctaLabelKey: string;
@@ -111,19 +120,19 @@ const PLAN_DETAILS: Record<
   }
 > = {
   personal: {
-    title: "Personal",
-    description: "welcome.personalPlanHint",
-    chip: "Free",
+    titleKey: "welcome.personalTitle",
+    descriptionKey: "welcome.personalPlanHint",
+    chipKey: "welcome.freeChip",
     helperKey: "welcome.personalFreeHint",
     analytics: "cta-start-personal",
     ctaLabelKey: "welcome.startUsingSystem",
     href: "/assets",
   },
   team: {
-    title: "Team",
-    description: `For organizations and labs. Includes collaboration features with a ${config.freeTrialDays}-day free trial. No credit card required.`,
-    chip: `${config.freeTrialDays}-day trial`,
-    badge: "Recommended",
+    titleKey: "welcome.teamTitle",
+    descriptionKey: "welcome.teamDescription",
+    chipKey: "welcome.trialChip",
+    badgeKey: "welcome.recommendedBadge",
     analytics: "cta-next-team",
     ctaLabelKey: "welcome.nextSelectPlan",
     href: "/select-plan",
@@ -178,12 +187,12 @@ export function ChoosePurpose({
 
   // Determine CTA label based on plan and addon selection
   const selectedAddons = [
-    wantsAudits && "Audit",
-    wantsBarcodes && "Barcode",
+    wantsAudits && t("audits.audit"),
+    wantsBarcodes && t("welcome.barcode"),
   ].filter(Boolean);
   const ctaLabel =
     selectedPlan === "personal" && wantsAnyAddon
-      ? `Start with ${selectedAddons.join(" & ")} trial`
+      ? t("welcome.startWithTrial", { addons: selectedAddons.join(" & ") })
       : selectedDetails
       ? t(selectedDetails.ctaLabelKey)
       : t("welcome.startUsingSystem");
@@ -209,11 +218,10 @@ export function ChoosePurpose({
         <ShelfSymbolLogo className="mb-4 size-8" />
         <div className="mb-4 max-w-2xl text-center">
           <h3 className="text-2xl font-semibold text-gray-900">
-            How would you like to get started?
+            {t("ui.howWouldYouLikeToGetStarted")}
           </h3>
           <p className="mt-3 text-base text-gray-600">
-            Your choice determines which features we prepare for you. You can
-            always switch later.
+            {t("welcome.choiceHint")}
           </p>
           <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
             If your organization already has a workspace, you don't need to
@@ -221,7 +229,7 @@ export function ChoosePurpose({
           </p>
         </div>
         <h4 className=" w-full text-start  font-semibold text-gray-700">
-          Select a plan
+          {t("ui.selectAPlan")}
         </h4>
         <div className="grid w-full grid-cols-2 gap-4">
           {(Object.keys(PLAN_DETAILS) as Array<SignupPlan>).map((planKey) => {
@@ -237,13 +245,13 @@ export function ChoosePurpose({
                 }}
                 selected={isSelected}
                 description={
-                  planKey === "personal"
-                    ? t(plan.description)
-                    : plan.description
+                  // `days` is only consumed by the team description/chip; it is
+                  // harmless (and ignored) for the personal plan strings.
+                  t(plan.descriptionKey, { days: config.freeTrialDays })
                 }
-                title={plan.title}
-                chipLabel={plan.chip}
-                badgeLabel={plan.badge}
+                title={t(plan.titleKey)}
+                chipLabel={t(plan.chipKey, { days: config.freeTrialDays })}
+                badgeLabel={plan.badgeKey ? t(plan.badgeKey) : undefined}
                 icon={PLAN_ICONS[planKey]}
               />
             );
@@ -258,7 +266,7 @@ export function ChoosePurpose({
         {showAddonsSection ? (
           <>
             <h4 className="mt-6 w-full text-start font-semibold text-gray-700">
-              Choose optional add-ons
+              {t("ui.chooseOptionalAddOns")}
             </h4>
             {showAuditOption ? (
               <AddonToggle
@@ -415,6 +423,7 @@ function AddonBillingCards({
   billingInterval: AuditBillingInterval;
   onBillingIntervalChange: (interval: AuditBillingInterval) => void;
 }) {
+  const { t } = useTranslation();
   const { month: monthlyPrice, year: yearlyPrice } = prices;
 
   const yearlyDiscount =
@@ -449,14 +458,16 @@ function AddonBillingCards({
                 : "text-gray-500",
             )}
           >
-            Monthly
+            {t("audits.monthly")}
           </p>
           <p className="text-2xl font-semibold">
             {fmtPrice(monthlyPrice.unit_amount || 0, monthlyPrice.currency)}
             <span className="text-sm font-normal text-gray-500">/mo</span>
           </p>
-          <p className="text-xs text-gray-500">Billed monthly</p>
-          <p className="mt-1 text-xs text-gray-500">per workspace</p>
+          <p className="text-xs text-gray-500">{t("welcome.billedMonthly")}</p>
+          <p className="mt-1 text-xs text-gray-500">
+            {t("subscription.perWorkspace")}
+          </p>
         </button>
       )}
       {yearlyPrice && (
@@ -481,7 +492,7 @@ function AddonBillingCards({
               billingInterval === "year" ? "text-primary-600" : "text-gray-500",
             )}
           >
-            Yearly
+            {t("audits.yearly")}
           </p>
           <p className="text-2xl font-semibold">
             {fmtPrice(
@@ -494,7 +505,9 @@ function AddonBillingCards({
             Billed annually{" "}
             {fmtPrice(yearlyPrice.unit_amount || 0, yearlyPrice.currency)}
           </p>
-          <p className="mt-1 text-xs text-gray-500">per workspace</p>
+          <p className="mt-1 text-xs text-gray-500">
+            {t("subscription.perWorkspace")}
+          </p>
         </button>
       )}
     </div>

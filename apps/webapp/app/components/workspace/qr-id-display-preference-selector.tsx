@@ -327,7 +327,7 @@ export default function QrIdDisplayPreferenceSelector({
             })}
             {filteredOptions.length === 0 && (
               <div className="px-4 py-2 text-sm text-gray-500">
-                No options found
+                {t("assets.noOptionsFound")}
               </div>
             )}
           </PopoverContent>
@@ -345,7 +345,7 @@ export default function QrIdDisplayPreferenceSelector({
         className="flex items-center gap-2 text-xs text-gray-500"
         aria-live="polite"
       >
-        <span>List rows will look like:</span>
+        <span>{t("barcodePreference.rowsWillLookLike")}</span>
         <AssetCodeBadge
           value={selectedOption.exampleValue}
           // Drive the preview off the RESOLVED `selectedOption.value`, not the

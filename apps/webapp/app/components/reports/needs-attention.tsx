@@ -56,7 +56,7 @@ export function NeedsAttention({
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm font-semibold text-gray-900">
-            Team Performance
+            {t("ui.teamPerformance")}
           </h3>
           {timeframeLabel && (
             <span className="text-xs text-gray-400">{timeframeLabel}</span>
@@ -78,7 +78,7 @@ export function NeedsAttention({
               {t("reports.complianceHealthy")}
             </p>
             <p className="max-w-[200px] text-xs text-gray-400">
-              No team members need attention.
+              {t("ui.noTeamMembersNeedAttention")}
             </p>
           </div>
         ) : (

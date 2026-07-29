@@ -125,7 +125,7 @@ function UnlockBarcodesModalContent({
 
       <AlertDialogCancel asChild>
         <Button type="button" variant="secondary" width="full">
-          Close
+          {t("common.close")}
         </Button>
       </AlertDialogCancel>
     </AlertDialogContent>
@@ -170,7 +170,7 @@ export function UnlockBarcodesModal({
   );
 }
 
-/** Inline banner with "Learn more" that opens the unlock modal */
+/** Inline banner with t("common.learnMore") that opens the unlock modal */
 export function UnlockBarcodesBanner() {
   const { t } = useTranslation();
   const { isOwner } = useUserRoleHelper();
@@ -231,6 +231,7 @@ function BarcodeModalPricing({
   actionFetcher: ReturnType<typeof useFetcher>;
   disabled: boolean;
 }) {
+  const { t } = useTranslation();
   const [selectedInterval, setSelectedInterval] = useState<"month" | "year">(
     "year",
   );
@@ -273,7 +274,7 @@ function BarcodeModalPricing({
                   : "text-gray-500",
               )}
             >
-              Monthly
+              {t("audits.monthly")}
             </p>
             <p className="text-lg font-semibold">
               {fmtPrice(monthlyPrice.unit_amount || 0, monthlyPrice.currency)}
@@ -305,7 +306,7 @@ function BarcodeModalPricing({
                   : "text-gray-500",
               )}
             >
-              Yearly
+              {t("audits.yearly")}
             </p>
             <p className="text-lg font-semibold">
               {fmtPrice(
@@ -328,10 +329,7 @@ function BarcodeModalPricing({
               className="mt-0.5 shrink-0"
             />
             <span className="text-[13px] text-gray-600">
-              I understand that after the 7-day free trial, my payment method on
-              file will be automatically charged at the regular subscription
-              rate. I can cancel anytime before the trial ends to avoid being
-              charged.
+              {t("subscription.trialConsent")}
             </span>
           </label>
         </div>
@@ -353,7 +351,7 @@ function BarcodeModalPricing({
           >
             <span className="flex items-center gap-2">
               <SparklesIcon className="size-4" />
-              {disabled ? "Enabling..." : "Enable for free for 7 days"}
+              {disabled ? "Enabling..." : t("subscription.enableFreeSevenDays")}
             </span>
           </Button>
         </actionFetcher.Form>

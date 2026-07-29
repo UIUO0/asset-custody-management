@@ -1,4 +1,5 @@
 import type { Asset, Category } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { loader } from "~/routes/_layout+/home";
 import { ClickableTr } from "./clickable-tr";
@@ -23,12 +24,13 @@ const PLACEHOLDER_ROW_KEYS = [
 ] as const;
 
 export default function NewestAssets() {
+  const { t } = useTranslation();
   const { newAssets } = useLoaderData<typeof loader>();
   return (
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Newest assets
+          {t("ui.newestAssets")}
         </span>
         <div className="flex items-center gap-2">
           <Button
@@ -36,7 +38,7 @@ export default function NewestAssets() {
             variant="block-link-gray"
             className="!mt-0 text-xs"
           >
-            View all
+            {t("audits.viewAll")}
           </Button>
         </div>
       </div>
@@ -70,17 +72,17 @@ export default function NewestAssets() {
                   <Tr key={placeholderKey} className="h-[72px]">
                     {""}
                   </Tr>
-                )
+                ),
               )}
           </tbody>
         </Table>
       ) : (
         <div className="flex flex-1 items-center justify-center p-4">
           <DashboardEmptyState
-            text="No assets yet"
-            subText="Create your first asset to start building your inventory."
+            text={t("assets.empty")}
+            subText={t("home.newestAssetsEmpty")}
             ctaTo="/assets/new"
-            ctaText="Create an asset"
+            ctaText={t("assets.createAsset")}
           />
         </div>
       )}

@@ -1,10 +1,17 @@
 import { MapPinIcon } from "lucide-react";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { useTranslation } from "react-i18next";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import { redirect, Form, useLoaderData } from "react-router";
 import { z } from "zod";
 import { LocationSelect } from "~/components/location/location-select";
 import { Button } from "~/components/shared/button";
 import { useDisabled } from "~/hooks/use-disabled";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getLocationsForCreateAndEdit } from "~/modules/asset/service.server";
 import { getKit, updateKitLocation } from "~/modules/kit/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -17,7 +24,15 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-export const meta = () => [{ title: appendToMetaTitle("Update kit location") }];
+export const meta: MetaFunction = ({ matches }: { matches: any[] }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match: any) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.kits.updateLocationTitle) }];
+};
 
 const ParamsSchema = z.object({ kitId: z.string() });
 
@@ -103,6 +118,7 @@ export async function action({ params, request, context }: ActionFunctionArgs) {
 }
 
 export default function UpdateKitLocation() {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const { kit } = useLoaderData<typeof loader>();
 
@@ -113,7 +129,7 @@ export default function UpdateKitLocation() {
           <MapPinIcon />
         </div>
         <div className="mb-5">
-          <h4>Update location</h4>
+          <h4>{t("assetActions.updateLocation")}</h4>
           <p>
             Adjust the location of{" "}
             <span className="font-medium">{kit.name}</span>.
@@ -137,7 +153,7 @@ export default function UpdateKitLocation() {
 
         <div className="flex gap-3">
           <Button to=".." variant="secondary" width="full" disabled={disabled}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             variant="primary"
@@ -145,7 +161,7 @@ export default function UpdateKitLocation() {
             type="submit"
             disabled={disabled}
           >
-            Confirm
+            {t("common.confirm")}
           </Button>
         </div>
       </div>

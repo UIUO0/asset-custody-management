@@ -12,11 +12,14 @@
  * @see {@link file://./../../modules/audit/service.server.ts} duplicateAuditSession
  * @see {@link file://./../../components/audit/duplicate-audit-dialog.tsx}
  */
+import type { MetaFunction } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data, redirect } from "react-router";
 import { z } from "zod";
 import { DuplicateAuditDialog } from "~/components/audit/duplicate-audit-dialog";
 import { db } from "~/database/db.server";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import {
   DUPLICATE_AUDIT_ALLOWED_STATUSES,
   duplicateAuditSession,
@@ -38,7 +41,15 @@ const paramsSchema = z.object({ auditId: z.string() });
  *
  * @returns React Router meta descriptor with the page title.
  */
-export const meta = () => [{ title: appendToMetaTitle("Duplicate audit") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.audits.duplicateTitle) }];
+};
 
 /**
  * Loader for the duplicate-audit route.
@@ -91,7 +102,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     // the loader UX guard and the service contract from drifting.
     if (
       !DUPLICATE_AUDIT_ALLOWED_STATUSES.includes(
-        audit.status as (typeof DUPLICATE_AUDIT_ALLOWED_STATUSES)[number]
+        audit.status as (typeof DUPLICATE_AUDIT_ALLOWED_STATUSES)[number],
       )
     ) {
       throw new ShelfError({

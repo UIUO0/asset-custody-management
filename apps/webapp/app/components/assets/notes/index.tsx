@@ -10,6 +10,7 @@
  * @see {@link file://./../../../routes/_layout+/assets.$assetId.activity.tsx} loader
  * @see {@link file://./../../../modules/note/service.server.ts} getPaginatedAndFilterableAssetNotes
  */
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { StatusFilter } from "~/components/booking/status-filter";
 import { ListContentWrapper } from "~/components/list/content-wrapper";
@@ -35,6 +36,7 @@ import { Note } from "./note";
  * so this composes the toolbar primitives directly rather than via `<List>`.
  */
 export const Notes = () => {
+  const { t } = useTranslation();
   const { asset, items, search, hasNotes, page } =
     useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
@@ -112,7 +114,7 @@ export const Notes = () => {
             download
             reloadDocument
           >
-            Export activity CSV
+            {t("bookings.exportActivityCsv")}
           </Button>
         ) : null}
       </Filters>
@@ -144,10 +146,10 @@ export const Notes = () => {
       ) : hasActiveFilters ? (
         <div className="flex h-[300px] items-center justify-center">
           <div className="flex flex-col items-center justify-center p-[16px] text-center md:p-[50px]">
-            <h4>No matching activity</h4>
+            <h4>{t("ui.noMatchingActivity")}</h4>
             <p>
-              No notes match your current search or filter. <br />
-              Try adjusting them to see more.
+              {t("ui.noNotesMatchFilter")} <br />
+              {t("ui.tryAdjustingThemToSeeMore")}
             </p>
           </div>
         </div>
@@ -156,13 +158,13 @@ export const Notes = () => {
           <div className="flex flex-col items-center justify-center p-[16px] text-center md:p-[50px]">
             <img
               src="/static/images/no-notes.svg"
-              alt="Graphic for no notes"
+              alt={t("bookings.noNotesImageAlt")}
               className="mb-6 w-[172px]"
             />
-            <h4>No Notes</h4>
+            <h4>{t("bookings.noNotesTitle")}</h4>
             <p>
               Your asset `{asset?.title}` has no notes <br />
-              attached to it.
+              {t("notes.attachedToIt")}
             </p>
           </div>
         </div>

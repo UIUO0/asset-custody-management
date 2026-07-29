@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { CheckIcon, UserIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Separator } from "~/components/shared/separator";
 import When from "~/components/when/when";
 import useApiQuery from "~/hooks/use-api-query";
@@ -22,9 +23,10 @@ export default function TeamMembersSelector({
   error,
   defaultValues,
 }: TeamMembersSelectorProps) {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>(
-    defaultValues?.length ? defaultValues : []
+    defaultValues?.length ? defaultValues : [],
   );
 
   const { isLoading, data } = useApiQuery<{
@@ -48,7 +50,7 @@ export default function TeamMembersSelector({
         tm.name.toLowerCase().includes(normalizedQuery) ||
         tm.user?.firstName?.toLowerCase().includes(normalizedQuery) ||
         tm.user?.lastName?.toLowerCase().includes(normalizedQuery) ||
-        tm.user?.email?.includes(normalizedQuery)
+        tm.user?.email?.includes(normalizedQuery),
     );
   }, [data, searchQuery]);
 
@@ -61,7 +63,7 @@ export default function TeamMembersSelector({
         return [...prev, teamMember.id];
       });
     },
-    []
+    [],
   );
 
   return (
@@ -73,7 +75,7 @@ export default function TeamMembersSelector({
         <UserIcon className="size-4 text-gray-500" />
         <input
           type="text"
-          placeholder="Find team members"
+          placeholder={t("ui.findTeamMembers")}
           className="flex-1 border-none p-0 focus:border-none focus:ring-0"
           value={searchQuery}
           onChange={(event) => {
@@ -105,7 +107,7 @@ export default function TeamMembersSelector({
       <When truthy={!isLoading}>
         {teamMembers.map((teamMember) => {
           const isTeamMemberSelected = selectedTeamMembers.includes(
-            teamMember.id
+            teamMember.id,
           );
 
           return (
@@ -113,13 +115,13 @@ export default function TeamMembersSelector({
               key={teamMember.id}
               className={tw(
                 "flex cursor-pointer items-center justify-between gap-4 border-b px-6 py-4 hover:bg-gray-100",
-                isTeamMemberSelected && "bg-gray-100"
+                isTeamMemberSelected && "bg-gray-100",
               )}
               role="button"
               tabIndex={0}
               onClick={() => handleSelectedTeamMembersChange(teamMember)}
               onKeyDown={handleActivationKeyPress(() =>
-                handleSelectedTeamMembersChange(teamMember)
+                handleSelectedTeamMembersChange(teamMember),
               )}
             >
               <div className="flex items-center gap-2">

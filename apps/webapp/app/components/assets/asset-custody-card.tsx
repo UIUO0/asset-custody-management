@@ -1,4 +1,5 @@
 import type { Booking, TeamMember, User } from "@prisma/client";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { getPrimaryCustody } from "~/modules/custody/utils";
@@ -6,7 +7,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { resolveTeamMemberName } from "~/utils/user";
 import { Button } from "../shared/button";
@@ -49,6 +50,7 @@ export function CustodyCard({
     | null;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const canViewTeamMemberUsers = userHasPermission({
     roles,
@@ -78,19 +80,19 @@ export function CustodyCard({
               primaryCustody.custodian?.user?.profilePicture ||
               "/static/images/default_pfp.jpg"
             }
-            alt="custodian"
+            alt={t("ui.custodian")}
             className="size-10 rounded"
           />
           <div>
             <p className="">
-              In custody of{" "}
+              {t("ui.inCustodyOf")}{" "}
               {canViewTeamMemberUsers && primaryCustody?.custodian?.userId ? (
                 <Button
                   to={`/settings/team/users/${primaryCustody.custodian.userId}/assets`}
                   variant="link"
                   className={tw(
                     "mt-px font-semibold text-gray-900 hover:text-gray-700 hover:underline",
-                    "[&_.external-link-icon]:opacity-0 [&_.external-link-icon]:duration-100 [&_.external-link-icon]:ease-in-out [&_.external-link-icon]:hover:opacity-100"
+                    "[&_.external-link-icon]:opacity-0 [&_.external-link-icon]:duration-100 [&_.external-link-icon]:ease-in-out [&_.external-link-icon]:hover:opacity-100",
                   )}
                   target="_blank"
                 >
@@ -102,7 +104,12 @@ export function CustodyCard({
               <span className="font-semibold">{}</span>
             </p>
             <span>
-              Since <DateS date={primaryCustody.createdAt} includeTime />
+              <Trans
+                i18nKey="ui.custodySince"
+                components={{
+                  1: <DateS date={primaryCustody.createdAt} includeTime />,
+                }}
+              />
             </span>
           </div>
         </div>
@@ -137,21 +144,24 @@ export function CustodyCard({
               booking.custodianUser?.profilePicture ??
               "/static/images/default_pfp.jpg"
             }
-            alt="custodian"
+            alt={t("ui.custodian")}
             className="size-10 rounded"
           />
           <div>
             <p className="">
-              In custody of{" "}
+              {t("ui.inCustodyOf")}{" "}
               <span className="font-semibold">{teamMemberName} </span>
-              via
+              {t("ui.via")}
             </p>
             <Link to={`/bookings/${booking.id}`} className="underline">
               {booking.name}
             </Link>
             <span>
               {" "}
-              Since <DateS date={booking.from} includeTime />
+              <Trans
+                i18nKey="ui.custodySince"
+                components={{ 1: <DateS date={booking.from} includeTime /> }}
+              />
             </span>
           </div>
         </div>

@@ -55,7 +55,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 
@@ -97,20 +97,25 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   });
 
   try {
-    const { organizationId, userOrganizations, role } = await requirePermission(
-      {
+    const { organizationId, userOrganizations, role, isScopedToOwnRecords } =
+      await requirePermission({
         userId,
         request,
         entity: PermissionEntity.asset,
         action: PermissionAction.read,
-      },
-    );
+      });
 
     const asset = await getAsset({
       id,
       organizationId,
       userOrganizations,
       request,
+      /**
+       * An employee reaching a PENDING asset by direct URL (a shared link, a
+       * stale bookmark, a scanned QR) gets the standard "not found" — the
+       * asset is not part of the inventory they may see yet.
+       */
+      onlyReadyAssets: isScopedToOwnRecords,
       include: {
         custody: { include: { custodian: true } },
         assetKits: {

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -24,22 +25,21 @@ export const SendOtpSchema = z.object({
 });
 
 export function ContinueWithEmailForm({ mode }: { mode: "login" | "signup" }) {
+  const { t } = useTranslation();
   const sendOTP = useFetcher<typeof action>();
   const { data, state } = sendOTP;
   const zo = useZorm("NewQuestionWizardScreen", SendOtpSchema);
 
   const isLoading = state === "submitting" || state === "loading";
   const buttontext =
-    mode === "login" ? "Continue with OTP" : "Sign up with OTP";
-  const buttonLabel = isLoading
-    ? "Sending you a one time password..."
-    : buttontext;
+    mode === "login" ? t("auth.continueWithOtp") : t("auth.signUpWithOtp");
+  const buttonLabel = isLoading ? t("auth.sendingOtp") : buttontext;
 
   return (
     <sendOTP.Form method="post" action="/send-otp" ref={zo.ref}>
       <input type="hidden" name="mode" value={mode} />
       <Input
-        label="Email"
+        label={t("ui.email")}
         hideLabel={true}
         type="email"
         name="email"
@@ -59,7 +59,7 @@ export function ContinueWithEmailForm({ mode }: { mode: "login" | "signup" }) {
         variant="secondary"
         className="mt-3"
         data-test-id="continueWithOtpButton"
-        title="One Time Password (OTP) is the most secure way to login. We will send you a code to your email."
+        title={t("ui.oneTimePasswordOtpIsTheMostSecureWayToLoginW")}
       >
         {buttonLabel}
       </Button>

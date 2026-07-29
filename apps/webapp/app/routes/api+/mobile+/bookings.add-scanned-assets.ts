@@ -1,3 +1,4 @@
+import { AssetLifecycleStage } from "@prisma/client";
 import { data, type ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/database/db.server";
@@ -125,7 +126,14 @@ export async function action({ request }: ActionFunctionArgs) {
     // booking. The downstream service connects them by id with no org check, so
     // without this a caller could attach another workspace's assets (cross-org
     // IDOR). Kit-derived asset ids are already org-scoped by the query below.
-    await assertAssetsBelongToOrg({ assetIds, organizationId });
+    // `onlyReadyAssets` closes the write-side of the intake gate: a PENDING
+    // asset is invisible to these roles on every read path, so accepting its
+    // id here would let a scanned code bypass the approval workflow.
+    await assertAssetsBelongToOrg({
+      assetIds,
+      organizationId,
+      onlyReadyAssets: isScopedToOwnRecords,
+    });
 
     // Expand kits to their contained assets — the service only connects
     // `assetIds` to the booking (`kitIds` drives status flags and notes).
@@ -141,6 +149,11 @@ export async function action({ request }: ActionFunctionArgs) {
         where: {
           organizationId,
           assetKits: { some: { kitId: { in: kitIds } } },
+          // Same gate as the explicit asset ids above — a kit must not smuggle
+          // in units the warehouse has not released.
+          ...(isScopedToOwnRecords
+            ? { lifecycleStage: AssetLifecycleStage.READY }
+            : {}),
         },
         select: { id: true },
       });

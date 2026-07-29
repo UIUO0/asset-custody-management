@@ -612,7 +612,7 @@ export function MoveUnitsDialog({
           <AlertDialogFooter className="mt-4 gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={isSubmitting}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 

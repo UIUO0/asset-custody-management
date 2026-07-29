@@ -285,7 +285,7 @@ export default function IndexLoginForm() {
               search: searchParams.toString(),
             }}
           >
-            Sign up
+            {t("ui.signUp")}
           </Button>
         </div>
       )}

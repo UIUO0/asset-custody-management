@@ -1,11 +1,17 @@
 import { useEffect } from "react";
 
-import type { ActionFunctionArgs, MetaFunction } from "react-router";
+import { useTranslation } from "react-i18next";
+import type {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  MetaFunction,
+} from "react-router";
 import { data, useFetcher } from "react-router";
 import { z } from "zod";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
 import { config } from "~/config/shelf.config";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { supabaseClient } from "~/integrations/supabase/client";
 import { createMobileAuthCode } from "~/modules/auth/mobile-sso.server";
 import { refreshAccessToken } from "~/modules/auth/service.server";
@@ -145,13 +151,13 @@ export async function action({ request }: ActionFunctionArgs) {
         // it to the auth code so the exchange must present a matching verifier.
         // Absent → legacy (pre-PKCE) flow, redeemed without a verifier.
         const codeChallenge = await mobilePkceChallengeCookie.parse(
-          request.headers.get("Cookie")
+          request.headers.get("Cookie"),
         );
 
         // Hand the device a single-use code via the deeplink — never tokens.
         const code = await createMobileAuthCode(
           authSession.userId,
-          typeof codeChallenge === "string" ? codeChallenge : undefined
+          typeof codeChallenge === "string" ? codeChallenge : undefined,
         );
 
         return data(
@@ -161,7 +167,7 @@ export async function action({ request }: ActionFunctionArgs) {
           {
             // Clear the one-shot challenge cookie now that it's bound to the code.
             headers: { "Set-Cookie": clearChallengeCookie },
-          }
+          },
         );
       }
     }
@@ -179,14 +185,17 @@ export async function action({ request }: ActionFunctionArgs) {
       {
         status: reason.status,
         headers: { "Set-Cookie": clearChallengeCookie },
-      }
+      },
     );
   }
 }
 
-export function loader() {
-  const title = "Signing you in";
-  const subHeading = "Please wait while we connect your account";
+export async function loader({ request }: LoaderFunctionArgs) {
+  // The loader owns this copy (it feeds both the page and `meta`), so we
+  // resolve it with the request's locale instead of the React hook.
+  const t = await getFixedT(getLocale(request));
+  const title = t("auth.signingYouIn");
+  const subHeading = t("auth.connectingAccount");
 
   return data(payload({ title, subHeading }));
 }
@@ -196,6 +205,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function MobileLoginCallback() {
+  const { t } = useTranslation();
   const fetcher = useFetcher<typeof action>();
   const result = fetcher.data;
 
@@ -237,7 +247,7 @@ export default function MobileLoginCallback() {
         <div>
           <div className="text-sm text-error-500">{errorMessage}</div>
           <Button to="/" className="mt-4">
-            Back to login
+            {t("auth.backToLogin")}
           </Button>
         </div>
       ) : (

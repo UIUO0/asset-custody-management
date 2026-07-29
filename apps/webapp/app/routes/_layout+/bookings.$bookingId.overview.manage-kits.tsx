@@ -654,15 +654,17 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     }
 
     // Send email to custodian about kit changes
+    // Note copy is written server-side, so resolve with the request's locale.
+    const t = await getFixedT(getLocale(request));
     const kitChanges: string[] = [];
     if (newAssetIds.length > 0) {
-      kitChanges.push("Kits were added to the booking");
+      kitChanges.push(t("bookings.kitsAdded"));
     }
     if (removedKitIds.length > 0) {
-      kitChanges.push("Kits were removed from the booking");
+      kitChanges.push(t("bookings.kitsRemoved"));
     }
     if (kitChanges.length > 0) {
-      kitChanges.push("View booking activity for full details");
+      kitChanges.push(t("bookings.viewActivityForDetails"));
       void sendBookingUpdatedEmail({
         bookingId,
         organizationId,

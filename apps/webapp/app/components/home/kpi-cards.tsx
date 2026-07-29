@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import type { loader } from "~/routes/_layout+/home";
 
@@ -22,28 +23,29 @@ function KpiCard({
 }
 
 export default function KpiCards() {
+  const { t } = useTranslation();
   const { totalAssets, teamMembersCount, locationsCount, categoriesCount } =
     useLoaderData<typeof loader>();
 
   return (
     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
       <KpiCard
-        label="Total assets"
+        label={t("bookings.totalAssets")}
         value={totalAssets.toLocaleString()}
         to="/assets"
       />
       <KpiCard
-        label="Categories"
+        label={t("nav.categories")}
         value={categoriesCount.toLocaleString()}
         to="/categories"
       />
       <KpiCard
-        label="Locations"
+        label={t("nav.locations")}
         value={locationsCount.toLocaleString()}
         to="/locations"
       />
       <KpiCard
-        label="Team members"
+        label={t("bookingForm.teamMembers")}
         value={teamMembersCount.toLocaleString()}
         to="/settings/team"
       />

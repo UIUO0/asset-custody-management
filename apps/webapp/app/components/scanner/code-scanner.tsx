@@ -203,6 +203,8 @@ export const CodeScanner = ({
   };
 
   // Determine if we should allow non-shelf codes based on the current action
+  // why: `action` is the persisted `scannerActionAtom` value, which stays in
+  // English on purpose — compare against the literal, not a translation.
   const shouldAllowNonShelfCodes =
     allowNonShelfCodes || action !== "View asset";
 
@@ -525,8 +527,7 @@ function ScannerMode({
         </Button>
       </div>
       <p className="mt-4 max-w-[360px] text-static-white/70">
-        Focus the field and use your barcode scanner to scan any code, or type
-        the code ID and press Enter.
+        {t("scanner.manualInputHint")}
       </p>
     </div>
   );
@@ -932,7 +933,7 @@ function Initializing() {
             onClick={() => window.location.reload()}
             className={"mt-4"}
           >
-            Reload page
+            {t("ui.reloadPage")}
           </Button>
         </div>
       )}

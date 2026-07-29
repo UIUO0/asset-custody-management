@@ -16,6 +16,7 @@
  * @see {@link file://./../../routes/api+/calendar-subscription.ts}
  */
 import { LinkIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import CalendarFeedControls from "~/components/calendar/calendar-feed-controls";
 import { Dialog, DialogPortal } from "../layout/dialog";
 
@@ -47,6 +48,7 @@ export default function CalendarSubscribeDialog({
   open,
   onClose,
 }: CalendarSubscribeDialogProps) {
+  const { t } = useTranslation();
   return (
     <DialogPortal>
       <Dialog
@@ -61,7 +63,7 @@ export default function CalendarSubscribeDialog({
       >
         <div className="px-6 py-4">
           <div className="mb-5">
-            <h4>Subscribe to your booking calendar</h4>
+            <h4>{t("ui.subscribeToYourBookingCalendar")}</h4>
             <p className="text-gray-600">
               Add a live calendar to Google, Apple or Outlook and your bookings
               appear automatically. Subscribed calendars refresh on your
@@ -71,7 +73,7 @@ export default function CalendarSubscribeDialog({
             </p>
           </div>
 
-          {/* Render only while open so the child's "Stop sharing" confirm state
+          {/* Render only while open so the child's t("ui.stopSharing") confirm state
               resets each time the dialog is reopened. */}
           {open ? (
             <CalendarFeedControls

@@ -36,7 +36,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 
 /** Loader response shape for the audit overview route. */
 type LoaderData = Awaited<ReturnType<typeof loader>>;
@@ -78,7 +78,7 @@ export function AuditAssetListItem({ item }: { item: AuditAssetItem }) {
   const isAuditCompleted = session.status === "COMPLETED";
   const auditStatusLabel = getAuditStatusLabel(
     item.auditData,
-    isAuditCompleted
+    isAuditCompleted,
   );
 
   const canReadCustody = userHasPermission({

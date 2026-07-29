@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsCountAtom } from "~/atoms/list";
 import { useControlledDropdownMenu } from "~/hooks/use-controlled-dropdown-menu";
@@ -36,6 +37,7 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const selectedCategoryCount = useAtomValue(selectedBulkItemsCountAtom);
 
   const disabled = selectedCategoryCount === 0;
@@ -57,7 +59,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -79,7 +81,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -91,7 +95,7 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -111,7 +115,7 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="trash"
-                label="Delete"
+                label={t("common.delete")}
                 onClick={closeMenu}
               />
             </DropdownMenuItem>

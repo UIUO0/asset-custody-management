@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useCanUseBookings } from "~/hooks/use-can-use-bookings";
 import type { loader } from "~/routes/_layout+/home";
@@ -15,6 +16,7 @@ type BookingItem = ReturnType<
 >["overdueBookings"][number];
 
 export default function OverdueBookings() {
+  const { t } = useTranslation();
   const { overdueBookings } = useLoaderData<typeof loader>();
   const canUseBookings = useCanUseBookings();
 
@@ -22,7 +24,7 @@ export default function OverdueBookings() {
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Overdue bookings
+          {t("ui.overdueBookingsX")}
         </span>
         <div className="flex items-center gap-2">
           {canUseBookings && overdueBookings.length > 0 && (
@@ -36,7 +38,7 @@ export default function OverdueBookings() {
               variant="block-link-gray"
               className="!mt-0 text-xs"
             >
-              View all
+              {t("audits.viewAll")}
             </Button>
           )}
         </div>
@@ -44,8 +46,8 @@ export default function OverdueBookings() {
       {!canUseBookings ? (
         <div className="flex flex-1 items-center justify-center p-4">
           <PremiumFeatureTeaser
-            headline="Never lose track of returns"
-            description="Get instant visibility into overdue checkouts and keep your team accountable."
+            headline={t("home.overdueBookingsTagline")}
+            description={t("ui.getInstantVisibilityIntoOverdueCheckoutsAndK")}
           />
         </div>
       ) : overdueBookings.length > 0 ? (
@@ -105,8 +107,8 @@ export default function OverdueBookings() {
       ) : (
         <div className="flex flex-1 items-center justify-center p-4">
           <DashboardEmptyState
-            text="No overdue bookings"
-            subText="All bookings are on track."
+            text={t("reports.noOverdueBookings")}
+            subText={t("home.allBookingsOnTrack")}
           />
         </div>
       )}

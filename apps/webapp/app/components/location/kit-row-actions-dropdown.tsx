@@ -1,4 +1,5 @@
 import type { Kit } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import RemoveKitFromLocation from "./remove-kit-from-location";
 import { VerticalDotsIcon } from "../icons/library";
@@ -17,10 +18,11 @@ export default function KitRowActionsDropdown({
   kit,
   fullWidth,
 }: KitRowActionsDropdownProps) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
-        aria-label="Actions Trigger"
+        aria-label={t("bookings.actionsTrigger")}
         className={tw("asset-actions", fullWidth ? "w-full" : "")}
       >
         <span className="flex items-center gap-2">

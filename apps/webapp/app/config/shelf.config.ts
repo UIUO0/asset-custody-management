@@ -19,13 +19,13 @@ export const config: Config = {
 
   // EPDA (هيئة تطوير المنطقة الشرقية) branding
   logoPath: {
-    fullLogo: "/static/images/epda-logo-full.png",
-    symbol: "/static/images/epda-symbol.png",
+    fullLogo: "/static/images/sda-logo-full.png",
+    symbol: "/static/images/sda-symbol.png",
   },
   faviconPath: "/static/favicon.ico",
   emailPrimaryColor: "#044E8B",
-  appName: "EPDA Assets",
-  appIdentifier: "EPDA",
+  appName: "SDA Assets",
+  appIdentifier: "SDA",
   showHowDidYouFindUs: SHOW_HOW_DID_YOU_FIND_US || false,
   collectBusinessIntel:
     COLLECT_BUSINESS_INTEL || SHOW_HOW_DID_YOU_FIND_US || false,

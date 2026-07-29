@@ -164,7 +164,7 @@ export function OverdueItemsContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                {assetsAtRisk === 1 ? "Asset" : "Assets"} Outstanding
+                {assetsAtRisk === 1 ? "Asset" : t("nav.assets")} Outstanding
               </span>
               {totalOverdue > 0 ? (
                 <span className="text-xs text-gray-500">
@@ -173,7 +173,7 @@ export function OverdueItemsContent({
                 </span>
               ) : (
                 <span className="text-xs text-green-600">
-                  All assets returned on time
+                  {t("ui.allAssetsReturnedOnTime")}
                 </span>
               )}
             </div>
@@ -213,7 +213,7 @@ export function OverdueItemsContent({
       <div className="rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">
-            Overdue Bookings
+            {t("ui.overdueBookings")}
           </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}

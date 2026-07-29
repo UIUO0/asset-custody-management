@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 import type { AuditAsset } from "@prisma/client";
 import { useSetAtom } from "jotai";
 import { ImagePlus, Loader, MessageSquarePlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { incrementAuditAssetMetaAtom } from "~/atoms/qr-scanner";
 import { Button } from "~/components/shared/button";
@@ -30,6 +31,7 @@ export function AuditAssetActions({
   imagesCount = 0,
   isPending: _isPending = false,
 }: AuditAssetActionsProps) {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fetcher = useFetcher({ key: `quick-image-upload-${auditAssetId}` });
   const incrementMeta = useSetAtom(incrementAuditAssetMetaAtom);
@@ -105,12 +107,12 @@ export function AuditAssetActions({
         variant="secondary"
         size="xs"
         className="relative"
-        title="Add comment"
+        title={t("ui.addComment")}
         to={`${auditAssetId}/details`}
       >
         <span className="flex items-center gap-1">
           <MessageSquarePlus className="inline-block size-4" />
-          <span>Add comment</span>
+          <span>{t("ui.addComment")}</span>
           {totalCount > 0 && (
             <span className="absolute -right-2 -top-2 flex size-4 items-center justify-center rounded-full bg-gray-300 text-[10px] font-medium text-gray-800">
               {totalCount}
@@ -127,7 +129,7 @@ export function AuditAssetActions({
         disabled={isUploading}
         onClick={handleQuickImageUpload}
         className={tw("relative", hasError && "border border-error-500")}
-        title="Add image"
+        title={t("ui.addImage")}
       >
         <span className="flex items-center gap-1">
           {isUploading ? (
@@ -138,7 +140,7 @@ export function AuditAssetActions({
           ) : (
             <ImagePlus className="size-4" />
           )}
-          Add image
+          {t("ui.addImage")}
         </span>
       </Button>
     </div>

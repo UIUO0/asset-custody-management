@@ -236,7 +236,7 @@ export function TimeframePicker({
             aria-expanded={customOpen}
           >
             <CalendarIcon className="size-3.5" />
-            <span>{isCustomActive ? value.label : "Custom"}</span>
+            <span>{isCustomActive ? value.label : t("ui.customX")}</span>
             <ChevronDown
               className={tw(
                 "size-3 transition-transform",
@@ -257,7 +257,7 @@ export function TimeframePicker({
           >
             <div className="space-y-4">
               <div className="text-sm font-medium text-gray-900">
-                Select date range
+                {t("ui.selectDateRange")}
               </div>
 
               <div>
@@ -302,7 +302,7 @@ export function TimeframePicker({
                         "hover:text-gray-700 focus:outline-none focus-visible:text-gray-700",
                       )}
                     >
-                      Clear
+                      {t("ui.clear")}
                     </button>
                   )}
                   <div className="text-xs text-gray-500">
@@ -323,7 +323,7 @@ export function TimeframePicker({
                       "hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500",
                     )}
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     type="button"
@@ -335,7 +335,7 @@ export function TimeframePicker({
                       "disabled:cursor-not-allowed disabled:opacity-50",
                     )}
                   >
-                    Apply
+                    {t("ui.apply")}
                   </button>
                 </div>
               </div>

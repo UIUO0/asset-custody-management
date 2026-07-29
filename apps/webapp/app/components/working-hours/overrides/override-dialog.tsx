@@ -16,6 +16,7 @@ import { CreateOverrideFormSchema } from "~/modules/working-hours/zod-utils";
 import type { BookingSettingsActionData } from "~/routes/_layout+/settings.bookings";
 
 export function NewOverrideDialog() {
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const disabled = useDisabled();
 
@@ -40,7 +41,7 @@ export function NewOverrideDialog() {
         disabled={disabled}
         icon="plus"
       >
-        Add override
+        {t("ui.addOverride")}
       </Button>
       <DialogPortal>
         <Dialog
@@ -49,9 +50,9 @@ export function NewOverrideDialog() {
           headerClassName="border-b"
           title={
             <div className="-mb-3 w-full pb-6">
-              <h3>Create new override</h3>
+              <h3>{t("workingHours.createNewOverride")}</h3>
               <p className="text-gray-600">
-                Create a new date override for your working hours.
+                {t("ui.createANewDateOverrideForYourWorkingHours")}
               </p>
             </div>
           }
@@ -138,7 +139,7 @@ export const WorkingHoursOverrideForm = ({
 
         {/* Date Field */}
         <FormRow
-          rowLabel="Date"
+          rowLabel={t("ui.date")}
           subHeading={t("workingHours.selectOverrideDate")}
           className="border-b pb-4"
           required
@@ -197,7 +198,7 @@ export const WorkingHoursOverrideForm = ({
 
         {/* Reason Field */}
         <FormRow
-          rowLabel="Reason"
+          rowLabel={t("assetUpdate.colReason")}
           subHeading={t("workingHours.reasonHint")}
           className="border-b pb-4"
           required
@@ -231,7 +232,7 @@ export const WorkingHoursOverrideForm = ({
                 onClick={onCancel}
                 disabled={disabled}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
             )}
             <Button

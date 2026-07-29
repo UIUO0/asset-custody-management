@@ -7,6 +7,7 @@ import { forwardRef } from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import When from "../when/when";
 
@@ -25,7 +26,7 @@ const SheetOverlay = forwardRef<
   <SheetPrimitive.Overlay
     className={tw(
       "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
+      className,
     )}
     {...props}
     ref={ref}
@@ -49,7 +50,7 @@ const sheetVariants = cva(
     defaultVariants: {
       side: "right",
     },
-  }
+  },
 );
 
 interface SheetContentProps
@@ -62,26 +63,30 @@ const SheetContent = forwardRef<
 >(
   (
     { side = "right", className, children, hideCloseButton = false, ...props },
-    ref
-  ) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content
-        ref={ref}
-        className={tw(sheetVariants({ side }), className)}
-        {...props}
-      >
-        <When truthy={!hideCloseButton}>
-          <SheetPrimitive.Close className="ring-offset-background data-[state=open]:bg-secondary absolute right-4 top-4 z-50 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-            <X className="size-4" />
-            <span className="sr-only">Close</span>
-          </SheetPrimitive.Close>
-        </When>
+    ref,
+  ) => {
+    const { t } = useTranslation();
 
-        {children}
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  )
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content
+          ref={ref}
+          className={tw(sheetVariants({ side }), className)}
+          {...props}
+        >
+          <When truthy={!hideCloseButton}>
+            <SheetPrimitive.Close className="ring-offset-background data-[state=open]:bg-secondary absolute right-4 top-4 z-50 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+              <X className="size-4" />
+              <span className="sr-only">{t("common.close")}</span>
+            </SheetPrimitive.Close>
+          </When>
+
+          {children}
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
@@ -92,7 +97,7 @@ const SheetHeader = ({
   <div
     className={tw(
       "flex flex-col space-y-2 text-center sm:text-start",
-      className
+      className,
     )}
     {...props}
   />
@@ -106,7 +111,7 @@ const SheetFooter = ({
   <div
     className={tw(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
+      className,
     )}
     {...props}
   />

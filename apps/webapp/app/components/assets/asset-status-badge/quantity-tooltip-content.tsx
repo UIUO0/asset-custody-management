@@ -14,6 +14,7 @@
  * @see {@link file://./quantity-data.ts}
  */
 
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { tw } from "~/utils/tw";
 import type { BookingAssetRecord, QuantityBreakdown } from "./quantity-data";
@@ -54,6 +55,8 @@ function SliceBookingName({
  * custody and availability lines.
  */
 export function QuantityTooltipContent({ data }: { data: QuantityBreakdown }) {
+  const { t } = useTranslation();
+
   const {
     total,
     inCustody,
@@ -86,7 +89,7 @@ export function QuantityTooltipContent({ data }: { data: QuantityBreakdown }) {
   function pushSlice(buckets: Buckets, ba: BookingAssetRecord) {
     const slice: Slice = {
       bookingId: ba.booking?.id,
-      bookingName: ba.booking?.name ?? "Untitled booking",
+      bookingName: ba.booking?.name ?? t("bookings.untitled"),
       quantity: ba.quantity ?? 0,
     };
     if (ba.assetKitId) {
@@ -144,7 +147,7 @@ export function QuantityTooltipContent({ data }: { data: QuantityBreakdown }) {
         {kitTotal > 0 && (
           <>
             <p className="ps-2 text-gray-700">
-              <span className="font-medium">{kitTotal}</span> via kits
+              <span className="font-medium">{kitTotal}</span> {t("ui.viaKits")}
             </p>
             {buckets.kitDriven.map((b) => (
               <p
@@ -199,7 +202,7 @@ export function QuantityTooltipContent({ data }: { data: QuantityBreakdown }) {
       <p
         className={tw(
           "font-medium",
-          available > 0 ? "text-emerald-700" : "text-gray-500"
+          available > 0 ? "text-emerald-700" : "text-gray-500",
         )}
       >
         {available} available

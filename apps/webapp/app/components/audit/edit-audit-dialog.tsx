@@ -102,11 +102,8 @@ export function EditAuditDialog({
         onClose={onClose}
         title={
           <div className="-mb-3 w-full pb-6">
-            <h3>Edit audit details</h3>
-            <p className="text-gray-600">
-              Update the name, description, due date, and assignee of this
-              audit.
-            </p>
+            <h3>{t("audits.editAuditDetails")}</h3>
+            <p className="text-gray-600">{t("audits.editHint")}</p>
           </div>
         }
         headerClassName="border-b"
@@ -132,7 +129,7 @@ export function EditAuditDialog({
 
               <Input
                 name={descriptionField}
-                label="Description"
+                label={t("assets.description")}
                 placeholder={t("audits.descriptionHint")}
                 inputType="textarea"
                 rows={5}
@@ -144,7 +141,7 @@ export function EditAuditDialog({
 
               <Input
                 name={dueDateField}
-                label="Due date"
+                label={t("audits.dueDate")}
                 type="datetime-local"
                 defaultValue={defaultDueDate}
                 error={dueDateError}
@@ -156,11 +153,10 @@ export function EditAuditDialog({
                   <AlertTriangleIcon className="size-5 shrink-0 text-amber-600" />
                   <div>
                     <p className="text-sm font-medium text-amber-900">
-                      Active audit
+                      {t("ui.activeAudit")}
                     </p>
                     <p className="mt-1 text-sm text-amber-700">
-                      This audit is currently active. Changing the assignee may
-                      affect ongoing scans.
+                      {t("audits.activeAssigneeWarning")}
                     </p>
                   </div>
                 </div>
@@ -170,12 +166,10 @@ export function EditAuditDialog({
             {/* Right column: Team member selector */}
             <div className="!border-r">
               <Separator className="md:hidden" />
-              <p className="p-3 pb-0 font-medium">Select assignee (optional)</p>
-              <p className="border-b p-3">
-                If no assignee is selected, any admin user can perform the
-                audit. This can also be done by multiple users at different
-                times.
+              <p className="p-3 pb-0 font-medium">
+                {t("audits.selectAssignee")}
               </p>
+              <p className="border-b p-3">{t("audits.assigneeOptionalHint")}</p>
               <AuditTeamMemberSelector
                 error={assigneeError}
                 defaultValue={defaultAssigneeTeamMemberId}
@@ -191,7 +185,7 @@ export function EditAuditDialog({
               onClick={onClose}
               disabled={disabled}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={disabled}>
               {disabled ? "Saving..." : t("common.save")}

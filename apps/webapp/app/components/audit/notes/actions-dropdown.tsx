@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { TrashIcon } from "~/components/icons/library";
 import { ChevronRight } from "~/components/icons/library";
@@ -9,6 +10,7 @@ import {
 } from "~/components/shared/dropdown";
 
 export const ActionsDropdown = ({ noteId }: { noteId: string }) => {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   return (
     <DropdownMenu modal={false}>
@@ -27,7 +29,7 @@ export const ActionsDropdown = ({ noteId }: { noteId: string }) => {
               type="submit"
               className="flex w-full items-center gap-1 py-1 pe-3 text-start text-sm font-medium text-gray-700 outline-none hover:bg-slate-100 hover:text-gray-700 md:py-0.5"
             >
-              <TrashIcon /> Delete note
+              <TrashIcon /> {t("ui.deleteNote")}
             </button>
           </fetcher.Form>
         </DropdownMenuItem>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { selectedBulkItemsAtom } from "~/atoms/list";
 import { useSearchParams } from "~/hooks/search-params";
 import { ALL_SELECTED_KEY, isSelectingAllItems } from "~/utils/list";
@@ -9,6 +10,8 @@ import { Spinner } from "../shared/spinner";
 export const NRM_ID_PARAM = "nrmIds";
 
 export function ExportNrmButton() {
+  const { t } = useTranslation();
+
   const selectedNRMs = useAtomValue(selectedBulkItemsAtom);
   const disabled = selectedNRMs.length === 0;
 
@@ -58,9 +61,7 @@ export function ExportNrmButton() {
       variant="secondary"
       className="w-max"
       disabled={
-        disabled
-          ? { reason: "You must select at least one NRM to export" }
-          : isDownloading
+        disabled ? { reason: t("team.selectNrmToExport") } : isDownloading
       }
       onClick={handleExport}
     >

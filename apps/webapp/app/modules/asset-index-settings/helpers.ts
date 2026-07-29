@@ -29,6 +29,7 @@ export const fixedFields = [
   "type",
   "upcomingBookings",
   "assetModel",
+  "lifecycleStage",
 ] as const;
 
 // Define barcode field names
@@ -92,6 +93,7 @@ export const columnsLabelsMap: { [key in ColumnLabelKey]: string } = {
   type: "Tracking method",
   upcomingBookings: "Upcoming Bookings",
   assetModel: "Asset model",
+  lifecycleStage: "Intake stage",
 };
 
 export const defaultFields: Column[] = [
@@ -115,6 +117,13 @@ export const defaultFields: Column[] = [
   { name: "quantity", visible: false, position: 17 },
   { name: "type", visible: false, position: 18 },
   { name: "assetModel", visible: false, position: 19 },
+  /**
+   * Hidden by default: only المستودعات / المالية act on the intake queue, and
+   * for everyone else every visible asset is READY anyway, so the column would
+   * be a constant. Existing users pick it up via the self-healing merge in
+   * `service.server.ts` (`validateAndUpdateColumns`).
+   */
+  { name: "lifecycleStage", visible: false, position: 20 },
 ];
 
 // Generate barcode columns when barcodes are enabled

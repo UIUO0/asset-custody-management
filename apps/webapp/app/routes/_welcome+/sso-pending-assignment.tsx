@@ -8,17 +8,28 @@
  * them. Uses the `_welcome+` layout for a centered, standalone card.
  */
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { Form, redirect } from "react-router";
 import { ShelfSymbolLogo } from "~/components/marketing/logos";
 import { Button } from "~/components/shared/button";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { getUserOrganizations } from "~/modules/organization/service.server";
 import { getUserByID } from "~/modules/user/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 
-export const meta: MetaFunction = () => [
-  { title: appendToMetaTitle("Workspace Assignment Pending") },
-];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [
+    { title: appendToMetaTitle(resources.auth.workspaceAssignmentPending) },
+  ];
+};
 
 /**
  * Loader verifies the user is an SSO user with no team organizations.
@@ -49,11 +60,14 @@ export async function loader({ context }: LoaderFunctionArgs) {
 }
 
 export default function SsoPendingAssignment() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center px-6 py-12 text-center md:px-12">
       <ShelfSymbolLogo className="mb-6 size-12" />
 
-      <h1 className="mb-2 text-[24px] font-semibold">No workspace assigned</h1>
+      <h1 className="mb-2 text-[24px] font-semibold">
+        {t("ui.noWorkspaceAssigned")}
+      </h1>
 
       <p className="mx-auto mb-6 max-w-md text-gray-600">
         You don&apos;t currently have access to any workspace. This usually
@@ -68,7 +82,7 @@ export default function SsoPendingAssignment() {
 
       <Form method="post" action="/logout">
         <Button type="submit" variant="secondary">
-          Log out
+          {t("auth.logout")}
         </Button>
       </Form>
     </div>

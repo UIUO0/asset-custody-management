@@ -61,7 +61,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
 import { resolveTeamMemberName } from "~/utils/user";
@@ -277,10 +277,10 @@ export default function QrLinkExisting() {
           /** Clicking on the row will add the current asset to the atom of selected assets */
           navigate={handleSelectKit}
           customEmptyStateContent={{
-            title: "You haven't added any kits yet.",
-            text: "What are you waiting for? Create your first kit now!",
+            title: t("kits.pickerEmptyTitleKits"),
+            text: t("kits.pickerEmptyText"),
             newButtonRoute: `/kits/new?qrId=${qrId}`,
-            newButtonContent: "Create new kit and link",
+            newButtonContent: t("qr.createKitAndLink"),
           }}
           className="h-full border-t-0"
         />
@@ -298,7 +298,7 @@ export default function QrLinkExisting() {
       {/* Footer of the modal */}
       <footer className="-mx-4 flex justify-between border-t px-4 pt-3">
         <Button variant="secondary" to={`/qr/${qrId}/link`} width="full">
-          Close
+          {t("common.close")}
         </Button>
       </footer>
     </div>
@@ -348,6 +348,7 @@ export const ConfirmLinkingKitModal = ({
    */
   onCancel: () => void;
 }) => {
+  const { t } = useTranslation();
   const { items: kits } = useLoaderData<typeof loader>();
   const kit = kits.find((a) => a.id === kitId);
   const fetcher = useFetcher<typeof action>();
@@ -371,15 +372,13 @@ export const ConfirmLinkingKitModal = ({
             Link QR code with ‘{kit.name}’
           </AlertDialogTitle>
           <AlertDialogDescription className="text-start">
-            Are you sure that you want to do this? The current QR code that is
-            linked to this kit will be unlinked. You can always re-link it with
-            the old QR code.
+            {t("qr.relinkKitConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="gap-2">
           <AlertDialogCancel asChild>
             <Button type="button" variant="secondary" disabled={disabled}>
-              Cancel
+              {t("common.cancel")}
             </Button>
           </AlertDialogCancel>
 
@@ -391,7 +390,7 @@ export const ConfirmLinkingKitModal = ({
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </fetcher.Form>
           {data?.error ? (

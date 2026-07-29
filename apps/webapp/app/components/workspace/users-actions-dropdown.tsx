@@ -117,7 +117,7 @@ export function TeamUsersActionsDropdown({
                   disabled={disabled}
                 >
                   <span className="flex items-center gap-2">
-                    <RefreshIcon /> Resend invite
+                    <RefreshIcon /> {t("team.resendInvite")}
                   </span>
                 </Button>
                 <Button
@@ -130,7 +130,7 @@ export function TeamUsersActionsDropdown({
                   disabled={disabled}
                 >
                   <span className="flex items-center gap-2">
-                    <UserXIcon /> Cancel invite
+                    <UserXIcon /> {t("team.cancelInvite")}
                   </span>
                 </Button>
               </>
@@ -164,7 +164,7 @@ export function TeamUsersActionsDropdown({
                   }}
                 >
                   <span className="flex items-center gap-2">
-                    <PenIcon /> Change role
+                    <PenIcon /> {t("team.changeRole")}
                   </span>
                 </Button>
                 <Button
@@ -183,7 +183,7 @@ export function TeamUsersActionsDropdown({
                   }
                 >
                   <span className="flex items-center gap-2">
-                    <RemoveUserIcon /> Revoke access
+                    <RemoveUserIcon /> {t("team.revokeAccess")}
                   </span>
                 </Button>
               </>

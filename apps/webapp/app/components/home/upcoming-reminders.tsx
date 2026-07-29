@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { loader } from "~/routes/_layout+/home";
 import { ClickableTr } from "../dashboard/clickable-tr";
@@ -12,13 +13,14 @@ type ReminderItem = ReturnType<
 >["upcomingReminders"][number];
 
 export default function UpcomingReminders() {
+  const { t } = useTranslation();
   const { upcomingReminders } = useLoaderData<typeof loader>();
 
   return (
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Upcoming reminders
+          {t("ui.upcomingReminders")}
         </span>
         <div className="flex items-center gap-2">
           <Button
@@ -26,7 +28,7 @@ export default function UpcomingReminders() {
             variant="block-link-gray"
             className="!mt-0 text-xs"
           >
-            View all
+            {t("audits.viewAll")}
           </Button>
         </div>
       </div>
@@ -67,10 +69,10 @@ export default function UpcomingReminders() {
       ) : (
         <div className="flex flex-1 items-center justify-center p-4">
           <DashboardEmptyState
-            text="No upcoming reminders"
-            subText="Asset reminders you set will appear here."
+            text={t("ui.noUpcomingReminders")}
+            subText={t("home.remindersEmpty")}
             ctaTo="/assets"
-            ctaText="Go to assets"
+            ctaText={t("dashboard.goToAssets")}
           />
         </div>
       )}

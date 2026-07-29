@@ -249,8 +249,8 @@ export default function AddAssetsToBookingDrawer({
       count: assetsAlreadyAddedIds.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s" : ""}`}</strong> already
-          added to the booking.
+          <strong>{`${count} asset${count > 1 ? "s" : ""}`}</strong>{" "}
+          {t("scanner.blockerAlreadyInBooking")}
         </>
       ),
       onResolve: () => removeAssetsFromList(assetsAlreadyAddedIds),
@@ -260,8 +260,8 @@ export default function AddAssetsToBookingDrawer({
       count: assetsPartOfKitIds.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong> are part
-          of a kit.
+          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong>{" "}
+          {t("scanner.blockerPartOfKit")}
         </>
       ),
       description: t("scanner.noteScanKitQrToAdd"),
@@ -283,7 +283,7 @@ export default function AddAssetsToBookingDrawer({
       count: errors.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} QR codes `}</strong> are invalid.
+          <strong>{`${count} QR codes `}</strong> {t("scanner.blockerInvalid")}
         </>
       ),
       onResolve: () => removeItemsFromList(errors.map(([qrId]) => qrId)),

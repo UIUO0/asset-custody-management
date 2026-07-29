@@ -82,7 +82,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
   );
 
   try {
-    const { organizationId } = await requirePermission({
+    const { organizationId, isScopedToOwnRecords } = await requirePermission({
       userId: authSession.userId,
       request,
       entity: PermissionEntity.location,
@@ -120,6 +120,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           });
         }),
       getPaginatedAndFilterableAssets({
+        /**
+         * PENDING assets are invisible to roles scoped to their own records, so
+         * they must not appear in this picker either — otherwise an employee
+         * could attach inventory the warehouse has not released.
+         */
+        onlyReadyAssets: isScopedToOwnRecords,
         request,
         organizationId,
       }),
@@ -374,7 +380,7 @@ export default function AddAssetsToLocation() {
             ) : null}
           </TabsTrigger>
           <TabsTrigger className="flex-1 gap-x-2" value="kits">
-            Kits
+            {t("nav.kits")}
             {locationKitIds.length > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {locationKitIds.length}
@@ -473,15 +479,15 @@ export default function AddAssetsToLocation() {
             title: t("assets.pickerEmptyTitle"),
             text: t("assets.pickerEmptyText"),
             newButtonRoute: "/assets/new",
-            newButtonContent: "New asset",
+            newButtonContent: t("assets.newAsset"),
           }}
           className="mx-1 flex h-full flex-col justify-start border-0"
           bulkActions={<> </>}
           headerChildren={
             <>
-              <Th>Location</Th>
-              <Th>Category</Th>
-              <Th>Tags</Th>
+              <Th>{t("assets.location")}</Th>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("nav.tags")}</Th>
             </>
           }
           extraItemComponentProps={{
@@ -499,7 +505,7 @@ export default function AddAssetsToLocation() {
 
         <div className="flex gap-3">
           <Button variant="secondary" to={".."}>
-            Close
+            {t("common.close")}
           </Button>
           <Form method="post" ref={formRef}>
             {/* We create inputs for both the removed and selected assets, so we can compare and easily add/remove */}
@@ -538,7 +544,7 @@ export default function AddAssetsToLocation() {
               value="addAssets"
               disabled={isSearching}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </Form>
         </div>
@@ -554,8 +560,7 @@ export default function AddAssetsToLocation() {
           void submit(formRef.current);
         }}
       >
-        You have added some assets to the booking but haven't saved it yet. Do
-        you want to confirm adding those assets?
+        {t("bookings.unsavedAssetsAlert")}
       </UnsavedChangesAlert>
     </Tabs>
   );

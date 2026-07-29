@@ -57,7 +57,7 @@ export function RenamePresetDialog({
           <div className="-mb-3 w-full pb-6">
             <h3>{t("assetsIndex.renamePreset")}</h3>
             <p className="text-gray-500">
-              Update the name of your saved filter preset.
+              {t("ui.updateTheNameOfYourSavedFilterPreset")}
             </p>
           </div>
         }
@@ -68,7 +68,7 @@ export function RenamePresetDialog({
             <input type="hidden" name="presetId" value={presetId} />
             <Input
               ref={nameInputRef}
-              label="New name"
+              label={t("ui.newName")}
               name="name"
               value={name}
               onChange={onNameChange}
@@ -82,10 +82,10 @@ export function RenamePresetDialog({
                 variant="secondary"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={!name.trim() || isSubmitting}>
-                {isSubmitting ? "Renaming..." : "Rename"}
+                {isSubmitting ? "Renaming..." : t("ui.rename")}
               </Button>
             </div>
           </Form>

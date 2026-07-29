@@ -11,6 +11,7 @@
  * @see {@link file://../../routes/_layout+/audits.$auditId.tsx} - Action handler
  */
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -46,6 +47,7 @@ export function CancelAuditDialog({
   open,
   onClose,
 }: CancelAuditDialogProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher({ key: "cancel-audit" });
   const disabled = useDisabled(fetcher);
 
@@ -83,7 +85,7 @@ export function CancelAuditDialog({
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Close
+                {t("common.close")}
               </Button>
             </AlertDialogCancel>
 
@@ -92,11 +94,11 @@ export function CancelAuditDialog({
               <Button
                 type="submit"
                 className={tw(
-                  "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
+                  "border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800",
                 )}
                 disabled={disabled}
               >
-                Cancel audit
+                {t("ui.cancelAudit")}
               </Button>
             </fetcher.Form>
           </div>

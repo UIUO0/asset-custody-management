@@ -243,7 +243,9 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
     return (
       <div className={tw("w-full", className)} style={style}>
         <div className=" border-t py-5 md:hidden">
-          <h2 className="mb-1 text-[18px] font-semibold">Barcodes</h2>
+          <h2 className="mb-1 text-[18px] font-semibold">
+            {t("assetForm.barcodes")}
+          </h2>
         </div>
         {barcodes.map((barcode, i) => {
           // Show server errors first (unless cleared), then client-side validation errors
@@ -264,7 +266,7 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
                     <PopoverTrigger asChild>
                       <div className="w-full">
                         <p className="inner-label mb-[6px] font-medium text-gray-700 lg:hidden">
-                          Select barcode type
+                          {t("barcodesInput.selectType")}
                         </p>
                         <Button
                           type="button"
@@ -391,7 +393,9 @@ const BarcodesInput = forwardRef<BarcodesInputRef, BarcodesInputProps>(
             ]);
           }}
         >
-          {barcodes.length === 0 ? "Add barcode" : "Add another barcode"}
+          {barcodes.length === 0
+            ? t("ui.addBarcode")
+            : t("barcodesInput.addAnother")}
         </Button>
       </div>
     );

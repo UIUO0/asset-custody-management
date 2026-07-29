@@ -80,7 +80,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     const totalPages = Math.ceil(bookingCount / perPage);
 
-    const header: HeaderData = { title: "My bookings" };
+    const header: HeaderData = { title: t("ui.myBookings") };
 
     const modelName = {
       singular: "booking",

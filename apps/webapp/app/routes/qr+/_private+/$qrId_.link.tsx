@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   MetaFunction,
   LoaderFunctionArgs,
@@ -142,6 +143,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function QrLink() {
+  const { t } = useTranslation();
   const { qrId } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const comesFromClaim = searchParams.get("ref") === "claim";
@@ -160,12 +162,12 @@ export default function QrLink() {
             </div>
             <div className="mb-8">
               <h1 className="mb-2 text-[24px] font-semibold">
-                Unlinked QR Code
+                {t("ui.unlinkedQrCode")}
               </h1>
               <p className="text-gray-600">
                 {comesFromClaim
-                  ? "Thanks for claiming the code. Now its time to link it to a kit or asset."
-                  : "This code is part of your workspace but is not linked with an asset. Would you like to link it?"}
+                  ? t("qr.claimedLinkHint")
+                  : t("qr.unlinkedCodeHint")}
               </p>
             </div>
             <div className="flex flex-col justify-center gap-2">
@@ -174,14 +176,14 @@ export default function QrLink() {
                 className=" max-w-full"
                 to={`/assets/new?qrId=${qrId}`}
               >
-                Create a new Asset and link
+                {t("ui.createANewAssetAndLink")}
               </Button>
               <Button
                 variant="primary"
                 className=" max-w-full"
                 to={`/kits/new?qrId=${qrId}`}
               >
-                Create a new Kit and link
+                {t("ui.createANewKitAndLink")}
               </Button>
 
               <Button
@@ -189,11 +191,11 @@ export default function QrLink() {
                 className=" max-w-full"
                 to={`/qr/${qrId}/link/asset`}
               >
-                Link to existing asset/kit
+                {t("qr.linkToExisting")}
               </Button>
 
               <Button variant="secondary" className="max-w-full" to={"/"}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </div>
           </div>
@@ -204,11 +206,11 @@ export default function QrLink() {
             items={[
               {
                 to: "asset",
-                content: "Assets",
+                content: t("nav.assets"),
               },
               {
                 to: "kit",
-                content: "Kits",
+                content: t("nav.kits"),
               },
             ]}
             className="mb-0 justify-center ps-0 [&>a]:w-full"

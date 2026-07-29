@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { TierId } from "@prisma/client";
 import type { Organization } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs } from "react-router";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -126,6 +127,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function WorkspacePage() {
+  const { t } = useTranslation();
   const {
     items: organizations,
     canCreateMoreOrganizations,
@@ -155,7 +157,7 @@ export default function WorkspacePage() {
     <div>
       <div className="w-full">
         <div className="mb-2.5 flex items-center justify-between bg-white md:rounded md:border md:border-gray-200 md:px-6 md:py-5">
-          <h2 className=" text-lg text-gray-900">Workspaces</h2>
+          <h2 className=" text-lg text-gray-900">{t("ui.workspaces")}</h2>
 
           <Button
             to="new"
@@ -171,18 +173,20 @@ export default function WorkspacePage() {
                 : false
             }
           >
-            New workspace
+            {t("ui.newWorkspace")}
           </Button>
         </div>
         <div className="flex-1 overflow-x-auto rounded border bg-white">
           <Table>
             <ListHeader>
-              <Th className="whitespace-nowrap">Owner</Th>
+              <Th className="whitespace-nowrap">{t("ui.owner")}</Th>
               <Th>Type</Th>
-              <Th>Assets</Th>
-              <Th>Locations</Th>
-              <Th className="whitespace-nowrap">Team members</Th>
-              <Th>Actions</Th>
+              <Th>{t("nav.assets")}</Th>
+              <Th>{t("nav.locations")}</Th>
+              <Th className="whitespace-nowrap">
+                {t("bookingForm.teamMembers")}
+              </Th>
+              <Th>{t("common.actions")}</Th>
             </ListHeader>
             <tbody>
               {organizations.map((org) => (
@@ -239,6 +243,7 @@ const OrganizationRow = ({
     };
   };
 }) => {
+  const { t } = useTranslation();
   const { currentOrganizationId, userId } = useLoaderData<typeof loader>();
   return (
     <>
@@ -274,7 +279,7 @@ const OrganizationRow = ({
                 {item.enabledSso && (
                   <span className="ms-2">
                     <Badge color={"#3ba361"} withDot={false}>
-                      SSO enabled
+                      {t("ui.ssoEnabled")}
                     </Badge>
                   </span>
                 )}

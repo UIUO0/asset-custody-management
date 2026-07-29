@@ -14,7 +14,7 @@ import {
  *
  * - **Rendering an action a role may or may not perform** → do NOT use this
  *   hook's booleans. Use `userHasPermission({ roles, entity, action })` from
- *   `permission.validator.client`, so the button matches what the server will
+ *   `permission.validator`, so the button matches what the server will
  *   actually allow. `roles` returned here is the input for it.
  * - **Deciding whether the user only sees their own records** →
  *   `isScopedToOwnRecords`.

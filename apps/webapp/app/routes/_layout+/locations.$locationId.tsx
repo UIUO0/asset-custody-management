@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   data,
   redirect,
@@ -130,7 +131,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
-      }
+      },
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, locationId });
@@ -158,7 +159,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ locationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -191,6 +192,7 @@ type LocationBreadcrumb = {
 };
 
 export default function LocationPage() {
+  const { t } = useTranslation();
   const {
     location,
     mapData,
@@ -204,9 +206,9 @@ export default function LocationPage() {
 
   const items = [
     { to: "overview", content: "Overview" },
-    { to: "assets", content: "Assets" },
-    { to: "kits", content: "Kits" },
-    { to: "activity", content: "Activity" },
+    { to: "assets", content: t("nav.assets") },
+    { to: "kits", content: t("nav.kits") },
+    { to: "activity", content: t("bookings.tabActivity") },
   ];
 
   /**
@@ -255,7 +257,7 @@ export default function LocationPage() {
           {childLocations?.length ? (
             <Card>
               <div className="text-sm font-semibold text-gray-900">
-                Child locations
+                {t("locations.childLocations")}
               </div>
               <div className="mt-3 text-sm text-gray-700">
                 <LocationTree nodes={childLocations} />
@@ -269,10 +271,12 @@ export default function LocationPage() {
             </Card>
           ) : null}
 
-          <TextualDivider text="Details" className="my-8 lg:hidden" />
+          <TextualDivider text={t("ui.details")} className="my-8 lg:hidden" />
 
           <div className="flex items-start justify-between gap-10 rounded border border-gray-200 bg-white px-4 py-5">
-            <span className=" text-xs font-medium text-gray-600">Address</span>
+            <span className=" text-xs font-medium text-gray-600">
+              {t("locations.address")}
+            </span>
             <span className="font-medium">{location.address ?? "-"}</span>
           </div>
 
@@ -287,7 +291,7 @@ export default function LocationPage() {
                     target="_blank"
                     rel="nofollow noopener noreferrer"
                   >
-                    See in Google Maps
+                    {t("assetOverview.seeInGoogleMaps")}
                   </Button>
                 </p>
                 <p className="mt-2 text-xs">
@@ -298,7 +302,7 @@ export default function LocationPage() {
                     rel="noopener noreferrer"
                     className="text-primary-600 underline"
                   >
-                    OpenStreetMap Nominatim
+                    {t("ui.openstreetmapNominatim")}
                   </a>
                 </p>
               </div>
@@ -308,8 +312,8 @@ export default function LocationPage() {
               <MapPlaceholder
                 description={
                   location.address
-                    ? "We couldn't geolocate your address. Please try formatting it differently."
-                    : "Add an address to see it on the map."
+                    ? t("locations.geolocateFailed")
+                    : t("locations.addAddressHint")
                 }
               />
             </div>

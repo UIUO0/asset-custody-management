@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { VerticalDotsIcon } from "~/components/icons/library";
 import {
@@ -28,6 +29,7 @@ export function TeamMembersActionsDropdown({
     };
   }>;
 }) {
+  const { t } = useTranslation();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const { isPersonalOrg } = useLoaderData<typeof loader>();
   const { ref, open, setOpen } = useControlledDropdownMenu();
@@ -41,7 +43,7 @@ export function TeamMembersActionsDropdown({
       >
         <DropdownMenuTrigger
           className="outline-none focus-visible:border-0"
-          aria-label="Actions Trigger"
+          aria-label={t("bookings.actionsTrigger")}
         >
           <i className="inline-block px-3 py-0 text-gray-400 ">
             <VerticalDotsIcon />
@@ -68,13 +70,12 @@ export function TeamMembersActionsDropdown({
               disabled={
                 isPersonalOrg
                   ? {
-                      reason:
-                        "You are not able to invite users to a personal workspace. ",
+                      reason: t("team.cannotInvitePersonalWorkspace"),
                     }
                   : false
               }
             >
-              Invite user
+              {t("ui.inviteUser")}
             </Button>
           </DropdownMenuItem>
 

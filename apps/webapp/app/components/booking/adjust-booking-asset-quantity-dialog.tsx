@@ -208,7 +208,7 @@ export function AdjustBookingAssetQuantityDialog({
             onClick={handleSubmit}
             disabled={disabled}
           >
-            {isSubmitting ? t("common.saving") : t("common.save")}
+            {isSubmitting ? "Saving..." : t("common.save")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

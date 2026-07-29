@@ -20,7 +20,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { DeleteAsset } from "./delete-asset";
 import { QuantityCustodyDialog } from "./quantity-custody-dialog";
@@ -251,7 +251,7 @@ const ConditionalActionsDropdown = () => {
                 >
                   {/*
                     QUANTITY_TRACKED assets route to the multi-row
-                    "Manage placements" dialog instead of the single-
+                    t("assetActions.managePlacements") dialog instead of the single-
                     location quick-set dialog — placements are the
                     asset's primary location concept once multiple
                     slices are possible. INDIVIDUAL assets keep the
@@ -366,6 +366,37 @@ const ConditionalActionsDropdown = () => {
                     </span>
                   </Button>
                 </div>
+
+                <div className="border-t p-4 md:hidden md:p-0">
+                  <Button
+                    type="button"
+                    role="button"
+                    variant="secondary"
+                    className="flex items-center justify-center text-gray-700 hover:text-gray-700 "
+                    width="full"
+                    onClick={handleMenuClose}
+                  >
+                    {t("common.close")}
+                  </Button>
+                </div>
+                {assetIsCheckedOut ? (
+                  <div className=" border-t p-2 text-start text-xs">
+                    {t("assetActions.disabledCheckedOut")}
+                  </div>
+                ) : null}
+                {assetIsPartOfUnavailableKit ? (
+                  <div className=" border-t p-2 text-start text-xs">
+                    {t("assetActions.disabledPartOfKit")}
+                  </div>
+                ) : null}
+              </When>
+              <When
+                truthy={userHasPermission({
+                  roles,
+                  entity: PermissionEntity.asset,
+                  action: PermissionAction.delete,
+                })}
+              >
                 <div
                   className="px-0 py-1 md:p-0"
                   aria-disabled={
@@ -391,30 +422,6 @@ const ConditionalActionsDropdown = () => {
                     }
                   />
                 </div>
-                <div className="border-t p-4 md:hidden md:p-0">
-                  <Button
-                    type="button"
-                    role="button"
-                    variant="secondary"
-                    className="flex items-center justify-center text-gray-700 hover:text-gray-700 "
-                    width="full"
-                    onClick={handleMenuClose}
-                  >
-                    Close
-                  </Button>
-                </div>
-                {assetIsCheckedOut ? (
-                  <div className=" border-t p-2 text-start text-xs">
-                    Some actions are disabled due to the asset being checked
-                    out.
-                  </div>
-                ) : null}
-                {assetIsPartOfUnavailableKit ? (
-                  <div className=" border-t p-2 text-start text-xs">
-                    Some actions are disabled due to the asset being part of a
-                    kit.
-                  </div>
-                ) : null}
               </When>
             </div>
           </PopoverContent>

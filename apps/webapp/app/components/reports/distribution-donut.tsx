@@ -214,7 +214,7 @@ export function DistributionDonut({
               {isExpanded ? (
                 <>
                   <ChevronUp className="size-3" />
-                  Show less
+                  {t("ui.showLess")}
                 </>
               ) : (
                 <>

@@ -1,6 +1,7 @@
 import type { ComponentProps, ReactElement } from "react";
 import { cloneElement, useCallback, useMemo, useState } from "react";
 import type { Asset, Kit, BarcodeType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import useApiQuery from "~/hooks/use-api-query";
 import { useBarcodePermissions } from "~/utils/permissions/use-barcode-permissions";
 import { tw } from "~/utils/tw";
@@ -34,6 +35,7 @@ export function CodePreviewDialog({
   trigger,
   selectedBarcodeId,
 }: CodePreviewDialogProps) {
+  const { t } = useTranslation();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedCode, setSelectedCode] = useState<CodeType | null>(null);
   const { canUseBarcodes } = useBarcodePermissions();
@@ -69,7 +71,7 @@ export function CodePreviewDialog({
   // Memoize barcodes array to prevent creating new array reference on every render
   const barcodes = useMemo(
     () => (canUseBarcodes ? data?.barcodes || [] : []),
-    [canUseBarcodes, data?.barcodes]
+    [canUseBarcodes, data?.barcodes],
   );
 
   const itemName = item.type === "asset" ? item.title : item.name;
@@ -81,7 +83,7 @@ export function CodePreviewDialog({
       name: itemName,
       type: item.type,
     }),
-    [item.id, item.type, itemName]
+    [item.id, item.type, itemName],
   );
 
   // Generate dynamic title based on selected code
@@ -94,7 +96,7 @@ export function CodePreviewDialog({
   // Memoize trigger element to prevent recreation on every render
   const triggerElement = useMemo(
     () => cloneElement(trigger, { onClick: openDialog }),
-    [trigger, openDialog]
+    [trigger, openDialog],
   );
 
   return (
@@ -107,7 +109,7 @@ export function CodePreviewDialog({
           onClose={closeDialog}
           className={tw(
             "h-dvh w-full md:h-[calc(100vh-4rem)] md:w-1/2 md:p-0",
-            className
+            className,
           )}
           title={dialogTitle}
         >
@@ -120,7 +122,7 @@ export function CodePreviewDialog({
               <When truthy={isLoading}>
                 <div className="relative size-full animate-pulse bg-gray-200">
                   <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col gap-2">
-                    <p>Fetching codes...</p>
+                    <p>{t("ui.fetchingCodes")}</p>
                   </div>
                 </div>
               </When>
@@ -147,7 +149,7 @@ export function CodePreviewDialog({
             </div>
             <div className="flex w-full justify-center gap-3 px-6 py-3 md:justify-end">
               <Button type="button" variant="secondary" onClick={closeDialog}>
-                Close
+                {t("common.close")}
               </Button>
             </div>
           </div>

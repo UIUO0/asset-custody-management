@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { Button } from "~/components/shared/button";
 import { isFormProcessing } from "~/utils/form";
@@ -67,6 +68,7 @@ export const LocationSelect = ({
   hideExtraContent = false,
   ...restProps
 }: LocationSelectProps) => {
+  const { t } = useTranslation();
   const navigation = useNavigation();
 
   const locationIdToUse = !restProps.isBulk ? restProps.locationId : undefined;
@@ -95,8 +97,8 @@ export const LocationSelect = ({
           fieldName={fieldName}
           defaultValue={locationId ?? undefined}
           model={{ name: "location", queryKey: "name" }}
-          contentLabel="Locations"
-          placeholder={placeholder || "Without location"}
+          contentLabel={t("nav.locations")}
+          placeholder={placeholder || t("list.withoutLocation")}
           initialDataKey="locations"
           countKey="totalLocations"
           closeOnSelect
@@ -110,8 +112,8 @@ export const LocationSelect = ({
               : ({ onItemCreated, closePopover }) => (
                   <InlineEntityCreationDialog
                     type="location"
-                    title="Create new location"
-                    buttonLabel="Create new location"
+                    title={t("assetForm.createNewLocation")}
+                    buttonLabel={t("assetForm.createNewLocation")}
                     onCreated={(created) => {
                       if (created?.type !== "location") return;
                       const createdLocation = created.entity;

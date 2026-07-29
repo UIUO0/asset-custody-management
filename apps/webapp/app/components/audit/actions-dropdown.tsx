@@ -6,6 +6,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useActionData, useLoaderData } from "react-router";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { ChevronRight } from "~/components/icons/library";
@@ -44,7 +45,7 @@ type DialogAction =
 
 function dialogReducer(
   _state: AuditDialogKind,
-  action: DialogAction
+  action: DialogAction,
 ): AuditDialogKind {
   switch (action.type) {
     case "open":
@@ -55,6 +56,7 @@ function dialogReducer(
 }
 
 const ConditionalActionsDropdown = () => {
+  const { t } = useTranslation();
   const { session, isAdminOrOwner, teamMembers } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -131,7 +133,7 @@ const ConditionalActionsDropdown = () => {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50 transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -190,7 +192,7 @@ const ConditionalActionsDropdown = () => {
                     }}
                   >
                     <span className="flex items-center gap-2">
-                      Edit details
+                      {t("ui.editDetails")}
                     </span>
                   </Button>
                 </div>
@@ -209,7 +211,7 @@ const ConditionalActionsDropdown = () => {
                     }}
                   >
                     <span className="flex items-center gap-2">
-                      Cancel audit
+                      {t("ui.cancelAudit")}
                     </span>
                   </Button>
                 </div>
@@ -227,7 +229,7 @@ const ConditionalActionsDropdown = () => {
                       dispatchDialog({ type: "open", dialog: "archive" });
                     }}
                   >
-                    Archive
+                    {t("bookings.archive")}
                   </Button>
                 </div>
               </When>
@@ -242,7 +244,7 @@ const ConditionalActionsDropdown = () => {
                     onClick={handleMenuClose}
                   >
                     <span className="flex items-center gap-2">
-                      Duplicate audit
+                      {t("ui.duplicateAudit")}
                     </span>
                   </Button>
                 </div>
@@ -260,7 +262,7 @@ const ConditionalActionsDropdown = () => {
                       dispatchDialog({ type: "open", dialog: "delete" });
                     }}
                   >
-                    Delete
+                    {t("common.delete")}
                   </Button>
                 </div>
               </When>
@@ -278,7 +280,7 @@ const ConditionalActionsDropdown = () => {
                   }}
                 >
                   <span className="flex items-center gap-2">
-                    Download Receipt
+                    {t("ui.downloadReceipt")}
                   </span>
                 </Button>
               </div>
@@ -292,7 +294,7 @@ const ConditionalActionsDropdown = () => {
                   width="full"
                   onClick={handleMenuClose}
                 >
-                  Close
+                  {t("common.close")}
                 </Button>
               </div>
             </div>

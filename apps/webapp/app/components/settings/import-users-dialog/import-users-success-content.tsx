@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ClientOnly } from "remix-utils/client-only";
 import SuccessAnimation from "~/components/scanner/success-animation";
 import { Button } from "~/components/shared/button";
@@ -20,20 +21,18 @@ export default function ImportUsersSuccessContent({
   onClose,
   onViewInvites,
 }: ImportUsersSuccessContentProps) {
+  const { t } = useTranslation();
   return (
     <div
       className={tw(
         "flex flex-col items-center justify-center px-6 pb-4 text-center",
-        className
+        className,
       )}
     >
       <ClientOnly fallback={null}>{() => <SuccessAnimation />}</ClientOnly>
 
-      <h4>Import completed</h4>
-      <p className="mb-4">
-        Users from the csv file has been invited. Below you can find a summary
-        of the invited users.
-      </p>
+      <h4>{t("ui.importCompleted")}</h4>
+      <p className="mb-4">{t("team.importUsersSuccessHint")}</p>
 
       <When truthy={!!data.extraMessage}>
         <WarningBox className="mb-4 w-full">
@@ -44,14 +43,14 @@ export default function ImportUsersSuccessContent({
       <When truthy={!!data?.inviteSentUsers?.length}>
         <ImportUsersTable
           className="mb-4"
-          title="Invited users"
+          title={t("ui.invitedUsers")}
           users={data?.inviteSentUsers ?? []}
         />
       </When>
       <When truthy={!!data?.skippedUsers?.length}>
         <ImportUsersTable
           className="mb-4"
-          title="Skipped users"
+          title={t("ui.skippedUsers")}
           users={data?.skippedUsers ?? []}
         />
       </When>
@@ -63,10 +62,10 @@ export default function ImportUsersSuccessContent({
           onClick={onClose}
           className="flex-1"
         >
-          Close
+          {t("common.close")}
         </Button>
         <Button type="button" onClick={onViewInvites} className="flex-1">
-          View Invites
+          {t("ui.viewInvites")}
         </Button>
       </div>
     </div>

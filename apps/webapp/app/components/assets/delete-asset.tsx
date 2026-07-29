@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { cloneElement, forwardRef } from "react";
 import type { Asset } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { Button } from "~/components/shared/button";
 
@@ -29,6 +30,7 @@ type DeleteAssetProps = {
 
 export const DeleteAsset = forwardRef<HTMLButtonElement, DeleteAssetProps>(
   function ({ asset, trigger }, ref) {
+    const { t } = useTranslation();
     const navigation = useNavigation();
     const disabled = isFormProcessing(navigation.state);
 
@@ -47,15 +49,14 @@ export const DeleteAsset = forwardRef<HTMLButtonElement, DeleteAssetProps>(
             </div>
             <AlertDialogTitle>Delete {asset.title}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this asset? This action cannot be
-              undone.
+              {t("assets.deleteConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <div className="flex justify-center gap-2">
               <AlertDialogCancel asChild>
                 <Button type="button" variant="secondary" disabled={disabled}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </AlertDialogCancel>
 
@@ -74,7 +75,7 @@ export const DeleteAsset = forwardRef<HTMLButtonElement, DeleteAssetProps>(
                   data-test-id="confirmdeleteAssetButton"
                   disabled={disabled}
                 >
-                  Delete
+                  {t("common.delete")}
                 </Button>
               </Form>
             </div>
@@ -82,7 +83,7 @@ export const DeleteAsset = forwardRef<HTMLButtonElement, DeleteAssetProps>(
         </AlertDialogContent>
       </AlertDialog>
     );
-  }
+  },
 );
 
 DeleteAsset.displayName = "DeleteAsset";

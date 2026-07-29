@@ -9,11 +9,13 @@ import type {
 import { data, redirect, useLoaderData } from "react-router";
 import { z } from "zod";
 import { dynamicTitleAtom } from "~/atoms/dynamic-title-atom";
+import { AssetLifecycleStagePanel } from "~/components/assets/asset-lifecycle-stage-panel";
 import { AssetForm, NewAssetFormSchema } from "~/components/assets/form";
 
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
 import { Button } from "~/components/shared/button";
+import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import {
   getAllEntriesForCreateAndEdit,
   getAsset,
@@ -47,6 +49,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { slugify } from "~/utils/slugify";
 
@@ -292,8 +295,15 @@ export default function AssetEditPage() {
   const { asset, referer } = useLoaderData<typeof loader>();
   const tags = useMemo(
     () => asset.tags?.map((tag) => ({ label: tag.name, value: tag.id })) || [],
-    [asset.tags]
+    [asset.tags],
   );
+
+  const { roles } = useUserRoleHelper();
+  const canApproveAsset = userHasPermission({
+    roles,
+    entity: PermissionEntity.asset,
+    action: PermissionAction.approve,
+  });
 
   return (
     <div className="relative">
@@ -303,6 +313,11 @@ export default function AssetEditPage() {
             {title !== "" ? title : asset.title}
           </Button>
         }
+      />
+      <AssetLifecycleStagePanel
+        stage={asset.lifecycleStage}
+        canApprove={canApproveAsset}
+        action={`/assets/${asset.id}/overview`}
       />
       <div className=" items-top flex justify-between">
         <AssetForm

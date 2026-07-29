@@ -60,9 +60,14 @@ function UploadedImageBox({
   onRemove,
   disabled,
 }: UploadedImageBoxProps) {
+  const { t } = useTranslation();
   return (
     <div className="group relative size-24 shrink-0 overflow-hidden rounded-lg border-2 border-gray-200">
-      <img src={previewUrl} alt="Audit" className="size-full object-cover" />
+      <img
+        src={previewUrl}
+        alt={t("audits.audit")}
+        className="size-full object-cover"
+      />
       {!disabled && (
         <button
           type="button"
@@ -373,7 +378,7 @@ export function AuditImageUploadSection({
           htmlFor="audit-images"
           className="text-sm font-medium text-gray-700"
         >
-          Add Photos (Optional)
+          {t("audits.addPhotosOptional")}
         </label>
         <span className="text-xs text-gray-500">
           {totalCount}/{maxCount} images
@@ -385,7 +390,7 @@ export function AuditImageUploadSection({
       {isUploading && (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Spinner className="size-4" />
-          Uploading images...
+          {t("ui.uploadingImages")}
         </div>
       )}
 

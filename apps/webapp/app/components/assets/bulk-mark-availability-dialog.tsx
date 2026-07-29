@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { BulkUpdateDialogContent } from "../bulk-update-dialog/bulk-update-dialog";
@@ -13,6 +14,7 @@ export default function BulkMarkAvailabilityDialog({
 }: {
   type: z.infer<typeof BulkMarkAvailabilitySchema>["type"];
 }) {
+  const { t } = useTranslation();
   const zo = useZorm("BulkMarkAvailability", BulkMarkAvailabilitySchema);
 
   return (
@@ -40,7 +42,7 @@ export default function BulkMarkAvailabilityDialog({
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -48,7 +50,7 @@ export default function BulkMarkAvailabilityDialog({
               width="full"
               disabled={disabled}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </div>

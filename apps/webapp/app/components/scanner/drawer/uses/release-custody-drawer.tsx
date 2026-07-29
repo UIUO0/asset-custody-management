@@ -151,8 +151,8 @@ export default function ReleaseCustodyDrawer({
       count: assetsNotInCustody.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong> not
-          in custody.
+          <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong>{" "}
+          {t("scanner.blockerNotInCustody")}
         </>
       ),
       description: t("scanner.blockerOnlyInCustodyReleased"),
@@ -163,8 +163,8 @@ export default function ReleaseCustodyDrawer({
       count: assetsArePartOfKit.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong> are part
-          of a kit.
+          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong>{" "}
+          {t("scanner.blockerPartOfKit")}
         </>
       ),
       description: t("scanner.noteScanKitQrToRelease"),
@@ -175,8 +175,8 @@ export default function ReleaseCustodyDrawer({
       count: qrIdsOfKitsNotInCustody.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong> not
-          in custody.
+          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
+          {t("scanner.blockerNotInCustody")}
         </>
       ),
       description: t("scanner.blockerOnlyKitsInCustody"),
@@ -187,7 +187,7 @@ export default function ReleaseCustodyDrawer({
       count: errors.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} QR codes `}</strong> are invalid.
+          <strong>{`${count} QR codes `}</strong> {t("scanner.blockerInvalid")}
         </>
       ),
       onResolve: () => removeItemsFromList(errors.map(([qrId]) => qrId)),
@@ -391,7 +391,7 @@ function ReleaseCustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
               width="full"
               disabled={disabled || disableSubmit || idsTotalCount === 0}
             >
-              Release custody
+              {t("assetActions.releaseCustody")}
             </Button>
           </div>
         </div>
@@ -534,6 +534,7 @@ function SubmittingDialog({
   custodyState: CustodyState;
   cleanupState: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <AlertDialog
       open={open}
@@ -544,7 +545,7 @@ function SubmittingDialog({
     >
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Releasing custody</AlertDialogTitle>
+          <AlertDialogTitle>{t("scanner.releasingCustody")}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="flex flex-col gap-4">
               <SubmissionState
@@ -604,7 +605,8 @@ function SubmissionState({
           <CheckmarkIcon />
         </span>
         <div className="font-mono">
-          {type === "asset" ? "Assets" : "Kits"} have been released from custody
+          {type === "asset" ? "Assets" : t("nav.kits")} have been released from
+          custody
         </div>
       </div>
     );

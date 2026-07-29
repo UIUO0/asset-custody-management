@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -29,6 +30,7 @@ import {
 } from "~/emails/change-user-email-address";
 
 import { sendEmail } from "~/emails/mail.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getSupabaseAdmin } from "~/integrations/supabase/client";
 import { refreshAccessToken } from "~/modules/auth/service.server";
 import {
@@ -251,7 +253,10 @@ export async function action({ context, request }: ActionFunctionArgs) {
         if (parsedData.type !== "deleteUser")
           throw new Error("Invalid payload type");
 
-        let reason = "No reason provided";
+        // Included in the account-deletion email body, so it must follow the
+        // requester's locale rather than a hard-coded English default.
+        const t = await getFixedT(getLocale(request));
+        let reason = t("ui.noReasonProvided");
         if ("reason" in parsedData && parsedData.reason) {
           reason = parsedData?.reason;
         }
@@ -428,7 +433,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const title = "Account Details";
+    // why: loaders run outside React, so `useTranslation` is unavailable —
+    // `getFixedT` gives the same `t` bound to the request's locale.
+    const t = await getFixedT(getLocale(request));
+    const title = t("accountDetails.title");
     const user = await getUserWithContact(userId);
 
     return payload({ title, user });
@@ -447,6 +455,7 @@ export const handle = {
 };
 
 export default function UserPage() {
+  const { t } = useTranslation();
   const { user } = useLoaderData<typeof loader>();
 
   return (
@@ -458,24 +467,25 @@ export default function UserPage() {
         <>
           <Card className="my-0">
             <div className="mb-6">
-              <h3 className="text-text-lg font-semibold">Password</h3>
+              <h3 className="text-text-lg font-semibold">
+                {t("accountDetails.passwordSection")}
+              </h3>
               <p className="text-sm text-gray-600">
-                Update your password here.
+                {t("accountDetails.updatePasswordHint")}
               </p>
             </div>
             <div>
-              <p>Need to reset your password?</p>
-              <p>
-                Click below to start the reset process. You'll be logged out and
-                redirected to our password reset page.
-              </p>
+              <p>{t("accountDetails.needResetPassword")}</p>
+              <p>{t("accountDetails.resetPasswordHint")}</p>
             </div>
             <PasswordResetForm />
           </Card>
           <Card className="my-0">
-            <h3 className="text-text-lg font-semibold">Delete account</h3>
+            <h3 className="text-text-lg font-semibold">
+              {t("accountDetails.deleteAccount")}
+            </h3>
             <p className="text-sm text-gray-600">
-              Send a request to delete your account.
+              {t("accountDetails.deleteAccountHint")}
             </p>
             <RequestDeleteUser />
           </Card>

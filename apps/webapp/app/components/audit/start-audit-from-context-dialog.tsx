@@ -179,7 +179,7 @@ export function StartAuditFromContextDialog({
           onClick={openDialog}
         >
           <span className="flex items-center gap-2">
-            <Icon icon="start-audit" /> Create audit
+            <Icon icon="start-audit" /> {t("audits.createAudit")}
           </span>
         </Button>
       ) : null}
@@ -191,7 +191,7 @@ export function StartAuditFromContextDialog({
           onClose={closeDialog}
           title={
             <div className="-mb-3 w-full pb-6">
-              <h3>Create audit</h3>
+              <h3>{t("audits.createAudit")}</h3>
               <p className="text-gray-600">{getDescriptionText()}</p>
             </div>
           }
@@ -220,7 +220,7 @@ export function StartAuditFromContextDialog({
 
                 <Input
                   name={zo.fields.description()}
-                  label="Description"
+                  label={t("assets.description")}
                   placeholder={t("audits.descriptionHint")}
                   inputType="textarea"
                   rows={5}
@@ -239,7 +239,7 @@ export function StartAuditFromContextDialog({
 
                 <Input
                   name={zo.fields.dueDate()}
-                  label="Due date"
+                  label={t("audits.dueDate")}
                   type="datetime-local"
                   error={zo.errors.dueDate()?.message}
                   disabled={isSubmitting}
@@ -260,7 +260,7 @@ export function StartAuditFromContextDialog({
                         disabled={isSubmitting}
                         className="rounded-sm checked:bg-primary focus-within:ring-primary checked:hover:bg-primary checked:focus:bg-primary"
                       />
-                      <span>Include assets from child locations</span>
+                      <span>{t("audits.includeChildLocations")}</span>
                     </label>
                   </div>
                 )}
@@ -270,12 +270,10 @@ export function StartAuditFromContextDialog({
               <div className="!border-r">
                 <Separator className="md:hidden" />
                 <p className="p-3 pb-0 font-medium">
-                  Select assignee (optional).
+                  {t("audits.selectAssigneeDot")}
                 </p>
                 <p className="border-b p-3 ">
-                  If no assignee is selected, any admin user can perform the
-                  audit. This can also be done by multiple users at different
-                  times.
+                  {t("audits.assigneeOptionalHint")}
                 </p>
                 <AuditTeamMemberSelector />
               </div>
@@ -289,7 +287,7 @@ export function StartAuditFromContextDialog({
                 disabled={isSubmitting}
                 onClick={closeDialog}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" variant="primary" disabled={isSubmitting}>
                 {isSubmitting ? "Creating..." : t("audits.createAudit")}

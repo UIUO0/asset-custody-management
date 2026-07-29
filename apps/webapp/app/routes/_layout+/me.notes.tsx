@@ -11,6 +11,7 @@
  * @see {@link file://./me.note.tsx} for the create/delete action route
  * @see {@link file://./../../components/user/notes/index.tsx} for the UserNotes container component
  */
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { NoPermissionsIcon } from "~/components/icons/library";
@@ -27,7 +28,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
 /**
@@ -95,6 +96,7 @@ export const handle = {
  * Shows notes on the current user's own profile, with permission-gated actions.
  */
 export default function MyNotesPage() {
+  const { t } = useTranslation();
   const { notes } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
   const canReadNotes = userHasPermission({
@@ -117,7 +119,10 @@ export default function MyNotesPage() {
     <div className="mt-4 w-full">
       {canReadNotes ? (
         <>
-          <TextualDivider text="Notes" className="mb-8 lg:hidden" />
+          <TextualDivider
+            text={t("team.notesTab")}
+            className="mb-8 lg:hidden"
+          />
           <UserNotes
             notes={notes}
             canCreate={canCreateNotes}
@@ -131,8 +136,8 @@ export default function MyNotesPage() {
             <div className="mb-4 inline-flex size-8 items-center justify-center rounded-full bg-primary-100 p-2 text-primary-600">
               <NoPermissionsIcon />
             </div>
-            <h5>Insufficient permissions</h5>
-            <p>You are not allowed to view notes</p>
+            <h5>{t("team.insufficientPermissions")}</h5>
+            <p>{t("ui.youAreNotAllowedToViewNotes")}</p>
           </div>
         </div>
       )}

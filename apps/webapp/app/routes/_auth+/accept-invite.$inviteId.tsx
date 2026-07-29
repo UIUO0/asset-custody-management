@@ -13,6 +13,7 @@ import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { useSearchParams } from "~/hooks/search-params";
 import { useDisabled } from "~/hooks/use-disabled";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { signInWithEmail } from "~/modules/auth/service.server";
@@ -183,9 +184,10 @@ export async function action({ context, request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     let titleOverride = null;
     if (cause instanceof Error && cause.name === "JsonWebTokenError") {
-      titleOverride = "Invalid invite token";
-      reason.message =
-        "The invitation link is invalid. Please try clicking the link in your email again or request a new invite. If the issue persists, feel free to contact support";
+      // Surfaced to the user, so resolve with the request's locale.
+      const t = await getFixedT(getLocale(request));
+      titleOverride = t("auth.invalidInviteToken");
+      reason.message = t("auth.invalidInviteHint");
     }
 
     return data(
@@ -241,15 +243,15 @@ export default function AcceptInvite() {
               ))}
             </p>
             <Button to="/" variant={"secondary"}>
-              Back to home
+              {t("ui.backToHome")}
             </Button>
           </div>
         ) : (
           <div>
-            <h2>Accept invite</h2>
+            <h2>{t("auth.acceptInvite")}</h2>
             <p className="mt-2">
               <strong>{inviter}</strong> invites you to join{" "}
-              <strong>{workspace}’s</strong> workspace as a member.
+              <strong>{workspace}’s</strong> {t("auth.workspaceAsMember")}
             </p>
             <Form method="post" className="my-3">
               <input
@@ -259,7 +261,7 @@ export default function AcceptInvite() {
               />
 
               <Button type="submit" disabled={disabled || error}>
-                {disabled ? "Validating token..." : t("auth.acceptInvite")}
+                {disabled ? t("auth.validatingToken") : t("auth.acceptInvite")}
               </Button>
             </Form>
           </div>

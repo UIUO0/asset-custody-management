@@ -89,10 +89,8 @@ export default function SetOrEditReminderDialog({
         headerClassName="border-b"
         title={
           <div className="-mb-3 w-full pb-6">
-            <h3>Set Reminder</h3>
-            <p className="text-gray-600">
-              Notify you and / or others via email about this asset.
-            </p>
+            <h3>{t("reminders.setReminder")}</h3>
+            <p className="text-gray-600">{t("reminders.notifyHint")}</p>
           </div>
         }
       >
@@ -123,7 +121,7 @@ export default function SetOrEditReminderDialog({
               error={
                 validationErrors?.name?.message || zo.errors.name()?.message
               }
-              label="Name"
+              label={t("assets.name")}
               disabled={disabled}
               required
               placeholder={t("reminders.namePlaceholder")}
@@ -138,17 +136,14 @@ export default function SetOrEditReminderDialog({
                   validationErrors?.message?.message ||
                   zo.errors.message()?.message
                 }
-                label="Message"
+                label={t("reminders.message")}
                 disabled={disabled}
                 required
                 placeholder={t("reminders.descriptionPlaceholder")}
                 inputType="textarea"
                 className="mb-2"
               />
-              <p className="text-gray-500">
-                This will show in the reminder mail that gets sent to selected
-                team member(s).
-              </p>
+              <p className="text-gray-500">{t("reminders.messageHint")}</p>
             </div>
 
             <div>
@@ -172,14 +167,14 @@ export default function SetOrEditReminderDialog({
                 placeholder={t("reminders.descriptionPlaceholder")}
                 className="mb-2"
               />
-              <p className="text-gray-500">
-                We will send the reminder at this date/time.
-              </p>
+              <p className="text-gray-500">{t("reminders.dateHint")}</p>
             </div>
           </div>
           <div>
             <Separator className="md:hidden" />
-            <p className="border-b p-3 font-medium">Select team member(s)</p>
+            <p className="border-b p-3 font-medium">
+              {t("reminders.selectTeamMembers")}
+            </p>
             <TeamMembersSelector
               defaultValues={reminder?.teamMembers}
               error={
@@ -196,10 +191,10 @@ export default function SetOrEditReminderDialog({
               disabled={disabled}
               onClick={onClose}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button role="button" type="submit" disabled={disabled}>
-              Confirm
+              {t("common.confirm")}
             </Button>
           </div>
         </Form>

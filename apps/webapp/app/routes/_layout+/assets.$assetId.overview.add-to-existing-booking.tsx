@@ -283,12 +283,8 @@ export default function ExistingBooking() {
           <CalendarCheck />
         </div>
         <div className="mb-5">
-          <h3>Add to Existing Booking</h3>
-          <div>
-            You can add an asset to Draft, Reserved, Ongoing or Overdue
-            bookings. Assets added to an ongoing booking stay available until
-            you check them out.
-          </div>
+          <h3>{t("addToBooking.dialogTitle")}</h3>
+          <div>{t("addToBooking.hint")}</div>
         </div>
         {ids?.map((item, i) => (
           <input
@@ -333,11 +329,22 @@ export default function ExistingBooking() {
             }
           />
           <div className="mt-2 text-gray-500">
-            <span className="font-medium text-gray-600">Draft</span>,{" "}
-            <span className="font-medium text-gray-600">Reserved</span>,{" "}
-            <span className="font-medium text-gray-600">Ongoing</span> and{" "}
-            <span className="font-medium text-gray-600">Overdue</span> bookings
-            are visible
+            <span className="font-medium text-gray-600">
+              {t("bookings.draft")}
+            </span>
+            ,{" "}
+            <span className="font-medium text-gray-600">
+              {t("bookings.reserved")}
+            </span>
+            ,{" "}
+            <span className="font-medium text-gray-600">
+              {t("bookings.ongoing")}
+            </span>{" "}
+            and{" "}
+            <span className="font-medium text-gray-600">
+              {t("bookings.overdue")}
+            </span>{" "}
+            {t("addToBooking.bookingsVisible")}
           </div>
         </div>
 
@@ -372,7 +379,7 @@ export default function ExistingBooking() {
         <div className="mb-8"></div>
         <div className="flex gap-3">
           <Button to=".." variant="secondary" width="full" disabled={disabled}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             type="submit"
@@ -380,7 +387,7 @@ export default function ExistingBooking() {
             width="full"
             disabled={disabled}
           >
-            Confirm
+            {t("common.confirm")}
           </Button>
         </div>
       </div>

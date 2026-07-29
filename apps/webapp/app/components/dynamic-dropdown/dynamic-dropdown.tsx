@@ -7,6 +7,7 @@ import {
   PopoverPortal,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { useModelFilters } from "~/hooks/use-model-filters";
@@ -76,7 +77,7 @@ type Props = ModelFilterProps & {
    */
   filterSelection?: (
     newSelection: string[],
-    previousSelection: string[]
+    previousSelection: string[],
   ) => string[];
 };
 
@@ -86,7 +87,7 @@ export default function DynamicDropdown({
   className,
   triggerWrapperClassName,
   style,
-  label = "Filter",
+  label: labelProp,
   hideLabel,
   hideCounter,
   placeholder,
@@ -101,6 +102,9 @@ export default function DynamicDropdown({
   filterSelection,
   ...hookProps
 }: Props) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `label`. */
+  const label = labelProp ?? t("common.filter");
   const navigation = useNavigation();
   const isSearching = isFormProcessing(navigation.state);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -160,7 +164,7 @@ export default function DynamicDropdown({
       setSelectedItems,
       baseHandleSelectItemChange,
       hookProps,
-    ]
+    ],
   );
 
   return (
@@ -171,7 +175,7 @@ export default function DynamicDropdown({
         <PopoverTrigger
           className={tw(
             "inline-flex items-center gap-1 text-gray-500",
-            triggerWrapperClassName
+            triggerWrapperClassName,
           )}
           asChild
         >
@@ -189,7 +193,7 @@ export default function DynamicDropdown({
             align="end"
             className={tw(
               "z-[100]  overflow-y-auto rounded-md border border-gray-300 bg-white p-0",
-              className
+              className,
             )}
             style={style}
           >
@@ -207,7 +211,7 @@ export default function DynamicDropdown({
                   className="whitespace-nowrap p-3 text-xs font-normal text-gray-500 hover:text-gray-600"
                   onClick={clearFilters}
                 >
-                  Clear filter
+                  {t("ui.clearFilter")}
                 </Button>
               </When>
             </div>
@@ -251,7 +255,7 @@ export default function DynamicDropdown({
               {/* Top Divider */}
               <When
                 truthy={Boolean(
-                  allowSelectAll || withValueItem || withoutValueItem
+                  allowSelectAll || withValueItem || withoutValueItem,
                 )}
               >
                 <div className="h-2 w-full  bg-gray-50" />
@@ -266,7 +270,7 @@ export default function DynamicDropdown({
                   onClick={handleSelectAll}
                   onKeyDown={handleActivationKeyPress(handleSelectAll)}
                 >
-                  <span className="pe-2">Select all</span>
+                  <span className="pe-2">{t("ui.selectAll")}</span>
                 </div>
               </When>
 
@@ -277,7 +281,7 @@ export default function DynamicDropdown({
                   className={tw(
                     "flex cursor-pointer touch-manipulation select-none items-center justify-between px-6 py-4 text-sm  outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100",
                     selectedItems.includes(withValueItem?.id ?? "") &&
-                      "bg-gray-50"
+                      "bg-gray-50",
                   )}
                 >
                   <span className="pe-2 normal-case">
@@ -311,7 +315,7 @@ export default function DynamicDropdown({
                   className={tw(
                     "flex cursor-pointer touch-manipulation select-none items-center justify-between px-6 py-4 text-sm  outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100",
                     selectedItems.includes(withoutValueItem?.id ?? "") &&
-                      "bg-gray-50"
+                      "bg-gray-50",
                   )}
                 >
                   <span className="pe-2 normal-case">
@@ -322,7 +326,7 @@ export default function DynamicDropdown({
                       value={withoutValueItem?.id}
                       className="hidden"
                       checked={selectedItems.includes(
-                        withoutValueItem?.id ?? ""
+                        withoutValueItem?.id ?? "",
                       )}
                       onChange={(e) => {
                         handleSelectItemChange(e.currentTarget.value);
@@ -343,7 +347,7 @@ export default function DynamicDropdown({
               {/* Bottom Divider */}
               <When
                 truthy={Boolean(
-                  allowSelectAll || withValueItem || withoutValueItem
+                  allowSelectAll || withValueItem || withoutValueItem,
                 )}
               >
                 <div className="h-2 w-full  bg-gray-50" />
@@ -357,7 +361,7 @@ export default function DynamicDropdown({
                     htmlFor={item.id}
                     className={tw(
                       "flex cursor-pointer touch-manipulation select-none items-center justify-between px-6 py-4 text-sm outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100",
-                      checked && "bg-gray-50"
+                      checked && "bg-gray-50",
                     )}
                   >
                     <span className="max-w-[350px] truncate whitespace-nowrap pe-2">
@@ -392,7 +396,7 @@ export default function DynamicDropdown({
                   onClick={getAllEntries}
                   className="flex w-full cursor-pointer select-none items-center justify-between px-6 py-3 text-sm font-medium text-gray-600 outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 focus:bg-gray-100"
                 >
-                  Show all
+                  {t("ui.showAll")}
                   <span>
                     {isSearching ? (
                       <Spinner className="size-4" />

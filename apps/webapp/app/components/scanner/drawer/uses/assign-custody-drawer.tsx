@@ -172,7 +172,7 @@ export default function AssignCustodyDrawer({
       message: (count: number) => (
         <>
           <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong>{" "}
-          already <strong>in custody</strong>.
+          already <strong>{t("assets.inCustody")}</strong>.
         </>
       ),
       onResolve: () => removeAssetsFromList(assetsAlreadyInCustody),
@@ -194,8 +194,8 @@ export default function AssignCustodyDrawer({
       count: assetsArePartOfKit.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong> are part
-          of a kit.
+          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong>{" "}
+          {t("scanner.blockerPartOfKit")}
         </>
       ),
       description: t("scanner.noteScanKitQrToAdd"),
@@ -207,7 +207,7 @@ export default function AssignCustodyDrawer({
       message: (count: number) => (
         <>
           <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
-          already <strong>in custody</strong>.
+          already <strong>{t("assets.inCustody")}</strong>.
         </>
       ),
       onResolve: () => removeItemsFromList(qrIdsOfKitsInCustody),
@@ -218,7 +218,7 @@ export default function AssignCustodyDrawer({
       message: (count: number) => (
         <>
           <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
-          already have assets <strong>in custody</strong>.
+          already have assets <strong>{t("assets.inCustody")}</strong>.
         </>
       ),
       onResolve: () => removeItemsFromList(qrIdsOfKitsWithAssetsInCustody),
@@ -240,7 +240,7 @@ export default function AssignCustodyDrawer({
       count: errors.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} QR codes `}</strong> are invalid.
+          <strong>{`${count} QR codes `}</strong> {t("scanner.blockerInvalid")}
         </>
       ),
       onResolve: () => removeItemsFromList(errors.map(([qrId]) => qrId)),
@@ -515,7 +515,7 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
               width="full"
               disabled={disabled || disableSubmit || idsTotalCount === 0}
             >
-              Assign custody
+              {t("assetActions.assignCustody")}
             </Button>
           </div>
         </div>
@@ -698,7 +698,7 @@ function SubmissionState({
           <CheckmarkIcon />
         </span>
         <div className="font-mono">
-          {type === "asset" ? "Assets" : "Kits"} are now in custody of{" "}
+          {type === "asset" ? "Assets" : t("nav.kits")} are now in custody of{" "}
           {custodianName}
         </div>
       </div>

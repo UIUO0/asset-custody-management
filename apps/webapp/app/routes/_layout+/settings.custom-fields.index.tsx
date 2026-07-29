@@ -13,6 +13,7 @@ import { Button } from "~/components/shared/button";
 import { GrayBadge } from "~/components/shared/gray-badge";
 import { Td, Th } from "~/components/table";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import {
@@ -35,7 +36,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 import { canCreateMoreCustomFields } from "~/utils/subscription.server";
 
@@ -80,8 +81,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     const totalPages = Math.ceil(totalCustomFields / perPageParam);
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header: HeaderData = {
-      title: "Custom Fields",
+      title: t("settings.customFieldsHeader"),
     };
     const modelName = {
       singular: "custom fields",
@@ -203,7 +207,7 @@ function CustomFieldRow({
       </Td>
       <Td>
         <span className="text-text-sm font-medium capitalize text-gray-600">
-          {item.required ? t("common.yes") : t("common.no")}
+          {item.required ? "Yes" : t("common.no")}
         </span>
       </Td>
       <Td>

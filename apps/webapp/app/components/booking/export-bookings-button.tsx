@@ -20,7 +20,7 @@ export function ExportBookingsButton() {
   const countSuffix = disabled
     ? ""
     : allSelected
-    ? t("list.allParens")
+    ? "(All)"
     : `(${selectedBookings.length})`;
   const title = `${t("list.exportSelection")} ${countSuffix}`;
 

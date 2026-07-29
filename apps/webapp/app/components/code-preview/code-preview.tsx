@@ -162,7 +162,7 @@ export const CodePreview = ({
       barcodes.forEach((barcode) => {
         const isExternalQr = barcode.type === "ExternalQR";
         const label = isExternalQr
-          ? "External QR Code"
+          ? t("qr.externalCode")
           : `${barcode.type} - ${barcode.value}`;
 
         codes.push({
@@ -307,7 +307,7 @@ export const CodePreview = ({
         <div className="flex items-center justify-center gap-2">
           <select
             id="code-selector"
-            aria-label="Select code to display"
+            aria-label={t("ui.selectCodeToDisplay")}
             value={selectedCodeId}
             onChange={(e) => {
               setSelectedCodeId(e.target.value);
@@ -334,7 +334,7 @@ export const CodePreview = ({
               variant="secondary"
               size="sm"
               onClick={() => setIsAddBarcodeDialogOpen(true)}
-              aria-label="Add code to asset"
+              aria-label={t("ui.addCodeToAsset")}
               disabled={
                 !canUseBarcodes
                   ? {
@@ -344,7 +344,7 @@ export const CodePreview = ({
                           enabled.{" "}
                           <UnlockBarcodesModal
                             triggerVariant="link"
-                            triggerLabel="Learn more"
+                            triggerLabel={t("common.learnMore")}
                           />
                         </>
                       ) : (
@@ -358,7 +358,7 @@ export const CodePreview = ({
                     }
                   : false
               }
-              tooltip={canUseBarcodes ? "Add code to asset" : undefined}
+              tooltip={canUseBarcodes ? t("ui.addCodeToAsset") : undefined}
               className="shrink-0"
             />
           </When>

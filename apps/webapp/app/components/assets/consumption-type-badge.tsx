@@ -46,7 +46,7 @@ export function ConsumptionTypeBadge({
   if (!consumptionType) return null;
 
   const isReturnable = consumptionType === "TWO_WAY";
-  const label = isReturnable ? t("assets.returnable") : t("assets.consumable");
+  const label = isReturnable ? "Returnable" : t("assets.consumable");
   const tooltipTitle = isReturnable
     ? t("assets.returnableTwoWay")
     : t("assets.consumableOneWay");

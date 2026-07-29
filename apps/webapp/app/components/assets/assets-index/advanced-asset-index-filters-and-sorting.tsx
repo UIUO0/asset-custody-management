@@ -205,7 +205,7 @@ function AdvancedFilter() {
             {/* We use the initial sorts, as we only count the ones returned from the server as those are already active filters */}
             {initialFilters.length > 0
               ? `Filtered by ${initialFilters.length}`
-              : "Filter"}
+              : t("common.filter")}
           </Button>
         </PopoverTrigger>
         <PopoverPortal>
@@ -365,7 +365,9 @@ function AdvancedFilter() {
                   <div className="me-1 inline-block size-[14px] align-middle">
                     <PlusIcon />
                   </div>
-                  <span className="inline-block align-middle">Add filter</span>
+                  <span className="inline-block align-middle">
+                    {t("ui.addFilter")}
+                  </span>
                 </Button>
               </div>
               <div className="ms-8 flex items-center justify-between gap-2">
@@ -377,7 +379,7 @@ function AdvancedFilter() {
                     className="mt-0 whitespace-nowrap text-[14px]"
                     onClick={clearAllFilters}
                   >
-                    Clear all
+                    {t("ui.clearAll")}
                   </Button>
                 )}
 
@@ -391,7 +393,7 @@ function AdvancedFilter() {
                   disabled={!validation.canApplyFilters || disabled}
                   onClick={applyFilters}
                 >
-                  Apply filters
+                  {t("ui.applyFilters")}
                 </Button>
               </div>
             </div>
@@ -599,7 +601,7 @@ function AdvancedSorting() {
                   className="mt-0 text-[14px]"
                   onClick={clearAllSorts}
                 >
-                  Clear all
+                  {t("ui.clearAll")}
                 </Button>
               )}
 
@@ -611,7 +613,7 @@ function AdvancedSorting() {
                 disabled={!haveSortsChanged || disabled}
                 onClick={applySorting}
               >
-                Apply sorting
+                {t("ui.applySorting")}
               </Button>
             </div>
           </div>
@@ -784,7 +786,7 @@ function PickAColumnToSortBy({
             ))}
             {filteredOptions.length === 0 && (
               <div className="px-4 py-2 text-[14px] text-gray-500">
-                No columns found
+                {t("ui.noColumnsFound")}
               </div>
             )}
           </div>

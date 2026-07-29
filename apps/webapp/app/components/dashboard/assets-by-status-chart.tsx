@@ -1,4 +1,5 @@
 import { DonutChart } from "@tremor/react";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ClientOnly } from "remix-utils/client-only";
 import type { loader } from "~/routes/_layout+/home";
@@ -9,6 +10,7 @@ import { Badge } from "../shared/badge";
 import { Button } from "../shared/button";
 
 export default function AssetsByStatusChart() {
+  const { t } = useTranslation();
   const { assetsByStatus } = useLoaderData<typeof loader>();
 
   const { chartData } = assetsByStatus;
@@ -17,7 +19,7 @@ export default function AssetsByStatusChart() {
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Assets by status
+          {t("ui.assetsByStatus")}
         </span>
         <div className="flex items-center gap-2">
           <Button
@@ -25,7 +27,7 @@ export default function AssetsByStatusChart() {
             variant="block-link-gray"
             className="!mt-0 text-xs"
           >
-            View all
+            {t("audits.viewAll")}
           </Button>
         </div>
       </div>
@@ -68,10 +70,10 @@ export default function AssetsByStatusChart() {
           </div>
         ) : (
           <DashboardEmptyState
-            text="No assets yet"
-            subText="Add assets to see their status distribution here."
+            text={t("assets.empty")}
+            subText={t("dashboard.addAssetsForStatus")}
             ctaTo="/assets/new"
-            ctaText="Create an asset"
+            ctaText={t("assets.createAsset")}
           />
         )}
       </div>

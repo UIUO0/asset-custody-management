@@ -791,8 +791,8 @@ export default function PartialCheckoutDrawer({
       count: assetsNotInBookingIds.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong> not
-          part of this booking.
+          <strong>{`${count} asset${count > 1 ? "s are" : " is"}`}</strong>{" "}
+          {t("scanner.blockerNotPartOfBooking")}
         </>
       ),
       onResolve: () => removeAssetsFromList(assetsNotInBookingIds),
@@ -802,8 +802,8 @@ export default function PartialCheckoutDrawer({
       count: alreadyCheckedOutAssets.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} asset${count > 1 ? "s" : ""}`}</strong> already
-          checked out for this booking.
+          <strong>{`${count} asset${count > 1 ? "s" : ""}`}</strong>{" "}
+          {t("scanner.blockerAlreadyCheckedOutBooking")}
         </>
       ),
       description: t("scanner.blockerCannotCheckOutAgain"),
@@ -842,7 +842,7 @@ export default function PartialCheckoutDrawer({
           already covered by scanned kit QR codes.
         </>
       ),
-      description: "Kit QR codes include all kit assets automatically",
+      description: t("ui.kitQrCodesIncludeAllKitAssetsAutomatically"),
       onResolve: () => removeItemsFromList(qrIdsOfRedundantAssets),
     },
     {
@@ -850,8 +850,8 @@ export default function PartialCheckoutDrawer({
       count: kitsNotInBooking.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong> not
-          part of this booking.
+          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
+          {t("scanner.blockerNotPartOfBooking")}
         </>
       ),
       onResolve: () => removeItemsFromList(qrIdsOfKitsNotInBooking),
@@ -861,7 +861,7 @@ export default function PartialCheckoutDrawer({
       count: errors.length,
       message: (count: number) => (
         <>
-          <strong>{`${count} QR codes `}</strong> are invalid.
+          <strong>{`${count} QR codes `}</strong> {t("scanner.blockerInvalid")}
         </>
       ),
       onResolve: () => removeItemsFromList(errors.map(([qrId]) => qrId)),
@@ -1601,6 +1601,7 @@ const CustomForm = ({
   isLoading,
   hasBlockers,
 }: CustomFormProps) => {
+  const { t } = useTranslation();
   /** Use state instead of ref so the component re-renders once the form
    * mounts — this guarantees portalContainer is always the real DOM node
    * when the user opens the early-checkout dialog. */
@@ -1638,7 +1639,7 @@ const CustomForm = ({
 
         {/* Cancel button */}
         <Button type="button" variant="secondary" to=".." className="ms-auto">
-          Cancel
+          {t("common.cancel")}
         </Button>
 
         {/* Submit button - conditional based on early check-out */}
@@ -1669,7 +1670,7 @@ const CustomForm = ({
             }
             className="w-auto"
           >
-            Check out assets
+            {t("ui.checkOutAssets")}
           </Button>
         )}
       </div>

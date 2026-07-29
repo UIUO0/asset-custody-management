@@ -17,7 +17,6 @@
  */
 
 import { lazy, Suspense } from "react";
-import { useTranslation } from "react-i18next";
 import type { AreaChartProps } from "./area-chart";
 import type { BarChartProps } from "./bar-chart";
 

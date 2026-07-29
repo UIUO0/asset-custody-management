@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useHints } from "~/utils/client-hints";
 
 interface TimeDisplayProps {
@@ -46,8 +47,10 @@ export const TimeRangeDisplay = ({
   closeTime,
   className,
 }: TimeRangeDisplayProps) => {
+  const { t } = useTranslation();
+
   if (!openTime || !closeTime) {
-    return <span className={className}>Open (times not specified)</span>;
+    return <span className={className}>{t("workingHours.openNoTimes")}</span>;
   }
 
   return (

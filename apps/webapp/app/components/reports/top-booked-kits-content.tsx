@@ -227,7 +227,7 @@ export function TopBookedKitsContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Total Bookings
+                {t("ui.totalBookings")}
               </span>
               <span className="text-xs text-gray-500">
                 {uniqueKitsBooked} kits booked
@@ -238,7 +238,7 @@ export function TopBookedKitsContent({
           {/* Supporting stats */}
           <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
             <div className="flex flex-col">
-              <span className="text-xs text-gray-500">Avg per Kit</span>
+              <span className="text-xs text-gray-500">{t("ui.avgPerKit")}</span>
               <span className="text-lg font-medium text-gray-900">
                 {avgBookingsPerKit.toFixed(1)}
               </span>

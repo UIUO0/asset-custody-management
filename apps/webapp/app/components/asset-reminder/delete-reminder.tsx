@@ -1,6 +1,7 @@
 import { forwardRef } from "react";
 import type { Prisma } from "@prisma/client";
 import { TrashIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Form, useNavigation } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -24,6 +25,7 @@ type DeleteReminderProps = {
 
 const DeleteReminder = forwardRef<HTMLButtonElement, DeleteReminderProps>(
   function ({ reminder }, ref) {
+    const { t } = useTranslation();
     const navigation = useNavigation();
     const disabled = isFormProcessing(navigation.state);
 
@@ -45,15 +47,14 @@ const DeleteReminder = forwardRef<HTMLButtonElement, DeleteReminderProps>(
             </div>
             <AlertDialogTitle>Delete {reminder.name}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this reminder? This action cannot
-              be undone.
+              {t("reminders.deleteConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <div className="flex justify-center gap-2">
               <AlertDialogCancel disabled={disabled} asChild>
                 <Button type="button" variant="secondary">
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </AlertDialogCancel>
 
@@ -66,7 +67,7 @@ const DeleteReminder = forwardRef<HTMLButtonElement, DeleteReminderProps>(
                   disabled={disabled}
                   className="border-error-600 bg-error-600 hover:border-error-800 hover:!bg-error-800"
                 >
-                  Delete
+                  {t("common.delete")}
                 </Button>
               </Form>
             </div>
@@ -74,7 +75,7 @@ const DeleteReminder = forwardRef<HTMLButtonElement, DeleteReminderProps>(
         </AlertDialogContent>
       </AlertDialog>
     );
-  }
+  },
 );
 
 DeleteReminder.displayName = "DeleteReminder";

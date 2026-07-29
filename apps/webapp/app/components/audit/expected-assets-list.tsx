@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { CheckCircle2, Clock } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import { scannedItemsAtom, type AuditScannedItem } from "~/atoms/qr-scanner";
 import type { AuditDrawerStats } from "~/components/audit/audit-drawer";
 import { tw } from "~/utils/tw";
@@ -23,6 +24,7 @@ export function ExpectedAssetsList({
   contextLabel,
   contextName,
 }: ExpectedAssetsListProps) {
+  const { t } = useTranslation();
   const scannedItems = useAtomValue(scannedItemsAtom);
 
   // Create a set of scanned asset IDs for quick lookup
@@ -31,9 +33,9 @@ export function ExpectedAssetsList({
       new Set(
         Object.values(scannedItems)
           .filter((item) => !!item && item.data && item.type === "asset")
-          .map((item) => item!.data!.id)
+          .map((item) => item!.data!.id),
       ),
-    [scannedItems]
+    [scannedItems],
   );
 
   // Categorize expected assets into found and missing
@@ -91,7 +93,7 @@ export function ExpectedAssetsList({
         <div className="max-h-96 space-y-1 overflow-y-auto rounded-md border border-gray-200 bg-white">
           {expectedAssets.length === 0 ? (
             <div className="p-4 text-center text-sm text-gray-500">
-              No expected assets for this audit.
+              {t("ui.noExpectedAssetsForThisAudit")}
             </div>
           ) : (
             <>
@@ -101,7 +103,7 @@ export function ExpectedAssetsList({
                   key={asset.id}
                   className={tw(
                     "flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2",
-                    "last:border-b-0"
+                    "last:border-b-0",
                   )}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -111,7 +113,7 @@ export function ExpectedAssetsList({
                     </span>
                   </div>
                   <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                    Found
+                    {t("audits.found")}
                   </span>
                 </div>
               ))}
@@ -122,7 +124,7 @@ export function ExpectedAssetsList({
                   key={asset.id}
                   className={tw(
                     "flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2",
-                    "last:border-b-0"
+                    "last:border-b-0",
                   )}
                 >
                   <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -132,7 +134,7 @@ export function ExpectedAssetsList({
                     </span>
                   </div>
                   <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                    Pending
+                    {t("assetForm.lifecyclePendingLabel")}
                   </span>
                 </div>
               ))}
@@ -149,7 +151,7 @@ export function ExpectedAssetsList({
             {stats.unexpectedCount === 1 ? "" : "s"} scanned
           </p>
           <p className="mt-1 text-xs text-orange-700">
-            These assets were not expected in this audit but were scanned.
+            {t("ui.theseAssetsWereNotExpectedInThisAuditButWere")}
           </p>
         </div>
       )}

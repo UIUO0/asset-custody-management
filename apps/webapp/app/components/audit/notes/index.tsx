@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { Note, type NoteWithUser } from "~/components/assets/notes/note";
 import { Button } from "~/components/shared/button";
@@ -8,6 +9,7 @@ import { ActionsDropdown } from "./actions-dropdown";
 import { NewNote } from "./new";
 
 export const AuditNotes = () => {
+  const { t } = useTranslation();
   const { session } = useLoaderData<typeof loader>();
 
   /* Using user data here for the Note component generated for frontend only as per the optimistic UI approach */
@@ -57,7 +59,7 @@ export const AuditNotes = () => {
           download
           reloadDocument
         >
-          Export activity CSV
+          {t("bookings.exportActivityCsv")}
         </Button>
       ) : null}
       <NewNote fetcher={fetcher} />
@@ -87,13 +89,13 @@ export const AuditNotes = () => {
           <div className="flex flex-col items-center justify-center p-[16px] text-center md:p-[50px]">
             <img
               src="/static/images/no-notes.svg"
-              alt="Graphic for no notes"
+              alt={t("bookings.noNotesImageAlt")}
               className="mb-6 w-[172px]"
             />
-            <h4>No Activity</h4>
+            <h4>{t("ui.noActivity")}</h4>
             <p>
               Your audit `{session?.name}` has no activity <br />
-              recorded yet.
+              {t("notes.recordedYet")}
             </p>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { z } from "zod";
@@ -73,6 +74,7 @@ export const handle = {
 };
 
 export default function LocationOverview() {
+  const { t } = useTranslation();
   const { location, totalValue, locale, currentOrganization } =
     useLoaderData<typeof loader>();
   return (
@@ -86,7 +88,7 @@ export default function LocationOverview() {
         </li>
         <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
           <span className="w-1/4 text-[14px] font-medium text-gray-900">
-            Created
+            {t("audits.created")}
           </span>
           <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
             <DateS
@@ -98,7 +100,7 @@ export default function LocationOverview() {
         {location.address && (
           <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
             <span className="w-1/4 text-[14px] font-medium text-gray-900">
-              Address
+              {t("locations.address")}
             </span>
             <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
               {location.address}
@@ -108,7 +110,7 @@ export default function LocationOverview() {
         {location.description && (
           <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
             <span className="w-1/4 text-[14px] font-medium text-gray-900">
-              Description
+              {t("assets.description")}
             </span>
             <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
               {location.description}
@@ -122,11 +124,8 @@ export default function LocationOverview() {
               iconClassName="size-4"
               content={
                 <>
-                  <h6>Total value</h6>
-                  <p>
-                    A sum of all assets' values stored at this location. If no
-                    assets are present, this will be zero.
-                  </p>
+                  <h6>{t("bookings.totalValue")}</h6>
+                  <p>{t("locations.totalValueHint")}</p>
                 </>
               }
             />

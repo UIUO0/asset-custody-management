@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import { Spinner } from "~/components/shared/spinner";
 
@@ -14,10 +15,12 @@ function DevicesPermissionContent({
   error: Error | null;
   onRequestPermissions: () => void | Promise<void>;
 }) {
+  const { t } = useTranslation();
+
   if (!error) {
     return (
       <>
-        <Spinner /> Waiting for permission to access camera/s.
+        <Spinner /> {t("scanner.waitingForPermission")}
       </>
     );
   }
@@ -25,10 +28,7 @@ function DevicesPermissionContent({
   if (error.name === "NotAllowedError") {
     return (
       <>
-        <p>
-          Permissions have been denied. You need to allow shelf to use your
-          device's camera to scan QR codes.
-        </p>
+        <p>{t("scanner.permissionDenied")}</p>
         <Button
           type="button"
           variant="secondary"
@@ -45,12 +45,7 @@ function DevicesPermissionContent({
   }
 
   if (error.name === "NotFoundError") {
-    return (
-      <p>
-        No media devices found. Please ensure you have a camera connected to
-        your device.
-      </p>
-    );
+    return <p>{t("scanner.noMediaDevices")}</p>;
   }
 
   return <>{error.message}</>;
@@ -108,7 +103,7 @@ export const useVideoDevices = () => {
 
       const allDevices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = allDevices.filter(
-        (device) => device.kind === "videoinput"
+        (device) => device.kind === "videoinput",
       );
 
       if (isMountedRef.current) {
@@ -117,7 +112,7 @@ export const useVideoDevices = () => {
     } catch (err) {
       if (isMountedRef.current) {
         setError(
-          err instanceof Error ? err : new Error("Failed to get devices")
+          err instanceof Error ? err : new Error("Failed to get devices"),
         );
         setDevices(null);
       }
@@ -163,7 +158,7 @@ export const useVideoDevices = () => {
 
       navigator.mediaDevices.removeEventListener(
         "devicechange",
-        handleDeviceChange
+        handleDeviceChange,
       );
 
       // Stop active stream

@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { format, parse } from "date-fns";
+import { useTranslation } from "react-i18next";
 import {
   Select,
   SelectContent,
@@ -176,19 +177,23 @@ export const TimeSelect: FC<TimeSelectProps> = ({
   defaultValue,
   onValueChange,
   disabled = false,
-  placeholder = "Select time",
+  placeholder,
   required = false,
   className,
   error,
   "aria-label": ariaLabel,
 }) => {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `placeholder`. */
+  const resolvedPlaceholder = placeholder ?? t("ui.selectTime");
+
   // Determine if we're in controlled mode
   const isControlled = value !== undefined;
 
   // Internal state to manage the current selection
   // Initialize with value (controlled) or defaultValue (uncontrolled) or empty string
   const [internalValue, setInternalValue] = useState<string>(
-    () => value ?? defaultValue ?? ""
+    () => value ?? defaultValue ?? "",
   );
 
   // In controlled mode, sync internal state with external value
@@ -221,13 +226,13 @@ export const TimeSelect: FC<TimeSelectProps> = ({
         required={required}
       >
         <SelectTrigger
-          aria-label={ariaLabel || "Select time"}
+          aria-label={ariaLabel || t("ui.selectTime")}
           className={`mt-2 w-[110px] px-3.5 py-2 text-start text-sm text-gray-500 md:mt-0 ${
             className || ""
           } ${error ? "border-error-500 focus:border-error-500" : ""}`}
         >
-          <SelectValue placeholder={placeholder}>
-            {displayValue || placeholder}
+          <SelectValue placeholder={resolvedPlaceholder}>
+            {displayValue || resolvedPlaceholder}
           </SelectValue>
         </SelectTrigger>
         <SelectContent

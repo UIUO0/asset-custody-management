@@ -180,7 +180,7 @@ export default function Join() {
           </div>
 
           <PasswordInput
-            label="Password"
+            label={t("auth.password")}
             placeholder="**********"
             required
             data-test-id="password"
@@ -214,7 +214,7 @@ export default function Join() {
             disabled={disabled}
             width="full"
           >
-            Get Started
+            {t("ui.getStarted")}
           </Button>
         </Form>
         <div className="mt-6">
@@ -234,7 +234,7 @@ export default function Join() {
         </div>
         <div className="flex items-center justify-center pt-5">
           <div className="text-center text-sm text-gray-500">
-            {"Already have an account? "}
+            {t("auth.alreadyHaveAccount")}
             <Button
               variant="link"
               to={{
@@ -242,7 +242,7 @@ export default function Join() {
                 search: searchParams.toString(),
               }}
             >
-              Log in
+              {t("auth.login")}
             </Button>
           </div>
         </div>

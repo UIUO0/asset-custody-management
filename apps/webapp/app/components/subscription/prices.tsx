@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type Stripe from "stripe";
 import { FREE_PLAN } from "./helpers";
 import { PriceBox } from "./price-box";
@@ -17,7 +18,7 @@ export const Prices = ({ prices }: { prices: PriceWithProduct[] }) => (
         (p) =>
           p.metadata.show_on_table &&
           p.metadata.show_on_table === "true" &&
-          p.metadata.legacy !== "true"
+          p.metadata.legacy !== "true",
       )
       .map((price, index) => (
         <Price
@@ -56,6 +57,8 @@ export const Price = ({
   price: PriceType;
   previousPlanName?: string;
 }) => {
+  const { t } = useTranslation();
+
   const isFreePlan = price.id === "free";
   const isTeamPlan = price.product.metadata.shelf_tier === "tier_2";
   const features = price.product.metadata.features?.split(",") || [];
@@ -94,7 +97,7 @@ export const Price = ({
                     variant="link"
                     className="inline !w-auto text-[16px] font-normal underline"
                   >
-                    contact sales
+                    {t("subscription.contactSales")}
                   </CrispButton>
                 </span>
               </li>

@@ -25,6 +25,7 @@ import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { useTranslation } from "react-i18next";
 import useApiQuery from "~/hooks/use-api-query";
 import { isQuantityTracked } from "~/modules/asset/utils";
+import { BADGE_COLORS } from "~/utils/badge-colors";
 import type { ExtendedAssetStatus } from "~/utils/booking-assets";
 import {
   getQuantityBadgeLabelAndColor,
@@ -143,6 +144,17 @@ export function AssetStatusBadge({
 
     return data;
   }, [data, status]);
+
+  if ((asset as any)?.lifecycleStage === "PENDING") {
+    const colors = BADGE_COLORS.gray;
+    return (
+      <span className="flex items-center gap-1.5">
+        <Badge color={colors.bg} textColor={colors.text}>
+          {t("status.PENDING", "قيد الانتظار")}
+        </Badge>
+      </span>
+    );
+  }
 
   /**
    * For quantity-tracked assets, render the qty-aware branch even before

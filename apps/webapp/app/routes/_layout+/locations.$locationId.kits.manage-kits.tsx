@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { KitStatus } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
 import { MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -196,6 +197,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function ManageLocationKits() {
+  const { t } = useTranslation();
   const { totalItems, location } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSearching = isFormProcessing(navigation.state);
@@ -258,7 +260,7 @@ export default function ManageLocationKits() {
             ) : null}
           </TabsTrigger>
           <TabsTrigger className="flex-1 gap-x-2" value="kits">
-            Kits
+            {t("nav.kits")}
             {selectedBulkItemsCount > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {selectedBulkItemsCount}
@@ -281,17 +283,17 @@ export default function ManageLocationKits() {
             updateItem(item);
           }}
           customEmptyStateContent={{
-            title: "You haven't added any kits yet.",
-            text: "What are you waiting for? Create your first kit now!",
+            title: t("kits.pickerEmptyTitleKits"),
+            text: t("kits.pickerEmptyTextKits"),
             newButtonRoute: "/kits/new",
-            newButtonContent: "New kit",
+            newButtonContent: t("kits.newKit"),
           }}
           className="mx-1 flex h-full flex-col justify-start border-0"
           bulkActions={<> </>}
           headerChildren={
             <>
-              <Th>Location</Th>
-              <Th>Category</Th>
+              <Th>{t("assets.location")}</Th>
+              <Th>{t("assets.category")}</Th>
             </>
           }
         />
@@ -304,7 +306,7 @@ export default function ManageLocationKits() {
 
         <div className="flex gap-3">
           <Button variant="secondary" to={".."}>
-            Close
+            {t("common.close")}
           </Button>
           <Form method="post" ref={formRef}>
             {/* We create inputs for both the removed and selected kits, so we can compare and easily add/remove */}
@@ -340,7 +342,7 @@ export default function ManageLocationKits() {
                 }
               }}
             >
-              Confirm
+              {t("common.confirm")}
             </Button>
           </Form>
         </div>
@@ -356,8 +358,7 @@ export default function ManageLocationKits() {
           void submit(formRef.current);
         }}
       >
-        You have added some kits to the booking but haven't saved it yet. Do you
-        want to confirm adding those kits?
+        {t("bookings.unsavedKitsAlert")}
       </UnsavedChangesAlert>
 
       <AlertDialog
@@ -371,20 +372,22 @@ export default function ManageLocationKits() {
                 <MapPin />
               </span>
             </div>
-            <AlertDialogTitle>Location Update notice</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("kits.locationUpdateNoticeTitle")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Changing kit locations will also automatically update the location
               of all assets within those kits.
               {selectedBulkItemsCount !== locationKitsCount && (
                 <div>
-                  <strong>This action will affect:</strong>
+                  <strong>{t("ui.thisActionWillAffect")}</strong>
                   <ul className="mt-2 list-inside list-disc">
-                    <li>All assets in kits being added to this location</li>
-                    <li>All assets in kits being removed from this location</li>
+                    <li>{t("kits.assetsBeingAdded")}</li>
+                    <li>{t("kits.assetsBeingRemoved")}</li>
                   </ul>
                 </div>
               )}
-              <div className="mt-2">Do you want to continue?</div>
+              <div className="mt-2">{t("kits.doYouWantToContinue")}</div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -395,7 +398,7 @@ export default function ManageLocationKits() {
                   variant="secondary"
                   disabled={isSearching}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </AlertDialogCancel>
 
@@ -407,7 +410,7 @@ export default function ManageLocationKits() {
                 }}
                 disabled={isSearching}
               >
-                Yes, update locations
+                {t("kits.yesUpdateLocations")}
               </Button>
             </div>
           </AlertDialogFooter>

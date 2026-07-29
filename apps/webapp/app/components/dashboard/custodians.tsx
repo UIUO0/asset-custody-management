@@ -8,7 +8,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { resolveTeamMemberName } from "~/utils/user";
 import { ClickableTr } from "./clickable-tr";
 import { DashboardEmptyState } from "./empty-state";
@@ -44,7 +44,7 @@ export default function CustodiansList() {
     <div className="flex h-full flex-col rounded border border-gray-200 bg-white">
       <div className="flex items-center justify-between border-b px-4 py-3 md:px-6">
         <span className="text-[14px] font-semibold text-gray-900">
-          Top custodians
+          {t("ui.topCustodians")}
         </span>
         <div className="flex items-center gap-2">
           {!isPersonal && (
@@ -53,7 +53,7 @@ export default function CustodiansList() {
               variant="block-link-gray"
               className="!mt-0 text-xs"
             >
-              View all
+              {t("audits.viewAll")}
             </Button>
           )}
         </div>
@@ -63,7 +63,7 @@ export default function CustodiansList() {
         <div className="flex flex-1 items-center justify-center p-4">
           <PremiumFeatureTeaser
             headline={t("dashboard.trackWhoHasWhat")}
-            description="Add non-registered members to assign asset custody, or create a Team workspace to invite users with full access."
+            description={t("ui.addNonRegisteredMembersToAssignAssetCustodyO")}
             ctaLabel={t("dashboard.addMember")}
             ctaTo="/settings/team/nrm"
             secondaryLabel="Or create a Team workspace →"

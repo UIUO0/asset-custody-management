@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { getUserWithContact } from "~/modules/user/service.server";
 import { Button } from "../shared/button";
 
@@ -6,6 +7,8 @@ export function UserSubheading({
 }: {
   user: ReturnType<typeof getUserWithContact>;
 }) {
+  const { t } = useTranslation();
+
   const { contact } = user;
   const hasAnyContactInfo =
     [
@@ -40,7 +43,7 @@ export function UserSubheading({
               contact.countryRegion,
             ]
               .filter(Boolean)
-              .join(", ") || "No address provided"}
+              .join(", ") || t("userForm.noAddress")}
           </>
         )}
       </span>

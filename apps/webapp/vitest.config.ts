@@ -28,6 +28,13 @@ export default defineConfig({
       // so a route test at `foo.test.ts` produces a generated file with the same
       // name that vitest would otherwise try to run as a test.
       ".react-router/**",
+      // Moved to `test/routes-tests/api+/user.entity-counts.test.ts`. Living
+      // inside the routes directory made the dev server emit a
+      // "Server-only module referenced by client" pre-transform warning on
+      // every start, because remix-flat-routes treats the file as a route.
+      // TODO: delete the now-empty `app/routes/api+/user.entity-counts.test.ts`
+      // and drop this exclude line with it.
+      "app/routes/api+/user.entity-counts.test.ts",
     ],
     coverage: {
       reporter: ["text", "json", "html"],

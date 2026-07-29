@@ -28,6 +28,7 @@ import { AuditImageUploadDialog } from "~/components/audit/audit-image-upload-di
 import { Button } from "~/components/shared/button";
 import { db } from "~/database/db.server";
 import { useDisabled } from "~/hooks/use-disabled";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import {
   createAuditAssetImagesAddedNote,
   createAuditImageEvidenceNote,
@@ -157,9 +158,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       },
     });
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header = {
       title: auditAsset.asset.title,
-      subHeading: "Notes and images",
+      subHeading: t("ui.notesAndImages"),
     };
 
     return payload({
@@ -849,14 +853,18 @@ export default function AuditAssetDetails() {
         <div className="mb-6">
           <div className="mb-3 flex items-center gap-2">
             <MessageSquare className="size-5 text-gray-600" />
-            <h3 className="text-base font-semibold text-gray-900">Notes</h3>
+            <h3 className="text-base font-semibold text-gray-900">
+              {t("team.notesTab")}
+            </h3>
             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
               {localNotes.length}
             </span>
           </div>
 
           {localNotes.length === 0 ? (
-            <p className="text-sm text-gray-500">No notes yet</p>
+            <p className="text-sm text-gray-500">
+              {t("auditNotes.noNotesYet")}
+            </p>
           ) : (
             <div className="space-y-3">
               {localNotes.map((note) => (
@@ -879,7 +887,9 @@ export default function AuditAssetDetails() {
       <div className="h-68 shrink-0 overflow-y-auto  border-gray-200 px-6 py-4">
         <div className="mb-3 flex items-center gap-2">
           <Paperclip className="size-5 text-gray-600" />
-          <h3 className="text-base font-semibold text-gray-900">Images</h3>
+          <h3 className="text-base font-semibold text-gray-900">
+            {t("ui.images")}
+          </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
             {localImages.length}
           </span>

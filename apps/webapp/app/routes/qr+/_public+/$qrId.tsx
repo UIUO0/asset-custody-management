@@ -1,8 +1,11 @@
 import type { Organization } from "@prisma/client";
 import { redirect, data } from "react-router";
+import type { MetaFunction } from "react-router";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { ErrorContent } from "~/components/errors";
+import ar from "~/i18n/locales/ar.json";
+import en from "~/i18n/locales/en.json";
 import { setSelectedOrganizationIdCookie } from "~/modules/organization/context.server";
 import { getUserOrganizations } from "~/modules/organization/service.server";
 import { getQr } from "~/modules/qr/service.server";
@@ -22,7 +25,15 @@ import {
   parseData,
 } from "~/utils/http.server";
 
-export const meta = () => [{ title: appendToMetaTitle("QR code") }];
+export const meta: MetaFunction = ({ matches }) => {
+  // why: `meta` runs outside React — locale comes from the root loader.
+  const rootData = matches.find((match) => match.id === "root")?.data as
+    | { locale?: string }
+    | undefined;
+  const resources = rootData?.locale === "en" ? en : ar;
+
+  return [{ title: appendToMetaTitle(resources.qr.codeTitle) }];
+};
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
   const authSession = context.isAuthenticated
@@ -88,7 +99,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const organizations = userOrganizations.map((uo) => uo.organization);
     const organizationsIds = organizations.map((org) => org.id);
     const personalOrganization = organizations.find(
-      (org) => org.type === "PERSONAL"
+      (org) => org.type === "PERSONAL",
     ) as Pick<Organization, "id">;
 
     if (!organizationsIds.includes(qr.organizationId)) {
@@ -99,8 +110,8 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       setCookie(
         await setSelectedOrganizationIdCookie(
           organizationsIds.find((orgId) => orgId === qr.organizationId) ||
-            personalOrganization.id
-        )
+            personalOrganization.id,
+        ),
       ),
     ];
 
@@ -120,7 +131,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         `/assets/${qr.assetId}/overview?ref=qr&scanId=${scan.id}&qrId=${qr.id}`,
         {
           headers,
-        }
+        },
       );
     } else if (qr.kitId) {
       /** If its linked to a kit, redirect to the kit */
@@ -128,7 +139,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         `/kits/${qr.kitId}?ref=qr&scanId=${scan.id}&qrId=${qr.id}`,
         {
           headers,
-        }
+        },
       );
     } else {
       throw new ShelfError({
@@ -158,7 +169,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
         latitude: z.string(),
         longitude: z.string(),
         scanId: z.string(),
-      })
+      }),
     );
 
     /**

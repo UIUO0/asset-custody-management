@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { useAtom } from "jotai";
 import type { DropzoneOptions, FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "react-i18next";
 import type { Fetcher } from "react-router";
 
 import { FileUploadIcon } from "~/components/icons/library";
@@ -27,6 +28,7 @@ export function FileDropzone({
   dropzoneOptions?: DropzoneOptions;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [fileInfo, updateAllFileInfo] = useAtom(derivedFileInfoAtom);
   const { filename, message, error } = fileInfo;
 
@@ -68,7 +70,7 @@ export function FileDropzone({
         error: true,
       });
     },
-    [updateAllFileInfo]
+    [updateAllFileInfo],
   );
 
   const mergedDropzoneOptions = {
@@ -85,16 +87,16 @@ export function FileDropzone({
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone(
-    mergedDropzoneOptions
+    mergedDropzoneOptions,
   );
 
   const style = useMemo(
     () =>
       tw(
         "flex flex-col items-center rounded-xl border-2 border-dashed border-gray-200 p-4", // default dropzone styles
-        isDragActive && "border-solid border-primary bg-gray-50" // classes added when draggin item on top
+        isDragActive && "border-solid border-primary bg-gray-50", // classes added when draggin item on top
       ),
-    [isDragActive]
+    [isDragActive],
   );
 
   const fakeLinkStyles = useMemo(
@@ -102,9 +104,9 @@ export function FileDropzone({
       tw(
         "text-text-sm font-semibold  text-primary-700 hover:cursor-pointer hover:text-primary-800", // base
         isPending &&
-          "border-gray-200 bg-gray-50 text-gray-300 hover:pointer-events-none" // disabled state
+          "border-gray-200 bg-gray-50 text-gray-300 hover:pointer-events-none", // disabled state
       ),
-    [isPending]
+    [isPending],
   );
 
   return (
@@ -113,8 +115,8 @@ export function FileDropzone({
         <input {...getInputProps()} disabled={isPending} name={fileInputName} />
         <FileUploadIcon />
         <p>
-          <span className={fakeLinkStyles}>Click to upload</span> or drag and
-          drop
+          <span className={fakeLinkStyles}>{t("ui.clickToUpload")}</span>{" "}
+          {t("ui.orDragAndDrop")}
         </p>
         <p>
           PNG, JPG, JPEG, or WebP (max.{" "}

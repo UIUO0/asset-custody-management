@@ -122,7 +122,7 @@ export function MonthlyBookingTrendsContent({
     0;
   const peakMonth = kpis.find((k) => k.id === "peak_month")?.value || "—";
   const trendKpi = kpis.find((k) => k.id === "trend_direction");
-  const trendDirection = trendKpi?.value || "Stable";
+  const trendDirection = trendKpi?.value || t("ui.stable");
   const trendDeltaStr = trendKpi?.delta;
   const trendDelta = trendDeltaStr ? Number(trendDeltaStr) : null;
   const trendDescription = trendKpi?.description;
@@ -141,7 +141,7 @@ export function MonthlyBookingTrendsContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Total Bookings
+                {t("ui.totalBookings")}
               </span>
             </div>
           </div>
@@ -166,7 +166,7 @@ export function MonthlyBookingTrendsContent({
             </div>
             <div className="flex flex-col">
               <span className="text-xs text-gray-500">
-                Trend (Last 2 Months)
+                {t("reports.trendLastTwoMonths")}
               </span>
               {/* Use the shared InfoTooltip so the explanation is reachable
                   via keyboard focus (the previous custom hover-only div was
@@ -226,7 +226,7 @@ export function MonthlyBookingTrendsContent({
       <div className="overflow-hidden rounded border border-gray-200 bg-white">
         <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3 md:px-6">
           <h3 className="text-sm font-semibold text-gray-900">
-            Monthly Breakdown
+            {t("ui.monthlyBreakdown")}
           </h3>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
             {totalRows}

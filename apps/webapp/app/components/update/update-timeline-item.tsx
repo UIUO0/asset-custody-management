@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { RenderableTreeNodes } from "@markdoc/markdoc";
 import type { Update, UserUpdateRead } from "@prisma/client";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { MarkdownViewer } from "~/components/markdown/markdown-viewer";
 import { Badge } from "~/components/shared/badge";
@@ -19,6 +20,7 @@ interface UpdateTimelineItemProps {
 }
 
 export function UpdateTimelineItem({ update }: UpdateTimelineItemProps) {
+  const { t } = useTranslation();
   const isUnread = update.userReads.length === 0;
   const itemRef = useRef<HTMLDivElement>(null);
   const hasTrackedView = useRef(false);
@@ -32,11 +34,11 @@ export function UpdateTimelineItem({ update }: UpdateTimelineItemProps) {
         // Submit with this update's own fetcher
         void fetcher.submit(
           { intent: "markAsRead", updateId: update.id },
-          { method: "POST", action: "/api/updates" }
+          { method: "POST", action: "/api/updates" },
         );
       }
     },
-    [update.id, fetcher]
+    [update.id, fetcher],
   );
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export function UpdateTimelineItem({ update }: UpdateTimelineItemProps) {
         <div
           className={tw(
             "z-10 size-3 rounded-full border-2 border-static-white shadow-sm",
-            isUnread ? "bg-blue-500" : "bg-gray-400"
+            isUnread ? "bg-blue-500" : "bg-gray-400",
           )}
         />
         <div className="absolute top-3 h-full w-px bg-gray-200" />
@@ -122,13 +124,13 @@ export function UpdateTimelineItem({ update }: UpdateTimelineItemProps) {
               onClick={() => {
                 void fetcher.submit(
                   { intent: "trackClick", updateId: update.id },
-                  { method: "POST", action: "/api/updates" }
+                  { method: "POST", action: "/api/updates" },
                 );
               }}
               aria-label={`Learn more about ${update.title}`}
               className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
             >
-              Learn more
+              {t("common.learnMore")}
               <ExternalLinkIcon className="size-4" />
             </a>
           </div>

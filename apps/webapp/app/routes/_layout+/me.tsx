@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { MetaArgs, LoaderFunctionArgs } from "react-router";
 import { data, Outlet, useLoaderData } from "react-router";
 import Header from "~/components/layout/header";
@@ -14,7 +15,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { resolveUserDisplayName } from "~/utils/user";
 
 export async function loader({ context }: LoaderFunctionArgs) {
@@ -35,8 +36,14 @@ export async function loader({ context }: LoaderFunctionArgs) {
   }
 }
 
+/** Breadcrumb for the profile route (component so it can use the hook). */
+function MyProfileBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("nav.myProfile")}</>;
+}
+
 export const handle = {
-  breadcrumb: () => "My profile",
+  breadcrumb: () => <MyProfileBreadcrumb />,
 };
 
 export function meta({ data }: MetaArgs<typeof loader>) {

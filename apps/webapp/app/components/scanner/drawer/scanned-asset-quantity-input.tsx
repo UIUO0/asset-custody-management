@@ -17,6 +17,7 @@
 
 import type { ChangeEvent } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
+import { useTranslation } from "react-i18next";
 import {
   scannedAssetQuantitiesAtom,
   setScannedAssetQuantityAtom,
@@ -39,6 +40,7 @@ export function ScannedAssetQuantityInput({
   max: number;
   unit: string;
 }) {
+  const { t } = useTranslation();
   const quantities = useAtomValue(scannedAssetQuantitiesAtom);
   const setQuantity = useSetAtom(setScannedAssetQuantityAtom);
   const value = quantities[assetId] ?? 1;
@@ -58,7 +60,7 @@ export function ScannedAssetQuantityInput({
         </label>
         <Input
           id={`scan-qty-${assetId}`}
-          label="Quantity"
+          label={t("assets.quantity")}
           hideLabel
           type="number"
           inputMode="numeric"

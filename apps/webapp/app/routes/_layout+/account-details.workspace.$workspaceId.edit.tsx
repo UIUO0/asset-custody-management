@@ -4,6 +4,7 @@ import {
   parseFormData,
 } from "@remix-run/form-data-parser";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -62,7 +63,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ workspaceId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -130,7 +131,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // Get subscription info for the workspace owner (for transfer dialog)
     const ownerSubscriptionInfo = await getOwnerSubscriptionInfo(
       organization.userId,
-      organization.id
+      organization.id,
     );
 
     // Count owner's other team workspaces (for warning about tier downgrade)
@@ -180,7 +181,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ workspaceId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -258,13 +259,13 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         additionalData: {
           organizationId: organization.id,
         },
-      }
+      },
     );
 
     switch (intent) {
       case "general": {
         const schema = EditGeneralWorkspaceSettingsFormSchema(
-          organization.type === "PERSONAL"
+          organization.type === "PERSONAL",
         );
 
         const parsedData = parseData(formData, schema, {
@@ -276,7 +277,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
         let nextShowShelfBranding = resolveShowShelfBranding(
           showShelfBranding,
-          organization.showShelfBranding
+          organization.showShelfBranding,
         );
 
         if (!canHideBrandingForThisWorkspace) {
@@ -440,8 +441,10 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function WorkspaceEditPage() {
+  const { t } = useTranslation();
+
   const name = useAtomValue(dynamicTitleAtom);
-  const hasName = name !== "Untitled workspace";
+  const hasName = name !== "";
   const {
     organization,
     admins,

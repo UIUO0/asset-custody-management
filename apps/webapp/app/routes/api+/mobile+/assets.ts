@@ -3,9 +3,11 @@ import { db } from "~/database/db.server";
 import {
   requireMobileAuth,
   requireOrganizationAccess,
+  getMobileUserContext,
   shapeMobileAssetResponse,
 } from "~/modules/api/mobile-auth.server";
 import { makeShelfError } from "~/utils/error";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/assets?orgId=xxx&search=xxx&page=1&perPage=20&myCustody=true&status=IN_CUSTODY
@@ -46,8 +48,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const myCustody = url.searchParams.get("myCustody") === "true";
     const statusFilter = url.searchParams.get("status");
 
+    /**
+     * Ordinary employees see released inventory only — an asset the warehouse
+     * has not approved yet must not appear in the companion app's list either.
+     * Roles with org-wide visibility keep seeing the intake queue.
+     */
+    const { role } = await getMobileUserContext(user.id, organizationId);
+    const onlyReadyAssets = rolesAreScopedToOwnRecords(role);
+
     const where: Record<string, unknown> = {
       organizationId,
+      ...(onlyReadyAssets ? { lifecycleStage: "READY" } : {}),
       // Match on title OR sequentialId (SAM id, e.g. "SAM-0001"). When the
       // workspace display preference is SAM, every asset row shows its SAM id,
       // so a user typing that number must be able to find it here. Mirrors the
@@ -177,7 +188,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

@@ -16,6 +16,7 @@
  */
 import { useState } from "react";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -46,6 +47,7 @@ const CONFIRMATION_WORD = "DELETE";
  * input so destructive submission is always a deliberate act.
  */
 export default function BulkDeleteAuditsDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<AuditsIndexLoaderData>();
   const selectedAudits = useAtomValue(selectedBulkItemsAtom);
   const totalSelected = isSelectingAllItems(selectedAudits)
@@ -76,7 +78,7 @@ export default function BulkDeleteAuditsDialog() {
               <span className="font-semibold">{CONFIRMATION_WORD}</span> below.
             </p>
             <Input
-              label="Confirmation"
+              label={t("customFields.confirmation")}
               name={zo.fields.confirmation()}
               value={confirmation}
               onChange={(event) => setConfirmation(event.target.value)}
@@ -98,7 +100,7 @@ export default function BulkDeleteAuditsDialog() {
               disabled={disabled}
               onClick={handleCloseDialog}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
@@ -107,7 +109,7 @@ export default function BulkDeleteAuditsDialog() {
               disabled={disabled || !confirmationMatches}
               className="border-error-600 bg-error-600 hover:border-error-800 hover:bg-error-800"
             >
-              Delete
+              {t("common.delete")}
             </Button>
           </div>
         </>

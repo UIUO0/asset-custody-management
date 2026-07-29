@@ -16,6 +16,7 @@
  * @see {@link file://../custom-fields/delete-dialog.tsx} - Pattern reference
  */
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { TrashIcon } from "~/components/icons/library";
@@ -54,6 +55,7 @@ export function DeleteAuditDialog({
   open,
   onClose,
 }: DeleteAuditDialogProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher({ key: "delete-audit" });
   const disabled = useDisabled(fetcher);
   const [confirmation, setConfirmation] = useState("");
@@ -88,8 +90,7 @@ export function DeleteAuditDialog({
           </div>
           <AlertDialogTitle>Delete "{auditName}"</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete this audit and all its data (scans,
-            notes, and images). This action cannot be undone.
+            {t("audits.deleteConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -97,10 +98,10 @@ export function DeleteAuditDialog({
           <input type="hidden" name="intent" value="delete-audit" />
 
           <p className="text-sm text-gray-600">
-            To confirm, type the audit name below.
+            {t("ui.toConfirmTypeTheAuditNameBelow")}
           </p>
           <Input
-            label="Confirmation"
+            label={t("customFields.confirmation")}
             name="confirmation"
             value={confirmation}
             onChange={(event) => setConfirmation(event.target.value)}
@@ -116,7 +117,7 @@ export function DeleteAuditDialog({
             <div className="flex justify-center gap-2">
               <AlertDialogCancel asChild>
                 <Button type="button" variant="secondary" disabled={disabled}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </AlertDialogCancel>
               <Button
@@ -124,7 +125,7 @@ export function DeleteAuditDialog({
                 type="submit"
                 disabled={disabled || !confirmationMatches}
               >
-                {disabled ? "Deleting..." : "Delete"}
+                {disabled ? "Deleting..." : t("common.delete")}
               </Button>
             </div>
           </AlertDialogFooter>

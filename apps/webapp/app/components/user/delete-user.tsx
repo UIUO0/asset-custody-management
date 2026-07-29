@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useActionData } from "react-router";
 import { Button } from "~/components/shared/button";
 
@@ -18,6 +19,7 @@ import { Form } from "../custom-form";
 import { TrashIcon } from "../icons/library";
 
 export const DeleteUser = () => {
+  const { t } = useTranslation();
   const disabled = useDisabled();
   const actionData = useActionData<typeof action>();
   const [open, setOpen] = useState(false);
@@ -37,7 +39,7 @@ export const DeleteUser = () => {
           variant="danger"
           className="mt-3"
         >
-          Delete user
+          {t("ui.deleteUser")}
         </Button>
       </AlertDialogTrigger>
 
@@ -50,22 +52,21 @@ export const DeleteUser = () => {
               </span>
             </div>
             <AlertDialogTitle>
-              Are you sure you want to delete this user?
+              {t("ui.areYouSureYouWantToDeleteThisUser")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This is a final delete and cannot be reverted. Deleting a user
-              will also delete:
+              {t("team.finalDeleteUserHint")}
             </AlertDialogDescription>
             <ul className="list-inside list-disc">
-              <li>All the user's data</li>
-              <li>All user's workspaces</li>
+              <li>{t("ui.allTheUserSData")}</li>
+              <li>{t("ui.allUserSWorkspaces")}</li>
             </ul>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-3">
             <div className="flex justify-center gap-2">
               <AlertDialogCancel asChild>
                 <Button variant="secondary" disabled={disabled} type="button">
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </AlertDialogCancel>
 
@@ -77,7 +78,7 @@ export const DeleteUser = () => {
                 name="intent"
                 value="deleteUser"
               >
-                Confirm
+                {t("common.confirm")}
               </Button>
             </div>
           </AlertDialogFooter>

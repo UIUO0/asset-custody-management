@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Tag } from "@prisma/client";
 import { PencilIcon, Trash2Icon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 import When from "~/components/when/when";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
@@ -8,7 +9,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { DeleteTag } from "./delete-tag";
 
@@ -23,6 +24,7 @@ export default function TagQuickActions({
   style,
   tag,
 }: TagQuickActionsProps) {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
 
   return (
@@ -39,8 +41,8 @@ export default function TagQuickActions({
           variant="secondary"
           className={"p-2"}
           to={`${tag.id}/edit`}
-          aria-label="Edit tag"
-          tooltip="Edit tag"
+          aria-label={t("tags.editTitle")}
+          tooltip={t("tags.editTitle")}
         >
           <PencilIcon className="size-4" />
         </Button>
@@ -61,8 +63,8 @@ export default function TagQuickActions({
               size="sm"
               variant="secondary"
               className={"p-2"}
-              aria-label="Delete tag"
-              tooltip="Delete tag"
+              aria-label={t("ui.deleteTag")}
+              tooltip={t("ui.deleteTag")}
             >
               <Trash2Icon className="size-4" />
             </Button>

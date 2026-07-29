@@ -6,6 +6,7 @@ import {
 } from "@remix-run/form-data-parser";
 import { invariant } from "framer-motion";
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -181,7 +182,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               "Failed to link audit addon to new organization during workspace creation",
             additionalData: { userId, organizationId: newOrg.id },
             label: "Stripe",
-          })
+          }),
         );
 
         // Notify admin so they can resolve manually
@@ -234,7 +235,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
               "Failed to link barcode addon to new organization during workspace creation",
             additionalData: { userId, organizationId: newOrg.id },
             label: "Stripe",
-          })
+          }),
         );
 
         // Notify admin so they can resolve manually
@@ -277,8 +278,14 @@ export async function action({ context, request }: ActionFunctionArgs) {
   }
 }
 
+/** Breadcrumb for the new-workspace page (component so it can use the hook). */
+function NewWorkspaceBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("workspaceForm.newWorkspace")}</>;
+}
+
 export const handle = {
-  breadcrumb: () => "New workspace",
+  breadcrumb: () => <NewWorkspaceBreadcrumb />,
 };
 
 export default function NewWorkspace() {

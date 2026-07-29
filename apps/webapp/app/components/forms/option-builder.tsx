@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CrossCircledIcon } from "@radix-ui/react-icons";
 
+import { useTranslation } from "react-i18next";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import Input from "./input";
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 function OptionBuilder({ options, onAdd, onRemove, disabled }: Props) {
+  const { t } = useTranslation();
   const [opt, setOpt] = useState("");
   const [error, setError] = useState("");
   return (
@@ -21,7 +23,7 @@ function OptionBuilder({ options, onAdd, onRemove, disabled }: Props) {
           onChange={({ target }) => setOpt(target.value)}
           label=""
           value={opt}
-          placeholder="Type an option here and press enter"
+          placeholder={t("ui.typeAnOptionHereAndPressEnter")}
           disabled={disabled}
           className="w-full"
           error={error}

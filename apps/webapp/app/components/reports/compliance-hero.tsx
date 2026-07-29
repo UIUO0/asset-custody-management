@@ -7,6 +7,7 @@
 
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 
 export interface ComplianceHeroProps {
@@ -38,7 +39,7 @@ export interface ComplianceHeroProps {
 function formatPriorPeriodLabel(
   periodLabel: string,
   fromDate?: Date,
-  toDate?: Date
+  toDate?: Date,
 ): string {
   // For custom ranges, show the actual dates
   if (periodLabel === "prior period" && fromDate && toDate) {
@@ -60,12 +61,13 @@ export function ComplianceHero({
   timeframeLabel,
   className,
 }: ComplianceHeroProps) {
+  const { t } = useTranslation();
   const total = onTime + late;
   const priorLabel = priorPeriod
     ? formatPriorPeriodLabel(
         priorPeriod.periodLabel,
         priorPeriod.fromDate,
-        priorPeriod.toDate
+        priorPeriod.toDate,
       )
     : "";
 
@@ -82,7 +84,7 @@ export function ComplianceHero({
 
           <div className="flex flex-col">
             <span className="text-sm font-medium text-gray-700">
-              On-Time Return Rate
+              {t("ui.onTimeReturnRate")}
             </span>
 
             {/* Period comparison */}
@@ -120,7 +122,7 @@ export function ComplianceHero({
 
             {total === 0 && (
               <span className="text-xs text-gray-400">
-                No completed bookings in period
+                {t("ui.noCompletedBookingsInPeriod")}
               </span>
             )}
 
@@ -135,7 +137,7 @@ export function ComplianceHero({
         {/* Supporting stats */}
         <div className="flex gap-6 border-t border-gray-100 pt-3 md:border-l md:border-t-0 md:ps-6 md:pt-0">
           <div className="flex flex-col">
-            <span className="text-xs text-gray-500">On-time</span>
+            <span className="text-xs text-gray-500">{t("ui.onTime")}</span>
             <span className="flex items-center gap-1.5">
               <span className="size-2 rounded-full bg-green-500" />
               <span className="text-lg font-medium text-gray-900">
@@ -153,7 +155,7 @@ export function ComplianceHero({
           </div>
 
           <div className="flex flex-col">
-            <span className="text-xs text-gray-500">Total</span>
+            <span className="text-xs text-gray-500">{t("ui.total")}</span>
             <span className="text-lg font-medium text-gray-900">{total}</span>
           </div>
         </div>
@@ -164,7 +166,7 @@ export function ComplianceHero({
         <div className="border-t border-gray-100 px-4 py-2 md:px-6">
           <p className="text-xs text-gray-400">
             <span className="font-medium text-gray-500">
-              How it's calculated:
+              {t("reports.howCalculated")}
             </span>{" "}
             {onTime} on-time ÷ {total} total = {rate}% (rounded to nearest whole
             number). Bookings with a due date in this period are counted:

@@ -34,7 +34,7 @@ schedulerService
               message:
                 "Something went wrong while registering booking workers.",
               label: "Scheduler",
-            })
+            }),
           );
         }),
       regierAssetWorkers()
@@ -45,7 +45,7 @@ schedulerService
               cause,
               message: "Something went wrong while registering asset workers.",
               label: "Scheduler",
-            })
+            }),
           );
         }),
       registerEmailWorkers()
@@ -56,7 +56,7 @@ schedulerService
               cause,
               message: "Something went wrong while registering email workers.",
               label: "Scheduler",
-            })
+            }),
           );
         }),
       registerAuditWorkers()
@@ -67,7 +67,7 @@ schedulerService
               cause,
               message: "Something went wrong while registering audit workers.",
               label: "Scheduler",
-            })
+            }),
           );
         }),
       registerAddonTrialWorkers()
@@ -79,10 +79,10 @@ schedulerService
               message:
                 "Something went wrong while registering addon trial workers.",
               label: "Scheduler",
-            })
+            }),
           );
         }),
-    ])
+    ]),
   )
   .finally(() => {
     // eslint-disable-next-line no-console
@@ -94,7 +94,7 @@ schedulerService
         cause,
         message: "Scheduler crash",
         label: "Scheduler",
-      })
+      }),
     );
   });
 // === end: register scheduler and workers ===
@@ -104,9 +104,13 @@ schedulerService
  *
  * If this happen, you will have Sentry logs with a `Unhandled` tag and `unhandled.remix.server` as origin.
  *
+ * `logErrors` is enabled in development only. With it off, a server-side render
+ * crash surfaced as a bare `500` in the request log and the generic error page
+ * in the browser — no stack anywhere, which makes local debugging guesswork.
+ * In production Sentry is the sink, so the console stays quiet as before.
  */
 export const handleError = Sentry.createSentryHandleError({
-  logErrors: false,
+  logErrors: process.env.NODE_ENV === "development",
 });
 
 const ABORT_DELAY = 5000;
@@ -128,7 +132,7 @@ async function handleRequest(
   // This is ignored so we can keep it in the template for visibility.  Feel
   // free to delete this parameter in your app if you're not using it!
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  loadContext: AppLoadContext
+  loadContext: AppLoadContext,
 ) {
   const i18n = await createI18nInstance(getLocale(request));
 
@@ -138,14 +142,14 @@ async function handleRequest(
         responseStatusCode,
         responseHeaders,
         reactRouterContext,
-        i18n
+        i18n,
       )
     : handleBrowserRequest(
         request,
         responseStatusCode,
         responseHeaders,
         reactRouterContext,
-        i18n
+        i18n,
       );
 }
 
@@ -154,7 +158,7 @@ function handleBotRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   reactRouterContext: EntryContext,
-  i18n: I18nInstance
+  i18n: I18nInstance,
 ) {
   return new Promise((resolve, reject) => {
     let shellRendered = false;
@@ -174,7 +178,7 @@ function handleBotRequest(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
+            }),
           );
 
           pipe(body);
@@ -191,7 +195,7 @@ function handleBotRequest(
             console.error(error);
           }
         },
-      }
+      },
     );
 
     setTimeout(abort, ABORT_DELAY);
@@ -203,7 +207,7 @@ function handleBrowserRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   reactRouterContext: EntryContext,
-  i18n: I18nInstance
+  i18n: I18nInstance,
 ) {
   return new Promise((resolve, reject) => {
     let shellRendered = false;
@@ -223,7 +227,7 @@ function handleBrowserRequest(
             new Response(stream, {
               headers: responseHeaders,
               status: responseStatusCode,
-            })
+            }),
           );
 
           pipe(body);
@@ -240,7 +244,7 @@ function handleBrowserRequest(
             console.error(error);
           }
         },
-      }
+      },
     );
 
     setTimeout(abort, ABORT_DELAY);

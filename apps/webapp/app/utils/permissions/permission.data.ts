@@ -493,6 +493,7 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
+      PermissionAction.delete,
       PermissionAction.custody,
       // why: the matrix's "إضافة" covers both single-asset entry and the bulk
       // Excel template path described in the workflow spec (section 2).
@@ -507,9 +508,7 @@ export const Role2PermissionMap: {
       PermissionAction.update,
     ],
     [PermissionEntity.booking]: [
-      PermissionAction.create,
       PermissionAction.read,
-      PermissionAction.update,
       PermissionAction.delete,
       PermissionAction.checkout,
       PermissionAction.checkin,
@@ -622,13 +621,26 @@ export const Role2PermissionMap: {
    * possession) and all location permissions — the matrix marks المواقع as "—".
    */
   [OrganizationRoles.FINANCE]: {
+    /**
+     * Read + update only. FINANCE annotates assets the warehouse already
+     * registered (financial coding, depreciation); it never brings an asset
+     * into existence.
+     *
+     * `import` is withheld deliberately even though the finance workflow needs
+     * an Excel round trip (export → edit → import-update). Both
+     * `assets.import` (bulk CREATE) and `assets.import-update` (bulk UPDATE)
+     * currently gate on the same `asset.import` action, so granting it here
+     * would hand FINANCE bulk asset creation through the back door — exactly
+     * what withholding `create` is meant to prevent.
+     *
+     * Phase 2 restores the round trip properly by splitting the two routes onto
+     * separate actions; until then finance edits through the UI.
+     *
+     * `export` stays: it is read-only and feeds the financial analytics.
+     */
     [PermissionEntity.asset]: [
-      PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      // why: the finance workflow is an export → edit in Excel → import-update
-      // round trip (workflow spec section 2), so both halves are required.
-      PermissionAction.import,
       PermissionAction.export,
     ],
     [PermissionEntity.assetIndexSettings]: [

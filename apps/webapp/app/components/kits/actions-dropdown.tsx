@@ -13,7 +13,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import DeleteKit from "./delete-kit";
 import RelinkQrCodeDialog from "./relink-qr-code-dialog";
@@ -171,7 +171,8 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
                     aria-label={t("kitActions.releaseCustody")}
                   >
                     <span className="flex items-center gap-1">
-                      <Icon icon="release-custody" /> Release custody
+                      <Icon icon="release-custody" />{" "}
+                      {t("assetActions.releaseCustody")}
                     </span>
                   </Button>
                 ) : (
@@ -214,7 +215,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
                   }}
                 >
                   <span className="flex items-center gap-2">
-                    <Icon icon="start-audit" /> Create audit
+                    <Icon icon="start-audit" /> {t("kitActions.createAudit")}
                   </span>
                 </Button>
               </DropdownMenuItem>
@@ -237,7 +238,8 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
                   onClick={() => setOpen(false)}
                 >
                   <span className="flex items-center gap-2">
-                    <MapPinIcon className="size-4" /> Update location
+                    <MapPinIcon className="size-4" />{" "}
+                    {t("kitActions.updateLocation")}
                   </span>
                 </Button>
               </DropdownMenuItem>
@@ -256,7 +258,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
                 >
                   <span className="flex items-center gap-2">
                     <Icon icon="barcode" />
-                    Relink QR Code
+                    {t("assetActions.relinkQr")}
                   </span>
                 </Button>
               </DropdownMenuItem>
@@ -289,7 +291,7 @@ function ConditionalActionsDropdown({ fullWidth }: { fullWidth?: boolean }) {
             <When truthy={!isSelfService}>
               {kitIsCheckedOut || someAssetIsNotAvailable ? (
                 <div className=" border-t p-2 text-start text-xs">
-                  Some actions are disabled due to asset(s) not being Available.
+                  {t("kitActions.disabledNotAvailable")}
                 </div>
               ) : null}
             </When>

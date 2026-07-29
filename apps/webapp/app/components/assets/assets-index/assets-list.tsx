@@ -38,7 +38,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { AssetCodeBadge } from "../asset-code-badge";
 import { AssetImage } from "../asset-image";
@@ -449,12 +449,13 @@ export const ListAssetContent = ({
 };
 
 function AdvancedModeMobileFallback() {
+  const { t } = useTranslation();
   const fetcher = useFetcher();
   const disabled = useDisabled(fetcher);
   return (
     <div className="flex h-full flex-col items-center justify-center gap-2">
       <p className="text-center">
-        Advanced mode is currently not available on mobile.
+        {t("ui.advancedModeIsCurrentlyNotAvailableOnMobile")}
       </p>
       <fetcher.Form
         method="post"
@@ -469,7 +470,7 @@ function AdvancedModeMobileFallback() {
         <input type="hidden" name="intent" value="changeMode" />
 
         <Button type="submit" name="mode" value="SIMPLE" disabled={disabled}>
-          Change to simple mode
+          {t("ui.changeToSimpleMode")}
         </Button>
       </fetcher.Form>
     </div>

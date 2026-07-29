@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import ReactDOM from "react-dom";
+import { useTranslation } from "react-i18next";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
 import { XIcon } from "../icons/library";
@@ -23,6 +24,7 @@ export const Dialog = ({
   headerClassName?: string;
   wrapperClassName?: string;
 }) => {
+  const { t } = useTranslation();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const onCloseRef = useRef(onClose);
   const previouslyFocusedElement = useRef<HTMLElement | null>(null);
@@ -53,7 +55,7 @@ export const Dialog = ({
       dialog.querySelector<HTMLElement>("[data-dialog-initial-focus]") ||
       dialog.querySelector<HTMLElement>("[autofocus]") ||
       dialog.querySelector<HTMLElement>(
-        'input,select,textarea,button,[href],[tabindex]:not([tabindex="-1"])'
+        'input,select,textarea,button,[href],[tabindex]:not([tabindex="-1"])',
       ) ||
       dialog;
 
@@ -83,7 +85,7 @@ export const Dialog = ({
           <div
             className={tw(
               "dialog-header flex items-start justify-between bg-white px-6 py-3",
-              headerClassName
+              headerClassName,
             )}
           >
             {title}
@@ -92,7 +94,7 @@ export const Dialog = ({
               onClick={onClose}
               variant="link"
               className={"mt-2 leading-none text-gray-500 md:right-6"}
-              aria-label="Close dialog"
+              aria-label={t("ui.closeDialog")}
             >
               <XIcon />
             </Button>

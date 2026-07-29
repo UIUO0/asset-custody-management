@@ -27,7 +27,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import BulkArchiveAuditsDialog from "./bulk-archive-audits-dialog";
 import BulkDeleteAuditsDialog from "./bulk-delete-audits-dialog";
@@ -46,12 +46,13 @@ import { MobileDropdownStyles } from "../shared/mobile-dropdown-styles";
  * Renders a placeholder button during SSR and the full dropdown after hydration.
  */
 export default function AuditIndexBulkActionsDropdown() {
+  const { t } = useTranslation();
   const isHydrated = useHydrated();
 
   if (!isHydrated) {
     return (
       <Button type="button" variant="secondary" disabled>
-        <span className="flex items-center gap-2">Actions</span>
+        <span className="flex items-center gap-2">{t("common.actions")}</span>
       </Button>
     );
   }
@@ -161,7 +162,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -173,7 +176,7 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -193,7 +196,7 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="archive"
-                label="Archive"
+                label={t("bookings.archive")}
                 onClick={closeMenu}
                 disabled={
                   !canArchiveAudit
@@ -202,8 +205,7 @@ function ConditionalDropdown() {
                       }
                     : someNotArchivable
                     ? {
-                        reason:
-                          "Some of the selected audits are not completed or cancelled. You can only archive audits that are completed or cancelled.",
+                        reason: t("audits.archiveBlocked"),
                       }
                     : isLoading
                 }
@@ -217,7 +219,7 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="delete-audit"
-                label="Delete"
+                label={t("common.delete")}
                 onClick={closeMenu}
                 disabled={
                   !canDeleteAudit

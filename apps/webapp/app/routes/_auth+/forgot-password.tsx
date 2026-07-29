@@ -52,6 +52,7 @@ const OtpSchema = z
       .min(8, "Password is too short. Minimum 8 characters."),
   })
   .superRefine(({ password, confirmPassword, otp, email }, ctx) => {
+    const { t } = useTranslation();
     if (password !== confirmPassword) {
       return ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -199,10 +200,7 @@ export default function ForgotPassword() {
       <div className="mx-auto w-full">
         {actionData?.error || !email || email === "" ? (
           <div>
-            <p className="mb-4 text-center">
-              Enter your email address and we'll send you a one-time code to
-              reset your password.
-            </p>
+            <p className="mb-4 text-center">{t("auth.forgotPasswordHint")}</p>
             <Form ref={zo.ref} method="post" className="space-y-2" replace>
               <input type="hidden" name="intent" value="request-otp" />
               <div>
@@ -229,8 +227,7 @@ export default function ForgotPassword() {
               </Button>
             </Form>
             <p className="mt-2 text-center text-gray-500">
-              Tip: Check your spam folder if you don't see the email within a
-              few minutes.
+              {t("auth.spamFolderTip")}
             </p>
           </div>
         ) : (
@@ -240,9 +237,9 @@ export default function ForgotPassword() {
               <span className="font-semibold">{email}</span>.
             </p>
             <ol className="mb-4 list-inside list-decimal">
-              <li>Enter the code from your email</li>
-              <li>Enter your new password</li>
-              <li>Confirm your new password</li>
+              <li>{t("auth.enterCodeFromEmail")}</li>
+              <li>{t("auth.newPassword")}</li>
+              <li>{t("auth.confirmYourNewPassword")}</li>
             </ol>
             <PasswordResetForm email={email} />
           </>
@@ -250,11 +247,11 @@ export default function ForgotPassword() {
         <div className="pt-4 text-center">
           {email ? (
             <Button variant="link" to={"/forgot-password"}>
-              Request new code
+              {t("auth.requestNewCode")}
             </Button>
           ) : (
             <Button variant="link" to={"/login"}>
-              Back to login
+              {t("auth.backToLogin")}
             </Button>
           )}
         </div>
@@ -269,13 +266,13 @@ function PasswordResetForm({ email }: { email: string }) {
   const disabled = useDisabled();
   const actionData = useActionData<typeof action>();
   return !email || email === "" || actionData?.error ? (
-    <div>Something went wrong. Please refresh the page and try again.</div>
+    <div>{t("ui.somethingWentWrongPleaseRefreshThePageAndTry")}</div>
   ) : (
     <Form method="post" ref={zoReset.ref} className="space-y-2">
       <ShelfOTP error={zoReset.errors.otp()?.message} />
 
       <PasswordInput
-        label="New password"
+        label={t("auth.newPasswordLabel")}
         data-test-id="password"
         name={zoReset.fields.password()}
         type="password"
@@ -306,7 +303,7 @@ function PasswordResetForm({ email }: { email: string }) {
         className="w-full "
         disabled={disabled}
       >
-        Confirm password reset
+        {t("auth.confirmPasswordReset")}
       </Button>
     </Form>
   );

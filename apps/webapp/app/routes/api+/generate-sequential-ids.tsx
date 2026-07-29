@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 import type { ActionFunctionArgs } from "react-router";
 import { data } from "react-router";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { generateBulkSequentialIdsEfficient } from "~/modules/asset/sequential-id.server";
 import { getSelectedOrganization } from "~/modules/organization/context.server";
 import { updateOrganization } from "~/modules/organization/service.server";
@@ -40,7 +41,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           success: false,
           message: "You don't have permission to run this migration.",
         }),
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -55,10 +56,13 @@ export async function action({ context, request }: ActionFunctionArgs) {
       hasSequentialIdsMigrated: true,
     });
 
+    // This message is surfaced in the UI, so resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     // Handle different cases based on asset count
     const message =
       updatedCount === 0
-        ? "Sequential IDs are now enabled! New assets will automatically get sequential IDs (SAM-0001, SAM-0002, etc.)"
+        ? t("settings.sequentialIdsEnabled")
         : `Successfully generated sequential IDs for ${updatedCount} assets`;
 
     return data(
@@ -66,7 +70,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         success: true,
         updatedCount,
         message,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -75,7 +79,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         success: false,
         message: reason.message,
       }),
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

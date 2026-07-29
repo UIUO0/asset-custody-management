@@ -103,7 +103,7 @@ export function ReportShell({
             )}
           >
             <ArrowLeft className="size-4" />
-            <span>Reports</span>
+            <span>{t("nav.reports")}</span>
           </Link>
 
           {/* Export action - always visible, disabled when no data */}
@@ -145,7 +145,7 @@ export function ReportShell({
         {loading && (
           <div className="mb-4 flex items-center gap-2 text-xs text-gray-500">
             <div className="animate-spin size-3 rounded-full border-2 border-gray-300 border-t-gray-600" />
-            <span>Loading...</span>
+            <span>{t("common.loading")}</span>
           </div>
         )}
 

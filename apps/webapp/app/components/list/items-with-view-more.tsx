@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import get from "lodash/get";
+import { useTranslation } from "react-i18next";
 import { tw } from "~/utils/tw";
 import { GrayBadge } from "../shared/gray-badge";
 import {
@@ -42,9 +43,12 @@ export default function ItemsWithViewMore<T>({
   className,
   items,
   showCount = 2,
-  emptyMessage = "No items",
+  emptyMessage: emptyMessageProp,
   ...restProps
 }: ItemsWithViewMoreProps<T>) {
+  const { t } = useTranslation();
+  /** Falls back to the translated default when the caller omits `emptyMessage`. */
+  const emptyMessage = emptyMessageProp ?? t("ui.noItems");
   // Filter out any null/undefined items first
   const filteredItems = items.filter(Boolean);
 

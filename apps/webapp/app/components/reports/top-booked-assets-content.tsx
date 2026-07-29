@@ -227,7 +227,7 @@ export function TopBookedAssetsContent({
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-gray-700">
-                Total Bookings
+                {t("ui.totalBookings")}
               </span>
               <span className="text-xs text-gray-500">
                 {uniqueAssetsBooked} assets booked

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { RenderableTreeNode } from "@markdoc/markdoc";
 import type { AssetStatus, QrIdDisplayPreference } from "@prisma/client";
-import { CustomFieldType } from "@prisma/client";
+import { AssetLifecycleStage, CustomFieldType } from "@prisma/client";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import {
   Popover,
@@ -55,13 +55,13 @@ import { formatCurrency } from "~/utils/currency";
 import { getCustomFieldDisplayValue } from "~/utils/custom-fields";
 import { cleanMarkdownFormatting } from "~/utils/markdown-cleaner";
 import { isLink } from "~/utils/misc";
-import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
-import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import type { OrganizationPermissionSettings } from "~/utils/permissions/custody-and-bookings-permissions.validator";
+import { userHasCustodyViewPermission } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import { resolveUserDisplayName } from "~/utils/user";
 import { AssetCodeBadge } from "../asset-code-badge";
@@ -83,6 +83,7 @@ export function AdvancedIndexColumn({
   column: ColumnLabelKey;
   item: AdvancedIndexAsset;
 }) {
+  const { t } = useTranslation();
   const { locale, currentOrganization, timeZone } =
     useLoaderData<AssetIndexLoaderData>();
   const showAssetImage = useAssetIndexShowImage();
@@ -117,7 +118,7 @@ export function AdvancedIndexColumn({
         {field.customField.type === CustomFieldType.MULTILINE_TEXT ? (
           <Popover>
             <PopoverTrigger className="underline hover:cursor-pointer">
-              View content
+              {t("ui.viewContent")}
             </PopoverTrigger>
             <PopoverPortal>
               <PopoverContent
@@ -327,10 +328,13 @@ export function AdvancedIndexColumn({
               QTY
             </span>
           ) : (
-            "Individual"
+            t("advancedFilters.individual")
           )}
         </Td>
       );
+
+    case "lifecycleStage":
+      return <LifecycleStageColumn stage={item.lifecycleStage} />;
 
     case "assetModel":
       return (
@@ -1020,6 +1024,44 @@ function UpcomingBookingsColumn({
           </PopoverContent>
         </PopoverPortal>
       </Popover>
+    </Td>
+  );
+}
+
+/**
+ * Intake-stage cell (مرحلة الاستلام).
+ *
+ * `READY` is rendered plainly rather than as a green badge: it is the normal
+ * state of every asset an ordinary employee can see, so badging it would add
+ * noise to every row without carrying information. `PENDING` is the exception
+ * worth spotting, so only it gets colour.
+ *
+ * @param stage - The asset's `lifecycleStage`
+ */
+function LifecycleStageColumn({ stage }: { stage?: AssetLifecycleStage }) {
+  const { t } = useTranslation();
+
+  if (!stage) {
+    return (
+      <Td className="w-full max-w-none whitespace-nowrap">
+        <EmptyTableValue />
+      </Td>
+    );
+  }
+
+  const isPending = stage === AssetLifecycleStage.PENDING;
+
+  return (
+    <Td className="w-full max-w-none whitespace-nowrap">
+      {isPending ? (
+        <span className="rounded-full bg-warning-50 px-2 py-0.5 text-xs font-medium text-warning-700">
+          {t("assetForm.lifecyclePendingLabel")}
+        </span>
+      ) : (
+        <span className="text-gray-600">
+          {t("assetForm.lifecycleReadyLabel")}
+        </span>
+      )}
     </Td>
   );
 }

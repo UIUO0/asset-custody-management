@@ -19,7 +19,9 @@
  * primitive works as a row subtitle, a table cell, or a card field.
  */
 
+import type { TFunction } from "i18next";
 import { Maximize2Icon, ScanBarcodeIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ScanQRIcon } from "~/components/icons/library";
 import {
   Tooltip,
@@ -66,30 +68,47 @@ type AssetCodeBadgeProps = ResolvedDisplayCode & {
  * The `body` is optional so explicit-column callers can render a title-only
  * tooltip (no workspace-relative narrative there).
  */
+/**
+ * Builds the tooltip title/body for a resolved display code.
+ *
+ * Takes `t` as a parameter rather than calling `useTranslation`: this is a plain
+ * helper, not a component, so it cannot host a hook.
+ *
+ * @param t - The translation function from the calling component
+ * @param value - The resolved code value shown to the user
+ * @param type - The code type this item actually has
+ * @param isFallback - True when the workspace preference could not be honoured
+ * @param workspacePreference - The workspace's preferred display code type
+ * @returns The tooltip title and (optionally) its explanatory body
+ */
 function buildTooltipContent(
+  t: TFunction,
   value: string,
   type: ResolvedDisplayCode["type"],
   isFallback: boolean,
-  workspacePreference: ResolvedDisplayCode["workspacePreference"]
+  workspacePreference: ResolvedDisplayCode["workspacePreference"],
 ): { title: string; body?: string } {
   const typeLabel = labelForPreference(type);
   const wsLabel = labelForPreference(workspacePreference);
 
   if (isFallback) {
     return {
-      title: `${typeLabel}: ${value} (fallback)`,
-      body: `Your workspace prefers ${wsLabel} but this item has no ${wsLabel}. Add one (or change the workspace setting) to fix.`,
+      title: t("barcodePreference.tooltipFallbackTitle", {
+        label: typeLabel,
+        value,
+      }),
+      body: t("barcodePreference.tooltipFallbackBody", { preference: wsLabel }),
     };
   }
   if (type !== workspacePreference) {
     return {
-      title: `${typeLabel}: ${value}`,
-      body: `Per-asset override — overrides workspace's preferred ${wsLabel}.`,
+      title: t("barcodePreference.tooltipTitle", { label: typeLabel, value }),
+      body: t("barcodePreference.tooltipOverrideBody", { preference: wsLabel }),
     };
   }
   return {
-    title: `${typeLabel}: ${value}`,
-    body: "Matches your workspace's preferred display code. Change in workspace settings.",
+    title: t("barcodePreference.tooltipTitle", { label: typeLabel, value }),
+    body: t("barcodePreference.matchesWorkspaceDefault"),
   };
 }
 
@@ -119,9 +138,11 @@ export function AssetCodeBadge({
   interactive = false,
   explicit = false,
 }: AssetCodeBadgeProps) {
+  const { t } = useTranslation();
+
   if (!value) return null;
 
-  // QR_ID and SAM_ID share the QR-ish icon (both are Shelf-native identifiers).
+  // QR_ID and SAM_ID share the QR-ish icon (both are system-native identifiers).
   // All BarcodeType-derived values get the barcode icon.
   const Icon =
     type === "QR_ID" || type === "SAM_ID" ? ScanQRIcon : ScanBarcodeIcon;
@@ -133,7 +154,7 @@ export function AssetCodeBadge({
   // tooltip.
   const { title, body } = explicit
     ? { title: `${labelForPreference(type)}: ${value}`, body: undefined }
-    : buildTooltipContent(value, type, isFallback, workspacePreference);
+    : buildTooltipContent(t, value, type, isFallback, workspacePreference);
 
   // aria-label concatenates title + body so screen-reader users get the full
   // explanation even without the tooltip mounting. Single string keeps SR
@@ -160,7 +181,7 @@ export function AssetCodeBadge({
             isFallback
               ? "bg-white text-gray-500 ring-1 ring-inset ring-gray-200"
               : "bg-gray-100 text-gray-700",
-            className
+            className,
           )}
           aria-label={ariaLabel}
         >

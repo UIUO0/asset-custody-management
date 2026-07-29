@@ -4,6 +4,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@radix-ui/react-popover";
+import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
 
 /**
@@ -32,6 +33,7 @@ export function DescriptionComponent({
   oldText,
   newText,
 }: DescriptionComponentProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   // If only one text is provided, show single description
@@ -59,7 +61,9 @@ export function DescriptionComponent({
           sideOffset={8}
         >
           <div className="text-sm">
-            <div className="font-semibold text-gray-900">Full Description:</div>
+            <div className="font-semibold text-gray-900">
+              {t("notes.fullDescription")}
+            </div>
             <div className="mt-1 text-gray-700">{oldText}</div>
           </div>
         </PopoverContent>
@@ -91,7 +95,9 @@ export function DescriptionComponent({
           sideOffset={8}
         >
           <div className="text-sm">
-            <div className="font-semibold text-gray-900">Full Description:</div>
+            <div className="font-semibold text-gray-900">
+              {t("notes.fullDescription")}
+            </div>
             <div className="mt-1 text-gray-700">{newText}</div>
           </div>
         </PopoverContent>
@@ -125,7 +131,7 @@ export function DescriptionComponent({
             >
               <div className="text-sm">
                 <div className="font-semibold text-gray-900">
-                  Previous Description:
+                  {t("notes.previousDescription")}
                 </div>
                 <div className="mt-1 text-gray-700">{oldText}</div>
               </div>
@@ -156,7 +162,7 @@ export function DescriptionComponent({
             >
               <div className="text-sm">
                 <div className="font-semibold text-gray-900">
-                  New Description:
+                  {t("notes.newDescription")}
                 </div>
                 <div className="mt-1 text-gray-700">{newText}</div>
               </div>
@@ -170,5 +176,5 @@ export function DescriptionComponent({
   }
 
   // Fallback for edge cases
-  return <span>Description updated</span>;
+  return <span>{t("ui.descriptionUpdated")}</span>;
 }

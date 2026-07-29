@@ -109,7 +109,7 @@ export default function CalendarFeedControls({
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <label htmlFor="calendar-feed-url" className="sr-only">
-              Calendar feed URL
+              {t("ui.calendarFeedUrl")}
             </label>
             <input
               id="calendar-feed-url"
@@ -135,7 +135,7 @@ export default function CalendarFeedControls({
           <div className="flex flex-wrap items-center gap-2">
             {webcalUrl ? (
               <Button to={webcalUrl} variant="secondary">
-                Add to calendar
+                {t("bookings.addToCalendar")}
               </Button>
             ) : null}
             <fetcher.Form method="post" action="/api/calendar-subscription">
@@ -146,7 +146,7 @@ export default function CalendarFeedControls({
               />
               <input type="hidden" name="intent" value="regenerate" />
               <Button type="submit" variant="secondary" disabled={disabled}>
-                {disabled ? t("calendar.working") : "Regenerate"}
+                {disabled ? "Working…" : "Regenerate"}
               </Button>
             </fetcher.Form>
             {confirmingRevoke ? (
@@ -162,10 +162,10 @@ export default function CalendarFeedControls({
                 />
                 <input type="hidden" name="intent" value="revoke" />
                 <span className="text-sm text-gray-600">
-                  Stop updating this link?
+                  {t("ui.stopUpdatingThisLink")}
                 </span>
                 <Button type="submit" variant="danger" disabled={disabled}>
-                  {disabled ? t("calendar.stopping") : t("calendar.yesStop")}
+                  {disabled ? "Stopping…" : t("calendar.yesStop")}
                 </Button>
                 <Button
                   type="button"
@@ -173,7 +173,7 @@ export default function CalendarFeedControls({
                   onClick={() => setConfirmingRevoke(false)}
                   disabled={disabled}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
               </fetcher.Form>
             ) : (
@@ -182,16 +182,17 @@ export default function CalendarFeedControls({
                 variant="danger"
                 onClick={() => setConfirmingRevoke(true)}
               >
-                Stop sharing
+                {t("ui.stopSharing")}
               </Button>
             )}
           </div>
 
           {showHelp ? (
             <p className="text-xs text-gray-500">
-              In Google Calendar: <strong>Other calendars → From URL</strong>,
-              then paste the link. Regenerating creates a new link and stops the
-              old one — use it if the link is ever shared by mistake.
+              {t("calendar.inGoogleCalendar")}{" "}
+              <strong>Other calendars → From URL</strong>, then paste the link.
+              Regenerating creates a new link and stops the old one — use it if
+              the link is ever shared by mistake.
             </p>
           ) : null}
         </div>
@@ -200,7 +201,7 @@ export default function CalendarFeedControls({
           <input type="hidden" name="organizationId" value={organizationId} />
           <input type="hidden" name="intent" value="generate" />
           <Button type="submit" variant="secondary" disabled={disabled}>
-            {disabled ? t("calendar.generating") : t("calendar.generateLink")}
+            {disabled ? "Generating…" : t("calendar.generateLink")}
           </Button>
         </fetcher.Form>
       )}

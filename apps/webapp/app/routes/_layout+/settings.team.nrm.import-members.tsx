@@ -148,12 +148,12 @@ export default function ImportNRMs() {
 
 function ImportForm() {
   const { t } = useTranslation();
-  const [agreed, setAgreed] = useState<"I AGREE" | "">("");
+  const [agreed, setAgreed] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
   const fetcher = useFetcher<typeof action>();
 
   const { data, state } = fetcher;
-  const disabled = isFormProcessing(state) || agreed !== "I AGREE";
+  const disabled = isFormProcessing(state) || agreed !== t("ui.iAgree");
   const isSuccessful = data && !data.error && data.success;
 
   /** We use a controlled field for the file, because of the confirmation dialog we have.
@@ -210,7 +210,7 @@ function ImportForm() {
                   name="agree"
                   value={agreed}
                   onChange={(e) => setAgreed(e.target.value as any)}
-                  placeholder="I AGREE"
+                  placeholder={t("ui.iAgree")}
                   pattern="^I AGREE$" // We use a regex to make sure the user types the exact string
                   required
                 />
@@ -252,7 +252,7 @@ function ImportForm() {
                   disabled={disabled}
                 >
                   {isFormProcessing(fetcher.state)
-                    ? t("team.importing")
+                    ? "Importing..."
                     : t("common.import")}
                 </Button>
               </>

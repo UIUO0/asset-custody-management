@@ -1,6 +1,7 @@
 import type { HTMLProps, KeyboardEvent } from "react";
 import { useCallback, useReducer } from "react";
 import { RefreshCwIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ChevronRight } from "~/components/icons/library";
 import { tw } from "~/utils/tw";
 import { Dialog, DialogPortal } from "../layout/dialog";
@@ -39,7 +40,7 @@ const INITIAL_PREVIEW_STATE: PreviewState = {
 
 function previewReducer(
   state: PreviewState,
-  action: PreviewAction
+  action: PreviewAction,
 ): PreviewState {
   switch (action.type) {
     case "load_success":
@@ -101,6 +102,7 @@ export default function ImageWithPreview({
   disablePortal = false,
   ...restProps
 }: ImageWithPreviewProps) {
+  const { t } = useTranslation();
   const [state, dispatch] = useReducer(previewReducer, INITIAL_PREVIEW_STATE);
   const { isLoading, isImageError, retryKey, open, currentIndex } = state;
 
@@ -189,14 +191,14 @@ export default function ImageWithPreview({
       <div
         className={tw(
           "relative size-14 overflow-hidden rounded border",
-          className
+          className,
         )}
       >
         {isLoading ? (
           <div
             className={tw(
               "absolute inset-0 flex items-center justify-center bg-gray-100",
-              "z-10 transition-opacity"
+              "z-10 transition-opacity",
             )}
           >
             <Spinner className="[&_.spinner]:before:border-t-gray-400" />
@@ -207,18 +209,20 @@ export default function ImageWithPreview({
           <div
             className={tw(
               "absolute inset-0 z-10 flex flex-col items-center justify-center gap-2",
-              "bg-gray-100 text-gray-500"
+              "bg-gray-100 text-gray-500",
             )}
           >
-            <div className="px-2 text-center text-xs">Failed to load</div>
+            <div className="px-2 text-center text-xs">
+              {t("ui.failedToLoad")}
+            </div>
             <button
               type="button"
               onClick={handleRetry}
               className="flex items-center gap-1 rounded bg-gray-200 px-2 py-1 text-xs text-gray-700 transition-colors hover:bg-gray-300"
-              title="Retry loading image"
+              title={t("ui.retryLoadingImage")}
             >
               <RefreshCwIcon className="size-4" />
-              Retry
+              {t("ui.retry")}
             </button>
           </div>
         ) : null}
@@ -246,7 +250,7 @@ export default function ImageWithPreview({
           }
           className={tw(
             "size-full object-cover",
-            withPreview && "cursor-pointer"
+            withPreview && "cursor-pointer",
           )}
           alt={alt}
           loading="lazy"
@@ -290,7 +294,7 @@ export default function ImageWithPreview({
                       type="button"
                       onClick={handlePrevious}
                       className="absolute left-4 top-1/2 z-10 -translate-y-1/2 text-gray-900 transition-all hover:text-gray-600"
-                      aria-label="Previous"
+                      aria-label={t("common.previous")}
                     >
                       <ChevronRight className="size-8 rotate-180" />
                     </button>
@@ -307,7 +311,7 @@ export default function ImageWithPreview({
                       type="button"
                       onClick={handleNext}
                       className="absolute right-4 top-1/2 z-10 -translate-y-1/2 text-gray-900 transition-all hover:text-gray-600"
-                      aria-label="Next"
+                      aria-label={t("common.next")}
                     >
                       <ChevronRight className="size-8" />
                     </button>
@@ -317,7 +321,7 @@ export default function ImageWithPreview({
                 <div className="flex w-full justify-center gap-3 px-6 py-3 md:justify-end">
                   {editImageUrl ? (
                     <Button to={editImageUrl} variant="secondary">
-                      Edit image(s)
+                      {t("ui.editImages")}
                     </Button>
                   ) : null}
 
@@ -326,7 +330,7 @@ export default function ImageWithPreview({
                     variant="secondary"
                     onClick={handleCloseDialog}
                   >
-                    Close
+                    {t("common.close")}
                   </Button>
                 </div>
               </div>

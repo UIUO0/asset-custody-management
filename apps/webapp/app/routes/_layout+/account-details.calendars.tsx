@@ -12,6 +12,7 @@
  * @see {@link file://./../../components/calendar/calendar-feed-controls.tsx}
  * @see {@link file://./account-details.tsx}
  */
+import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useLoaderData } from "react-router";
 import CalendarFeedControls from "~/components/calendar/calendar-feed-controls";
@@ -72,6 +73,7 @@ export const handle = {
  * workspace with bookings enabled yet.
  */
 export default function CalendarsSettings() {
+  const { t } = useTranslation();
   const { feeds } = useLoaderData<typeof loader>();
 
   return (
@@ -82,7 +84,7 @@ export default function CalendarsSettings() {
         {/* Intro: what calendar feeds are + the privacy warning. */}
         <div className="border-b border-gray-200 px-4 py-5 md:px-6">
           <h3 className="text-text-lg font-semibold text-gray-900">
-            Calendars
+            {t("ui.calendars")}
           </h3>
           <p className="mt-1 text-sm text-gray-600">
             Subscribe your external calendar (Google, Apple or Outlook) to a
@@ -95,12 +97,12 @@ export default function CalendarsSettings() {
         {/* Workspaces: one row per workspace that can have a booking calendar. */}
         <section className="px-4 py-5 md:px-6">
           <h4 className="mb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
-            Workspaces
+            {t("ui.workspaces")}
           </h4>
 
           {feeds.length === 0 ? (
             <p className="py-4 text-sm text-gray-500">
-              You don’t have any workspaces with bookings yet.
+              {t("ui.youDonTHaveAnyWorkspacesWithBookingsYet")}
             </p>
           ) : (
             <div className="mt-3 flex flex-col gap-3">
@@ -132,9 +134,9 @@ export default function CalendarsSettings() {
         {feeds.length > 0 ? (
           <div className="border-t border-gray-100 bg-gray-50 px-4 py-3 md:px-6">
             <p className="text-xs text-gray-500">
-              In Google Calendar: <strong>Other calendars → From URL</strong>,
-              then paste a link. Regenerating creates a new link and stops the
-              old one.
+              {t("calendar.inGoogleCalendar")}{" "}
+              <strong>Other calendars → From URL</strong>, then paste a link.
+              Regenerating creates a new link and stops the old one.
             </p>
           </div>
         ) : null}

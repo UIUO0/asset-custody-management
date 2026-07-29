@@ -269,9 +269,7 @@ export const LocationForm = ({
             className="mt-2"
             inputClassName="border-0 shadow-none p-0 rounded-none"
           />
-          <p className="hidden lg:block">
-            Accepts PNG, JPG, JPEG, or WebP (max.4 MB)
-          </p>
+          <p className="hidden lg:block">{t("locationForm.imageHint")}</p>
         </When>
 
         <When

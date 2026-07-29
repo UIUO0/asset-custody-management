@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -17,6 +18,7 @@ import { Button } from "~/components/shared/button";
 import { config } from "~/config/shelf.config";
 import { useSearchParams } from "~/hooks/search-params";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { signInWithSSO } from "~/modules/auth/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { mobilePkceChallengeCookie } from "~/utils/cookies.server";
@@ -44,8 +46,11 @@ const SSOLoginFormSchema = z.object({
 });
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
-  const title = "Log in with SSO";
-  const subHeading = "Enter your company's domain to login with SSO.";
+  // why: loaders run outside React, so `useTranslation` is unavailable —
+  // `getFixedT` gives the same `t` bound to the request's locale.
+  const t = await getFixedT(getLocale(request));
+  const title = t("auth.logInWithSso");
+  const subHeading = t("auth.enterDomainForSso");
   const { disableSSO } = config;
 
   const url = new URL(request.url);
@@ -63,7 +68,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     if (disableSSO) {
       throw new ShelfError({
         cause: null,
-        title: "SSO is disabled",
+        title: t("auth.ssoDisabled"),
         message:
           "For more information, please contact your workspace administrator.",
         label: "User onboarding",
@@ -128,6 +133,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export default function SSOLogin() {
+  const { t } = useTranslation();
   const zo = useZorm("NewQuestionWizardScreen", SSOLoginFormSchema);
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
@@ -150,7 +156,7 @@ export default function SSOLogin() {
             <Input
               ref={domainInputRef}
               data-test-id="domain"
-              label="Company domain"
+              label={t("auth.companyDomain")}
               placeholder="yourdomain.com"
               required
               name={zo.fields.domain()}
@@ -167,7 +173,7 @@ export default function SSOLogin() {
               disabled={disabled}
               width="full"
             >
-              Log In
+              {t("auth.logIn")}
             </Button>
           </div>
         </Form>
@@ -178,7 +184,7 @@ export default function SSOLogin() {
             deployment is an internal Azure AD (Entra ID) configuration, so the
             only correct recipient is the authority's own IT department.
             @see apps/docs/epda-azure-entra-sso.md */}
-        <div>Need SSO access? Contact the IT department.</div>
+        <div>{t("auth.needSsoAccess")}</div>
       </div>
     </>
   );

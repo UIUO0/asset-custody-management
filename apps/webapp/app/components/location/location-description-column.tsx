@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import LineBreakText from "~/components/layout/line-break-text";
 import {
   Tooltip,
@@ -14,6 +15,7 @@ interface LocationDescriptionColumnProps {
 export function LocationDescriptionColumn({
   value,
 }: LocationDescriptionColumnProps) {
+  const { t } = useTranslation();
   return (
     <Td className="min-w-[250px] max-w-[250px] whitespace-pre-wrap">
       {/* Only show tooltip when value is more than 60 - 2 rows of 30 */}
@@ -25,7 +27,7 @@ export function LocationDescriptionColumn({
             </TooltipTrigger>
 
             <TooltipContent side="top" className="max-w-[400px]">
-              <h5>Location description</h5>
+              <h5>{t("ui.locationDescription")}</h5>
               <p className="text-sm">{value}</p>
             </TooltipContent>
           </Tooltip>

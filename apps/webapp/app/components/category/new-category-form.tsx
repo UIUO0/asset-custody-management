@@ -165,7 +165,7 @@ export default function NewCategoryForm({
             className="flex-1"
             disabled={disabled}
           >
-            {disabled ? t("common.creating") : t("common.create")}
+            {disabled ? "Creating..." : t("common.create")}
           </Button>
         </div>
 

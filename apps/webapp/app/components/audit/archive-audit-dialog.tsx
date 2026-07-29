@@ -11,6 +11,7 @@
  * @see {@link file://../../routes/_layout+/audits.$auditId.tsx} - Action handler
  */
 import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { Button } from "~/components/shared/button";
 import {
@@ -44,6 +45,7 @@ export function ArchiveAuditDialog({
   open,
   onClose,
 }: ArchiveAuditDialogProps) {
+  const { t } = useTranslation();
   const fetcher = useFetcher({ key: "archive-audit" });
   const disabled = useDisabled(fetcher);
 
@@ -77,14 +79,14 @@ export function ArchiveAuditDialog({
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary" disabled={disabled}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
             <fetcher.Form method="post">
               <input type="hidden" name="intent" value="archive-audit" />
               <Button type="submit" disabled={disabled}>
-                Archive
+                {t("bookings.archive")}
               </Button>
             </fetcher.Form>
           </div>

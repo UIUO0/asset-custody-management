@@ -21,6 +21,7 @@ import {
 import { useAtomValue } from "jotai";
 import { InfoIcon } from "lucide-react";
 import { DateTime } from "luxon";
+import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
@@ -58,7 +59,7 @@ export const KitsBulkStartAuditSchema = BaseAuditSchema.extend({
   {
     message: "Due date must be in the future",
     path: ["dueDate"],
-  }
+  },
 );
 
 /**
@@ -90,6 +91,7 @@ function SelectedKitsSummary({
   kits: ListItemData[];
   search: string | null;
 }) {
+  const { t } = useTranslation();
   const plural = count === 1 ? "" : "s";
 
   if (allSelected) {
@@ -126,7 +128,7 @@ function SelectedKitsSummary({
             variant="link"
             className="h-auto p-0 text-sm font-medium"
           >
-            View list
+            {t("ui.viewList")}
           </Button>
         </PopoverTrigger>
         <PopoverPortal>
@@ -151,7 +153,7 @@ function SelectedKitsSummary({
                       className="truncate text-gray-700"
                       title={kit.name ?? undefined}
                     >
-                      {kit.name || "Untitled kit"}
+                      {kit.name || t("kits.untitled")}
                     </span>
                     <span className="shrink-0 text-xs tabular-nums text-gray-500">
                       {assetCount} asset{assetCount === 1 ? "" : "s"}
@@ -172,6 +174,7 @@ function SelectedKitsSummary({
  * The audit covers the union of all assets in the selected kits.
  */
 export default function KitsBulkStartAuditDialog() {
+  const { t } = useTranslation();
   const { totalItems } = useLoaderData<IndexResponse>();
   const selectedItems = useAtomValue(selectedBulkItemsAtom);
   const selectedCount = useAtomValue(selectedBulkItemsCountAtom);
@@ -199,8 +202,8 @@ export default function KitsBulkStartAuditDialog() {
       ref={zo.ref}
       type="start-audit"
       className="md:w-[800px]"
-      title="Start an audit"
-      description="Set up an audit for the assets in the kits you selected."
+      title={t("bulkActions.startAuditTitle")}
+      description={t("ui.setUpAnAuditForTheAssetsInTheKitsYouSelected")}
       actionUrl="/api/audits/start"
       arrayFieldId="kitIds"
       formClassName="px-0"

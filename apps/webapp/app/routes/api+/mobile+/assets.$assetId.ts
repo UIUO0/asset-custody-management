@@ -1,3 +1,4 @@
+import { AssetLifecycleStage } from "@prisma/client";
 import { data, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { getQuantityData } from "~/components/assets/asset-status-badge/quantity-data";
@@ -16,6 +17,7 @@ import { getAssetQuantityRows } from "~/modules/asset/quantity-breakdown.server"
 import { isQuantityTracked } from "~/modules/asset/utils";
 import { makeShelfError } from "~/utils/error";
 import { getParams } from "~/utils/http.server";
+import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
 
 /**
  * GET /api/mobile/assets/:assetId
@@ -36,17 +38,23 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     // custody-view permission (SELF_SERVICE/BASE, unless the org overrides
     // allow) must not receive other holders' custody. Resolve the flag once
     // here; the filtering happens below, after shaping.
-    const { canSeeAllCustody } = await getMobileUserContext(
+    const { canSeeAllCustody, role } = await getMobileUserContext(
       user.id,
-      organizationId
+      organizationId,
     );
 
-    const asset = await db.asset.findUnique({
+    const asset = await db.asset.findFirst({
       where: {
         // why: inline-scope to org so cross-org probes 404 — matches the
         // pattern used by every other mobile route.
         id: assetId,
         organizationId,
+        // A PENDING asset is not in circulation yet; for roles scoped to their
+        // own records it must 404 exactly like a cross-org probe, otherwise a
+        // scanned QR would leak it before المستودعات release it.
+        ...(rolesAreScopedToOwnRecords(role)
+          ? { lifecycleStage: AssetLifecycleStage.READY }
+          : {}),
       },
       select: {
         id: true,
@@ -228,7 +236,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
             // render a negative cap.
             custodyAvailable: Math.max(
               0,
-              breakdown.total - breakdown.inCustody - breakdown.checkedOut
+              breakdown.total - breakdown.inCustody - breakdown.checkedOut,
             ),
           }
         : null;
@@ -308,7 +316,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     const reason = makeShelfError(cause);
     return data(
       { error: { message: reason.message } },
-      { status: reason.status }
+      { status: reason.status },
     );
   }
 }

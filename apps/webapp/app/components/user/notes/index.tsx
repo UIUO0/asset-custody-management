@@ -21,6 +21,7 @@
  * @see {@link file://./../../../routes/_layout+/me.notes.tsx} for the /me route
  * @see {@link file://./../../../modules/team-member-note/service.server.ts} for the data layer
  */
+import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import type { NoteWithUser } from "~/components/assets/notes/note";
 import { Note } from "~/components/assets/notes/note";
@@ -49,6 +50,7 @@ export const UserNotes = ({
   canDelete?: boolean;
   actionUrl?: string;
 }) => {
+  const { t } = useTranslation();
   /* Using user data for the optimistic Note component rendered on the frontend
    * before the server responds. This provides immediate visual feedback. */
   const user = useUserData();
@@ -125,14 +127,14 @@ export const UserNotes = ({
           <div className="flex flex-col items-center justify-center p-[16px] text-center md:p-[50px]">
             <img
               src="/static/images/no-notes.svg"
-              alt="Graphic for no notes"
+              alt={t("bookings.noNotesImageAlt")}
               className="mb-6 w-[172px]"
             />
-            <h4>No Notes</h4>
+            <h4>{t("bookings.noNotesTitle")}</h4>
             <p>
-              This user has no admin notes
+              {t("ui.thisUserHasNoAdminNotes")}
               <br />
-              in this workspace.
+              {t("team.inThisWorkspace")}
             </p>
           </div>
         </div>

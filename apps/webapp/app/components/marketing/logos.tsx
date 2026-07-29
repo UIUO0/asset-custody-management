@@ -10,7 +10,7 @@ import When from "../when/when";
  * as the app shell, where the React i18n hook is unavailable — and the EPDA
  * deployment must not surface the upstream vendor's brand name anywhere.
  */
-const ALT_TEXT = "EPDA";
+const ALT_TEXT = "SDA";
 
 /**
  * Logo shown in the sidebar

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserData } from "~/hooks/use-user-data";
 import { CustomerPortalForm } from "./customer-portal-form";
@@ -5,6 +6,7 @@ import { plansIconsMap } from "./price-box";
 import { Button } from "../shared/button";
 
 export const NoSubscription = () => {
+  const { t } = useTranslation();
   const currentOrganization = useCurrentOrganization();
   const user = useUserData();
 
@@ -18,21 +20,21 @@ export const NoSubscription = () => {
             {plansIconsMap["tier_2"]}
           </i>
         </div>
-        <h2 className="mb-2">Workspace disabled</h2>
+        <h2 className="mb-2">{t("ui.workspaceDisabled")}</h2>
         <p className="max-w-[550px] text-gray-600">
           {userIsOwner
-            ? "The subscription for this workspace has expired and is therefore set to inactive. Renew your subscription to start using this Team workspace again."
-            : "The subscription for this workspace has expired and is therefore set to inactive. Please contact the owner of the workspace for more information."}
+            ? t("subscription.expiredRenew")
+            : t("subscription.expiredContactOwner")}
         </p>
         <div className="mt-4 flex justify-center gap-2">
           {userIsOwner && (
-            <CustomerPortalForm buttonText={"Manage subscription"} />
+            <CustomerPortalForm buttonText={t("ui.manageSubscription")} />
           )}
           <Button
             to={`mailto:${currentOrganization?.owner.email}`}
             variant="secondary"
           >
-            Contact owner
+            {t("ui.contactOwnerX")}
           </Button>
         </div>
       </div>

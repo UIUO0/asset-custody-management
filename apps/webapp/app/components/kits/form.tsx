@@ -319,7 +319,7 @@ export default function KitsForm({
               {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={disabled}>
-              {disabled ? t("common.saving") : t("common.save")}
+              {disabled ? "Saving..." : t("common.save")}
             </Button>
           </div>
         </FormRow>

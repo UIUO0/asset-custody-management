@@ -59,9 +59,9 @@ export function UserDetailsForm({
   return (
     <Card className="my-0">
       <div className="mb-6">
-        <h3 className="text-text-lg font-semibold">My details</h3>
+        <h3 className="text-text-lg font-semibold">{t("ui.myDetails")}</h3>
         <p className="text-sm text-gray-600">
-          Update your photo and personal details here.
+          {t("ui.updateYourPhotoAndPersonalDetailsHere")}
         </p>
       </div>
       <Form
@@ -136,11 +136,11 @@ export function UserDetailsForm({
           <ChangeEmailForm currentEmail={user?.email} />
         </FormRow>
         <FormRow
-          rowLabel="Username"
+          rowLabel={t("ui.username")}
           required={zodFieldIsRequired(UserDetailsFormSchema.shape.username)}
         >
           <Input
-            label="Username"
+            label={t("ui.username")}
             hideLabel={true}
             addOn="@"
             type="text"
@@ -161,7 +161,7 @@ export function UserDetailsForm({
           <div className="flex gap-3">
             <ProfilePicture />
             <div>
-              <p>Accepts PNG, JPG, JPEG, or WebP (max.4 MB)</p>
+              <p>{t("locationForm.imageHint")}</p>
               <Input
                 disabled={disabled}
                 accept={ACCEPT_SUPPORTED_IMAGES}

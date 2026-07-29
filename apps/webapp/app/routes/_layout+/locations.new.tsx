@@ -14,6 +14,7 @@ import {
 } from "~/components/location/form";
 
 import { db } from "~/database/db.server";
+import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getLocationsForCreateAndEdit } from "~/modules/asset/service.server";
@@ -30,7 +31,6 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-const title = "New Location";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -49,8 +49,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       request,
     });
 
+    // Header copy is rendered server-side, so we resolve it with the request's
+    // locale instead of the React hook.
+    const t = await getFixedT(getLocale(request));
     const header = {
-      title,
+      title: t("locations.newLocation"),
     };
 
     return payload({ header, locations, totalLocations });

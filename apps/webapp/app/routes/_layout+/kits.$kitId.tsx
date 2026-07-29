@@ -57,12 +57,12 @@ import { sendNotification } from "~/utils/emitter/send-notification.server";
 import { makeShelfError } from "~/utils/error";
 import { payload, error, getParams, parseData } from "~/utils/http.server";
 import { wrapLinkForNote, wrapUserLinkForNote } from "~/utils/markdoc-wrappers";
-import { userCanViewSpecificCustody } from "~/utils/permissions/custody-and-bookings-permissions.validator.client";
+import { userCanViewSpecificCustody } from "~/utils/permissions/custody-and-bookings-permissions.validator";
 import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { useBarcodePermissions } from "~/utils/permissions/use-barcode-permissions";
 import { requirePermission } from "~/utils/roles.server";
 import { tw } from "~/utils/tw";
@@ -85,7 +85,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     params,
     z.object({
       kitId: z.string(),
-    })
+    }),
   );
 
   try {
@@ -241,7 +241,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           "add-barcode",
           "relink-qr-code",
         ]),
-      })
+      }),
     );
 
     const intent2ActionMap: { [K in typeof intent]: PermissionAction } = {
@@ -272,7 +272,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       z.object({
         image: z.string().optional(),
       }),
-      { additionalData: { userId, organizationId, kitId } }
+      { additionalData: { userId, organizationId, kitId } },
     );
 
     switch (intent) {
@@ -298,7 +298,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({
             assetId: z.string(),
           }),
-          { additionalData: { userId, organizationId, kitId } }
+          { additionalData: { userId, organizationId, kitId } },
         );
 
         /**
@@ -390,7 +390,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
               detachmentImpact: impact,
               slice: detachedSlice,
             };
-          }
+          },
         );
 
         await emitAssetKitDetachmentNotes({
@@ -442,17 +442,17 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({
             barcodeType: z.nativeEnum(BarcodeType),
             barcodeValue: z.string().min(1, "Barcode value is required"),
-          })
+          }),
         );
 
         // Validate barcode value
         const normalizedValue = normalizeBarcodeValue(
           barcodeType,
-          barcodeValue
+          barcodeValue,
         );
         const validationError = validateBarcodeValue(
           barcodeType,
-          normalizedValue
+          normalizedValue,
         );
 
         if (validationError) {
@@ -488,7 +488,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
               payload({ error: validationErrors["barcodes[0].value"].message }),
               {
                 status: reason.status,
-              }
+              },
             );
           }
 
@@ -501,7 +501,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       case "relink-qr-code": {
         const { newQrId } = parseData(
           formData,
-          z.object({ newQrId: z.string() })
+          z.object({ newQrId: z.string() }),
         );
 
         await relinkKitQrCode({
@@ -540,7 +540,7 @@ export default function KitDetails() {
   const { canUseBarcodes } = useBarcodePermissions();
 
   const kitHasUnavailableAssets = kit.assetKits.some(
-    (ak) => !ak.asset.availableToBook
+    (ak) => !ak.asset.availableToBook,
   );
 
   const items = [

@@ -1,4 +1,5 @@
 import { useAtomValue } from "jotai";
+import { useTranslation } from "react-i18next";
 import { useHydrated } from "remix-utils/use-hydrated";
 import { selectedBulkItemsCountAtom } from "~/atoms/list";
 import When from "~/components/when/when";
@@ -8,7 +9,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator.client";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import BulkDeleteDialog from "./bulk-delete-dialog";
 import LocationsBulkStartAuditDialog from "./bulk-start-audit-dialog";
@@ -44,6 +45,7 @@ export default function BulkActionsDropdown() {
 }
 
 function ConditionalDropdown() {
+  const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
   const selectedLocationsCount = useAtomValue(selectedBulkItemsCountAtom);
 
@@ -66,7 +68,7 @@ function ConditionalDropdown() {
       {open && (
         <div
           className={tw(
-            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden"
+            "fixed right-0 top-0 z-10 h-screen w-screen cursor-pointer bg-gray-700/50  transition duration-300 ease-in-out md:hidden",
           )}
         />
       )}
@@ -89,7 +91,9 @@ function ConditionalDropdown() {
           disabled={disabled}
         >
           <Button type="button" variant="secondary">
-            <span className="flex items-center gap-2">Actions</span>
+            <span className="flex items-center gap-2">
+              {t("common.actions")}
+            </span>
           </Button>
         </DropdownMenuTrigger>
 
@@ -101,7 +105,7 @@ function ConditionalDropdown() {
           disabled={disabled}
           type="button"
         >
-          <span className="flex items-center gap-2">Actions</span>
+          <span className="flex items-center gap-2">{t("common.actions")}</span>
         </Button>
 
         <MobileDropdownStyles open={open} />
@@ -128,7 +132,7 @@ function ConditionalDropdown() {
               >
                 <BulkUpdateDialogTrigger
                   type="start-audit"
-                  label="Create audit"
+                  label={t("audits.createAudit")}
                   onClick={closeMenu}
                 />
               </DropdownMenuItem>
@@ -142,7 +146,7 @@ function ConditionalDropdown() {
             >
               <BulkUpdateDialogTrigger
                 type="trash"
-                label="Delete"
+                label={t("common.delete")}
                 onClick={closeMenu}
               />
             </DropdownMenuItem>

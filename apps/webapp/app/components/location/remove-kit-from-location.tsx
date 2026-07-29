@@ -1,4 +1,5 @@
 import type { Kit } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { useNavigation } from "react-router";
 import { isFormProcessing } from "~/utils/form";
 import { Form } from "../custom-form";
@@ -20,6 +21,7 @@ export default function RemoveKitFromLocation({
 }: {
   kit: Pick<Kit, "id" | "name">;
 }) {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
 
@@ -33,7 +35,7 @@ export default function RemoveKitFromLocation({
           width="full"
           icon="trash"
         >
-          Remove
+          {t("common.remove")}
         </Button>
       </AlertDialogTrigger>
 
@@ -46,8 +48,7 @@ export default function RemoveKitFromLocation({
           </div>
           <AlertDialogTitle>Remove "{kit.name}" from location</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to remove this kit from the location? All
-            assets within the kit will also be removed from this location.
+            {t("locations.removeKitConfirm")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -55,7 +56,7 @@ export default function RemoveKitFromLocation({
           <div className="flex justify-center gap-2">
             <AlertDialogCancel asChild>
               <Button type="button" variant="secondary">
-                Cancel
+                {t("common.cancel")}
               </Button>
             </AlertDialogCancel>
 
@@ -67,7 +68,7 @@ export default function RemoveKitFromLocation({
                 value="removeKit"
                 disabled={disabled}
               >
-                Remove
+                {t("common.remove")}
               </Button>
             </Form>
           </div>

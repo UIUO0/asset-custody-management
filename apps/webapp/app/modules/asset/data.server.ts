@@ -148,8 +148,13 @@ export async function simpleModeLoader({
   settings,
 }: Props) {
   const { locale, timeZone } = getClientHint(request);
-  const isSelfService = role === OrganizationRoles.SELF_SERVICE;
+  /**
+   * NOTE: We are now explicitly widening this to all scoped roles based on user request.
+   * BASE users should also only see bookable assets in the global list. They can still
+   * view their non-bookable assets in the "My Assets" page.
+   */
   const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+  const isSelfService = isScopedToOwnRecords;
 
   // Check if URL contains advanced filter syntax (from browser back button or old bookmark)
   // URLSearchParams.toString() encodes colons as %3A, so we must check the decoded values
@@ -222,6 +227,12 @@ export async function simpleModeLoader({
       request,
       organizationId,
       filters,
+      /**
+       * Employees only ever see released inventory. Roles with org-wide
+       * visibility (المستودعات / المالية / المخزون / admins) keep seeing
+       * PENDING rows — the intake queue is their work list.
+       */
+      onlyReadyAssets: isScopedToOwnRecords,
       extraInclude:
         view === "availability"
           ? {
@@ -435,8 +446,13 @@ export async function advancedModeLoader({
   settings,
 }: Props) {
   const { locale, timeZone } = getClientHint(request);
-  const isSelfService = role === OrganizationRoles.SELF_SERVICE;
+  /**
+   * NOTE: Widened to all scoped roles based on user request.
+   * BASE users should also only see bookable assets in the global list. They can still
+   * view their non-bookable assets in the "My Assets" page.
+   */
   const isScopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+  const isSelfService = isScopedToOwnRecords;
 
   /** Parse filters */
   const {
@@ -535,7 +551,10 @@ export async function advancedModeLoader({
       settings,
       getBookings: view === "availability",
       canUseBarcodes: currentOrganization.barcodesEnabled ?? false,
+      // See the `isSelfService` note above — intentionally SELF_SERVICE-only.
       availableToBookOnly: role === OrganizationRoles.SELF_SERVICE,
+      /** @see the simple-mode loader above for why this is scoped this way */
+      onlyReadyAssets: isScopedToOwnRecords,
       preParsedFilters: parsedFilters,
     }),
     // We need the custom fields so we can create the options for filtering

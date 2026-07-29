@@ -429,7 +429,7 @@ function renderPendingIndividualAsset(
                   {t("scanner.assetPill")}
                 </span>
                 <AvailabilityBadge
-                  badgeText="Pending"
+                  badgeText={t("assetForm.lifecyclePendingLabel")}
                   tooltipTitle={t("scanner.pendingScan")}
                   tooltipContent={t("scanner.notScannedYet")}
                   className="border-gray-200 bg-gray-50 text-gray-600"

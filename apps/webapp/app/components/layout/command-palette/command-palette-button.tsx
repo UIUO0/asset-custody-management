@@ -61,7 +61,7 @@ export function CommandPaletteButton({
       <Button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Open command palette"
+        aria-label={t("ui.openCommandPalette")}
         variant={"secondary"}
         className={tw(
           "flex items-center justify-center rounded border-0 bg-white px-2  py-[2px] text-gray-600 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 md:border-gray-200",

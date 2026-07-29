@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import type { BarcodeType } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import { BarcodeDisplay } from "~/components/barcode/barcode-display";
 import { CodeScanner } from "~/components/scanner/code-scanner";
 import type { OnCodeDetectionSuccessProps } from "~/components/scanner/code-scanner";
@@ -20,6 +21,7 @@ export function ScanBarcodeTab({
   action,
   onRefetchData,
 }: ScanBarcodeTabProps) {
+  const { t } = useTranslation();
   const [paused, setPaused] = useState(false);
   const [scannedValue, setScannedValue] = useState<string | null>(null);
   const [detectedType, setDetectedType] = useState<BarcodeType | null>(null);
@@ -53,7 +55,7 @@ export function ScanBarcodeTab({
   const helpText = useMemo(() => {
     if (detectedType) {
       const option = BARCODE_TYPE_OPTIONS.find(
-        (opt) => opt.value === detectedType
+        (opt) => opt.value === detectedType,
       );
       return option ? option.description : undefined;
     }
@@ -67,7 +69,7 @@ export function ScanBarcodeTab({
         {/* Detected Barcode Preview */}
         <div className="rounded-lg border bg-gray-50 p-3">
           <h4 className="mb-2 text-sm font-medium text-gray-900">
-            Detected Barcode
+            {t("ui.detectedBarcode")}
           </h4>
           <div className="space-y-2">
             <div className="flex items-center gap-2">

@@ -27,6 +27,43 @@ export const DATE_FORMAT_OPTIONS = {
   minute: "2-digit",
 } as const;
 
+/**
+ * Kit / multi-reservation glyph shown on a calendar event.
+ *
+ * Lives in its own component so it can call `useTranslation` — `renderEventCard`
+ * is invoked by FullCalendar as a plain function, where hooks are not safe.
+ *
+ * End-user copy avoids internal "slice"/pivot jargon: multi-slice reads as a
+ * reservation count, and the hover tooltip carries the full breakdown. The
+ * singular form is handled by i18next plurals so a lone reservation never
+ * reads "1 times".
+ *
+ * @param sliceCount - How many reservations this event represents
+ */
+function KitGlyph({ sliceCount }: { sliceCount: number }) {
+  const { t } = useTranslation();
+  const glyphLabel =
+    sliceCount > 1
+      ? t("calendar.reservedTimesOnBooking", { count: sliceCount })
+      : t("calendar.bookedViaKit");
+
+  return (
+    <span
+      className="inline-flex items-center gap-0.5"
+      title={glyphLabel}
+      role="img"
+      aria-label={glyphLabel}
+    >
+      <Boxes className="size-3" aria-hidden="true" />
+      {sliceCount > 1 ? (
+        <span className="text-xs font-medium tabular-nums" aria-hidden="true">
+          {sliceCount}
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 export default function renderEventCard({ event }: EventCardProps) {
   const viewType = event._context.calendarApi.view.type;
   const booking = event.extendedProps as CalendarExtendedProps;
@@ -37,14 +74,6 @@ export default function renderEventCard({ event }: EventCardProps) {
   const sliceCount = booking.sliceCount ?? slices.length;
   const hasKitSlice = slices.some((s) => s.assetKitId !== null);
   const showKitGlyph = hasKitSlice || sliceCount > 1;
-  // End-user copy (avoid internal "slice"/pivot jargon). Multi-slice reads as a
-  // reservation count; the hover tooltip carries the full standalone/kit
-  // breakdown. Singular guarded so a lone reservation never reads "1 times".
-  const glyphLabel =
-    sliceCount > 1
-      ? `Reserved ${sliceCount} times on this booking`
-      : "Booked via a kit";
-
   // Ref callback to set up scroll tracking
   const triggerRefCallback = (element: HTMLDivElement | null) => {
     if (!element) return;
@@ -220,24 +249,7 @@ export default function renderEventCard({ event }: EventCardProps) {
             )}
             <DateS date={booking.start} options={{ timeStyle: "short" }} /> |{" "}
             {event.title}
-            {showKitGlyph ? (
-              <span
-                className="inline-flex items-center gap-0.5"
-                title={glyphLabel}
-                role="img"
-                aria-label={glyphLabel}
-              >
-                <Boxes className="size-3" aria-hidden="true" />
-                {sliceCount > 1 ? (
-                  <span
-                    className="text-xs font-medium tabular-nums"
-                    aria-hidden="true"
-                  >
-                    {sliceCount}
-                  </span>
-                ) : null}
-              </span>
-            ) : null}
+            {showKitGlyph ? <KitGlyph sliceCount={sliceCount} /> : null}
             <ExternalLinkIcon
               className={tw("external-link-icon mt-px", "hidden")}
             />
@@ -263,6 +275,8 @@ export function EventCardContent({
 }: {
   booking: CalendarExtendedProps;
 }) {
+  const { t } = useTranslation();
+
   const slices = booking.slices ?? [];
   const showBreakdown =
     slices.length >= 2 || slices.some((s) => s.assetKitId !== null);
@@ -309,7 +323,7 @@ export function EventCardContent({
           </div>
         </div>
         <div>
-          <p className="mb-1 text-sm font-normal">Created by:</p>
+          <p className="mb-1 text-sm font-normal">{t("calendar.createdBy")}</p>
           <div className="mb-3 flex items-center gap-2">
             <TeamMemberBadge teamMember={booking.creator} />
           </div>
@@ -328,7 +342,9 @@ export function EventCardContent({
 
       {showBreakdown ? (
         <>
-          <p className="mb-1 text-sm font-normal">Reserved on this booking:</p>
+          <p className="mb-1 text-sm font-normal">
+            {t("calendar.reservedOnBooking")}
+          </p>
           <ul className="mb-3 flex flex-col gap-1">
             {orderedSlices.map((slice, index) => (
               <li

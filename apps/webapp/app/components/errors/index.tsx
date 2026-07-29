@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Component, lazy, Suspense, useEffect, useState } from "react";
 import * as Sentry from "@sentry/react-router";
+import { useTranslation } from "react-i18next";
 import { isRouteErrorResponse, useLocation, useRouteError } from "react-router";
 
 import { useUserData } from "~/hooks/use-user-data";
@@ -59,27 +60,27 @@ function splitIntoStableLines(message: string) {
 }
 
 export const ErrorContent = ({ className }: ErrorContentProps) => {
+  const { t } = useTranslation();
   const loc = useLocation();
   const response = useRouteError();
 
   /* Present when the authenticated app layout rendered (child-route errors).
    * That is also the only case where /api/feedback can accept a report, so
-   * the "Report this issue" button is gated on it. */
+   * the t("feedback.reportThisIssue") button is gated on it. */
   const user = useUserData();
   const [reportOpen, setReportOpen] = useState(false);
   /* Flipped when the modal chunk fails to load/render: the report UI hides
    * instead of leaving a button that blanks the page when clicked */
   const [reportBroken, setReportBroken] = useState(false);
 
-  let title = "Oops, something went wrong";
-  let message =
-    "There was an unexpected error. Please refresh to try again. If the issues persists, please contact support.";
+  let title = t("ui.oopsSomethingWentWrong");
+  let message = t("errors.unexpectedError");
   let traceId;
   let errorStatus;
 
   if (isRouteError(response)) {
     message = response.data.error.message;
-    title = response.data.error.title || "Oops, something went wrong";
+    title = response.data.error.title || t("ui.oopsSomethingWentWrong");
     traceId = response.data.error.traceId;
   }
 
@@ -106,7 +107,7 @@ export const ErrorContent = ({ className }: ErrorContentProps) => {
       setSentryEventId(
         Sentry.captureException(response, {
           tags: { source: "error-boundary" },
-        })
+        }),
       );
     }
   }, [response, error404.isError404]);
@@ -130,7 +131,7 @@ export const ErrorContent = ({ className }: ErrorContentProps) => {
     <div
       className={tw(
         "flex size-full h-dvh items-center justify-center",
-        className
+        className,
       )}
     >
       <div className="flex flex-col items-center text-center">
@@ -152,10 +153,10 @@ export const ErrorContent = ({ className }: ErrorContentProps) => {
         )}
         <div className=" mt-8 flex gap-3">
           <Button to="/" variant="secondary" icon="home">
-            Back to home
+            {t("ui.backToHome")}
           </Button>
           <Button to={loc.pathname} reloadDocument>
-            Reload page
+            {t("ui.reloadPage")}
           </Button>
           {user && !reportBroken ? (
             <Button
@@ -163,7 +164,7 @@ export const ErrorContent = ({ className }: ErrorContentProps) => {
               variant="secondary"
               onClick={() => setReportOpen(true)}
             >
-              Report this issue
+              {t("feedback.reportThisIssue")}
             </Button>
           ) : null}
         </div>

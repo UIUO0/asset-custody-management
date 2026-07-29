@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { GrayBadge } from "../shared/gray-badge";
 import {
   Tooltip,
@@ -13,6 +14,7 @@ export const SSOUserBadge = ({
   userId: string;
   sso: boolean;
 }) => {
+  const { t } = useTranslation();
   if (!sso) return null;
 
   return (
@@ -22,15 +24,9 @@ export const SSOUserBadge = ({
           <GrayBadge className="ms-2">SSO</GrayBadge>
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-72">
-          <h4>SSO user</h4>
+          <h4>{t("ui.ssoUser")}</h4>
 
-          <p className="mt-2">
-            This user signs in with Single Sign-On (SSO). Their access is
-            managed by an external identity provider. On every login attempt,
-            their permissions and access will be revalidated. If you want to
-            remove them immediately, use the revoke access user action here. You
-            will still need to remove them from the IDP to make this complete.
-          </p>
+          <p className="mt-2">{t("team.ssoUserHint")}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

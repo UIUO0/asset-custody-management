@@ -1,4 +1,5 @@
 import type { Barcode } from "@prisma/client";
+import { useTranslation } from "react-i18next";
 import type { MetaFunction, LoaderFunctionArgs } from "react-router";
 import { data, useLoaderData } from "react-router";
 import { z } from "zod";
@@ -85,6 +86,7 @@ export const handle = {
 };
 
 export default function KitOverview() {
+  const { t } = useTranslation();
   const { kit, currentOrganization, locale } = useLoaderData<typeof loader>();
   const { canUseBarcodes } = useBarcodePermissions();
   // Multiplies per-unit `valuation` by `AssetKit.quantity` — units of
@@ -108,7 +110,7 @@ export default function KitOverview() {
         {kit?.qrCodes?.[0] ? (
           <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
             <span className="w-1/4 text-[14px] font-medium text-gray-900">
-              QR ID
+              {t("assetOverview.qrId")}
             </span>
             <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
               {kit.qrCodes[0].id}
@@ -117,7 +119,7 @@ export default function KitOverview() {
         ) : null}
         <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
           <span className="w-1/4 text-[14px] font-medium text-gray-900">
-            Created
+            {t("audits.created")}
           </span>
           <div className="mt-1 w-3/5 text-gray-600 md:mt-0">
             <DateS date={kit.createdAt} includeTime />
@@ -127,7 +129,7 @@ export default function KitOverview() {
         {kit?.description ? (
           <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
             <span className="w-1/4 text-[14px] font-medium text-gray-900">
-              Description
+              {t("assets.description")}
             </span>
             <div className="mt-1 whitespace-pre-wrap text-gray-600 md:mt-0 md:w-3/5">
               {kit.description}
@@ -138,7 +140,7 @@ export default function KitOverview() {
         <When truthy={!!kit.category}>
           <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
             <span className="w-1/4 text-[14px] font-medium text-gray-900">
-              Category
+              {t("assets.category")}
             </span>
             <div className="mt-1 whitespace-pre-wrap text-gray-600 md:mt-0 md:w-3/5">
               <CategoryBadge category={kit.category} />
@@ -149,7 +151,7 @@ export default function KitOverview() {
         <When truthy={!!kit.location}>
           <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
             <span className="w-1/4 text-[14px] font-medium text-gray-900">
-              Location
+              {t("assets.location")}
             </span>
             <div className="mt-1 md:mt-0 md:w-3/5">
               {kit.location ? (
@@ -173,11 +175,8 @@ export default function KitOverview() {
               iconClassName="size-4"
               content={
                 <>
-                  <h6>Total value</h6>
-                  <p>
-                    A sum of all assets' values in this kit. If no assets are
-                    present, this will be zero.
-                  </p>
+                  <h6>{t("bookings.totalValue")}</h6>
+                  <p>{t("kits.totalValueHint")}</p>
                 </>
               }
             />
@@ -207,11 +206,8 @@ export default function KitOverview() {
                 iconClassName="size-4"
                 content={
                   <>
-                    <h6>Barcodes support</h6>
-                    <p>
-                      Alternative barcodes let you scan kits with the codes you
-                      already use.
-                    </p>
+                    <h6>{t("assetOverview.barcodesSupport")}</h6>
+                    <p>{t("kits.altBarcodesHint")}</p>
                   </>
                 }
               />

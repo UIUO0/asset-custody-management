@@ -42,17 +42,17 @@ vi.mock("~/utils/client-hints", () => ({
 // why: custody-view gating is orthogonal to this hook's shape-normalization;
 // force it off so event titles stay the plain booking name.
 vi.mock(
-  "~/utils/permissions/custody-and-bookings-permissions.validator.client",
+  "~/utils/permissions/custody-and-bookings-permissions.validator",
   () => ({
     userHasCustodyViewPermission: () => false,
-  })
+  }),
 );
 
 /** Builds a minimal AdvancedAssetBooking with sane defaults. Advanced-mode
  * elements carry the per-slice `assetKitId`/`kitName`/`quantity` inline, so
  * overriding those on the booking mirrors one flattened advanced-mode row. */
 function makeBooking(
-  overrides: Partial<AdvancedAssetBooking> = {}
+  overrides: Partial<AdvancedAssetBooking> = {},
 ): AdvancedAssetBooking {
   return {
     id: "booking-1",
@@ -74,7 +74,7 @@ function makeSlice(
     assetKitId?: string | null;
     kitName?: string | null;
     quantity?: number;
-  } = {}
+  } = {},
 ): {
   booking: AdvancedAssetBooking;
   assetKitId: string | null;
@@ -178,7 +178,7 @@ describe("useAssetAvailabilityData", () => {
           kitName: "Camera Kit",
           quantity: 3,
         }),
-      ])
+      ]),
     );
   });
 
@@ -290,7 +290,7 @@ describe("useAssetAvailabilityData", () => {
           kitName: "Camera Kit",
           quantity: 3,
         }),
-      ])
+      ]),
     );
   });
 
@@ -324,7 +324,7 @@ describe("useAssetAvailabilityData", () => {
       },
     ] as unknown as Items;
     const { result: r1 } = renderHook(() =>
-      useAssetAvailabilityData(twoBookings)
+      useAssetAvailabilityData(twoBookings),
     );
     expect(r1.current.events).toHaveLength(2);
 
@@ -335,7 +335,7 @@ describe("useAssetAvailabilityData", () => {
       { id: "asset-2", title: "Lens", bookings: [makeBooking({ id: "b1" })] },
     ] as unknown as Items;
     const { result: r2 } = renderHook(() =>
-      useAssetAvailabilityData(twoAssets)
+      useAssetAvailabilityData(twoAssets),
     );
     expect(r2.current.events).toHaveLength(2);
     expect(new Set(r2.current.events.map((e) => e.resourceId)).size).toBe(2);
@@ -362,7 +362,7 @@ describe("useAssetAvailabilityData", () => {
     const { result } = renderHook(() => useAssetAvailabilityData(items));
 
     const byResource = new Map(
-      result.current.events.map((e) => [e.resourceId, e.extendedProps])
+      result.current.events.map((e) => [e.resourceId, e.extendedProps]),
     );
     expect(byResource.get("asset-qt")?.quantityTracked).toBe(true);
     // INDIVIDUAL asset booked via a kit → quantityTracked false, so the

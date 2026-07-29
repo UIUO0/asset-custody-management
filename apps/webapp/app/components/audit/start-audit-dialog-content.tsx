@@ -17,6 +17,7 @@
 
 import type { ChangeEvent } from "react";
 import { useEffect, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 import AuditTeamMemberSelector from "~/components/audit/audit-team-member-selector";
@@ -96,6 +97,7 @@ export function StartAuditDialogContent({
   dueDateError,
   assigneeError,
 }: StartAuditDialogContentProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isNavigating = useDisabled();
   const formDisabled = disabled || isNavigating;
@@ -106,7 +108,7 @@ export function StartAuditDialogContent({
   const descriptionCounterId = useId();
 
   const handleDescriptionChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     setDescriptionLength(event.currentTarget.value.length);
   };
@@ -126,8 +128,8 @@ export function StartAuditDialogContent({
         <div className="py-4 pe-6">
           <Input
             name={nameField}
-            label="Audit name"
-            placeholder="Quarterly warehouse audit"
+            label={t("audits.auditName")}
+            placeholder={t("audits.auditNamePlaceholder")}
             error={nameError}
             required
             disabled={formDisabled}
@@ -136,8 +138,8 @@ export function StartAuditDialogContent({
 
           <Input
             name={descriptionField}
-            label="Description"
-            placeholder="Add context that will help auditors (optional)."
+            label={t("assets.description")}
+            placeholder={t("audits.descriptionHint")}
             inputType="textarea"
             rows={5}
             maxLength={AUDIT_DESCRIPTION_MAX_LENGTH}
@@ -157,7 +159,7 @@ export function StartAuditDialogContent({
 
           <Input
             name={dueDateField}
-            label="Due date"
+            label={t("audits.dueDate")}
             type="datetime-local"
             error={dueDateError}
             disabled={formDisabled}
@@ -168,11 +170,10 @@ export function StartAuditDialogContent({
         {/* Right column: Team member selector */}
         <div className="!border-r">
           <Separator className="md:hidden" />
-          <p className="p-3 pb-0 font-medium">Select assignee (optional).</p>
-          <p className="border-b p-3 ">
-            If no assignee is selected, any admin user can perform the audit.
-            This can also be done by multiple users at different times.
+          <p className="p-3 pb-0 font-medium">
+            {t("audits.selectAssigneeDot")}
           </p>
+          <p className="border-b p-3 ">{t("audits.assigneeOptionalHint")}</p>
           <AuditTeamMemberSelector error={assigneeError} />
         </div>
       </div>
@@ -185,10 +186,10 @@ export function StartAuditDialogContent({
           disabled={formDisabled}
           onClick={handleCloseDialog}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button type="submit" variant="primary" disabled={formDisabled}>
-          Create audit
+          {t("audits.createAudit")}
         </Button>
       </div>
     </>

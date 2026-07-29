@@ -196,6 +196,7 @@ export type AdvancedIndexAsset = Pick<
   | "minQuantity"
   | "consumptionType"
   | "availableToBook"
+  | "lifecycleStage"
 > & {
   qrId: string; // QR code will always be available
   assetModelId?: string | null;

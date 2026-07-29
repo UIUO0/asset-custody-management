@@ -110,6 +110,7 @@ function AuditDrawerFooter({
   };
   expanded: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={tw(
@@ -119,7 +120,7 @@ function AuditDrawerFooter({
     >
       {/* Close button */}
       <Button type="button" variant="secondary" to=".." className="ms-auto">
-        Close
+        {t("common.close")}
       </Button>
       {/* Complete Audit dialog trigger */}
       <CompleteAuditDialog
@@ -514,9 +515,11 @@ export function AuditDrawer({
               <div className="flex flex-wrap items-center gap-1">
                 <span className={assetTypeBadgeClass}>asset</span>
                 <AvailabilityBadge
-                  badgeText="Pending"
-                  tooltipTitle="Pending scan"
-                  tooltipContent="This asset is expected but has not been scanned yet."
+                  badgeText={t("assetForm.lifecyclePendingLabel")}
+                  tooltipTitle={t("scanner.pendingScan")}
+                  tooltipContent={t(
+                    "ui.thisAssetIsExpectedButHasNotBeenScannedYet",
+                  )}
                   className="border-gray-200 bg-gray-50 text-gray-600"
                 />
                 {/* Action buttons for notes and images on pending assets */}
