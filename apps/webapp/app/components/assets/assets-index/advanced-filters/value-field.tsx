@@ -27,6 +27,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/shared/tooltip";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
 import { useHints } from "~/utils/client-hints";
 import {
@@ -211,12 +212,15 @@ export function ValueField({
   }, [filter.operator, filter.type, localValue]);
 
   // Use a combined error that takes both into account
-  const error = useMemo(() => {
-    // If there's a local validation error from validateBetweenFilter, show that
-    if (localError) return localError;
-    // Otherwise show any zorm validation error
-    return zormError;
-  }, [localError, zormError]);
+  const resolveValidationMessage = useValidationMessage();
+  const error = useMemo(
+    () =>
+      // If there's a local validation error from validateBetweenFilter, show that
+      // Otherwise show any zorm validation error. Either way the message is
+      // localised here so every branch below renders translated copy.
+      resolveValidationMessage(localError ?? zormError),
+    [localError, zormError, resolveValidationMessage],
+  );
 
   useEffect(() => {
     validateBetweenFilter();
@@ -2232,10 +2236,11 @@ export function DateField({
   const [localError, setLocalError] = useState<string | null>(null);
   // Combine local and zorm errors
 
-  const combinedError = useMemo(() => {
-    if (localError) return localError;
-    return error;
-  }, [localError, error]);
+  const resolveValidationMessage = useValidationMessage();
+  const combinedError = useMemo(
+    () => resolveValidationMessage(localError ?? error),
+    [localError, error, resolveValidationMessage],
+  );
 
   useEffect(() => {
     if (Array.isArray(filter.value)) {

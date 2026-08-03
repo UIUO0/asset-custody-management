@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Separator } from "~/components/shared/separator";
 import When from "~/components/when/when";
 import useApiQuery from "~/hooks/use-api-query";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import type { ReminderTeamMember } from "~/routes/api+/reminders.team-members";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
@@ -20,9 +21,13 @@ type TeamMembersSelectorProps = {
 export default function TeamMembersSelector({
   className,
   style,
-  error,
+  error: errorProp,
   defaultValues,
 }: TeamMembersSelectorProps) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>(

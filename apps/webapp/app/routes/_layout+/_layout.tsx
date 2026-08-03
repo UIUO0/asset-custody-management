@@ -44,6 +44,7 @@ import { UnpaidInvoiceBanner } from "~/components/subscription/unpaid-invoice-ba
 import { config } from "~/config/shelf.config";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
+import { countPendingBookingRequests } from "~/modules/booking/request.server";
 import { getBookingSettingsForOrganization } from "~/modules/booking-settings/service.server";
 import { CHANGE_CURRENT_ORGANIZATION_ACTION } from "~/modules/organization/constants";
 import {
@@ -65,6 +66,11 @@ import { isLikeShelfError, makeShelfError, ShelfError } from "~/utils/error";
 import { isRouteError } from "~/utils/http";
 import { payload, error } from "~/utils/http.server";
 import { skipRevalidationOnClientViewChange } from "~/utils/list-view-params";
+import {
+  PermissionAction,
+  PermissionEntity,
+} from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import type { CustomerWithSubscriptions } from "~/utils/stripe.server";
 
 import {
@@ -194,17 +200,41 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     // Run booking settings, working hours, and unread count in parallel —
     // all only depend on organizationId/userId which are available now.
-    const [bookingSettings, workingHours, unreadUpdatesCount] =
-      await Promise.all([
-        getBookingSettingsForOrganization(currentOrganization.id),
-        getWorkingHoursForOrganization(currentOrganization.id),
-        currentOrganizationUserRoles?.[0]
-          ? getUnreadCountForUser({
-              userId: authSession.userId,
-              userRole: currentOrganizationUserRoles[0],
-            })
-          : Promise.resolve(0),
-      ]);
+    /**
+     * The requests badge is only fetched for the roles that can act on the
+     * queue — nobody else's sidebar shows it, so counting for them would be a
+     * query per page load for a number never rendered.
+     */
+    const canSeeRequests =
+      userHasPermission({
+        roles: currentOrganizationUserRoles ?? [],
+        entity: PermissionEntity.booking,
+        action: PermissionAction.approve,
+      }) ||
+      userHasPermission({
+        roles: currentOrganizationUserRoles ?? [],
+        entity: PermissionEntity.booking,
+        action: PermissionAction.hold,
+      });
+
+    const [
+      bookingSettings,
+      workingHours,
+      unreadUpdatesCount,
+      pendingRequestCount,
+    ] = await Promise.all([
+      getBookingSettingsForOrganization(currentOrganization.id),
+      getWorkingHoursForOrganization(currentOrganization.id),
+      currentOrganizationUserRoles?.[0]
+        ? getUnreadCountForUser({
+            userId: authSession.userId,
+            userRole: currentOrganizationUserRoles[0],
+          })
+        : Promise.resolve(0),
+      canSeeRequests
+        ? countPendingBookingRequests(currentOrganization.id)
+        : Promise.resolve(0),
+    ]);
 
     return data(
       payload({
@@ -224,6 +254,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         canUseBookings: canUseBookings(currentOrganization),
         canUseAudits: canUseAudits(currentOrganization),
         unreadUpdatesCount,
+        pendingRequestCount,
         hasUnpaidInvoice: user.hasUnpaidInvoice,
         warnForNoPaymentMethod: user.warnForNoPaymentMethod,
         needsSequentialIdMigration,

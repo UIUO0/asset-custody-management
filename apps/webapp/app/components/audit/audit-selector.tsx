@@ -10,6 +10,7 @@ import {
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "~/components/shared/button";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
 import { ChevronRight } from "../icons/library";
@@ -49,10 +50,16 @@ const AuditSelector: FunctionComponent<AuditSelectorProps> = ({
   defaultValue,
   className,
   disabled,
-  error,
+  error: errorProp,
   isLoading = false,
 }) => {
   const { t } = useTranslation();
+
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
+
   // `selectedAudit` is initialized from `defaultValue` at mount using a lazy
   // initializer. Downstream callers don't currently change `defaultValue`
   // after mount, and the local selection is owned by this component once the

@@ -311,6 +311,9 @@ export async function action({ context, request }: ActionFunctionArgs) {
     }
 
     const booking = await createBooking({
+      // An employee's booking enters the المستودعات approval queue instead of
+      // being immediately reservable. Operational roles book directly.
+      isScopedToOwnRecords,
       booking: {
         from,
         to,

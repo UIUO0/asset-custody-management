@@ -59,7 +59,7 @@ export function getHints(request?: Request) {
       if ("transform" in hint) {
         // @ts-expect-error - this is fine (PRs welcome though)
         acc[hintName] = hint.transform(
-          getCookieValue(cookieString, hintName) ?? hint.fallback
+          getCookieValue(cookieString, hintName) ?? hint.fallback,
         );
       } else {
         acc[hintName] = getCookieValue(cookieString, hintName) ?? hint.fallback;
@@ -72,7 +72,7 @@ export function getHints(request?: Request) {
       }
         ? ReturnValue
         : (typeof clientHints)[name]["fallback"];
-    }
+    },
   );
 }
 
@@ -146,7 +146,7 @@ if (cookieChanged && navigator.cookieEnabled) {
  */
 export function getDateTimeFormat(
   request: Request,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ) {
   const locale = getLocale(request);
 
@@ -159,7 +159,7 @@ export function getDateTimeFormat(
 
 export function getDateTimeFormatFromHints(
   hints: ClientHint,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ) {
   // change your default options here
   const defaultOptions: Intl.DateTimeFormatOptions = {
@@ -168,8 +168,21 @@ export function getDateTimeFormatFromHints(
     day: "numeric",
   };
 
+  /**
+   * `dateStyle` / `timeStyle` are "formatter shortcuts" and the Intl spec makes
+   * them mutually exclusive with the granular component options (`year`,
+   * `month`, `day`, `hour`, …). Mixing the two throws
+   * `TypeError: Invalid option : option` at construction time — which, inside a
+   * render, takes the whole route down.
+   *
+   * The guard used to test `timeStyle` only, so a caller passing `dateStyle`
+   * alone still got the granular defaults merged in and crashed. Skip the
+   * defaults whenever *either* shortcut is present.
+   */
+  const usesStyleShortcut = Boolean(options?.dateStyle || options?.timeStyle);
+
   options = {
-    ...(options?.timeStyle ? {} : defaultOptions),
+    ...(usesStyleShortcut ? {} : defaultOptions),
     ...options,
     timeZone: options?.timeZone ?? hints.timeZone,
   };
@@ -208,6 +221,6 @@ export function parseDateOnlyString(date: string) {
   return new Date(
     year,
     month - 1, // Converting month to JS format
-    day
+    day,
   );
 }

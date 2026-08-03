@@ -22,6 +22,15 @@ export enum PermissionAction {
    * move it forward in the lifecycle, and vice versa.
    */
   approve = "approve",
+  /**
+   * EPDA: freezing an item for review without deciding it.
+   *
+   * Deliberately NOT a weaker form of `approve`. المخزون hold booking requests
+   * they want a second look at, but may never accept or reject one; المستودعات
+   * decide requests but do not place holds. Two different jobs, two different
+   * actions — collapsing them into one would hand each role the other's power.
+   */
+  hold = "hold",
 }
 export enum PermissionEntity {
   asset = "asset",
@@ -518,6 +527,12 @@ export const Role2PermissionMap: {
       PermissionAction.cancel,
       PermissionAction.extend,
       PermissionAction.export,
+      /**
+       * المستودعات decide employee requests: accept (the booking may now hold
+       * inventory) or reject with a reason. They cannot place a review hold —
+       * that is المخزون's check on this decision.
+       */
+      PermissionAction.approve,
     ],
     [PermissionEntity.bookingNote]: [
       PermissionAction.read,
@@ -696,7 +711,12 @@ export const Role2PermissionMap: {
     // it does not author asset data.
     [PermissionEntity.asset]: [PermissionAction.read, PermissionAction.delete],
     [PermissionEntity.assetIndexSettings]: [PermissionAction.read],
-    [PermissionEntity.booking]: [PermissionAction.read],
+    /**
+     * المخزون review the request queue without deciding it: they may freeze a
+     * request (and release their own freeze), but accept/reject stays with
+     * المستودعات. `hold` without `approve` is exactly that separation.
+     */
+    [PermissionEntity.booking]: [PermissionAction.read, PermissionAction.hold],
     [PermissionEntity.bookingNote]: [PermissionAction.read],
     [PermissionEntity.auditNote]: [PermissionAction.read],
     [PermissionEntity.qr]: [PermissionAction.read],

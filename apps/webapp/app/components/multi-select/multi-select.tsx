@@ -4,6 +4,7 @@ import { InfoIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ReactTags } from "react-tag-autocomplete";
 import type { Tag } from "react-tag-autocomplete";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { tw } from "~/utils/tw";
 import { InnerLabel } from "../forms/inner-label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../shared/tooltip";
@@ -34,12 +35,16 @@ export default function MultiSelect<T>({
   name,
   defaultSelected,
   disabled,
-  error,
+  error: errorProp,
   tooltip,
   placeholder,
   hideLabel = false,
   required = false,
 }: MultiSelectProps<T>) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   const { t } = useTranslation();
   /* This is a workaround for the SSR issue with react-tag-autocomplete */
   if (typeof document === "undefined") {

@@ -11,6 +11,7 @@ import {
 import { CheckIcon, ChevronDownIcon, SearchIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
 import When from "../when/when";
@@ -30,8 +31,12 @@ export default function KitSelector({
   name,
   placeholder: placeholderProp,
   isLoading = false,
-  error,
+  error: errorProp,
 }: KitSelectorProps) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   const { t } = useTranslation();
   /** Falls back to the translated default when the caller omits `placeholder`. */
   const placeholder = placeholderProp ?? t("bulkActions.selectAKit");

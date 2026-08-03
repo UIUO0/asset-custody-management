@@ -7,6 +7,7 @@ import { Separator } from "~/components/shared/separator";
 import When from "~/components/when/when";
 import useApiQuery from "~/hooks/use-api-query";
 import { useUserData } from "~/hooks/use-user-data";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import type { AuditTeamMember } from "~/routes/api+/audits.team-members";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { tw } from "~/utils/tw";
@@ -27,9 +28,13 @@ type AuditTeamMemberSelectorProps = {
 export default function AuditTeamMemberSelector({
   className,
   style,
-  error,
+  error: errorProp,
   defaultValue,
 }: AuditTeamMemberSelectorProps) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   // Lazy initializer avoids a false-positive derived-state lint: after mount this

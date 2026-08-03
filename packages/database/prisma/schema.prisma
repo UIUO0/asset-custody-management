@@ -89,6 +89,10 @@ model User {
   userOrganizations  UserOrganization[]
   bookings           Booking[]          @relation("creator")
   custodies          Booking[]          @relation("custodian")
+  /// EPDA: booking requests this user accepted or rejected (المستودعات)
+  bookingApprovals   Booking[]          @relation("bookingApprovalDecider")
+  /// EPDA: booking requests this user put on review hold (المخزون)
+  bookingReviewHolds Booking[]          @relation("bookingReviewHolder")
   createdKits        Kit[]
   tierId             TierId             @default(free)
   tier               Tier               @relation(fields: [tierId], references: [id])
@@ -1414,6 +1418,22 @@ model Announcement {
   updatedAt DateTime @updatedAt
 }
 
+/// EPDA: where a booking sits in the المستودعات approval queue.
+///
+/// Deliberately separate from `BookingStatus`, which tracks the *lifecycle* of
+/// an approved booking (draft → reserved → ongoing → complete). A booking can
+/// be DRAFT and APPROVED, or DRAFT and PENDING — they answer different
+/// questions.
+enum BookingApprovalState {
+  /// Raised by an employee, waiting on المستودعات. Cannot be reserved.
+  PENDING
+  /// Accepted — behaves like any pre-EPDA booking.
+  APPROVED
+  /// Turned down with a reason. Kept rather than deleted so the employee can
+  /// see what happened and the decision stays auditable.
+  REJECTED
+}
+
 enum BookingStatus {
   DRAFT
   RESERVED
@@ -1580,11 +1600,52 @@ model Booking {
 
   cancellationReason String?
 
+  // ── EPDA request workflow (مسار الطلبات) ──────────────────────────────
+  //
+  // A booking raised by an ordinary employee is a *request*: it exists, but
+  // it holds no inventory until المستودعات accept it. Bookings created by
+  // operational roles skip the queue (they start APPROVED) — the gate exists
+  // to review what employees ask for, not to make the warehouse approve
+  // itself.
+  //
+  // Modelled as a separate field rather than a new `BookingStatus` member on
+  // purpose: `status` is switched on exhaustively in dozens of places, and
+  // widening it would silently change every one of those flows.
+  approvalState BookingApprovalState @default(PENDING)
+
+  /// When the accept/reject decision was made. Null while still queued.
+  approvalDecidedAt DateTime? @db.Timestamptz(3)
+
+  approvalDecidedBy   User?   @relation("bookingApprovalDecider", fields: [approvalDecidedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  approvalDecidedById String?
+
+  /// Mandatory on rejection, optional on acceptance.
+  approvalNote String?
+
+  // ── Review hold (تعليق للمراجعة) ──────────────────────────────────────
+  //
+  // المخزون cannot accept or reject, but can freeze a request for review.
+  // While frozen, the accept/reject actions are blocked for المستودعات too —
+  // that is the whole point of the hold. Modelled as a nullable timestamp
+  // rather than a boolean so "who held it, when, and why" comes for free.
+  reviewHoldAt DateTime? @db.Timestamptz(3)
+
+  reviewHoldBy   User?   @relation("bookingReviewHolder", fields: [reviewHoldById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  reviewHoldById String?
+
+  /// Mandatory when placing a hold — it is the only record of why someone
+  /// else's request stopped moving.
+  reviewHoldReason String?
+
   // Per-booking notification recipients (team members who receive all email updates for this booking)
   notificationRecipients TeamMember[] @relation("BookingNotificationRecipients")
 
   // Indexes for foreign keys
   @@index([creatorId])
+  @@index([approvalDecidedById])
+  @@index([reviewHoldById])
+  /// Drives the requests queue: "pending requests in this workspace".
+  @@index([organizationId, approvalState])
   @@index([custodianTeamMemberId])
   @@index([custodianUserId])
   @@index([organizationId])

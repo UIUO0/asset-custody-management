@@ -290,6 +290,9 @@ type Pages = {
       auditAssetId: string;
     };
   };
+  "/available-assets": {
+    params: {};
+  };
   "/bookings": {
     params: {};
   };
@@ -523,6 +526,9 @@ type Pages = {
   "/me/notes": {
     params: {};
   };
+  "/my-custody": {
+    params: {};
+  };
   "/reminders": {
     params: {};
   };
@@ -538,6 +544,9 @@ type Pages = {
     params: {
       fileName: string;
     };
+  };
+  "/requests": {
+    params: {};
   };
   "/scanner-sam-id": {
     params: {};
@@ -1274,6 +1283,7 @@ type RouteFiles = {
       | "/audits/:auditId/overview"
       | "/audits/:auditId/scan"
       | "/audits/:auditId/scan/:auditAssetId/details"
+      | "/available-assets"
       | "/bookings"
       | "/bookings/:bookingId"
       | "/bookings/:bookingId/activity"
@@ -1327,10 +1337,12 @@ type RouteFiles = {
       | "/me/bookings"
       | "/me/note"
       | "/me/notes"
+      | "/my-custody"
       | "/reminders"
       | "/reports"
       | "/reports/:reportId"
       | "/reports/export/:fileName.csv"
+      | "/requests"
       | "/scanner-sam-id"
       | "/scanner"
       | "/settings"
@@ -1651,6 +1663,7 @@ type RouteFiles = {
       | "/audits/:auditId/overview"
       | "/audits/:auditId/scan"
       | "/audits/:auditId/scan/:auditAssetId/details"
+      | "/available-assets"
       | "/bookings"
       | "/bookings/:bookingId"
       | "/bookings/:bookingId/activity"
@@ -1704,10 +1717,12 @@ type RouteFiles = {
       | "/me/bookings"
       | "/me/note"
       | "/me/notes"
+      | "/my-custody"
       | "/reminders"
       | "/reports"
       | "/reports/:reportId"
       | "/reports/export/:fileName.csv"
+      | "/requests"
       | "/scanner-sam-id"
       | "/scanner"
       | "/settings"
@@ -2088,6 +2103,10 @@ type RouteFiles = {
     id: "routes/_layout+/audits._index";
     page: "/audits";
   };
+  "routes/_layout+/available-assets.tsx": {
+    id: "routes/_layout+/available-assets";
+    page: "/available-assets";
+  };
   "routes/_layout+/bookings.tsx": {
     id: "routes/_layout+/bookings";
     page:
@@ -2423,6 +2442,10 @@ type RouteFiles = {
     id: "routes/_layout+/me.notes";
     page: "/me/notes";
   };
+  "routes/_layout+/my-custody.tsx": {
+    id: "routes/_layout+/my-custody";
+    page: "/my-custody";
+  };
   "routes/_layout+/reminders.tsx": {
     id: "routes/_layout+/reminders";
     page: "/reminders";
@@ -2446,6 +2469,10 @@ type RouteFiles = {
   "routes/_layout+/reports.export.$fileName[.csv].tsx": {
     id: "routes/_layout+/reports.export.$fileName[.csv]";
     page: "/reports/export/:fileName.csv";
+  };
+  "routes/_layout+/requests.tsx": {
+    id: "routes/_layout+/requests";
+    page: "/requests";
   };
   "routes/_layout+/scanner-sam-id.ts": {
     id: "routes/_layout+/scanner-sam-id";
@@ -3423,6 +3450,7 @@ type RouteModules = {
   "routes/_layout+/audits.$auditId.scan": typeof import("./app/routes/_layout+/audits.$auditId.scan.tsx");
   "routes/_layout+/audits.$auditId.scan.$auditAssetId.details": typeof import("./app/routes/_layout+/audits.$auditId.scan.$auditAssetId.details.tsx");
   "routes/_layout+/audits._index": typeof import("./app/routes/_layout+/audits._index.tsx");
+  "routes/_layout+/available-assets": typeof import("./app/routes/_layout+/available-assets.tsx");
   "routes/_layout+/bookings": typeof import("./app/routes/_layout+/bookings.tsx");
   "routes/_layout+/bookings.$bookingId": typeof import("./app/routes/_layout+/bookings.$bookingId.tsx");
   "routes/_layout+/bookings.$bookingId._index": typeof import("./app/routes/_layout+/bookings.$bookingId._index.tsx");
@@ -3483,12 +3511,14 @@ type RouteModules = {
   "routes/_layout+/me.bookings": typeof import("./app/routes/_layout+/me.bookings.tsx");
   "routes/_layout+/me.note": typeof import("./app/routes/_layout+/me.note.tsx");
   "routes/_layout+/me.notes": typeof import("./app/routes/_layout+/me.notes.tsx");
+  "routes/_layout+/my-custody": typeof import("./app/routes/_layout+/my-custody.tsx");
   "routes/_layout+/reminders": typeof import("./app/routes/_layout+/reminders.tsx");
   "routes/_layout+/reminders._index": typeof import("./app/routes/_layout+/reminders._index.tsx");
   "routes/_layout+/reports": typeof import("./app/routes/_layout+/reports.tsx");
   "routes/_layout+/reports.$reportId": typeof import("./app/routes/_layout+/reports.$reportId.tsx");
   "routes/_layout+/reports._index": typeof import("./app/routes/_layout+/reports._index.tsx");
   "routes/_layout+/reports.export.$fileName[.csv]": typeof import("./app/routes/_layout+/reports.export.$fileName[.csv].tsx");
+  "routes/_layout+/requests": typeof import("./app/routes/_layout+/requests.tsx");
   "routes/_layout+/scanner-sam-id": typeof import("./app/routes/_layout+/scanner-sam-id.ts");
   "routes/_layout+/scanner": typeof import("./app/routes/_layout+/scanner.tsx");
   "routes/_layout+/settings": typeof import("./app/routes/_layout+/settings.tsx");

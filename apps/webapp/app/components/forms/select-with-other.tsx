@@ -12,6 +12,7 @@ import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import Input from "~/components/forms/input";
 import When from "~/components/when/when";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { handleActivationKeyPress } from "~/utils/keyboard";
 import { resolveSelectState } from "~/utils/options";
 import { tw } from "~/utils/tw";
@@ -74,7 +75,7 @@ export function SelectWithOther({
   label,
   name,
   options,
-  error,
+  error: errorProp,
   defaultValue,
   placeholder: placeholderProp,
   required,
@@ -84,6 +85,10 @@ export function SelectWithOther({
   onValueChange,
   className,
 }: SelectWithOtherProps) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   const { t } = useTranslation();
   /** Falls back to the translated default when the caller omits `placeholder`. */
   const placeholder = placeholderProp ?? t("list.selectAnOption");

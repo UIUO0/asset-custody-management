@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/forms/select";
+import { useValidationMessage } from "~/i18n/validation-messages";
 
 /**
  * Represents a time option for the select dropdown
@@ -180,10 +181,15 @@ export const TimeSelect: FC<TimeSelectProps> = ({
   placeholder,
   required = false,
   className,
-  error,
+  error: errorProp,
   "aria-label": ariaLabel,
 }) => {
   const { t } = useTranslation();
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
+
   /** Falls back to the translated default when the caller omits `placeholder`. */
   const resolvedPlaceholder = placeholder ?? t("ui.selectTime");
 

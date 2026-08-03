@@ -2,6 +2,7 @@ import * as React from "react";
 import type { ComponentPropsWithoutRef, ElementRef } from "react";
 import { OTPInput, OTPInputContext } from "input-otp";
 import { Minus } from "lucide-react";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { tw } from "~/utils/tw";
 import { InnerLabel } from "./inner-label";
 
@@ -13,7 +14,7 @@ const InputOTP = React.forwardRef<
     ref={ref}
     containerClassName={tw(
       "flex items-center gap-2 has-[:disabled]:opacity-50",
-      containerClassName
+      containerClassName,
     )}
     className={tw("disabled:cursor-not-allowed", className)}
     {...props}
@@ -42,7 +43,7 @@ const InputOTPSlot = React.forwardRef<
       className={tw(
         "border-input relative flex h-[42px] w-full items-center justify-center border-y border-r border-gray-300 text-[16px]  transition-all first:rounded-l-[4px] first:border-l last:rounded-r-[4px]",
         isActive && "z-10 ring-1 ring-primary-500",
-        className
+        className,
       )}
       {...props}
     >
@@ -68,12 +69,16 @@ const InputOTPSeparator = React.forwardRef<
 InputOTPSeparator.displayName = "InputOTPSeparator";
 
 function ShelfOTP({
-  error,
+  error: errorProp,
   onComplete,
 }: {
   error?: string;
   onComplete?: (otp: string) => void;
 }) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   return (
     <div>
       <label className={tw("relative flex flex-col")} htmlFor={"otp"}>

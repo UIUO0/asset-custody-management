@@ -11,6 +11,7 @@ import {
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useNavigation } from "react-router";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import type { ShelfAssetCustomFieldValueType } from "~/modules/asset/types";
 import type { loader } from "~/routes/_layout+/assets.$assetId_.edit";
 import { useHints } from "~/utils/client-hints";
@@ -62,7 +63,10 @@ export default function AssetCustomFields({
 
   // Get field errors from the plain object passed from parent
   // This avoids react-zorm + React 19 incompatibility
-  const getFieldError = (fieldId: string) => fieldErrors[fieldId];
+  // Messages are localised here — the single accessor every field goes through.
+  const resolveValidationMessage = useValidationMessage();
+  const getFieldError = (fieldId: string) =>
+    resolveValidationMessage(fieldErrors[fieldId]);
 
   // Get required status from the custom field definition itself
   const isFieldRequired = (fieldId: string) => {

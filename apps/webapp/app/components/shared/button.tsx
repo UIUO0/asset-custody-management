@@ -8,6 +8,7 @@ import type {
 import { ExternalLinkIcon } from "@radix-ui/react-icons";
 import { useTranslation } from "react-i18next";
 import { Link, type LinkProps } from "react-router";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { tw } from "~/utils/tw";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "./hover-card";
 import type { IconType } from "./icons-map";
@@ -200,7 +201,7 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
       children,
       onlyIconOnMobile,
       onlyNewTabIconOnHover = false,
-      error,
+      error: errorProp,
       hideErrorText = false,
       tooltip,
       label,
@@ -208,6 +209,11 @@ export const Button = React.forwardRef<HTMLElement, ButtonProps>(
     },
     ref,
   ) {
+    /** Validation copy is localised at the display boundary — see
+     * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+    const resolveValidationMessage = useValidationMessage();
+    const error = resolveValidationMessage(errorProp);
+
     const { t } = useTranslation();
     const Component = isLinkProps(props) ? Link : as;
 

@@ -202,6 +202,9 @@ export async function action({ request }: ActionFunctionArgs) {
     const to = toDt.toJSDate();
 
     const booking = await createBooking({
+      // An employee's booking enters the المستودعات approval queue instead of
+      // being immediately reservable. Operational roles book directly.
+      isScopedToOwnRecords,
       booking: {
         name: body.name,
         description: body.description ?? null,

@@ -1,4 +1,5 @@
 import {
+  BookingApprovalState,
   BookingStatus,
   AssetStatus,
   KitStatus,
@@ -663,6 +664,7 @@ export async function createBooking({
   assetIds,
   kitSlices,
   hints,
+  isScopedToOwnRecords = false,
 }: {
   /**
    * Booking object that contains all the required fields to create a booking
@@ -707,6 +709,16 @@ export async function createBooking({
    * Hints are used for setting the timezone of the booking
    */
   hints: ClientHint;
+  /**
+   * Whether the creator is scoped to their own records — i.e. an ordinary
+   * employee. Their bookings enter the المستودعات approval queue; bookings made
+   * by operational roles are approved on arrival, because the queue exists to
+   * review what employees ask for, not to make the warehouse approve itself.
+   *
+   * Optional and defaulting to "not scoped" so existing internal callers
+   * (duplicate, seed, imports) keep creating approved bookings unchanged.
+   */
+  isScopedToOwnRecords?: boolean;
 }) {
   try {
     const dataToCreate: Prisma.BookingCreateInput = {
@@ -715,6 +727,14 @@ export async function createBooking({
       to: booking.to,
       description: booking.description,
       status: BookingStatus.DRAFT,
+      /**
+       * An employee's booking is a *request* until المستودعات accept it; it
+       * cannot be reserved (see the gate in `reserveBooking`). Anyone with
+       * organization-wide scope books directly, as before.
+       */
+      approvalState: isScopedToOwnRecords
+        ? BookingApprovalState.PENDING
+        : BookingApprovalState.APPROVED,
       creator: { connect: { id: booking.creatorId } },
       organization: { connect: { id: booking.organizationId } },
       /**
@@ -1538,6 +1558,49 @@ export async function reserveBooking({
         status: 400,
         shouldBeCaptured: false,
         message: `This booking is already ${bookingFound.status.toLowerCase()}. Only DRAFT bookings can be reserved.`,
+      });
+    }
+
+    /**
+     * EPDA request gate.
+     *
+     * Reserving is the moment a booking starts holding inventory, so it is the
+     * moment the approval has to bite. A request المستودعات have not accepted —
+     * or one المخزون have frozen — must not get that far, whichever entry point
+     * asked (web overview action, mobile reserve endpoint, a stale tab).
+     *
+     * Enforced here rather than at the routes precisely because there are
+     * several entry points: this is the single place they all funnel through.
+     *
+     * Bookings created by operational roles start APPROVED, so they pass
+     * untouched, as does every booking that predates the workflow (the
+     * migration backfilled them).
+     */
+    if (bookingFound.approvalState !== BookingApprovalState.APPROVED) {
+      throw new ShelfError({
+        cause: null,
+        label,
+        status: 403,
+        shouldBeCaptured: false,
+        title: "Awaiting approval",
+        message:
+          bookingFound.approvalState === BookingApprovalState.REJECTED
+            ? "This request was rejected, so it cannot be reserved."
+            : "This request has not been accepted by the warehouse yet, so it cannot be reserved.",
+        additionalData: { id, approvalState: bookingFound.approvalState },
+      });
+    }
+
+    if (bookingFound.reviewHoldAt) {
+      throw new ShelfError({
+        cause: null,
+        label,
+        status: 409,
+        shouldBeCaptured: false,
+        title: "On hold for review",
+        message:
+          "This request is on hold for review and cannot be reserved until the hold is released.",
+        additionalData: { id, reviewHoldReason: bookingFound.reviewHoldReason },
       });
     }
 

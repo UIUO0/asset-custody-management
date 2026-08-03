@@ -33,7 +33,29 @@
 | Asset model     | طراز الأصل  |                                |
 | Reminder        | تذكير       |                                |
 | Barcode         | باركود      | يُبقى كما هو                   |
-| QR code         | رمز QR      |                                |
+
+### مصطلحات سير عمل الهيئة (مضافة)
+
+| English                | العربية         | ملاحظة                             |
+| ---------------------- | --------------- | ---------------------------------- |
+| Intake stage           | مرحلة الاستلام  | حقل `Asset.lifecycleStage`         |
+| Pending                | قيد الانتظار    | لم تعتمده المستودعات بعد           |
+| Ready for distribution | جاهز للتوزيع    | معتمَد وظاهر للموظفين              |
+| Approve and release    | اعتماد وإتاحة   | نقل الأصل إلى «جاهز للتوزيع»       |
+| Send back for review   | إرجاع للمراجعة  | سحب أصل من التداول — السبب إلزامي  |
+| Request                | طلب             | حجز رفعه موظف ولم يُبتَّ فيه       |
+| Requests queue         | الطلبات         | صفحة `/requests`                   |
+| Accept / Reject        | قبول / رفض      | قرار المستودعات — سبب الرفض إلزامي |
+| Hold for review        | تعليق للمراجعة  | تجميد يملكه المخزون وحده           |
+| Release hold           | فك التعليق      |                                    |
+| My custody             | الأصول في عهدتي | صفحة `/my-custody`                 |
+| Available assets       | الأصول المتاحة  | صفحة `/available-assets`           |
+| Assigned directly      | مُسنَد مباشرةً  | عهدة غير موروثة من مجموعة          |
+| Due back               | موعد الإرجاع    |                                    |
+
+**أقسام القائمة الجانبية:** خدماتي (My space) · المخزون (Inventory) ·
+العمليات (Operations) · المنظمة (Organization)
+| QR code | رمز QR | |
 
 ---
 

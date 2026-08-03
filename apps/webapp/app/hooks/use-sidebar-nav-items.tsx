@@ -8,11 +8,14 @@ import {
   ChartLineIcon,
   ClipboardCheckIcon,
   FileBarChartIcon,
+  HandIcon,
   HomeIcon,
+  InboxIcon,
   MapPinIcon,
   MessageCircleIcon,
   Package,
   PackageOpenIcon,
+  PackageSearchIcon,
   ScanBarcodeIcon,
   SettingsIcon,
   TagsIcon,
@@ -40,6 +43,8 @@ type BaseNavItem = {
   disabled?: boolean | { reason: ReactNode };
   badge?: {
     show: boolean;
+    /** Number rendered inside the pill. Omitted badges render nothing. */
+    count?: number;
     variant?: "unread";
   };
 };
@@ -72,8 +77,13 @@ export type NavItem =
 
 export function useSidebarNavItems() {
   const { t } = useTranslation();
-  const { isAdmin, canUseBookings, subscription, unreadUpdatesCount } =
-    useLoaderData<typeof loader>();
+  const {
+    isAdmin,
+    canUseBookings,
+    subscription,
+    unreadUpdatesCount,
+    pendingRequestCount,
+  } = useLoaderData<typeof loader>();
   const { roles, isScopedToOwnRecords } = useUserRoleHelper();
   const currentOrganization = useCurrentOrganization();
   const isPersonalOrganization = isPersonalOrg(currentOrganization);
@@ -94,6 +104,16 @@ export function useSidebarNavItems() {
     PermissionAction.read,
   );
   const canReadTeam = can(PermissionEntity.teamMember, PermissionAction.read);
+
+  /**
+   * The requests queue is for the two roles that act on it: المستودعات decide
+   * requests (`approve`) and المخزون freeze them for review (`hold`). Asking
+   * for either capability — rather than listing the roles — keeps the nav
+   * honest if the permission map changes.
+   */
+  const canSeeRequests =
+    can(PermissionEntity.booking, PermissionAction.approve) ||
+    can(PermissionEntity.booking, PermissionAction.hold);
   const canReadGeneralSettings = can(
     PermissionEntity.generalSettings,
     PermissionAction.read,
@@ -130,6 +150,41 @@ export function useSidebarNavItems() {
     };
   }, [canUseBookings, subscription]);
 
+  /**
+   * Audits are the one operational surface an ordinary employee legitimately
+   * reaches: the index is already scoped to their own assignments, so for them
+   * `/audits` reads as "my audits".
+   */
+  const canReadAudits = can(PermissionEntity.audit, PermissionAction.read);
+  const canReadReminders = can(
+    PermissionEntity.assetReminders,
+    PermissionAction.read,
+  );
+
+  /**
+   * Sidebar grouping.
+   *
+   * The menu used to be one long list under a single "asset management" label,
+   * which meant an ordinary employee scrolled past a dozen inventory tools to
+   * reach the two pages that concern them. It is now split by *who the section
+   * is for*, and each label carries the same visibility as its children so no
+   * empty heading is ever left behind:
+   *
+   * - **خدماتي** — everyone. What can I request, what am I holding, my bookings.
+   * - **المخزون** — the catalogue itself. Browsing and editing inventory is an
+   *   operational job, so this whole section is hidden from roles scoped to
+   *   their own records: `/assets` and `/kits` are inventory tools they cannot
+   *   act in, and "الأصول المتاحة" already answers the question they actually
+   *   have. (Both routes stay reachable by link — a scanned QR or a row link
+   *   still opens an asset.)
+   * - **العمليات** — running the workflow: the requests queue, audits,
+   *   reminders, reports.
+   * - **المنظمة** — people and workspace configuration.
+   */
+  const showInventorySection = !isScopedToOwnRecords;
+  const showOperationsSection =
+    canSeeRequests || canReadAudits || canReadReminders || canReadDashboard;
+
   const topMenuItems: NavItem[] = [
     {
       type: "child",
@@ -139,54 +194,30 @@ export function useSidebarNavItems() {
       hidden: !isAdmin,
     },
     {
-      type: "label",
-      title: t("nav.assetManagement"),
-    },
-    {
       type: "child",
       title: t("nav.home"),
       to: "/home",
       Icon: HomeIcon,
       hidden: !canReadDashboard,
     },
+
+    { type: "label", title: t("nav.mySpace") },
     {
       type: "child",
-      title: t("nav.assets"),
-      to: "/assets",
-      Icon: PackageOpenIcon,
+      title: t("nav.availableAssets"),
+      to: "/available-assets",
+      Icon: PackageSearchIcon,
     },
     {
+      /**
+       * Holding custody is not a permission, it is a fact about a person: a
+       * warehouse operator can be a custodian just as an employee can, and the
+       * page only ever shows the viewer's own holdings.
+       */
       type: "child",
-      title: t("nav.kits"),
-      to: "/kits",
-      Icon: Package,
-    },
-    {
-      type: "child",
-      title: t("nav.categories"),
-      to: "/categories",
-      Icon: BoxesIcon,
-      hidden: !can(PermissionEntity.category, PermissionAction.read),
-    },
-    {
-      type: "child",
-      title: t("nav.tags"),
-      to: "/tags",
-      Icon: TagsIcon,
-      hidden: !can(PermissionEntity.tag, PermissionAction.read),
-    },
-    {
-      type: "child",
-      title: t("nav.locations"),
-      to: "/locations",
-      Icon: MapPinIcon,
-      hidden: !can(PermissionEntity.location, PermissionAction.read),
-    },
-    {
-      type: "child",
-      title: t("nav.audits"),
-      to: "/audits",
-      Icon: ClipboardCheckIcon,
+      title: t("nav.myCustody"),
+      to: "/my-custody",
+      Icon: HandIcon,
     },
     {
       type: "parent",
@@ -206,11 +237,73 @@ export function useSidebarNavItems() {
         },
       ],
     },
+
+    { type: "label", title: t("nav.inventory"), hidden: !showInventorySection },
+    {
+      type: "child",
+      title: t("nav.assets"),
+      to: "/assets",
+      Icon: PackageOpenIcon,
+      hidden: !showInventorySection,
+    },
+    {
+      type: "child",
+      title: t("nav.kits"),
+      to: "/kits",
+      Icon: Package,
+      hidden: !showInventorySection,
+    },
+    {
+      type: "child",
+      title: t("nav.locations"),
+      to: "/locations",
+      Icon: MapPinIcon,
+      hidden: !can(PermissionEntity.location, PermissionAction.read),
+    },
+    {
+      type: "child",
+      title: t("nav.categories"),
+      to: "/categories",
+      Icon: BoxesIcon,
+      hidden: !can(PermissionEntity.category, PermissionAction.read),
+    },
+    {
+      type: "child",
+      title: t("nav.tags"),
+      to: "/tags",
+      Icon: TagsIcon,
+      hidden: !can(PermissionEntity.tag, PermissionAction.read),
+    },
+
+    {
+      type: "label",
+      title: t("nav.operations"),
+      hidden: !showOperationsSection,
+    },
+    {
+      type: "child",
+      title: t("nav.requests"),
+      to: "/requests",
+      Icon: InboxIcon,
+      hidden: !canSeeRequests,
+      badge: {
+        show: pendingRequestCount > 0,
+        count: pendingRequestCount,
+        variant: "unread",
+      },
+    },
+    {
+      type: "child",
+      title: t("nav.audits"),
+      to: "/audits",
+      Icon: ClipboardCheckIcon,
+      hidden: !canReadAudits,
+    },
     {
       type: "child",
       title: t("nav.reminders"),
       Icon: AlarmClockIcon,
-      hidden: !can(PermissionEntity.assetReminders, PermissionAction.read),
+      hidden: !canReadReminders,
       to: "/reminders",
     },
     {
@@ -220,6 +313,7 @@ export function useSidebarNavItems() {
       hidden: !canReadDashboard,
       to: "/reports",
     },
+
     {
       type: "label",
       title: t("nav.organization"),

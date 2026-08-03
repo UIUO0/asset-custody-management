@@ -1,6 +1,7 @@
 import type { RefObject, InputHTMLAttributes } from "react";
 import { forwardRef } from "react";
 
+import { useValidationMessage } from "~/i18n/validation-messages";
 import { tw } from "~/utils/tw";
 import { InnerLabel } from "./inner-label";
 import type { IconType } from "../shared/icons-map";
@@ -66,7 +67,7 @@ const Input = forwardRef(function Input(
   {
     className,
     inputClassName,
-    error,
+    error: errorProp,
     hideErrorText,
     inputType = "input",
     label,
@@ -80,8 +81,12 @@ const Input = forwardRef(function Input(
     required = false,
     ...rest
   }: InputProps,
-  ref
+  ref,
 ) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   /**
    * @TODO
    * Add automatic server side validation for error messages using getValidationErrors so we dont have to server side errors manually but only pass client side useZorm errors
@@ -90,11 +95,11 @@ const Input = forwardRef(function Input(
 
   const iconClasses = tw(
     "pointer-events-none absolute flex h-full items-center border-gray-300 px-[14px]",
-    iconClassName
+    iconClassName,
   );
 
   const addonClasses = tw(
-    "pointer-events-none flex items-center rounded-l-[4px] border-y border-l border-gray-300 bg-white px-[14px] text-gray-600"
+    "pointer-events-none flex items-center rounded-l-[4px] border-y border-l border-gray-300 bg-white px-[14px] text-gray-600",
   );
 
   const inputClasses = tw(
@@ -109,7 +114,7 @@ const Input = forwardRef(function Input(
         : "rounded-l-none rounded-r-[4px]"
       : "rounded-[4px]",
     hasAttachedButton ? tw("rounded-r-none") : undefined,
-    inputClassName
+    inputClassName,
   );
 
   /** Store props in an object for easier dynamic rendering of input type */

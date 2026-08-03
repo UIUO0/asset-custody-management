@@ -3,6 +3,7 @@ import type { useLoaderData } from "react-router";
 import DynamicSelect from "~/components/dynamic-select/dynamic-select";
 import FormRow from "~/components/forms/form-row";
 import type { ModelFilterItem } from "~/hooks/use-model-filters";
+import { useValidationMessage } from "~/i18n/validation-messages";
 import type { NewBookingLoaderReturnType } from "~/routes/_layout+/bookings.new";
 import { resolveTeamMemberName } from "~/utils/user";
 
@@ -16,7 +17,7 @@ export function CustodianField({
   disabled,
   userCanSeeCustodian,
   isNewBooking,
-  error,
+  error: errorProp,
 }: {
   defaultTeamMember: TeamMemberType | undefined;
   disabled: boolean;
@@ -24,6 +25,10 @@ export function CustodianField({
   isNewBooking?: boolean;
   error?: string;
 }) {
+  /** Validation copy is localised at the display boundary — see
+   * `~/i18n/validation-messages`. Unmapped messages pass through unchanged. */
+  const resolveValidationMessage = useValidationMessage();
+  const error = resolveValidationMessage(errorProp);
   const { t } = useTranslation();
   return (
     <FormRow
