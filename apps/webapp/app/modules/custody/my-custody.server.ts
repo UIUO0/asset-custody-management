@@ -1,5 +1,5 @@
 /**
- * "Assets in my custody" (الأصول التي في عهدتي)
+ * "Assets in my custody" (الأصناف التي في عهدتي)
  *
  * Answers one question for the signed-in employee: *what am I currently
  * holding, and what am I accountable for?*

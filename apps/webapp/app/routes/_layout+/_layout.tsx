@@ -46,6 +46,7 @@ import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { countPendingBookingRequests } from "~/modules/booking/request.server";
 import { getBookingSettingsForOrganization } from "~/modules/booking-settings/service.server";
+import { countHandoversAwaitingMySignature } from "~/modules/custody/handover.server";
 import { CHANGE_CURRENT_ORGANIZATION_ACTION } from "~/modules/organization/constants";
 import {
   getSelectedOrganization,
@@ -222,6 +223,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       workingHours,
       unreadUpdatesCount,
       pendingRequestCount,
+      pendingHandoverCount,
     ] = await Promise.all([
       getBookingSettingsForOrganization(currentOrganization.id),
       getWorkingHoursForOrganization(currentOrganization.id),
@@ -234,6 +236,16 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       canSeeRequests
         ? countPendingBookingRequests(currentOrganization.id)
         : Promise.resolve(0),
+      /**
+       * Counted for everyone, unlike the requests badge: anybody can be named
+       * as the employee on a handover, so there is no role that provably never
+       * has one waiting. The query is a single indexed lookup on the viewer's
+       * own team-member row, not a workspace-wide scan.
+       */
+      countHandoversAwaitingMySignature({
+        userId: authSession.userId,
+        organizationId: currentOrganization.id,
+      }),
     ]);
 
     return data(
@@ -255,6 +267,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         canUseAudits: canUseAudits(currentOrganization),
         unreadUpdatesCount,
         pendingRequestCount,
+        pendingHandoverCount,
         hasUnpaidInvoice: user.hasUnpaidInvoice,
         warnForNoPaymentMethod: user.warnForNoPaymentMethod,
         needsSequentialIdMigration,

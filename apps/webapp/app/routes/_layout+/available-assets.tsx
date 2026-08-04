@@ -1,5 +1,5 @@
 /**
- * "Available assets" page (الأصول المتاحة حالياً)
+ * "Available assets" page (الأصناف المتاحة حالياً)
  *
  * The employee-facing counterpart to "my custody": *what can I ask for right
  * now?* The full asset index answers a different question — it is an inventory

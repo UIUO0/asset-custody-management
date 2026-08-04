@@ -139,4 +139,4 @@ approvalState: isScopedToOwnRecords ? PENDING : APPROVED;
 - `apps/webapp/app/routes/_layout+/requests.tsx` — الصفحة
 - `apps/webapp/app/modules/booking/service.server.ts` — بوابة `reserveBooking`
 - [epda-asset-intake-workflow.md](./epda-asset-intake-workflow.md) — نفس النمط
-  مطبّقاً على استلام الأصول
+  مطبّقاً على استلام الأصناف

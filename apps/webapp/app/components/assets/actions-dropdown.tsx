@@ -199,8 +199,11 @@ const ConditionalActionsDropdown = () => {
                       </span>
                     </Button>
                   ) : assetCanBeReleased ? (
+                    // EPDA: individual custody moves through the signed
+                    // handover flow. The direction is derived server-side, so
+                    // both branches point at the same route.
                     <Button
-                      to="overview/release-custody"
+                      to="overview/custody-handover"
                       role="link"
                       variant="link"
                       className="justify-start whitespace-nowrap px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
@@ -219,7 +222,7 @@ const ConditionalActionsDropdown = () => {
                     </Button>
                   ) : (
                     <Button
-                      to="overview/assign-custody"
+                      to="overview/custody-handover"
                       role="link"
                       variant="link"
                       className="justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"

@@ -1,5 +1,5 @@
 /**
- * Asset intake-stage tests (مرحلة استلام الأصل)
+ * Asset intake-stage tests (مرحلة استلام الصنف)
  *
  * Covers the permission and query rules that make the intake workflow real:
  *

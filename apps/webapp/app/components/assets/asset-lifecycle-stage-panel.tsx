@@ -1,5 +1,5 @@
 /**
- * Asset intake-stage panel (لوحة مرحلة استلام الأصل)
+ * Asset intake-stage panel (لوحة مرحلة استلام الصنف)
  *
  * Renders the state of an asset's `lifecycleStage` on the asset overview page,
  * plus the two transitions that move it:

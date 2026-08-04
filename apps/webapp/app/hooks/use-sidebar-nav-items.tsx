@@ -18,6 +18,7 @@ import {
   PackageSearchIcon,
   ScanBarcodeIcon,
   SettingsIcon,
+  SignatureIcon,
   TagsIcon,
   UsersRoundIcon,
   type LucideIcon,
@@ -83,6 +84,7 @@ export function useSidebarNavItems() {
     subscription,
     unreadUpdatesCount,
     pendingRequestCount,
+    pendingHandoverCount,
   } = useLoaderData<typeof loader>();
   const { roles, isScopedToOwnRecords } = useUserRoleHelper();
   const currentOrganization = useCurrentOrganization();
@@ -174,7 +176,7 @@ export function useSidebarNavItems() {
    * - **المخزون** — the catalogue itself. Browsing and editing inventory is an
    *   operational job, so this whole section is hidden from roles scoped to
    *   their own records: `/assets` and `/kits` are inventory tools they cannot
-   *   act in, and "الأصول المتاحة" already answers the question they actually
+   *   act in, and "الأصناف المتاحة" already answers the question they actually
    *   have. (Both routes stay reachable by link — a scanned QR or a row link
    *   still opens an asset.)
    * - **العمليات** — running the workflow: the requests queue, audits,
@@ -218,6 +220,27 @@ export function useSidebarNavItems() {
       title: t("nav.myCustody"),
       to: "/my-custody",
       Icon: HandIcon,
+    },
+    {
+      /**
+       * Sits in خدماتي, not العمليات, and is shown to everyone: being named on
+       * a handover is not a permission, it is something that happened to you.
+       * An operator sees the same entry because they can be the employee on
+       * someone else's record too.
+       *
+       * The badge counts only records waiting on *this* viewer's signature —
+       * a number about somebody else's inbox is noise, and a badge that never
+       * clears stops being read.
+       */
+      type: "child",
+      title: t("nav.pendingHandovers"),
+      to: "/handovers",
+      Icon: SignatureIcon,
+      badge: {
+        show: pendingHandoverCount > 0,
+        count: pendingHandoverCount,
+        variant: "unread",
+      },
     },
     {
       type: "parent",

@@ -19,655 +19,6 @@ type Pages = {
       "*": string;
     };
   };
-  "/.well-known/apple-app-site-association": {
-    params: {};
-  };
-  "/.well-known/assetlinks.json": {
-    params: {};
-  };
-  "/accept-invite/:inviteId": {
-    params: {
-      inviteId: string;
-    };
-  };
-  "/forgot-password": {
-    params: {};
-  };
-  "/join": {
-    params: {};
-  };
-  "/login": {
-    params: {};
-  };
-  "/logout": {
-    params: {};
-  };
-  "/oauth/callback": {
-    params: {};
-  };
-  "/oauth/callback/mobile": {
-    params: {};
-  };
-  "/otp": {
-    params: {};
-  };
-  "/resend-otp": {
-    params: {};
-  };
-  "/send-otp": {
-    params: {};
-  };
-  "/sso-login": {
-    params: {};
-  };
-  "/account-details": {
-    params: {};
-  };
-  "/account-details/calendars": {
-    params: {};
-  };
-  "/account-details/general": {
-    params: {};
-  };
-  "/account-details/subscription": {
-    params: {};
-  };
-  "/account-details/subscription/customer-portal": {
-    params: {};
-  };
-  "/account-details/workspace": {
-    params: {};
-  };
-  "/account-details/workspace/:workspaceId/edit": {
-    params: {
-      workspaceId: string;
-    };
-  };
-  "/account-details/workspace/new": {
-    params: {};
-  };
-  "/admin-dashboard": {
-    params: {};
-  };
-  "/admin-dashboard/:userId": {
-    params: {
-      userId: string;
-    };
-  };
-  "/admin-dashboard/announcements": {
-    params: {};
-  };
-  "/admin-dashboard/announcements/new": {
-    params: {};
-  };
-  "/admin-dashboard/generate-locations": {
-    params: {};
-  };
-  "/admin-dashboard/move-location-images": {
-    params: {};
-  };
-  "/admin-dashboard/org/:organizationId": {
-    params: {
-      organizationId: string;
-    };
-  };
-  "/admin-dashboard/org/:organizationId/assets": {
-    params: {
-      organizationId: string;
-    };
-  };
-  "/admin-dashboard/org/:organizationId/members": {
-    params: {
-      organizationId: string;
-    };
-  };
-  "/admin-dashboard/org/:organizationId/qr-codes": {
-    params: {
-      organizationId: string;
-    };
-  };
-  "/admin-dashboard/org/:organizationId/transfer-ownership": {
-    params: {
-      organizationId: string;
-    };
-  };
-  "/admin-dashboard/qrs": {
-    params: {};
-  };
-  "/admin-dashboard/qrs/codes.zip": {
-    params: {};
-  };
-  "/admin-dashboard/test-supabase-rls": {
-    params: {};
-  };
-  "/admin-dashboard/updates": {
-    params: {};
-  };
-  "/admin-dashboard/updates/:updateId/edit": {
-    params: {
-      updateId: string;
-    };
-  };
-  "/admin-dashboard/updates/new": {
-    params: {};
-  };
-  "/admin-dashboard/users": {
-    params: {};
-  };
-  "/assets": {
-    params: {};
-  };
-  "/assets/:assetId": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/activity": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/activity.csv": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/bookings": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/note": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/add-to-existing-booking": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/assign-custody": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/create-new-booking": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/duplicate": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/manage-placements": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/release-custody": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/overview/update-location": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/reminders": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/:assetId/edit": {
-    params: {
-      assetId: string;
-    };
-  };
-  "/assets/export/:fileName.csv": {
-    params: {
-      fileName: string;
-    };
-  };
-  "/assets/import-update": {
-    params: {};
-  };
-  "/assets/import": {
-    params: {};
-  };
-  "/assets/new": {
-    params: {};
-  };
-  "/audits": {
-    params: {};
-  };
-  "/audits/:auditId": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/activity": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/activity.csv": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/duplicate": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/note": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/overview": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/scan": {
-    params: {
-      auditId: string;
-    };
-  };
-  "/audits/:auditId/scan/:auditAssetId/details": {
-    params: {
-      auditId: string;
-      auditAssetId: string;
-    };
-  };
-  "/available-assets": {
-    params: {};
-  };
-  "/bookings": {
-    params: {};
-  };
-  "/bookings/:bookingId": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/activity": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/activity.csv": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/cal.ics": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/checkin-assets": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/checkout-assets": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/duplicate": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/fulfil-and-checkout": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/manage-assets": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/manage-kits": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/:bookingId/overview/scan-assets": {
-    params: {
-      bookingId: string;
-    };
-  };
-  "/bookings/export/:fileName.csv": {
-    params: {
-      fileName: string;
-    };
-  };
-  "/bookings/new": {
-    params: {};
-  };
-  "/calendar": {
-    params: {};
-  };
-  "/categories": {
-    params: {};
-  };
-  "/categories/:categoryId/edit": {
-    params: {
-      categoryId: string;
-    };
-  };
-  "/categories/new": {
-    params: {};
-  };
-  "/dashboard": {
-    params: {};
-  };
-  "/home": {
-    params: {};
-  };
-  "/kits": {
-    params: {};
-  };
-  "/kits/:kitId": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets/add-to-existing-booking": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets/assign-custody": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets/create-new-booking": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets/manage-assets": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets/release-custody": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/assets/update-location": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/bookings": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/overview": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/scan-assets": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/:kitId/edit": {
-    params: {
-      kitId: string;
-    };
-  };
-  "/kits/new": {
-    params: {};
-  };
-  "/locations": {
-    params: {};
-  };
-  "/locations/:locationId": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/activity": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/activity.csv": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/assets": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/assets/manage-assets": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/kits": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/kits/manage-kits": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/note": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/overview": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/scan-assets-kits": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/:locationId/edit": {
-    params: {
-      locationId: string;
-    };
-  };
-  "/locations/new": {
-    params: {};
-  };
-  "/me": {
-    params: {};
-  };
-  "/me/assets": {
-    params: {};
-  };
-  "/me/bookings": {
-    params: {};
-  };
-  "/me/note": {
-    params: {};
-  };
-  "/me/notes": {
-    params: {};
-  };
-  "/my-custody": {
-    params: {};
-  };
-  "/reminders": {
-    params: {};
-  };
-  "/reports": {
-    params: {};
-  };
-  "/reports/:reportId": {
-    params: {
-      reportId: string;
-    };
-  };
-  "/reports/export/:fileName.csv": {
-    params: {
-      fileName: string;
-    };
-  };
-  "/requests": {
-    params: {};
-  };
-  "/scanner-sam-id": {
-    params: {};
-  };
-  "/scanner": {
-    params: {};
-  };
-  "/settings": {
-    params: {};
-  };
-  "/settings/asset-models": {
-    params: {};
-  };
-  "/settings/asset-models/:assetModelId/edit": {
-    params: {
-      assetModelId: string;
-    };
-  };
-  "/settings/asset-models/new": {
-    params: {};
-  };
-  "/settings/bookings": {
-    params: {};
-  };
-  "/settings/custom-fields": {
-    params: {};
-  };
-  "/settings/custom-fields/:fieldId/edit": {
-    params: {
-      fieldId: string;
-    };
-  };
-  "/settings/custom-fields/new": {
-    params: {};
-  };
-  "/settings/emails": {
-    params: {};
-  };
-  "/settings/general": {
-    params: {};
-  };
-  "/settings/team": {
-    params: {};
-  };
-  "/settings/team/invites": {
-    params: {};
-  };
-  "/settings/team/nrm": {
-    params: {};
-  };
-  "/settings/team/nrm/:nrmId/edit": {
-    params: {
-      nrmId: string;
-    };
-  };
-  "/settings/team/nrm/add-member": {
-    params: {};
-  };
-  "/settings/team/nrm/import-members": {
-    params: {};
-  };
-  "/settings/team/users": {
-    params: {};
-  };
-  "/settings/team/users/:userId": {
-    params: {
-      userId: string;
-    };
-  };
-  "/settings/team/users/:userId/*": {
-    params: {
-      userId: string;
-      "*": string;
-    };
-  };
-  "/settings/team/users/:userId/assets": {
-    params: {
-      userId: string;
-    };
-  };
-  "/settings/team/users/:userId/bookings": {
-    params: {
-      userId: string;
-    };
-  };
-  "/settings/team/users/:userId/note": {
-    params: {
-      userId: string;
-    };
-  };
-  "/settings/team/users/:userId/notes": {
-    params: {
-      userId: string;
-    };
-  };
-  "/tags": {
-    params: {};
-  };
-  "/tags/:tagId/edit": {
-    params: {
-      tagId: string;
-    };
-  };
-  "/tags/new": {
-    params: {};
-  };
-  "/updates": {
-    params: {};
-  };
-  "/onboarding": {
-    params: {};
-  };
-  "/select-plan": {
-    params: {};
-  };
-  "/sso-pending-assignment": {
-    params: {};
-  };
-  "/welcome": {
-    params: {};
-  };
   "/api/:organizationId/qr-codes.zip": {
     params: {
       organizationId: string;
@@ -840,6 +191,9 @@ type Pages = {
     params: {};
   };
   "/api/command-palette/search": {
+    params: {};
+  };
+  "/api/custody/request-return": {
     params: {};
   };
   "/api/custom-fields/bulk-actions": {
@@ -1207,6 +561,668 @@ type Pages = {
       qrId: string;
     };
   };
+  "/.well-known/apple-app-site-association": {
+    params: {};
+  };
+  "/.well-known/assetlinks.json": {
+    params: {};
+  };
+  "/accept-invite/:inviteId": {
+    params: {
+      inviteId: string;
+    };
+  };
+  "/forgot-password": {
+    params: {};
+  };
+  "/join": {
+    params: {};
+  };
+  "/login": {
+    params: {};
+  };
+  "/logout": {
+    params: {};
+  };
+  "/oauth/callback": {
+    params: {};
+  };
+  "/oauth/callback/mobile": {
+    params: {};
+  };
+  "/otp": {
+    params: {};
+  };
+  "/resend-otp": {
+    params: {};
+  };
+  "/send-otp": {
+    params: {};
+  };
+  "/sso-login": {
+    params: {};
+  };
+  "/account-details": {
+    params: {};
+  };
+  "/account-details/calendars": {
+    params: {};
+  };
+  "/account-details/general": {
+    params: {};
+  };
+  "/account-details/subscription": {
+    params: {};
+  };
+  "/account-details/subscription/customer-portal": {
+    params: {};
+  };
+  "/account-details/workspace": {
+    params: {};
+  };
+  "/account-details/workspace/:workspaceId/edit": {
+    params: {
+      workspaceId: string;
+    };
+  };
+  "/account-details/workspace/new": {
+    params: {};
+  };
+  "/admin-dashboard": {
+    params: {};
+  };
+  "/admin-dashboard/:userId": {
+    params: {
+      userId: string;
+    };
+  };
+  "/admin-dashboard/announcements": {
+    params: {};
+  };
+  "/admin-dashboard/announcements/new": {
+    params: {};
+  };
+  "/admin-dashboard/generate-locations": {
+    params: {};
+  };
+  "/admin-dashboard/move-location-images": {
+    params: {};
+  };
+  "/admin-dashboard/org/:organizationId": {
+    params: {
+      organizationId: string;
+    };
+  };
+  "/admin-dashboard/org/:organizationId/assets": {
+    params: {
+      organizationId: string;
+    };
+  };
+  "/admin-dashboard/org/:organizationId/members": {
+    params: {
+      organizationId: string;
+    };
+  };
+  "/admin-dashboard/org/:organizationId/qr-codes": {
+    params: {
+      organizationId: string;
+    };
+  };
+  "/admin-dashboard/org/:organizationId/transfer-ownership": {
+    params: {
+      organizationId: string;
+    };
+  };
+  "/admin-dashboard/qrs": {
+    params: {};
+  };
+  "/admin-dashboard/qrs/codes.zip": {
+    params: {};
+  };
+  "/admin-dashboard/test-supabase-rls": {
+    params: {};
+  };
+  "/admin-dashboard/updates": {
+    params: {};
+  };
+  "/admin-dashboard/updates/:updateId/edit": {
+    params: {
+      updateId: string;
+    };
+  };
+  "/admin-dashboard/updates/new": {
+    params: {};
+  };
+  "/admin-dashboard/users": {
+    params: {};
+  };
+  "/assets": {
+    params: {};
+  };
+  "/assets/:assetId": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/activity": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/activity.csv": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/bookings": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/note": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/add-to-existing-booking": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/assign-custody": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/create-new-booking": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/custody-handover": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/duplicate": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/manage-placements": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/release-custody": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/overview/update-location": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/reminders": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/:assetId/edit": {
+    params: {
+      assetId: string;
+    };
+  };
+  "/assets/export/:fileName.csv": {
+    params: {
+      fileName: string;
+    };
+  };
+  "/assets/import-update": {
+    params: {};
+  };
+  "/assets/import": {
+    params: {};
+  };
+  "/assets/new": {
+    params: {};
+  };
+  "/audits": {
+    params: {};
+  };
+  "/audits/:auditId": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/activity": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/activity.csv": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/duplicate": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/note": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/overview": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/scan": {
+    params: {
+      auditId: string;
+    };
+  };
+  "/audits/:auditId/scan/:auditAssetId/details": {
+    params: {
+      auditId: string;
+      auditAssetId: string;
+    };
+  };
+  "/available-assets": {
+    params: {};
+  };
+  "/bookings": {
+    params: {};
+  };
+  "/bookings/:bookingId": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/activity": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/activity.csv": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/cal.ics": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/checkin-assets": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/checkout-assets": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/duplicate": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/fulfil-and-checkout": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/manage-assets": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/manage-kits": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/:bookingId/overview/scan-assets": {
+    params: {
+      bookingId: string;
+    };
+  };
+  "/bookings/export/:fileName.csv": {
+    params: {
+      fileName: string;
+    };
+  };
+  "/bookings/new": {
+    params: {};
+  };
+  "/calendar": {
+    params: {};
+  };
+  "/categories": {
+    params: {};
+  };
+  "/categories/:categoryId/edit": {
+    params: {
+      categoryId: string;
+    };
+  };
+  "/categories/new": {
+    params: {};
+  };
+  "/dashboard": {
+    params: {};
+  };
+  "/handovers": {
+    params: {};
+  };
+  "/handovers/:handoverId": {
+    params: {
+      handoverId: string;
+    };
+  };
+  "/home": {
+    params: {};
+  };
+  "/kits": {
+    params: {};
+  };
+  "/kits/:kitId": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets/add-to-existing-booking": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets/assign-custody": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets/create-new-booking": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets/manage-assets": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets/release-custody": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/assets/update-location": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/bookings": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/overview": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/scan-assets": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/:kitId/edit": {
+    params: {
+      kitId: string;
+    };
+  };
+  "/kits/new": {
+    params: {};
+  };
+  "/locations": {
+    params: {};
+  };
+  "/locations/:locationId": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/activity": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/activity.csv": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/assets": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/assets/manage-assets": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/kits": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/kits/manage-kits": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/note": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/overview": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/scan-assets-kits": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/:locationId/edit": {
+    params: {
+      locationId: string;
+    };
+  };
+  "/locations/new": {
+    params: {};
+  };
+  "/me": {
+    params: {};
+  };
+  "/me/assets": {
+    params: {};
+  };
+  "/me/bookings": {
+    params: {};
+  };
+  "/me/note": {
+    params: {};
+  };
+  "/me/notes": {
+    params: {};
+  };
+  "/my-custody": {
+    params: {};
+  };
+  "/reminders": {
+    params: {};
+  };
+  "/reports": {
+    params: {};
+  };
+  "/reports/:reportId": {
+    params: {
+      reportId: string;
+    };
+  };
+  "/reports/export/:fileName.csv": {
+    params: {
+      fileName: string;
+    };
+  };
+  "/requests": {
+    params: {};
+  };
+  "/scanner-sam-id": {
+    params: {};
+  };
+  "/scanner": {
+    params: {};
+  };
+  "/settings": {
+    params: {};
+  };
+  "/settings/asset-models": {
+    params: {};
+  };
+  "/settings/asset-models/:assetModelId/edit": {
+    params: {
+      assetModelId: string;
+    };
+  };
+  "/settings/asset-models/new": {
+    params: {};
+  };
+  "/settings/bookings": {
+    params: {};
+  };
+  "/settings/custom-fields": {
+    params: {};
+  };
+  "/settings/custom-fields/:fieldId/edit": {
+    params: {
+      fieldId: string;
+    };
+  };
+  "/settings/custom-fields/new": {
+    params: {};
+  };
+  "/settings/emails": {
+    params: {};
+  };
+  "/settings/general": {
+    params: {};
+  };
+  "/settings/team": {
+    params: {};
+  };
+  "/settings/team/invites": {
+    params: {};
+  };
+  "/settings/team/nrm": {
+    params: {};
+  };
+  "/settings/team/nrm/:nrmId/edit": {
+    params: {
+      nrmId: string;
+    };
+  };
+  "/settings/team/nrm/add-member": {
+    params: {};
+  };
+  "/settings/team/nrm/import-members": {
+    params: {};
+  };
+  "/settings/team/users": {
+    params: {};
+  };
+  "/settings/team/users/:userId": {
+    params: {
+      userId: string;
+    };
+  };
+  "/settings/team/users/:userId/*": {
+    params: {
+      userId: string;
+      "*": string;
+    };
+  };
+  "/settings/team/users/:userId/assets": {
+    params: {
+      userId: string;
+    };
+  };
+  "/settings/team/users/:userId/bookings": {
+    params: {
+      userId: string;
+    };
+  };
+  "/settings/team/users/:userId/note": {
+    params: {
+      userId: string;
+    };
+  };
+  "/settings/team/users/:userId/notes": {
+    params: {
+      userId: string;
+    };
+  };
+  "/tags": {
+    params: {};
+  };
+  "/tags/:tagId/edit": {
+    params: {
+      tagId: string;
+    };
+  };
+  "/tags/new": {
+    params: {};
+  };
+  "/updates": {
+    params: {};
+  };
+  "/onboarding": {
+    params: {};
+  };
+  "/select-plan": {
+    params: {};
+  };
+  "/sso-pending-assignment": {
+    params: {};
+  };
+  "/welcome": {
+    params: {};
+  };
 };
 
 type RouteFiles = {
@@ -1215,167 +1231,6 @@ type RouteFiles = {
     page:
       | "/"
       | "/*"
-      | "/.well-known/apple-app-site-association"
-      | "/.well-known/assetlinks.json"
-      | "/accept-invite/:inviteId"
-      | "/forgot-password"
-      | "/join"
-      | "/login"
-      | "/logout"
-      | "/oauth/callback"
-      | "/oauth/callback/mobile"
-      | "/otp"
-      | "/resend-otp"
-      | "/send-otp"
-      | "/sso-login"
-      | "/account-details"
-      | "/account-details/calendars"
-      | "/account-details/general"
-      | "/account-details/subscription"
-      | "/account-details/subscription/customer-portal"
-      | "/account-details/workspace"
-      | "/account-details/workspace/:workspaceId/edit"
-      | "/account-details/workspace/new"
-      | "/admin-dashboard"
-      | "/admin-dashboard/:userId"
-      | "/admin-dashboard/announcements"
-      | "/admin-dashboard/announcements/new"
-      | "/admin-dashboard/generate-locations"
-      | "/admin-dashboard/move-location-images"
-      | "/admin-dashboard/org/:organizationId"
-      | "/admin-dashboard/org/:organizationId/assets"
-      | "/admin-dashboard/org/:organizationId/members"
-      | "/admin-dashboard/org/:organizationId/qr-codes"
-      | "/admin-dashboard/org/:organizationId/transfer-ownership"
-      | "/admin-dashboard/qrs"
-      | "/admin-dashboard/qrs/codes.zip"
-      | "/admin-dashboard/test-supabase-rls"
-      | "/admin-dashboard/updates"
-      | "/admin-dashboard/updates/:updateId/edit"
-      | "/admin-dashboard/updates/new"
-      | "/admin-dashboard/users"
-      | "/assets"
-      | "/assets/:assetId"
-      | "/assets/:assetId/activity"
-      | "/assets/:assetId/activity.csv"
-      | "/assets/:assetId/bookings"
-      | "/assets/:assetId/note"
-      | "/assets/:assetId/overview"
-      | "/assets/:assetId/overview/add-to-existing-booking"
-      | "/assets/:assetId/overview/assign-custody"
-      | "/assets/:assetId/overview/create-new-booking"
-      | "/assets/:assetId/overview/duplicate"
-      | "/assets/:assetId/overview/manage-placements"
-      | "/assets/:assetId/overview/release-custody"
-      | "/assets/:assetId/overview/update-location"
-      | "/assets/:assetId/reminders"
-      | "/assets/:assetId/edit"
-      | "/assets/export/:fileName.csv"
-      | "/assets/import-update"
-      | "/assets/import"
-      | "/assets/new"
-      | "/audits"
-      | "/audits/:auditId"
-      | "/audits/:auditId/activity"
-      | "/audits/:auditId/activity.csv"
-      | "/audits/:auditId/duplicate"
-      | "/audits/:auditId/note"
-      | "/audits/:auditId/overview"
-      | "/audits/:auditId/scan"
-      | "/audits/:auditId/scan/:auditAssetId/details"
-      | "/available-assets"
-      | "/bookings"
-      | "/bookings/:bookingId"
-      | "/bookings/:bookingId/activity"
-      | "/bookings/:bookingId/activity.csv"
-      | "/bookings/:bookingId/overview"
-      | "/bookings/:bookingId/overview/cal.ics"
-      | "/bookings/:bookingId/overview/checkin-assets"
-      | "/bookings/:bookingId/overview/checkout-assets"
-      | "/bookings/:bookingId/overview/duplicate"
-      | "/bookings/:bookingId/overview/fulfil-and-checkout"
-      | "/bookings/:bookingId/overview/manage-assets"
-      | "/bookings/:bookingId/overview/manage-kits"
-      | "/bookings/:bookingId/overview/scan-assets"
-      | "/bookings/export/:fileName.csv"
-      | "/bookings/new"
-      | "/calendar"
-      | "/categories"
-      | "/categories/:categoryId/edit"
-      | "/categories/new"
-      | "/dashboard"
-      | "/home"
-      | "/kits"
-      | "/kits/:kitId"
-      | "/kits/:kitId/assets"
-      | "/kits/:kitId/assets/add-to-existing-booking"
-      | "/kits/:kitId/assets/assign-custody"
-      | "/kits/:kitId/assets/create-new-booking"
-      | "/kits/:kitId/assets/manage-assets"
-      | "/kits/:kitId/assets/release-custody"
-      | "/kits/:kitId/assets/update-location"
-      | "/kits/:kitId/bookings"
-      | "/kits/:kitId/overview"
-      | "/kits/:kitId/scan-assets"
-      | "/kits/:kitId/edit"
-      | "/kits/new"
-      | "/locations"
-      | "/locations/:locationId"
-      | "/locations/:locationId/activity"
-      | "/locations/:locationId/activity.csv"
-      | "/locations/:locationId/assets"
-      | "/locations/:locationId/assets/manage-assets"
-      | "/locations/:locationId/kits"
-      | "/locations/:locationId/kits/manage-kits"
-      | "/locations/:locationId/note"
-      | "/locations/:locationId/overview"
-      | "/locations/:locationId/scan-assets-kits"
-      | "/locations/:locationId/edit"
-      | "/locations/new"
-      | "/me"
-      | "/me/assets"
-      | "/me/bookings"
-      | "/me/note"
-      | "/me/notes"
-      | "/my-custody"
-      | "/reminders"
-      | "/reports"
-      | "/reports/:reportId"
-      | "/reports/export/:fileName.csv"
-      | "/requests"
-      | "/scanner-sam-id"
-      | "/scanner"
-      | "/settings"
-      | "/settings/asset-models"
-      | "/settings/asset-models/:assetModelId/edit"
-      | "/settings/asset-models/new"
-      | "/settings/bookings"
-      | "/settings/custom-fields"
-      | "/settings/custom-fields/:fieldId/edit"
-      | "/settings/custom-fields/new"
-      | "/settings/emails"
-      | "/settings/general"
-      | "/settings/team"
-      | "/settings/team/invites"
-      | "/settings/team/nrm"
-      | "/settings/team/nrm/:nrmId/edit"
-      | "/settings/team/nrm/add-member"
-      | "/settings/team/nrm/import-members"
-      | "/settings/team/users"
-      | "/settings/team/users/:userId"
-      | "/settings/team/users/:userId/*"
-      | "/settings/team/users/:userId/assets"
-      | "/settings/team/users/:userId/bookings"
-      | "/settings/team/users/:userId/note"
-      | "/settings/team/users/:userId/notes"
-      | "/tags"
-      | "/tags/:tagId/edit"
-      | "/tags/new"
-      | "/updates"
-      | "/onboarding"
-      | "/select-plan"
-      | "/sso-pending-assignment"
-      | "/welcome"
       | "/api/:organizationId/qr-codes.zip"
       | "/api/:organizationId/working-hours"
       | "/api/admin/export-org-assets/:organizationId/:fileName.csv"
@@ -1424,6 +1279,7 @@ type RouteFiles = {
       | "/api/categories/bulk-actions"
       | "/api/client-notification"
       | "/api/command-palette/search"
+      | "/api/custody/request-return"
       | "/api/custom-fields/bulk-actions"
       | "/api/feedback"
       | "/api/generate-sequential-ids"
@@ -1528,23 +1384,9 @@ type RouteFiles = {
       | "/qr/:qrId/successful-link"
       | "/qr/:qrId"
       | "/qr/:qrId/contact-owner"
-      | "/qr/:qrId/not-logged-in";
-  };
-  "routes/$.tsx": {
-    id: "routes/$";
-    page: "/*";
-  };
-  "routes/[.well-known].apple-app-site-association.tsx": {
-    id: "routes/[.well-known].apple-app-site-association";
-    page: "/.well-known/apple-app-site-association";
-  };
-  "routes/[.well-known].assetlinks[.json].tsx": {
-    id: "routes/[.well-known].assetlinks[.json]";
-    page: "/.well-known/assetlinks.json";
-  };
-  "routes/_auth+/_auth.tsx": {
-    id: "routes/_auth+/_auth";
-    page:
+      | "/qr/:qrId/not-logged-in"
+      | "/.well-known/apple-app-site-association"
+      | "/.well-known/assetlinks.json"
       | "/accept-invite/:inviteId"
       | "/forgot-password"
       | "/join"
@@ -1555,59 +1397,7 @@ type RouteFiles = {
       | "/otp"
       | "/resend-otp"
       | "/send-otp"
-      | "/sso-login";
-  };
-  "routes/_auth+/accept-invite.$inviteId.tsx": {
-    id: "routes/_auth+/accept-invite.$inviteId";
-    page: "/accept-invite/:inviteId";
-  };
-  "routes/_auth+/forgot-password.tsx": {
-    id: "routes/_auth+/forgot-password";
-    page: "/forgot-password";
-  };
-  "routes/_auth+/join.tsx": {
-    id: "routes/_auth+/join";
-    page: "/join";
-  };
-  "routes/_auth+/login.tsx": {
-    id: "routes/_auth+/login";
-    page: "/login";
-  };
-  "routes/_auth+/logout.tsx": {
-    id: "routes/_auth+/logout";
-    page: "/logout";
-  };
-  "routes/_auth+/oauth.callback.tsx": {
-    id: "routes/_auth+/oauth.callback";
-    page: "/oauth/callback";
-  };
-  "routes/_auth+/oauth.callback_.mobile.tsx": {
-    id: "routes/_auth+/oauth.callback_.mobile";
-    page: "/oauth/callback/mobile";
-  };
-  "routes/_auth+/otp.tsx": {
-    id: "routes/_auth+/otp";
-    page: "/otp";
-  };
-  "routes/_auth+/resend-otp.tsx": {
-    id: "routes/_auth+/resend-otp";
-    page: "/resend-otp";
-  };
-  "routes/_auth+/send-otp.tsx": {
-    id: "routes/_auth+/send-otp";
-    page: "/send-otp";
-  };
-  "routes/_auth+/sso-login.tsx": {
-    id: "routes/_auth+/sso-login";
-    page: "/sso-login";
-  };
-  "routes/_index.tsx": {
-    id: "routes/_index";
-    page: "/";
-  };
-  "routes/_layout+/_layout.tsx": {
-    id: "routes/_layout+/_layout";
-    page:
+      | "/sso-login"
       | "/account-details"
       | "/account-details/calendars"
       | "/account-details/general"
@@ -1644,6 +1434,7 @@ type RouteFiles = {
       | "/assets/:assetId/overview/add-to-existing-booking"
       | "/assets/:assetId/overview/assign-custody"
       | "/assets/:assetId/overview/create-new-booking"
+      | "/assets/:assetId/overview/custody-handover"
       | "/assets/:assetId/overview/duplicate"
       | "/assets/:assetId/overview/manage-placements"
       | "/assets/:assetId/overview/release-custody"
@@ -1684,6 +1475,8 @@ type RouteFiles = {
       | "/categories/:categoryId/edit"
       | "/categories/new"
       | "/dashboard"
+      | "/handovers"
+      | "/handovers/:handoverId"
       | "/home"
       | "/kits"
       | "/kits/:kitId"
@@ -1751,947 +1544,15 @@ type RouteFiles = {
       | "/tags"
       | "/tags/:tagId/edit"
       | "/tags/new"
-      | "/updates";
-  };
-  "routes/_layout+/account-details.tsx": {
-    id: "routes/_layout+/account-details";
-    page:
-      | "/account-details"
-      | "/account-details/calendars"
-      | "/account-details/general"
-      | "/account-details/subscription"
-      | "/account-details/subscription/customer-portal"
-      | "/account-details/workspace"
-      | "/account-details/workspace/:workspaceId/edit"
-      | "/account-details/workspace/new";
-  };
-  "routes/_layout+/account-details.calendars.tsx": {
-    id: "routes/_layout+/account-details.calendars";
-    page: "/account-details/calendars";
-  };
-  "routes/_layout+/account-details.general.tsx": {
-    id: "routes/_layout+/account-details.general";
-    page: "/account-details/general";
-  };
-  "routes/_layout+/account-details.index.tsx": {
-    id: "routes/_layout+/account-details.index";
-    page: "/account-details";
-  };
-  "routes/_layout+/account-details.subscription.tsx": {
-    id: "routes/_layout+/account-details.subscription";
-    page:
-      | "/account-details/subscription"
-      | "/account-details/subscription/customer-portal";
-  };
-  "routes/_layout+/account-details.subscription.customer-portal.tsx": {
-    id: "routes/_layout+/account-details.subscription.customer-portal";
-    page: "/account-details/subscription/customer-portal";
-  };
-  "routes/_layout+/account-details.workspace.tsx": {
-    id: "routes/_layout+/account-details.workspace";
-    page:
-      | "/account-details/workspace"
-      | "/account-details/workspace/:workspaceId/edit"
-      | "/account-details/workspace/new";
-  };
-  "routes/_layout+/account-details.workspace.$workspaceId.edit.tsx": {
-    id: "routes/_layout+/account-details.workspace.$workspaceId.edit";
-    page: "/account-details/workspace/:workspaceId/edit";
-  };
-  "routes/_layout+/account-details.workspace.index.tsx": {
-    id: "routes/_layout+/account-details.workspace.index";
-    page: "/account-details/workspace";
-  };
-  "routes/_layout+/account-details.workspace.new.tsx": {
-    id: "routes/_layout+/account-details.workspace.new";
-    page: "/account-details/workspace/new";
-  };
-  "routes/_layout+/admin-dashboard+/_layout.tsx": {
-    id: "routes/_layout+/admin-dashboard+/_layout";
-    page:
-      | "/admin-dashboard"
-      | "/admin-dashboard/:userId"
-      | "/admin-dashboard/announcements"
-      | "/admin-dashboard/announcements/new"
-      | "/admin-dashboard/generate-locations"
-      | "/admin-dashboard/move-location-images"
-      | "/admin-dashboard/org/:organizationId"
-      | "/admin-dashboard/org/:organizationId/assets"
-      | "/admin-dashboard/org/:organizationId/members"
-      | "/admin-dashboard/org/:organizationId/qr-codes"
-      | "/admin-dashboard/org/:organizationId/transfer-ownership"
-      | "/admin-dashboard/qrs"
-      | "/admin-dashboard/qrs/codes.zip"
-      | "/admin-dashboard/test-supabase-rls"
-      | "/admin-dashboard/updates"
-      | "/admin-dashboard/updates/:updateId/edit"
-      | "/admin-dashboard/updates/new"
-      | "/admin-dashboard/users";
-  };
-  "routes/_layout+/admin-dashboard+/$userId.tsx": {
-    id: "routes/_layout+/admin-dashboard+/$userId";
-    page: "/admin-dashboard/:userId";
-  };
-  "routes/_layout+/admin-dashboard+/announcements.tsx": {
-    id: "routes/_layout+/admin-dashboard+/announcements";
-    page:
-      | "/admin-dashboard/announcements"
-      | "/admin-dashboard/announcements/new";
-  };
-  "routes/_layout+/admin-dashboard+/announcements.new.tsx": {
-    id: "routes/_layout+/admin-dashboard+/announcements.new";
-    page: "/admin-dashboard/announcements/new";
-  };
-  "routes/_layout+/admin-dashboard+/generate-locations.tsx": {
-    id: "routes/_layout+/admin-dashboard+/generate-locations";
-    page: "/admin-dashboard/generate-locations";
-  };
-  "routes/_layout+/admin-dashboard+/move-location-images.tsx": {
-    id: "routes/_layout+/admin-dashboard+/move-location-images";
-    page: "/admin-dashboard/move-location-images";
-  };
-  "routes/_layout+/admin-dashboard+/org.$organizationId.tsx": {
-    id: "routes/_layout+/admin-dashboard+/org.$organizationId";
-    page:
-      | "/admin-dashboard/org/:organizationId"
-      | "/admin-dashboard/org/:organizationId/assets"
-      | "/admin-dashboard/org/:organizationId/members"
-      | "/admin-dashboard/org/:organizationId/qr-codes"
-      | "/admin-dashboard/org/:organizationId/transfer-ownership";
-  };
-  "routes/_layout+/admin-dashboard+/org.$organizationId.assets.tsx": {
-    id: "routes/_layout+/admin-dashboard+/org.$organizationId.assets";
-    page: "/admin-dashboard/org/:organizationId/assets";
-  };
-  "routes/_layout+/admin-dashboard+/org.$organizationId.members.tsx": {
-    id: "routes/_layout+/admin-dashboard+/org.$organizationId.members";
-    page: "/admin-dashboard/org/:organizationId/members";
-  };
-  "routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes.tsx": {
-    id: "routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes";
-    page: "/admin-dashboard/org/:organizationId/qr-codes";
-  };
-  "routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership.tsx": {
-    id: "routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership";
-    page: "/admin-dashboard/org/:organizationId/transfer-ownership";
-  };
-  "routes/_layout+/admin-dashboard+/qrs.tsx": {
-    id: "routes/_layout+/admin-dashboard+/qrs";
-    page: "/admin-dashboard/qrs" | "/admin-dashboard/qrs/codes.zip";
-  };
-  "routes/_layout+/admin-dashboard+/qrs.codes[.zip].ts": {
-    id: "routes/_layout+/admin-dashboard+/qrs.codes[.zip]";
-    page: "/admin-dashboard/qrs/codes.zip";
-  };
-  "routes/_layout+/admin-dashboard+/test-supabase-rls.tsx": {
-    id: "routes/_layout+/admin-dashboard+/test-supabase-rls";
-    page: "/admin-dashboard/test-supabase-rls";
-  };
-  "routes/_layout+/admin-dashboard+/updates.tsx": {
-    id: "routes/_layout+/admin-dashboard+/updates";
-    page:
-      | "/admin-dashboard/updates"
-      | "/admin-dashboard/updates/:updateId/edit"
-      | "/admin-dashboard/updates/new";
-  };
-  "routes/_layout+/admin-dashboard+/updates.$updateId.edit.tsx": {
-    id: "routes/_layout+/admin-dashboard+/updates.$updateId.edit";
-    page: "/admin-dashboard/updates/:updateId/edit";
-  };
-  "routes/_layout+/admin-dashboard+/updates.new.tsx": {
-    id: "routes/_layout+/admin-dashboard+/updates.new";
-    page: "/admin-dashboard/updates/new";
-  };
-  "routes/_layout+/admin-dashboard+/users.tsx": {
-    id: "routes/_layout+/admin-dashboard+/users";
-    page: "/admin-dashboard/users";
-  };
-  "routes/_layout+/assets.tsx": {
-    id: "routes/_layout+/assets";
-    page:
-      | "/assets"
-      | "/assets/:assetId"
-      | "/assets/:assetId/activity"
-      | "/assets/:assetId/activity.csv"
-      | "/assets/:assetId/bookings"
-      | "/assets/:assetId/note"
-      | "/assets/:assetId/overview"
-      | "/assets/:assetId/overview/add-to-existing-booking"
-      | "/assets/:assetId/overview/assign-custody"
-      | "/assets/:assetId/overview/create-new-booking"
-      | "/assets/:assetId/overview/duplicate"
-      | "/assets/:assetId/overview/manage-placements"
-      | "/assets/:assetId/overview/release-custody"
-      | "/assets/:assetId/overview/update-location"
-      | "/assets/:assetId/reminders"
-      | "/assets/:assetId/edit"
-      | "/assets/export/:fileName.csv"
-      | "/assets/import-update"
-      | "/assets/import"
-      | "/assets/new";
-  };
-  "routes/_layout+/assets.$assetId.tsx": {
-    id: "routes/_layout+/assets.$assetId";
-    page:
-      | "/assets/:assetId"
-      | "/assets/:assetId/activity"
-      | "/assets/:assetId/activity.csv"
-      | "/assets/:assetId/bookings"
-      | "/assets/:assetId/note"
-      | "/assets/:assetId/overview"
-      | "/assets/:assetId/overview/add-to-existing-booking"
-      | "/assets/:assetId/overview/assign-custody"
-      | "/assets/:assetId/overview/create-new-booking"
-      | "/assets/:assetId/overview/duplicate"
-      | "/assets/:assetId/overview/manage-placements"
-      | "/assets/:assetId/overview/release-custody"
-      | "/assets/:assetId/overview/update-location"
-      | "/assets/:assetId/reminders";
-  };
-  "routes/_layout+/assets.$assetId._index.tsx": {
-    id: "routes/_layout+/assets.$assetId._index";
-    page: "/assets/:assetId";
-  };
-  "routes/_layout+/assets.$assetId.activity.tsx": {
-    id: "routes/_layout+/assets.$assetId.activity";
-    page: "/assets/:assetId/activity";
-  };
-  "routes/_layout+/assets.$assetId.activity[.csv].ts": {
-    id: "routes/_layout+/assets.$assetId.activity[.csv]";
-    page: "/assets/:assetId/activity.csv";
-  };
-  "routes/_layout+/assets.$assetId.bookings.tsx": {
-    id: "routes/_layout+/assets.$assetId.bookings";
-    page: "/assets/:assetId/bookings";
-  };
-  "routes/_layout+/assets.$assetId.index.tsx": {
-    id: "routes/_layout+/assets.$assetId.index";
-    page: "/assets/:assetId";
-  };
-  "routes/_layout+/assets.$assetId.note.tsx": {
-    id: "routes/_layout+/assets.$assetId.note";
-    page: "/assets/:assetId/note";
-  };
-  "routes/_layout+/assets.$assetId.overview.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview";
-    page:
-      | "/assets/:assetId/overview"
-      | "/assets/:assetId/overview/add-to-existing-booking"
-      | "/assets/:assetId/overview/assign-custody"
-      | "/assets/:assetId/overview/create-new-booking"
-      | "/assets/:assetId/overview/duplicate"
-      | "/assets/:assetId/overview/manage-placements"
-      | "/assets/:assetId/overview/release-custody"
-      | "/assets/:assetId/overview/update-location";
-  };
-  "routes/_layout+/assets.$assetId.overview.add-to-existing-booking.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.add-to-existing-booking";
-    page: "/assets/:assetId/overview/add-to-existing-booking";
-  };
-  "routes/_layout+/assets.$assetId.overview.assign-custody.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.assign-custody";
-    page: "/assets/:assetId/overview/assign-custody";
-  };
-  "routes/_layout+/assets.$assetId.overview.create-new-booking.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.create-new-booking";
-    page: "/assets/:assetId/overview/create-new-booking";
-  };
-  "routes/_layout+/assets.$assetId.overview.duplicate.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.duplicate";
-    page: "/assets/:assetId/overview/duplicate";
-  };
-  "routes/_layout+/assets.$assetId.overview.manage-placements.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.manage-placements";
-    page: "/assets/:assetId/overview/manage-placements";
-  };
-  "routes/_layout+/assets.$assetId.overview.release-custody.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.release-custody";
-    page: "/assets/:assetId/overview/release-custody";
-  };
-  "routes/_layout+/assets.$assetId.overview.update-location.tsx": {
-    id: "routes/_layout+/assets.$assetId.overview.update-location";
-    page: "/assets/:assetId/overview/update-location";
-  };
-  "routes/_layout+/assets.$assetId.reminders.tsx": {
-    id: "routes/_layout+/assets.$assetId.reminders";
-    page: "/assets/:assetId/reminders";
-  };
-  "routes/_layout+/assets.$assetId_.edit.tsx": {
-    id: "routes/_layout+/assets.$assetId_.edit";
-    page: "/assets/:assetId/edit";
-  };
-  "routes/_layout+/assets._index.tsx": {
-    id: "routes/_layout+/assets._index";
-    page: "/assets";
-  };
-  "routes/_layout+/assets.export.$fileName[.csv].tsx": {
-    id: "routes/_layout+/assets.export.$fileName[.csv]";
-    page: "/assets/export/:fileName.csv";
-  };
-  "routes/_layout+/assets.import-update.tsx": {
-    id: "routes/_layout+/assets.import-update";
-    page: "/assets/import-update";
-  };
-  "routes/_layout+/assets.import.tsx": {
-    id: "routes/_layout+/assets.import";
-    page: "/assets/import";
-  };
-  "routes/_layout+/assets.new.tsx": {
-    id: "routes/_layout+/assets.new";
-    page: "/assets/new";
-  };
-  "routes/_layout+/audits.tsx": {
-    id: "routes/_layout+/audits";
-    page:
-      | "/audits"
-      | "/audits/:auditId"
-      | "/audits/:auditId/activity"
-      | "/audits/:auditId/activity.csv"
-      | "/audits/:auditId/duplicate"
-      | "/audits/:auditId/note"
-      | "/audits/:auditId/overview"
-      | "/audits/:auditId/scan"
-      | "/audits/:auditId/scan/:auditAssetId/details";
-  };
-  "routes/_layout+/audits.$auditId.tsx": {
-    id: "routes/_layout+/audits.$auditId";
-    page:
-      | "/audits/:auditId"
-      | "/audits/:auditId/activity"
-      | "/audits/:auditId/activity.csv"
-      | "/audits/:auditId/duplicate"
-      | "/audits/:auditId/note"
-      | "/audits/:auditId/overview"
-      | "/audits/:auditId/scan"
-      | "/audits/:auditId/scan/:auditAssetId/details";
-  };
-  "routes/_layout+/audits.$auditId._index.tsx": {
-    id: "routes/_layout+/audits.$auditId._index";
-    page: "/audits/:auditId";
-  };
-  "routes/_layout+/audits.$auditId.activity.tsx": {
-    id: "routes/_layout+/audits.$auditId.activity";
-    page: "/audits/:auditId/activity";
-  };
-  "routes/_layout+/audits.$auditId.activity[.csv].ts": {
-    id: "routes/_layout+/audits.$auditId.activity[.csv]";
-    page: "/audits/:auditId/activity.csv";
-  };
-  "routes/_layout+/audits.$auditId.duplicate.tsx": {
-    id: "routes/_layout+/audits.$auditId.duplicate";
-    page: "/audits/:auditId/duplicate";
-  };
-  "routes/_layout+/audits.$auditId.note.tsx": {
-    id: "routes/_layout+/audits.$auditId.note";
-    page: "/audits/:auditId/note";
-  };
-  "routes/_layout+/audits.$auditId.overview.tsx": {
-    id: "routes/_layout+/audits.$auditId.overview";
-    page: "/audits/:auditId/overview";
-  };
-  "routes/_layout+/audits.$auditId.scan.tsx": {
-    id: "routes/_layout+/audits.$auditId.scan";
-    page:
-      | "/audits/:auditId/scan"
-      | "/audits/:auditId/scan/:auditAssetId/details";
-  };
-  "routes/_layout+/audits.$auditId.scan.$auditAssetId.details.tsx": {
-    id: "routes/_layout+/audits.$auditId.scan.$auditAssetId.details";
-    page: "/audits/:auditId/scan/:auditAssetId/details";
-  };
-  "routes/_layout+/audits._index.tsx": {
-    id: "routes/_layout+/audits._index";
-    page: "/audits";
-  };
-  "routes/_layout+/available-assets.tsx": {
-    id: "routes/_layout+/available-assets";
-    page: "/available-assets";
-  };
-  "routes/_layout+/bookings.tsx": {
-    id: "routes/_layout+/bookings";
-    page:
-      | "/bookings"
-      | "/bookings/:bookingId"
-      | "/bookings/:bookingId/activity"
-      | "/bookings/:bookingId/activity.csv"
-      | "/bookings/:bookingId/overview"
-      | "/bookings/:bookingId/overview/cal.ics"
-      | "/bookings/:bookingId/overview/checkin-assets"
-      | "/bookings/:bookingId/overview/checkout-assets"
-      | "/bookings/:bookingId/overview/duplicate"
-      | "/bookings/:bookingId/overview/fulfil-and-checkout"
-      | "/bookings/:bookingId/overview/manage-assets"
-      | "/bookings/:bookingId/overview/manage-kits"
-      | "/bookings/:bookingId/overview/scan-assets"
-      | "/bookings/export/:fileName.csv"
-      | "/bookings/new";
-  };
-  "routes/_layout+/bookings.$bookingId.tsx": {
-    id: "routes/_layout+/bookings.$bookingId";
-    page:
-      | "/bookings/:bookingId"
-      | "/bookings/:bookingId/activity"
-      | "/bookings/:bookingId/activity.csv"
-      | "/bookings/:bookingId/overview"
-      | "/bookings/:bookingId/overview/cal.ics"
-      | "/bookings/:bookingId/overview/checkin-assets"
-      | "/bookings/:bookingId/overview/checkout-assets"
-      | "/bookings/:bookingId/overview/duplicate"
-      | "/bookings/:bookingId/overview/fulfil-and-checkout"
-      | "/bookings/:bookingId/overview/manage-assets"
-      | "/bookings/:bookingId/overview/manage-kits"
-      | "/bookings/:bookingId/overview/scan-assets";
-  };
-  "routes/_layout+/bookings.$bookingId._index.tsx": {
-    id: "routes/_layout+/bookings.$bookingId._index";
-    page: "/bookings/:bookingId";
-  };
-  "routes/_layout+/bookings.$bookingId.activity.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.activity";
-    page: "/bookings/:bookingId/activity";
-  };
-  "routes/_layout+/bookings.$bookingId.activity[.csv].ts": {
-    id: "routes/_layout+/bookings.$bookingId.activity[.csv]";
-    page: "/bookings/:bookingId/activity.csv";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview";
-    page:
-      | "/bookings/:bookingId/overview"
-      | "/bookings/:bookingId/overview/cal.ics"
-      | "/bookings/:bookingId/overview/checkin-assets"
-      | "/bookings/:bookingId/overview/checkout-assets"
-      | "/bookings/:bookingId/overview/duplicate"
-      | "/bookings/:bookingId/overview/fulfil-and-checkout"
-      | "/bookings/:bookingId/overview/manage-assets"
-      | "/bookings/:bookingId/overview/manage-kits"
-      | "/bookings/:bookingId/overview/scan-assets";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.cal[.ics].ts": {
-    id: "routes/_layout+/bookings.$bookingId.overview.cal[.ics]";
-    page: "/bookings/:bookingId/overview/cal.ics";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.checkin-assets.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.checkin-assets";
-    page: "/bookings/:bookingId/overview/checkin-assets";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.checkout-assets.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.checkout-assets";
-    page: "/bookings/:bookingId/overview/checkout-assets";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.duplicate.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.duplicate";
-    page: "/bookings/:bookingId/overview/duplicate";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout";
-    page: "/bookings/:bookingId/overview/fulfil-and-checkout";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.manage-assets.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.manage-assets";
-    page: "/bookings/:bookingId/overview/manage-assets";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.manage-kits.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.manage-kits";
-    page: "/bookings/:bookingId/overview/manage-kits";
-  };
-  "routes/_layout+/bookings.$bookingId.overview.scan-assets.tsx": {
-    id: "routes/_layout+/bookings.$bookingId.overview.scan-assets";
-    page: "/bookings/:bookingId/overview/scan-assets";
-  };
-  "routes/_layout+/bookings._index.tsx": {
-    id: "routes/_layout+/bookings._index";
-    page: "/bookings";
-  };
-  "routes/_layout+/bookings.export.$fileName[.csv].tsx": {
-    id: "routes/_layout+/bookings.export.$fileName[.csv]";
-    page: "/bookings/export/:fileName.csv";
-  };
-  "routes/_layout+/bookings.new.tsx": {
-    id: "routes/_layout+/bookings.new";
-    page: "/bookings/new";
-  };
-  "routes/_layout+/calendar.tsx": {
-    id: "routes/_layout+/calendar";
-    page: "/calendar";
-  };
-  "routes/_layout+/categories.tsx": {
-    id: "routes/_layout+/categories";
-    page: "/categories" | "/categories/:categoryId/edit" | "/categories/new";
-  };
-  "routes/_layout+/categories.$categoryId_.edit.tsx": {
-    id: "routes/_layout+/categories.$categoryId_.edit";
-    page: "/categories/:categoryId/edit";
-  };
-  "routes/_layout+/categories.new.tsx": {
-    id: "routes/_layout+/categories.new";
-    page: "/categories/new";
-  };
-  "routes/_layout+/dashboard.tsx": {
-    id: "routes/_layout+/dashboard";
-    page: "/dashboard";
-  };
-  "routes/_layout+/home.tsx": {
-    id: "routes/_layout+/home";
-    page: "/home";
-  };
-  "routes/_layout+/kits.tsx": {
-    id: "routes/_layout+/kits";
-    page:
-      | "/kits"
-      | "/kits/:kitId"
-      | "/kits/:kitId/assets"
-      | "/kits/:kitId/assets/add-to-existing-booking"
-      | "/kits/:kitId/assets/assign-custody"
-      | "/kits/:kitId/assets/create-new-booking"
-      | "/kits/:kitId/assets/manage-assets"
-      | "/kits/:kitId/assets/release-custody"
-      | "/kits/:kitId/assets/update-location"
-      | "/kits/:kitId/bookings"
-      | "/kits/:kitId/overview"
-      | "/kits/:kitId/scan-assets"
-      | "/kits/:kitId/edit"
-      | "/kits/new";
-  };
-  "routes/_layout+/kits.$kitId.tsx": {
-    id: "routes/_layout+/kits.$kitId";
-    page:
-      | "/kits/:kitId"
-      | "/kits/:kitId/assets"
-      | "/kits/:kitId/assets/add-to-existing-booking"
-      | "/kits/:kitId/assets/assign-custody"
-      | "/kits/:kitId/assets/create-new-booking"
-      | "/kits/:kitId/assets/manage-assets"
-      | "/kits/:kitId/assets/release-custody"
-      | "/kits/:kitId/assets/update-location"
-      | "/kits/:kitId/bookings"
-      | "/kits/:kitId/overview"
-      | "/kits/:kitId/scan-assets";
-  };
-  "routes/_layout+/kits.$kitId._index.tsx": {
-    id: "routes/_layout+/kits.$kitId._index";
-    page: "/kits/:kitId";
-  };
-  "routes/_layout+/kits.$kitId.assets.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets";
-    page:
-      | "/kits/:kitId/assets"
-      | "/kits/:kitId/assets/add-to-existing-booking"
-      | "/kits/:kitId/assets/assign-custody"
-      | "/kits/:kitId/assets/create-new-booking"
-      | "/kits/:kitId/assets/manage-assets"
-      | "/kits/:kitId/assets/release-custody"
-      | "/kits/:kitId/assets/update-location";
-  };
-  "routes/_layout+/kits.$kitId.assets.add-to-existing-booking.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets.add-to-existing-booking";
-    page: "/kits/:kitId/assets/add-to-existing-booking";
-  };
-  "routes/_layout+/kits.$kitId.assets.assign-custody.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets.assign-custody";
-    page: "/kits/:kitId/assets/assign-custody";
-  };
-  "routes/_layout+/kits.$kitId.assets.create-new-booking.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets.create-new-booking";
-    page: "/kits/:kitId/assets/create-new-booking";
-  };
-  "routes/_layout+/kits.$kitId.assets.manage-assets.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets.manage-assets";
-    page: "/kits/:kitId/assets/manage-assets";
-  };
-  "routes/_layout+/kits.$kitId.assets.release-custody.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets.release-custody";
-    page: "/kits/:kitId/assets/release-custody";
-  };
-  "routes/_layout+/kits.$kitId.assets.update-location.tsx": {
-    id: "routes/_layout+/kits.$kitId.assets.update-location";
-    page: "/kits/:kitId/assets/update-location";
-  };
-  "routes/_layout+/kits.$kitId.bookings.tsx": {
-    id: "routes/_layout+/kits.$kitId.bookings";
-    page: "/kits/:kitId/bookings";
-  };
-  "routes/_layout+/kits.$kitId.overview.tsx": {
-    id: "routes/_layout+/kits.$kitId.overview";
-    page: "/kits/:kitId/overview";
-  };
-  "routes/_layout+/kits.$kitId.scan-assets.tsx": {
-    id: "routes/_layout+/kits.$kitId.scan-assets";
-    page: "/kits/:kitId/scan-assets";
-  };
-  "routes/_layout+/kits.$kitId_.edit.tsx": {
-    id: "routes/_layout+/kits.$kitId_.edit";
-    page: "/kits/:kitId/edit";
-  };
-  "routes/_layout+/kits._index.tsx": {
-    id: "routes/_layout+/kits._index";
-    page: "/kits";
-  };
-  "routes/_layout+/kits.new.tsx": {
-    id: "routes/_layout+/kits.new";
-    page: "/kits/new";
-  };
-  "routes/_layout+/locations.tsx": {
-    id: "routes/_layout+/locations";
-    page:
-      | "/locations"
-      | "/locations/:locationId"
-      | "/locations/:locationId/activity"
-      | "/locations/:locationId/activity.csv"
-      | "/locations/:locationId/assets"
-      | "/locations/:locationId/assets/manage-assets"
-      | "/locations/:locationId/kits"
-      | "/locations/:locationId/kits/manage-kits"
-      | "/locations/:locationId/note"
-      | "/locations/:locationId/overview"
-      | "/locations/:locationId/scan-assets-kits"
-      | "/locations/:locationId/edit"
-      | "/locations/new";
-  };
-  "routes/_layout+/locations.$locationId.tsx": {
-    id: "routes/_layout+/locations.$locationId";
-    page:
-      | "/locations/:locationId"
-      | "/locations/:locationId/activity"
-      | "/locations/:locationId/activity.csv"
-      | "/locations/:locationId/assets"
-      | "/locations/:locationId/assets/manage-assets"
-      | "/locations/:locationId/kits"
-      | "/locations/:locationId/kits/manage-kits"
-      | "/locations/:locationId/note"
-      | "/locations/:locationId/overview"
-      | "/locations/:locationId/scan-assets-kits";
-  };
-  "routes/_layout+/locations.$locationId.activity.tsx": {
-    id: "routes/_layout+/locations.$locationId.activity";
-    page: "/locations/:locationId/activity";
-  };
-  "routes/_layout+/locations.$locationId.activity[.csv].ts": {
-    id: "routes/_layout+/locations.$locationId.activity[.csv]";
-    page: "/locations/:locationId/activity.csv";
-  };
-  "routes/_layout+/locations.$locationId.assets.tsx": {
-    id: "routes/_layout+/locations.$locationId.assets";
-    page:
-      | "/locations/:locationId/assets"
-      | "/locations/:locationId/assets/manage-assets";
-  };
-  "routes/_layout+/locations.$locationId.assets.manage-assets.tsx": {
-    id: "routes/_layout+/locations.$locationId.assets.manage-assets";
-    page: "/locations/:locationId/assets/manage-assets";
-  };
-  "routes/_layout+/locations.$locationId.index.tsx": {
-    id: "routes/_layout+/locations.$locationId.index";
-    page: "/locations/:locationId";
-  };
-  "routes/_layout+/locations.$locationId.kits.tsx": {
-    id: "routes/_layout+/locations.$locationId.kits";
-    page:
-      | "/locations/:locationId/kits"
-      | "/locations/:locationId/kits/manage-kits";
-  };
-  "routes/_layout+/locations.$locationId.kits.manage-kits.tsx": {
-    id: "routes/_layout+/locations.$locationId.kits.manage-kits";
-    page: "/locations/:locationId/kits/manage-kits";
-  };
-  "routes/_layout+/locations.$locationId.note.tsx": {
-    id: "routes/_layout+/locations.$locationId.note";
-    page: "/locations/:locationId/note";
-  };
-  "routes/_layout+/locations.$locationId.overview.tsx": {
-    id: "routes/_layout+/locations.$locationId.overview";
-    page: "/locations/:locationId/overview";
-  };
-  "routes/_layout+/locations.$locationId.scan-assets-kits.tsx": {
-    id: "routes/_layout+/locations.$locationId.scan-assets-kits";
-    page: "/locations/:locationId/scan-assets-kits";
-  };
-  "routes/_layout+/locations.$locationId_.edit.tsx": {
-    id: "routes/_layout+/locations.$locationId_.edit";
-    page: "/locations/:locationId/edit";
-  };
-  "routes/_layout+/locations._index.tsx": {
-    id: "routes/_layout+/locations._index";
-    page: "/locations";
-  };
-  "routes/_layout+/locations.new.tsx": {
-    id: "routes/_layout+/locations.new";
-    page: "/locations/new";
-  };
-  "routes/_layout+/me.tsx": {
-    id: "routes/_layout+/me";
-    page: "/me" | "/me/assets" | "/me/bookings" | "/me/note" | "/me/notes";
-  };
-  "routes/_layout+/me._index.tsx": {
-    id: "routes/_layout+/me._index";
-    page: "/me";
-  };
-  "routes/_layout+/me.assets.tsx": {
-    id: "routes/_layout+/me.assets";
-    page: "/me/assets";
-  };
-  "routes/_layout+/me.bookings.tsx": {
-    id: "routes/_layout+/me.bookings";
-    page: "/me/bookings";
-  };
-  "routes/_layout+/me.note.tsx": {
-    id: "routes/_layout+/me.note";
-    page: "/me/note";
-  };
-  "routes/_layout+/me.notes.tsx": {
-    id: "routes/_layout+/me.notes";
-    page: "/me/notes";
-  };
-  "routes/_layout+/my-custody.tsx": {
-    id: "routes/_layout+/my-custody";
-    page: "/my-custody";
-  };
-  "routes/_layout+/reminders.tsx": {
-    id: "routes/_layout+/reminders";
-    page: "/reminders";
-  };
-  "routes/_layout+/reminders._index.tsx": {
-    id: "routes/_layout+/reminders._index";
-    page: "/reminders";
-  };
-  "routes/_layout+/reports.tsx": {
-    id: "routes/_layout+/reports";
-    page: "/reports" | "/reports/:reportId" | "/reports/export/:fileName.csv";
-  };
-  "routes/_layout+/reports.$reportId.tsx": {
-    id: "routes/_layout+/reports.$reportId";
-    page: "/reports/:reportId";
-  };
-  "routes/_layout+/reports._index.tsx": {
-    id: "routes/_layout+/reports._index";
-    page: "/reports";
-  };
-  "routes/_layout+/reports.export.$fileName[.csv].tsx": {
-    id: "routes/_layout+/reports.export.$fileName[.csv]";
-    page: "/reports/export/:fileName.csv";
-  };
-  "routes/_layout+/requests.tsx": {
-    id: "routes/_layout+/requests";
-    page: "/requests";
-  };
-  "routes/_layout+/scanner-sam-id.ts": {
-    id: "routes/_layout+/scanner-sam-id";
-    page: "/scanner-sam-id";
-  };
-  "routes/_layout+/scanner.tsx": {
-    id: "routes/_layout+/scanner";
-    page: "/scanner";
-  };
-  "routes/_layout+/settings.tsx": {
-    id: "routes/_layout+/settings";
-    page:
-      | "/settings"
-      | "/settings/asset-models"
-      | "/settings/asset-models/:assetModelId/edit"
-      | "/settings/asset-models/new"
-      | "/settings/bookings"
-      | "/settings/custom-fields"
-      | "/settings/custom-fields/:fieldId/edit"
-      | "/settings/custom-fields/new"
-      | "/settings/emails"
-      | "/settings/general"
-      | "/settings/team"
-      | "/settings/team/invites"
-      | "/settings/team/nrm"
-      | "/settings/team/nrm/:nrmId/edit"
-      | "/settings/team/nrm/add-member"
-      | "/settings/team/nrm/import-members"
-      | "/settings/team/users"
-      | "/settings/team/users/:userId"
-      | "/settings/team/users/:userId/*"
-      | "/settings/team/users/:userId/assets"
-      | "/settings/team/users/:userId/bookings"
-      | "/settings/team/users/:userId/note"
-      | "/settings/team/users/:userId/notes";
-  };
-  "routes/_layout+/settings.asset-models.tsx": {
-    id: "routes/_layout+/settings.asset-models";
-    page:
-      | "/settings/asset-models"
-      | "/settings/asset-models/:assetModelId/edit"
-      | "/settings/asset-models/new";
-  };
-  "routes/_layout+/settings.asset-models.$assetModelId_.edit.tsx": {
-    id: "routes/_layout+/settings.asset-models.$assetModelId_.edit";
-    page: "/settings/asset-models/:assetModelId/edit";
-  };
-  "routes/_layout+/settings.asset-models.index.tsx": {
-    id: "routes/_layout+/settings.asset-models.index";
-    page: "/settings/asset-models";
-  };
-  "routes/_layout+/settings.asset-models.new.tsx": {
-    id: "routes/_layout+/settings.asset-models.new";
-    page: "/settings/asset-models/new";
-  };
-  "routes/_layout+/settings.bookings.tsx": {
-    id: "routes/_layout+/settings.bookings";
-    page: "/settings/bookings";
-  };
-  "routes/_layout+/settings.custom-fields.tsx": {
-    id: "routes/_layout+/settings.custom-fields";
-    page:
-      | "/settings/custom-fields"
-      | "/settings/custom-fields/:fieldId/edit"
-      | "/settings/custom-fields/new";
-  };
-  "routes/_layout+/settings.custom-fields.$fieldId_.edit.tsx": {
-    id: "routes/_layout+/settings.custom-fields.$fieldId_.edit";
-    page: "/settings/custom-fields/:fieldId/edit";
-  };
-  "routes/_layout+/settings.custom-fields.index.tsx": {
-    id: "routes/_layout+/settings.custom-fields.index";
-    page: "/settings/custom-fields";
-  };
-  "routes/_layout+/settings.custom-fields.new.tsx": {
-    id: "routes/_layout+/settings.custom-fields.new";
-    page: "/settings/custom-fields/new";
-  };
-  "routes/_layout+/settings.emails.tsx": {
-    id: "routes/_layout+/settings.emails";
-    page: "/settings/emails";
-  };
-  "routes/_layout+/settings.general.tsx": {
-    id: "routes/_layout+/settings.general";
-    page: "/settings/general";
-  };
-  "routes/_layout+/settings.index.tsx": {
-    id: "routes/_layout+/settings.index";
-    page: "/settings";
-  };
-  "routes/_layout+/settings.team.tsx": {
-    id: "routes/_layout+/settings.team";
-    page:
-      | "/settings/team"
-      | "/settings/team/invites"
-      | "/settings/team/nrm"
-      | "/settings/team/nrm/:nrmId/edit"
-      | "/settings/team/nrm/add-member"
-      | "/settings/team/nrm/import-members"
-      | "/settings/team/users"
-      | "/settings/team/users/:userId"
-      | "/settings/team/users/:userId/*"
-      | "/settings/team/users/:userId/assets"
-      | "/settings/team/users/:userId/bookings"
-      | "/settings/team/users/:userId/note"
-      | "/settings/team/users/:userId/notes";
-  };
-  "routes/_layout+/settings.team._index.tsx": {
-    id: "routes/_layout+/settings.team._index";
-    page: "/settings/team";
-  };
-  "routes/_layout+/settings.team.invites.tsx": {
-    id: "routes/_layout+/settings.team.invites";
-    page: "/settings/team/invites";
-  };
-  "routes/_layout+/settings.team.nrm.tsx": {
-    id: "routes/_layout+/settings.team.nrm";
-    page:
-      | "/settings/team/nrm"
-      | "/settings/team/nrm/:nrmId/edit"
-      | "/settings/team/nrm/add-member"
-      | "/settings/team/nrm/import-members";
-  };
-  "routes/_layout+/settings.team.nrm.$nrmId.edit.tsx": {
-    id: "routes/_layout+/settings.team.nrm.$nrmId.edit";
-    page: "/settings/team/nrm/:nrmId/edit";
-  };
-  "routes/_layout+/settings.team.nrm.add-member.tsx": {
-    id: "routes/_layout+/settings.team.nrm.add-member";
-    page: "/settings/team/nrm/add-member";
-  };
-  "routes/_layout+/settings.team.nrm.import-members.tsx": {
-    id: "routes/_layout+/settings.team.nrm.import-members";
-    page: "/settings/team/nrm/import-members";
-  };
-  "routes/_layout+/settings.team.users.tsx": {
-    id: "routes/_layout+/settings.team.users";
-    page:
-      | "/settings/team/users"
-      | "/settings/team/users/:userId"
-      | "/settings/team/users/:userId/*"
-      | "/settings/team/users/:userId/assets"
-      | "/settings/team/users/:userId/bookings"
-      | "/settings/team/users/:userId/note"
-      | "/settings/team/users/:userId/notes";
-  };
-  "routes/_layout+/settings.team.users.$userId.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId";
-    page:
-      | "/settings/team/users/:userId"
-      | "/settings/team/users/:userId/*"
-      | "/settings/team/users/:userId/assets"
-      | "/settings/team/users/:userId/bookings"
-      | "/settings/team/users/:userId/note"
-      | "/settings/team/users/:userId/notes";
-  };
-  "routes/_layout+/settings.team.users.$userId.$.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId.$";
-    page: "/settings/team/users/:userId/*";
-  };
-  "routes/_layout+/settings.team.users.$userId._index.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId._index";
-    page: "/settings/team/users/:userId";
-  };
-  "routes/_layout+/settings.team.users.$userId.assets.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId.assets";
-    page: "/settings/team/users/:userId/assets";
-  };
-  "routes/_layout+/settings.team.users.$userId.bookings.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId.bookings";
-    page: "/settings/team/users/:userId/bookings";
-  };
-  "routes/_layout+/settings.team.users.$userId.note.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId.note";
-    page: "/settings/team/users/:userId/note";
-  };
-  "routes/_layout+/settings.team.users.$userId.notes.tsx": {
-    id: "routes/_layout+/settings.team.users.$userId.notes";
-    page: "/settings/team/users/:userId/notes";
-  };
-  "routes/_layout+/tags.tsx": {
-    id: "routes/_layout+/tags";
-    page: "/tags" | "/tags/:tagId/edit" | "/tags/new";
-  };
-  "routes/_layout+/tags.$tagId_.edit.tsx": {
-    id: "routes/_layout+/tags.$tagId_.edit";
-    page: "/tags/:tagId/edit";
-  };
-  "routes/_layout+/tags.new.tsx": {
-    id: "routes/_layout+/tags.new";
-    page: "/tags/new";
-  };
-  "routes/_layout+/updates.tsx": {
-    id: "routes/_layout+/updates";
-    page: "/updates";
-  };
-  "routes/_welcome+/_layout.tsx": {
-    id: "routes/_welcome+/_layout";
-    page:
+      | "/updates"
       | "/onboarding"
       | "/select-plan"
       | "/sso-pending-assignment"
       | "/welcome";
   };
-  "routes/_welcome+/onboarding.tsx": {
-    id: "routes/_welcome+/onboarding";
-    page: "/onboarding";
-  };
-  "routes/_welcome+/select-plan.tsx": {
-    id: "routes/_welcome+/select-plan";
-    page: "/select-plan";
-  };
-  "routes/_welcome+/sso-pending-assignment.tsx": {
-    id: "routes/_welcome+/sso-pending-assignment";
-    page: "/sso-pending-assignment";
-  };
-  "routes/_welcome+/welcome.tsx": {
-    id: "routes/_welcome+/welcome";
-    page: "/welcome";
+  "routes/$.tsx": {
+    id: "routes/$";
+    page: "/*";
   };
   "routes/api+/$organizationId.qr-codes[.zip].ts": {
     id: "routes/api+/$organizationId.qr-codes[.zip]";
@@ -2902,6 +1763,10 @@ type RouteFiles = {
   "routes/api+/command-palette.search.ts": {
     id: "routes/api+/command-palette.search";
     page: "/api/command-palette/search";
+  };
+  "routes/api+/custody.request-return.ts": {
+    id: "routes/api+/custody.request-return";
+    page: "/api/custody/request-return";
   };
   "routes/api+/custom-fields.bulk-actions.ts": {
     id: "routes/api+/custom-fields.bulk-actions";
@@ -3367,197 +2232,1188 @@ type RouteFiles = {
     id: "routes/qr+/_public+/$qrId_.not-logged-in";
     page: "/qr/:qrId/not-logged-in";
   };
+  "routes/[.well-known].apple-app-site-association.tsx": {
+    id: "routes/[.well-known].apple-app-site-association";
+    page: "/.well-known/apple-app-site-association";
+  };
+  "routes/[.well-known].assetlinks[.json].tsx": {
+    id: "routes/[.well-known].assetlinks[.json]";
+    page: "/.well-known/assetlinks.json";
+  };
+  "routes/_auth+/_auth.tsx": {
+    id: "routes/_auth+/_auth";
+    page:
+      | "/accept-invite/:inviteId"
+      | "/forgot-password"
+      | "/join"
+      | "/login"
+      | "/logout"
+      | "/oauth/callback"
+      | "/oauth/callback/mobile"
+      | "/otp"
+      | "/resend-otp"
+      | "/send-otp"
+      | "/sso-login";
+  };
+  "routes/_auth+/accept-invite.$inviteId.tsx": {
+    id: "routes/_auth+/accept-invite.$inviteId";
+    page: "/accept-invite/:inviteId";
+  };
+  "routes/_auth+/forgot-password.tsx": {
+    id: "routes/_auth+/forgot-password";
+    page: "/forgot-password";
+  };
+  "routes/_auth+/join.tsx": {
+    id: "routes/_auth+/join";
+    page: "/join";
+  };
+  "routes/_auth+/login.tsx": {
+    id: "routes/_auth+/login";
+    page: "/login";
+  };
+  "routes/_auth+/logout.tsx": {
+    id: "routes/_auth+/logout";
+    page: "/logout";
+  };
+  "routes/_auth+/oauth.callback.tsx": {
+    id: "routes/_auth+/oauth.callback";
+    page: "/oauth/callback";
+  };
+  "routes/_auth+/oauth.callback_.mobile.tsx": {
+    id: "routes/_auth+/oauth.callback_.mobile";
+    page: "/oauth/callback/mobile";
+  };
+  "routes/_auth+/otp.tsx": {
+    id: "routes/_auth+/otp";
+    page: "/otp";
+  };
+  "routes/_auth+/resend-otp.tsx": {
+    id: "routes/_auth+/resend-otp";
+    page: "/resend-otp";
+  };
+  "routes/_auth+/send-otp.tsx": {
+    id: "routes/_auth+/send-otp";
+    page: "/send-otp";
+  };
+  "routes/_auth+/sso-login.tsx": {
+    id: "routes/_auth+/sso-login";
+    page: "/sso-login";
+  };
+  "routes/_index.tsx": {
+    id: "routes/_index";
+    page: "/";
+  };
+  "routes/_layout+/_layout.tsx": {
+    id: "routes/_layout+/_layout";
+    page:
+      | "/account-details"
+      | "/account-details/calendars"
+      | "/account-details/general"
+      | "/account-details/subscription"
+      | "/account-details/subscription/customer-portal"
+      | "/account-details/workspace"
+      | "/account-details/workspace/:workspaceId/edit"
+      | "/account-details/workspace/new"
+      | "/admin-dashboard"
+      | "/admin-dashboard/:userId"
+      | "/admin-dashboard/announcements"
+      | "/admin-dashboard/announcements/new"
+      | "/admin-dashboard/generate-locations"
+      | "/admin-dashboard/move-location-images"
+      | "/admin-dashboard/org/:organizationId"
+      | "/admin-dashboard/org/:organizationId/assets"
+      | "/admin-dashboard/org/:organizationId/members"
+      | "/admin-dashboard/org/:organizationId/qr-codes"
+      | "/admin-dashboard/org/:organizationId/transfer-ownership"
+      | "/admin-dashboard/qrs"
+      | "/admin-dashboard/qrs/codes.zip"
+      | "/admin-dashboard/test-supabase-rls"
+      | "/admin-dashboard/updates"
+      | "/admin-dashboard/updates/:updateId/edit"
+      | "/admin-dashboard/updates/new"
+      | "/admin-dashboard/users"
+      | "/assets"
+      | "/assets/:assetId"
+      | "/assets/:assetId/activity"
+      | "/assets/:assetId/activity.csv"
+      | "/assets/:assetId/bookings"
+      | "/assets/:assetId/note"
+      | "/assets/:assetId/overview"
+      | "/assets/:assetId/overview/add-to-existing-booking"
+      | "/assets/:assetId/overview/assign-custody"
+      | "/assets/:assetId/overview/create-new-booking"
+      | "/assets/:assetId/overview/custody-handover"
+      | "/assets/:assetId/overview/duplicate"
+      | "/assets/:assetId/overview/manage-placements"
+      | "/assets/:assetId/overview/release-custody"
+      | "/assets/:assetId/overview/update-location"
+      | "/assets/:assetId/reminders"
+      | "/assets/:assetId/edit"
+      | "/assets/export/:fileName.csv"
+      | "/assets/import-update"
+      | "/assets/import"
+      | "/assets/new"
+      | "/audits"
+      | "/audits/:auditId"
+      | "/audits/:auditId/activity"
+      | "/audits/:auditId/activity.csv"
+      | "/audits/:auditId/duplicate"
+      | "/audits/:auditId/note"
+      | "/audits/:auditId/overview"
+      | "/audits/:auditId/scan"
+      | "/audits/:auditId/scan/:auditAssetId/details"
+      | "/available-assets"
+      | "/bookings"
+      | "/bookings/:bookingId"
+      | "/bookings/:bookingId/activity"
+      | "/bookings/:bookingId/activity.csv"
+      | "/bookings/:bookingId/overview"
+      | "/bookings/:bookingId/overview/cal.ics"
+      | "/bookings/:bookingId/overview/checkin-assets"
+      | "/bookings/:bookingId/overview/checkout-assets"
+      | "/bookings/:bookingId/overview/duplicate"
+      | "/bookings/:bookingId/overview/fulfil-and-checkout"
+      | "/bookings/:bookingId/overview/manage-assets"
+      | "/bookings/:bookingId/overview/manage-kits"
+      | "/bookings/:bookingId/overview/scan-assets"
+      | "/bookings/export/:fileName.csv"
+      | "/bookings/new"
+      | "/calendar"
+      | "/categories"
+      | "/categories/:categoryId/edit"
+      | "/categories/new"
+      | "/dashboard"
+      | "/handovers"
+      | "/handovers/:handoverId"
+      | "/home"
+      | "/kits"
+      | "/kits/:kitId"
+      | "/kits/:kitId/assets"
+      | "/kits/:kitId/assets/add-to-existing-booking"
+      | "/kits/:kitId/assets/assign-custody"
+      | "/kits/:kitId/assets/create-new-booking"
+      | "/kits/:kitId/assets/manage-assets"
+      | "/kits/:kitId/assets/release-custody"
+      | "/kits/:kitId/assets/update-location"
+      | "/kits/:kitId/bookings"
+      | "/kits/:kitId/overview"
+      | "/kits/:kitId/scan-assets"
+      | "/kits/:kitId/edit"
+      | "/kits/new"
+      | "/locations"
+      | "/locations/:locationId"
+      | "/locations/:locationId/activity"
+      | "/locations/:locationId/activity.csv"
+      | "/locations/:locationId/assets"
+      | "/locations/:locationId/assets/manage-assets"
+      | "/locations/:locationId/kits"
+      | "/locations/:locationId/kits/manage-kits"
+      | "/locations/:locationId/note"
+      | "/locations/:locationId/overview"
+      | "/locations/:locationId/scan-assets-kits"
+      | "/locations/:locationId/edit"
+      | "/locations/new"
+      | "/me"
+      | "/me/assets"
+      | "/me/bookings"
+      | "/me/note"
+      | "/me/notes"
+      | "/my-custody"
+      | "/reminders"
+      | "/reports"
+      | "/reports/:reportId"
+      | "/reports/export/:fileName.csv"
+      | "/requests"
+      | "/scanner-sam-id"
+      | "/scanner"
+      | "/settings"
+      | "/settings/asset-models"
+      | "/settings/asset-models/:assetModelId/edit"
+      | "/settings/asset-models/new"
+      | "/settings/bookings"
+      | "/settings/custom-fields"
+      | "/settings/custom-fields/:fieldId/edit"
+      | "/settings/custom-fields/new"
+      | "/settings/emails"
+      | "/settings/general"
+      | "/settings/team"
+      | "/settings/team/invites"
+      | "/settings/team/nrm"
+      | "/settings/team/nrm/:nrmId/edit"
+      | "/settings/team/nrm/add-member"
+      | "/settings/team/nrm/import-members"
+      | "/settings/team/users"
+      | "/settings/team/users/:userId"
+      | "/settings/team/users/:userId/*"
+      | "/settings/team/users/:userId/assets"
+      | "/settings/team/users/:userId/bookings"
+      | "/settings/team/users/:userId/note"
+      | "/settings/team/users/:userId/notes"
+      | "/tags"
+      | "/tags/:tagId/edit"
+      | "/tags/new"
+      | "/updates";
+  };
+  "routes/_layout+/account-details.tsx": {
+    id: "routes/_layout+/account-details";
+    page:
+      | "/account-details"
+      | "/account-details/calendars"
+      | "/account-details/general"
+      | "/account-details/subscription"
+      | "/account-details/subscription/customer-portal"
+      | "/account-details/workspace"
+      | "/account-details/workspace/:workspaceId/edit"
+      | "/account-details/workspace/new";
+  };
+  "routes/_layout+/account-details.calendars.tsx": {
+    id: "routes/_layout+/account-details.calendars";
+    page: "/account-details/calendars";
+  };
+  "routes/_layout+/account-details.general.tsx": {
+    id: "routes/_layout+/account-details.general";
+    page: "/account-details/general";
+  };
+  "routes/_layout+/account-details.index.tsx": {
+    id: "routes/_layout+/account-details.index";
+    page: "/account-details";
+  };
+  "routes/_layout+/account-details.subscription.tsx": {
+    id: "routes/_layout+/account-details.subscription";
+    page:
+      | "/account-details/subscription"
+      | "/account-details/subscription/customer-portal";
+  };
+  "routes/_layout+/account-details.subscription.customer-portal.tsx": {
+    id: "routes/_layout+/account-details.subscription.customer-portal";
+    page: "/account-details/subscription/customer-portal";
+  };
+  "routes/_layout+/account-details.workspace.tsx": {
+    id: "routes/_layout+/account-details.workspace";
+    page:
+      | "/account-details/workspace"
+      | "/account-details/workspace/:workspaceId/edit"
+      | "/account-details/workspace/new";
+  };
+  "routes/_layout+/account-details.workspace.$workspaceId.edit.tsx": {
+    id: "routes/_layout+/account-details.workspace.$workspaceId.edit";
+    page: "/account-details/workspace/:workspaceId/edit";
+  };
+  "routes/_layout+/account-details.workspace.index.tsx": {
+    id: "routes/_layout+/account-details.workspace.index";
+    page: "/account-details/workspace";
+  };
+  "routes/_layout+/account-details.workspace.new.tsx": {
+    id: "routes/_layout+/account-details.workspace.new";
+    page: "/account-details/workspace/new";
+  };
+  "routes/_layout+/admin-dashboard+/_layout.tsx": {
+    id: "routes/_layout+/admin-dashboard+/_layout";
+    page:
+      | "/admin-dashboard"
+      | "/admin-dashboard/:userId"
+      | "/admin-dashboard/announcements"
+      | "/admin-dashboard/announcements/new"
+      | "/admin-dashboard/generate-locations"
+      | "/admin-dashboard/move-location-images"
+      | "/admin-dashboard/org/:organizationId"
+      | "/admin-dashboard/org/:organizationId/assets"
+      | "/admin-dashboard/org/:organizationId/members"
+      | "/admin-dashboard/org/:organizationId/qr-codes"
+      | "/admin-dashboard/org/:organizationId/transfer-ownership"
+      | "/admin-dashboard/qrs"
+      | "/admin-dashboard/qrs/codes.zip"
+      | "/admin-dashboard/test-supabase-rls"
+      | "/admin-dashboard/updates"
+      | "/admin-dashboard/updates/:updateId/edit"
+      | "/admin-dashboard/updates/new"
+      | "/admin-dashboard/users";
+  };
+  "routes/_layout+/admin-dashboard+/$userId.tsx": {
+    id: "routes/_layout+/admin-dashboard+/$userId";
+    page: "/admin-dashboard/:userId";
+  };
+  "routes/_layout+/admin-dashboard+/announcements.tsx": {
+    id: "routes/_layout+/admin-dashboard+/announcements";
+    page:
+      | "/admin-dashboard/announcements"
+      | "/admin-dashboard/announcements/new";
+  };
+  "routes/_layout+/admin-dashboard+/announcements.new.tsx": {
+    id: "routes/_layout+/admin-dashboard+/announcements.new";
+    page: "/admin-dashboard/announcements/new";
+  };
+  "routes/_layout+/admin-dashboard+/generate-locations.tsx": {
+    id: "routes/_layout+/admin-dashboard+/generate-locations";
+    page: "/admin-dashboard/generate-locations";
+  };
+  "routes/_layout+/admin-dashboard+/move-location-images.tsx": {
+    id: "routes/_layout+/admin-dashboard+/move-location-images";
+    page: "/admin-dashboard/move-location-images";
+  };
+  "routes/_layout+/admin-dashboard+/org.$organizationId.tsx": {
+    id: "routes/_layout+/admin-dashboard+/org.$organizationId";
+    page:
+      | "/admin-dashboard/org/:organizationId"
+      | "/admin-dashboard/org/:organizationId/assets"
+      | "/admin-dashboard/org/:organizationId/members"
+      | "/admin-dashboard/org/:organizationId/qr-codes"
+      | "/admin-dashboard/org/:organizationId/transfer-ownership";
+  };
+  "routes/_layout+/admin-dashboard+/org.$organizationId.assets.tsx": {
+    id: "routes/_layout+/admin-dashboard+/org.$organizationId.assets";
+    page: "/admin-dashboard/org/:organizationId/assets";
+  };
+  "routes/_layout+/admin-dashboard+/org.$organizationId.members.tsx": {
+    id: "routes/_layout+/admin-dashboard+/org.$organizationId.members";
+    page: "/admin-dashboard/org/:organizationId/members";
+  };
+  "routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes.tsx": {
+    id: "routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes";
+    page: "/admin-dashboard/org/:organizationId/qr-codes";
+  };
+  "routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership.tsx": {
+    id: "routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership";
+    page: "/admin-dashboard/org/:organizationId/transfer-ownership";
+  };
+  "routes/_layout+/admin-dashboard+/qrs.tsx": {
+    id: "routes/_layout+/admin-dashboard+/qrs";
+    page: "/admin-dashboard/qrs" | "/admin-dashboard/qrs/codes.zip";
+  };
+  "routes/_layout+/admin-dashboard+/qrs.codes[.zip].ts": {
+    id: "routes/_layout+/admin-dashboard+/qrs.codes[.zip]";
+    page: "/admin-dashboard/qrs/codes.zip";
+  };
+  "routes/_layout+/admin-dashboard+/test-supabase-rls.tsx": {
+    id: "routes/_layout+/admin-dashboard+/test-supabase-rls";
+    page: "/admin-dashboard/test-supabase-rls";
+  };
+  "routes/_layout+/admin-dashboard+/updates.tsx": {
+    id: "routes/_layout+/admin-dashboard+/updates";
+    page:
+      | "/admin-dashboard/updates"
+      | "/admin-dashboard/updates/:updateId/edit"
+      | "/admin-dashboard/updates/new";
+  };
+  "routes/_layout+/admin-dashboard+/updates.$updateId.edit.tsx": {
+    id: "routes/_layout+/admin-dashboard+/updates.$updateId.edit";
+    page: "/admin-dashboard/updates/:updateId/edit";
+  };
+  "routes/_layout+/admin-dashboard+/updates.new.tsx": {
+    id: "routes/_layout+/admin-dashboard+/updates.new";
+    page: "/admin-dashboard/updates/new";
+  };
+  "routes/_layout+/admin-dashboard+/users.tsx": {
+    id: "routes/_layout+/admin-dashboard+/users";
+    page: "/admin-dashboard/users";
+  };
+  "routes/_layout+/assets.tsx": {
+    id: "routes/_layout+/assets";
+    page:
+      | "/assets"
+      | "/assets/:assetId"
+      | "/assets/:assetId/activity"
+      | "/assets/:assetId/activity.csv"
+      | "/assets/:assetId/bookings"
+      | "/assets/:assetId/note"
+      | "/assets/:assetId/overview"
+      | "/assets/:assetId/overview/add-to-existing-booking"
+      | "/assets/:assetId/overview/assign-custody"
+      | "/assets/:assetId/overview/create-new-booking"
+      | "/assets/:assetId/overview/custody-handover"
+      | "/assets/:assetId/overview/duplicate"
+      | "/assets/:assetId/overview/manage-placements"
+      | "/assets/:assetId/overview/release-custody"
+      | "/assets/:assetId/overview/update-location"
+      | "/assets/:assetId/reminders"
+      | "/assets/:assetId/edit"
+      | "/assets/export/:fileName.csv"
+      | "/assets/import-update"
+      | "/assets/import"
+      | "/assets/new";
+  };
+  "routes/_layout+/assets.$assetId.tsx": {
+    id: "routes/_layout+/assets.$assetId";
+    page:
+      | "/assets/:assetId"
+      | "/assets/:assetId/activity"
+      | "/assets/:assetId/activity.csv"
+      | "/assets/:assetId/bookings"
+      | "/assets/:assetId/note"
+      | "/assets/:assetId/overview"
+      | "/assets/:assetId/overview/add-to-existing-booking"
+      | "/assets/:assetId/overview/assign-custody"
+      | "/assets/:assetId/overview/create-new-booking"
+      | "/assets/:assetId/overview/custody-handover"
+      | "/assets/:assetId/overview/duplicate"
+      | "/assets/:assetId/overview/manage-placements"
+      | "/assets/:assetId/overview/release-custody"
+      | "/assets/:assetId/overview/update-location"
+      | "/assets/:assetId/reminders";
+  };
+  "routes/_layout+/assets.$assetId.activity.tsx": {
+    id: "routes/_layout+/assets.$assetId.activity";
+    page: "/assets/:assetId/activity";
+  };
+  "routes/_layout+/assets.$assetId.activity[.csv].ts": {
+    id: "routes/_layout+/assets.$assetId.activity[.csv]";
+    page: "/assets/:assetId/activity.csv";
+  };
+  "routes/_layout+/assets.$assetId.bookings.tsx": {
+    id: "routes/_layout+/assets.$assetId.bookings";
+    page: "/assets/:assetId/bookings";
+  };
+  "routes/_layout+/assets.$assetId.index.tsx": {
+    id: "routes/_layout+/assets.$assetId.index";
+    page: "/assets/:assetId";
+  };
+  "routes/_layout+/assets.$assetId.note.tsx": {
+    id: "routes/_layout+/assets.$assetId.note";
+    page: "/assets/:assetId/note";
+  };
+  "routes/_layout+/assets.$assetId.overview.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview";
+    page:
+      | "/assets/:assetId/overview"
+      | "/assets/:assetId/overview/add-to-existing-booking"
+      | "/assets/:assetId/overview/assign-custody"
+      | "/assets/:assetId/overview/create-new-booking"
+      | "/assets/:assetId/overview/custody-handover"
+      | "/assets/:assetId/overview/duplicate"
+      | "/assets/:assetId/overview/manage-placements"
+      | "/assets/:assetId/overview/release-custody"
+      | "/assets/:assetId/overview/update-location";
+  };
+  "routes/_layout+/assets.$assetId.overview.add-to-existing-booking.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.add-to-existing-booking";
+    page: "/assets/:assetId/overview/add-to-existing-booking";
+  };
+  "routes/_layout+/assets.$assetId.overview.assign-custody.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.assign-custody";
+    page: "/assets/:assetId/overview/assign-custody";
+  };
+  "routes/_layout+/assets.$assetId.overview.create-new-booking.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.create-new-booking";
+    page: "/assets/:assetId/overview/create-new-booking";
+  };
+  "routes/_layout+/assets.$assetId.overview.custody-handover.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.custody-handover";
+    page: "/assets/:assetId/overview/custody-handover";
+  };
+  "routes/_layout+/assets.$assetId.overview.duplicate.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.duplicate";
+    page: "/assets/:assetId/overview/duplicate";
+  };
+  "routes/_layout+/assets.$assetId.overview.manage-placements.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.manage-placements";
+    page: "/assets/:assetId/overview/manage-placements";
+  };
+  "routes/_layout+/assets.$assetId.overview.release-custody.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.release-custody";
+    page: "/assets/:assetId/overview/release-custody";
+  };
+  "routes/_layout+/assets.$assetId.overview.update-location.tsx": {
+    id: "routes/_layout+/assets.$assetId.overview.update-location";
+    page: "/assets/:assetId/overview/update-location";
+  };
+  "routes/_layout+/assets.$assetId.reminders.tsx": {
+    id: "routes/_layout+/assets.$assetId.reminders";
+    page: "/assets/:assetId/reminders";
+  };
+  "routes/_layout+/assets.$assetId._index.tsx": {
+    id: "routes/_layout+/assets.$assetId._index";
+    page: "/assets/:assetId";
+  };
+  "routes/_layout+/assets.$assetId_.edit.tsx": {
+    id: "routes/_layout+/assets.$assetId_.edit";
+    page: "/assets/:assetId/edit";
+  };
+  "routes/_layout+/assets.export.$fileName[.csv].tsx": {
+    id: "routes/_layout+/assets.export.$fileName[.csv]";
+    page: "/assets/export/:fileName.csv";
+  };
+  "routes/_layout+/assets.import-update.tsx": {
+    id: "routes/_layout+/assets.import-update";
+    page: "/assets/import-update";
+  };
+  "routes/_layout+/assets.import.tsx": {
+    id: "routes/_layout+/assets.import";
+    page: "/assets/import";
+  };
+  "routes/_layout+/assets.new.tsx": {
+    id: "routes/_layout+/assets.new";
+    page: "/assets/new";
+  };
+  "routes/_layout+/assets._index.tsx": {
+    id: "routes/_layout+/assets._index";
+    page: "/assets";
+  };
+  "routes/_layout+/audits.tsx": {
+    id: "routes/_layout+/audits";
+    page:
+      | "/audits"
+      | "/audits/:auditId"
+      | "/audits/:auditId/activity"
+      | "/audits/:auditId/activity.csv"
+      | "/audits/:auditId/duplicate"
+      | "/audits/:auditId/note"
+      | "/audits/:auditId/overview"
+      | "/audits/:auditId/scan"
+      | "/audits/:auditId/scan/:auditAssetId/details";
+  };
+  "routes/_layout+/audits.$auditId.tsx": {
+    id: "routes/_layout+/audits.$auditId";
+    page:
+      | "/audits/:auditId"
+      | "/audits/:auditId/activity"
+      | "/audits/:auditId/activity.csv"
+      | "/audits/:auditId/duplicate"
+      | "/audits/:auditId/note"
+      | "/audits/:auditId/overview"
+      | "/audits/:auditId/scan"
+      | "/audits/:auditId/scan/:auditAssetId/details";
+  };
+  "routes/_layout+/audits.$auditId.activity.tsx": {
+    id: "routes/_layout+/audits.$auditId.activity";
+    page: "/audits/:auditId/activity";
+  };
+  "routes/_layout+/audits.$auditId.activity[.csv].ts": {
+    id: "routes/_layout+/audits.$auditId.activity[.csv]";
+    page: "/audits/:auditId/activity.csv";
+  };
+  "routes/_layout+/audits.$auditId.duplicate.tsx": {
+    id: "routes/_layout+/audits.$auditId.duplicate";
+    page: "/audits/:auditId/duplicate";
+  };
+  "routes/_layout+/audits.$auditId.note.tsx": {
+    id: "routes/_layout+/audits.$auditId.note";
+    page: "/audits/:auditId/note";
+  };
+  "routes/_layout+/audits.$auditId.overview.tsx": {
+    id: "routes/_layout+/audits.$auditId.overview";
+    page: "/audits/:auditId/overview";
+  };
+  "routes/_layout+/audits.$auditId.scan.tsx": {
+    id: "routes/_layout+/audits.$auditId.scan";
+    page:
+      | "/audits/:auditId/scan"
+      | "/audits/:auditId/scan/:auditAssetId/details";
+  };
+  "routes/_layout+/audits.$auditId.scan.$auditAssetId.details.tsx": {
+    id: "routes/_layout+/audits.$auditId.scan.$auditAssetId.details";
+    page: "/audits/:auditId/scan/:auditAssetId/details";
+  };
+  "routes/_layout+/audits.$auditId._index.tsx": {
+    id: "routes/_layout+/audits.$auditId._index";
+    page: "/audits/:auditId";
+  };
+  "routes/_layout+/audits._index.tsx": {
+    id: "routes/_layout+/audits._index";
+    page: "/audits";
+  };
+  "routes/_layout+/available-assets.tsx": {
+    id: "routes/_layout+/available-assets";
+    page: "/available-assets";
+  };
+  "routes/_layout+/bookings.tsx": {
+    id: "routes/_layout+/bookings";
+    page:
+      | "/bookings"
+      | "/bookings/:bookingId"
+      | "/bookings/:bookingId/activity"
+      | "/bookings/:bookingId/activity.csv"
+      | "/bookings/:bookingId/overview"
+      | "/bookings/:bookingId/overview/cal.ics"
+      | "/bookings/:bookingId/overview/checkin-assets"
+      | "/bookings/:bookingId/overview/checkout-assets"
+      | "/bookings/:bookingId/overview/duplicate"
+      | "/bookings/:bookingId/overview/fulfil-and-checkout"
+      | "/bookings/:bookingId/overview/manage-assets"
+      | "/bookings/:bookingId/overview/manage-kits"
+      | "/bookings/:bookingId/overview/scan-assets"
+      | "/bookings/export/:fileName.csv"
+      | "/bookings/new";
+  };
+  "routes/_layout+/bookings.$bookingId.tsx": {
+    id: "routes/_layout+/bookings.$bookingId";
+    page:
+      | "/bookings/:bookingId"
+      | "/bookings/:bookingId/activity"
+      | "/bookings/:bookingId/activity.csv"
+      | "/bookings/:bookingId/overview"
+      | "/bookings/:bookingId/overview/cal.ics"
+      | "/bookings/:bookingId/overview/checkin-assets"
+      | "/bookings/:bookingId/overview/checkout-assets"
+      | "/bookings/:bookingId/overview/duplicate"
+      | "/bookings/:bookingId/overview/fulfil-and-checkout"
+      | "/bookings/:bookingId/overview/manage-assets"
+      | "/bookings/:bookingId/overview/manage-kits"
+      | "/bookings/:bookingId/overview/scan-assets";
+  };
+  "routes/_layout+/bookings.$bookingId.activity.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.activity";
+    page: "/bookings/:bookingId/activity";
+  };
+  "routes/_layout+/bookings.$bookingId.activity[.csv].ts": {
+    id: "routes/_layout+/bookings.$bookingId.activity[.csv]";
+    page: "/bookings/:bookingId/activity.csv";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview";
+    page:
+      | "/bookings/:bookingId/overview"
+      | "/bookings/:bookingId/overview/cal.ics"
+      | "/bookings/:bookingId/overview/checkin-assets"
+      | "/bookings/:bookingId/overview/checkout-assets"
+      | "/bookings/:bookingId/overview/duplicate"
+      | "/bookings/:bookingId/overview/fulfil-and-checkout"
+      | "/bookings/:bookingId/overview/manage-assets"
+      | "/bookings/:bookingId/overview/manage-kits"
+      | "/bookings/:bookingId/overview/scan-assets";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.cal[.ics].ts": {
+    id: "routes/_layout+/bookings.$bookingId.overview.cal[.ics]";
+    page: "/bookings/:bookingId/overview/cal.ics";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.checkin-assets.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.checkin-assets";
+    page: "/bookings/:bookingId/overview/checkin-assets";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.checkout-assets.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.checkout-assets";
+    page: "/bookings/:bookingId/overview/checkout-assets";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.duplicate.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.duplicate";
+    page: "/bookings/:bookingId/overview/duplicate";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout";
+    page: "/bookings/:bookingId/overview/fulfil-and-checkout";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.manage-assets.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.manage-assets";
+    page: "/bookings/:bookingId/overview/manage-assets";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.manage-kits.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.manage-kits";
+    page: "/bookings/:bookingId/overview/manage-kits";
+  };
+  "routes/_layout+/bookings.$bookingId.overview.scan-assets.tsx": {
+    id: "routes/_layout+/bookings.$bookingId.overview.scan-assets";
+    page: "/bookings/:bookingId/overview/scan-assets";
+  };
+  "routes/_layout+/bookings.$bookingId._index.tsx": {
+    id: "routes/_layout+/bookings.$bookingId._index";
+    page: "/bookings/:bookingId";
+  };
+  "routes/_layout+/bookings.export.$fileName[.csv].tsx": {
+    id: "routes/_layout+/bookings.export.$fileName[.csv]";
+    page: "/bookings/export/:fileName.csv";
+  };
+  "routes/_layout+/bookings.new.tsx": {
+    id: "routes/_layout+/bookings.new";
+    page: "/bookings/new";
+  };
+  "routes/_layout+/bookings._index.tsx": {
+    id: "routes/_layout+/bookings._index";
+    page: "/bookings";
+  };
+  "routes/_layout+/calendar.tsx": {
+    id: "routes/_layout+/calendar";
+    page: "/calendar";
+  };
+  "routes/_layout+/categories.tsx": {
+    id: "routes/_layout+/categories";
+    page: "/categories" | "/categories/:categoryId/edit" | "/categories/new";
+  };
+  "routes/_layout+/categories.$categoryId_.edit.tsx": {
+    id: "routes/_layout+/categories.$categoryId_.edit";
+    page: "/categories/:categoryId/edit";
+  };
+  "routes/_layout+/categories.new.tsx": {
+    id: "routes/_layout+/categories.new";
+    page: "/categories/new";
+  };
+  "routes/_layout+/dashboard.tsx": {
+    id: "routes/_layout+/dashboard";
+    page: "/dashboard";
+  };
+  "routes/_layout+/handovers.tsx": {
+    id: "routes/_layout+/handovers";
+    page: "/handovers";
+  };
+  "routes/_layout+/handovers_.$handoverId.tsx": {
+    id: "routes/_layout+/handovers_.$handoverId";
+    page: "/handovers/:handoverId";
+  };
+  "routes/_layout+/home.tsx": {
+    id: "routes/_layout+/home";
+    page: "/home";
+  };
+  "routes/_layout+/kits.tsx": {
+    id: "routes/_layout+/kits";
+    page:
+      | "/kits"
+      | "/kits/:kitId"
+      | "/kits/:kitId/assets"
+      | "/kits/:kitId/assets/add-to-existing-booking"
+      | "/kits/:kitId/assets/assign-custody"
+      | "/kits/:kitId/assets/create-new-booking"
+      | "/kits/:kitId/assets/manage-assets"
+      | "/kits/:kitId/assets/release-custody"
+      | "/kits/:kitId/assets/update-location"
+      | "/kits/:kitId/bookings"
+      | "/kits/:kitId/overview"
+      | "/kits/:kitId/scan-assets"
+      | "/kits/:kitId/edit"
+      | "/kits/new";
+  };
+  "routes/_layout+/kits.$kitId.tsx": {
+    id: "routes/_layout+/kits.$kitId";
+    page:
+      | "/kits/:kitId"
+      | "/kits/:kitId/assets"
+      | "/kits/:kitId/assets/add-to-existing-booking"
+      | "/kits/:kitId/assets/assign-custody"
+      | "/kits/:kitId/assets/create-new-booking"
+      | "/kits/:kitId/assets/manage-assets"
+      | "/kits/:kitId/assets/release-custody"
+      | "/kits/:kitId/assets/update-location"
+      | "/kits/:kitId/bookings"
+      | "/kits/:kitId/overview"
+      | "/kits/:kitId/scan-assets";
+  };
+  "routes/_layout+/kits.$kitId.assets.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets";
+    page:
+      | "/kits/:kitId/assets"
+      | "/kits/:kitId/assets/add-to-existing-booking"
+      | "/kits/:kitId/assets/assign-custody"
+      | "/kits/:kitId/assets/create-new-booking"
+      | "/kits/:kitId/assets/manage-assets"
+      | "/kits/:kitId/assets/release-custody"
+      | "/kits/:kitId/assets/update-location";
+  };
+  "routes/_layout+/kits.$kitId.assets.add-to-existing-booking.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets.add-to-existing-booking";
+    page: "/kits/:kitId/assets/add-to-existing-booking";
+  };
+  "routes/_layout+/kits.$kitId.assets.assign-custody.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets.assign-custody";
+    page: "/kits/:kitId/assets/assign-custody";
+  };
+  "routes/_layout+/kits.$kitId.assets.create-new-booking.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets.create-new-booking";
+    page: "/kits/:kitId/assets/create-new-booking";
+  };
+  "routes/_layout+/kits.$kitId.assets.manage-assets.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets.manage-assets";
+    page: "/kits/:kitId/assets/manage-assets";
+  };
+  "routes/_layout+/kits.$kitId.assets.release-custody.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets.release-custody";
+    page: "/kits/:kitId/assets/release-custody";
+  };
+  "routes/_layout+/kits.$kitId.assets.update-location.tsx": {
+    id: "routes/_layout+/kits.$kitId.assets.update-location";
+    page: "/kits/:kitId/assets/update-location";
+  };
+  "routes/_layout+/kits.$kitId.bookings.tsx": {
+    id: "routes/_layout+/kits.$kitId.bookings";
+    page: "/kits/:kitId/bookings";
+  };
+  "routes/_layout+/kits.$kitId.overview.tsx": {
+    id: "routes/_layout+/kits.$kitId.overview";
+    page: "/kits/:kitId/overview";
+  };
+  "routes/_layout+/kits.$kitId.scan-assets.tsx": {
+    id: "routes/_layout+/kits.$kitId.scan-assets";
+    page: "/kits/:kitId/scan-assets";
+  };
+  "routes/_layout+/kits.$kitId._index.tsx": {
+    id: "routes/_layout+/kits.$kitId._index";
+    page: "/kits/:kitId";
+  };
+  "routes/_layout+/kits.$kitId_.edit.tsx": {
+    id: "routes/_layout+/kits.$kitId_.edit";
+    page: "/kits/:kitId/edit";
+  };
+  "routes/_layout+/kits.new.tsx": {
+    id: "routes/_layout+/kits.new";
+    page: "/kits/new";
+  };
+  "routes/_layout+/kits._index.tsx": {
+    id: "routes/_layout+/kits._index";
+    page: "/kits";
+  };
+  "routes/_layout+/locations.tsx": {
+    id: "routes/_layout+/locations";
+    page:
+      | "/locations"
+      | "/locations/:locationId"
+      | "/locations/:locationId/activity"
+      | "/locations/:locationId/activity.csv"
+      | "/locations/:locationId/assets"
+      | "/locations/:locationId/assets/manage-assets"
+      | "/locations/:locationId/kits"
+      | "/locations/:locationId/kits/manage-kits"
+      | "/locations/:locationId/note"
+      | "/locations/:locationId/overview"
+      | "/locations/:locationId/scan-assets-kits"
+      | "/locations/:locationId/edit"
+      | "/locations/new";
+  };
+  "routes/_layout+/locations.$locationId.tsx": {
+    id: "routes/_layout+/locations.$locationId";
+    page:
+      | "/locations/:locationId"
+      | "/locations/:locationId/activity"
+      | "/locations/:locationId/activity.csv"
+      | "/locations/:locationId/assets"
+      | "/locations/:locationId/assets/manage-assets"
+      | "/locations/:locationId/kits"
+      | "/locations/:locationId/kits/manage-kits"
+      | "/locations/:locationId/note"
+      | "/locations/:locationId/overview"
+      | "/locations/:locationId/scan-assets-kits";
+  };
+  "routes/_layout+/locations.$locationId.activity.tsx": {
+    id: "routes/_layout+/locations.$locationId.activity";
+    page: "/locations/:locationId/activity";
+  };
+  "routes/_layout+/locations.$locationId.activity[.csv].ts": {
+    id: "routes/_layout+/locations.$locationId.activity[.csv]";
+    page: "/locations/:locationId/activity.csv";
+  };
+  "routes/_layout+/locations.$locationId.assets.tsx": {
+    id: "routes/_layout+/locations.$locationId.assets";
+    page:
+      | "/locations/:locationId/assets"
+      | "/locations/:locationId/assets/manage-assets";
+  };
+  "routes/_layout+/locations.$locationId.assets.manage-assets.tsx": {
+    id: "routes/_layout+/locations.$locationId.assets.manage-assets";
+    page: "/locations/:locationId/assets/manage-assets";
+  };
+  "routes/_layout+/locations.$locationId.index.tsx": {
+    id: "routes/_layout+/locations.$locationId.index";
+    page: "/locations/:locationId";
+  };
+  "routes/_layout+/locations.$locationId.kits.tsx": {
+    id: "routes/_layout+/locations.$locationId.kits";
+    page:
+      | "/locations/:locationId/kits"
+      | "/locations/:locationId/kits/manage-kits";
+  };
+  "routes/_layout+/locations.$locationId.kits.manage-kits.tsx": {
+    id: "routes/_layout+/locations.$locationId.kits.manage-kits";
+    page: "/locations/:locationId/kits/manage-kits";
+  };
+  "routes/_layout+/locations.$locationId.note.tsx": {
+    id: "routes/_layout+/locations.$locationId.note";
+    page: "/locations/:locationId/note";
+  };
+  "routes/_layout+/locations.$locationId.overview.tsx": {
+    id: "routes/_layout+/locations.$locationId.overview";
+    page: "/locations/:locationId/overview";
+  };
+  "routes/_layout+/locations.$locationId.scan-assets-kits.tsx": {
+    id: "routes/_layout+/locations.$locationId.scan-assets-kits";
+    page: "/locations/:locationId/scan-assets-kits";
+  };
+  "routes/_layout+/locations.$locationId_.edit.tsx": {
+    id: "routes/_layout+/locations.$locationId_.edit";
+    page: "/locations/:locationId/edit";
+  };
+  "routes/_layout+/locations.new.tsx": {
+    id: "routes/_layout+/locations.new";
+    page: "/locations/new";
+  };
+  "routes/_layout+/locations._index.tsx": {
+    id: "routes/_layout+/locations._index";
+    page: "/locations";
+  };
+  "routes/_layout+/me.tsx": {
+    id: "routes/_layout+/me";
+    page: "/me" | "/me/assets" | "/me/bookings" | "/me/note" | "/me/notes";
+  };
+  "routes/_layout+/me.assets.tsx": {
+    id: "routes/_layout+/me.assets";
+    page: "/me/assets";
+  };
+  "routes/_layout+/me.bookings.tsx": {
+    id: "routes/_layout+/me.bookings";
+    page: "/me/bookings";
+  };
+  "routes/_layout+/me.note.tsx": {
+    id: "routes/_layout+/me.note";
+    page: "/me/note";
+  };
+  "routes/_layout+/me.notes.tsx": {
+    id: "routes/_layout+/me.notes";
+    page: "/me/notes";
+  };
+  "routes/_layout+/me._index.tsx": {
+    id: "routes/_layout+/me._index";
+    page: "/me";
+  };
+  "routes/_layout+/my-custody.tsx": {
+    id: "routes/_layout+/my-custody";
+    page: "/my-custody";
+  };
+  "routes/_layout+/reminders.tsx": {
+    id: "routes/_layout+/reminders";
+    page: "/reminders";
+  };
+  "routes/_layout+/reminders._index.tsx": {
+    id: "routes/_layout+/reminders._index";
+    page: "/reminders";
+  };
+  "routes/_layout+/reports.tsx": {
+    id: "routes/_layout+/reports";
+    page: "/reports" | "/reports/:reportId" | "/reports/export/:fileName.csv";
+  };
+  "routes/_layout+/reports.$reportId.tsx": {
+    id: "routes/_layout+/reports.$reportId";
+    page: "/reports/:reportId";
+  };
+  "routes/_layout+/reports.export.$fileName[.csv].tsx": {
+    id: "routes/_layout+/reports.export.$fileName[.csv]";
+    page: "/reports/export/:fileName.csv";
+  };
+  "routes/_layout+/reports._index.tsx": {
+    id: "routes/_layout+/reports._index";
+    page: "/reports";
+  };
+  "routes/_layout+/requests.tsx": {
+    id: "routes/_layout+/requests";
+    page: "/requests";
+  };
+  "routes/_layout+/scanner-sam-id.ts": {
+    id: "routes/_layout+/scanner-sam-id";
+    page: "/scanner-sam-id";
+  };
+  "routes/_layout+/scanner.tsx": {
+    id: "routes/_layout+/scanner";
+    page: "/scanner";
+  };
+  "routes/_layout+/settings.tsx": {
+    id: "routes/_layout+/settings";
+    page:
+      | "/settings"
+      | "/settings/asset-models"
+      | "/settings/asset-models/:assetModelId/edit"
+      | "/settings/asset-models/new"
+      | "/settings/bookings"
+      | "/settings/custom-fields"
+      | "/settings/custom-fields/:fieldId/edit"
+      | "/settings/custom-fields/new"
+      | "/settings/emails"
+      | "/settings/general"
+      | "/settings/team"
+      | "/settings/team/invites"
+      | "/settings/team/nrm"
+      | "/settings/team/nrm/:nrmId/edit"
+      | "/settings/team/nrm/add-member"
+      | "/settings/team/nrm/import-members"
+      | "/settings/team/users"
+      | "/settings/team/users/:userId"
+      | "/settings/team/users/:userId/*"
+      | "/settings/team/users/:userId/assets"
+      | "/settings/team/users/:userId/bookings"
+      | "/settings/team/users/:userId/note"
+      | "/settings/team/users/:userId/notes";
+  };
+  "routes/_layout+/settings.asset-models.tsx": {
+    id: "routes/_layout+/settings.asset-models";
+    page:
+      | "/settings/asset-models"
+      | "/settings/asset-models/:assetModelId/edit"
+      | "/settings/asset-models/new";
+  };
+  "routes/_layout+/settings.asset-models.$assetModelId_.edit.tsx": {
+    id: "routes/_layout+/settings.asset-models.$assetModelId_.edit";
+    page: "/settings/asset-models/:assetModelId/edit";
+  };
+  "routes/_layout+/settings.asset-models.index.tsx": {
+    id: "routes/_layout+/settings.asset-models.index";
+    page: "/settings/asset-models";
+  };
+  "routes/_layout+/settings.asset-models.new.tsx": {
+    id: "routes/_layout+/settings.asset-models.new";
+    page: "/settings/asset-models/new";
+  };
+  "routes/_layout+/settings.bookings.tsx": {
+    id: "routes/_layout+/settings.bookings";
+    page: "/settings/bookings";
+  };
+  "routes/_layout+/settings.custom-fields.tsx": {
+    id: "routes/_layout+/settings.custom-fields";
+    page:
+      | "/settings/custom-fields"
+      | "/settings/custom-fields/:fieldId/edit"
+      | "/settings/custom-fields/new";
+  };
+  "routes/_layout+/settings.custom-fields.$fieldId_.edit.tsx": {
+    id: "routes/_layout+/settings.custom-fields.$fieldId_.edit";
+    page: "/settings/custom-fields/:fieldId/edit";
+  };
+  "routes/_layout+/settings.custom-fields.index.tsx": {
+    id: "routes/_layout+/settings.custom-fields.index";
+    page: "/settings/custom-fields";
+  };
+  "routes/_layout+/settings.custom-fields.new.tsx": {
+    id: "routes/_layout+/settings.custom-fields.new";
+    page: "/settings/custom-fields/new";
+  };
+  "routes/_layout+/settings.emails.tsx": {
+    id: "routes/_layout+/settings.emails";
+    page: "/settings/emails";
+  };
+  "routes/_layout+/settings.general.tsx": {
+    id: "routes/_layout+/settings.general";
+    page: "/settings/general";
+  };
+  "routes/_layout+/settings.index.tsx": {
+    id: "routes/_layout+/settings.index";
+    page: "/settings";
+  };
+  "routes/_layout+/settings.team.tsx": {
+    id: "routes/_layout+/settings.team";
+    page:
+      | "/settings/team"
+      | "/settings/team/invites"
+      | "/settings/team/nrm"
+      | "/settings/team/nrm/:nrmId/edit"
+      | "/settings/team/nrm/add-member"
+      | "/settings/team/nrm/import-members"
+      | "/settings/team/users"
+      | "/settings/team/users/:userId"
+      | "/settings/team/users/:userId/*"
+      | "/settings/team/users/:userId/assets"
+      | "/settings/team/users/:userId/bookings"
+      | "/settings/team/users/:userId/note"
+      | "/settings/team/users/:userId/notes";
+  };
+  "routes/_layout+/settings.team.invites.tsx": {
+    id: "routes/_layout+/settings.team.invites";
+    page: "/settings/team/invites";
+  };
+  "routes/_layout+/settings.team.nrm.tsx": {
+    id: "routes/_layout+/settings.team.nrm";
+    page:
+      | "/settings/team/nrm"
+      | "/settings/team/nrm/:nrmId/edit"
+      | "/settings/team/nrm/add-member"
+      | "/settings/team/nrm/import-members";
+  };
+  "routes/_layout+/settings.team.nrm.$nrmId.edit.tsx": {
+    id: "routes/_layout+/settings.team.nrm.$nrmId.edit";
+    page: "/settings/team/nrm/:nrmId/edit";
+  };
+  "routes/_layout+/settings.team.nrm.add-member.tsx": {
+    id: "routes/_layout+/settings.team.nrm.add-member";
+    page: "/settings/team/nrm/add-member";
+  };
+  "routes/_layout+/settings.team.nrm.import-members.tsx": {
+    id: "routes/_layout+/settings.team.nrm.import-members";
+    page: "/settings/team/nrm/import-members";
+  };
+  "routes/_layout+/settings.team.users.tsx": {
+    id: "routes/_layout+/settings.team.users";
+    page:
+      | "/settings/team/users"
+      | "/settings/team/users/:userId"
+      | "/settings/team/users/:userId/*"
+      | "/settings/team/users/:userId/assets"
+      | "/settings/team/users/:userId/bookings"
+      | "/settings/team/users/:userId/note"
+      | "/settings/team/users/:userId/notes";
+  };
+  "routes/_layout+/settings.team.users.$userId.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId";
+    page:
+      | "/settings/team/users/:userId"
+      | "/settings/team/users/:userId/*"
+      | "/settings/team/users/:userId/assets"
+      | "/settings/team/users/:userId/bookings"
+      | "/settings/team/users/:userId/note"
+      | "/settings/team/users/:userId/notes";
+  };
+  "routes/_layout+/settings.team.users.$userId.$.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId.$";
+    page: "/settings/team/users/:userId/*";
+  };
+  "routes/_layout+/settings.team.users.$userId.assets.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId.assets";
+    page: "/settings/team/users/:userId/assets";
+  };
+  "routes/_layout+/settings.team.users.$userId.bookings.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId.bookings";
+    page: "/settings/team/users/:userId/bookings";
+  };
+  "routes/_layout+/settings.team.users.$userId.note.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId.note";
+    page: "/settings/team/users/:userId/note";
+  };
+  "routes/_layout+/settings.team.users.$userId.notes.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId.notes";
+    page: "/settings/team/users/:userId/notes";
+  };
+  "routes/_layout+/settings.team.users.$userId._index.tsx": {
+    id: "routes/_layout+/settings.team.users.$userId._index";
+    page: "/settings/team/users/:userId";
+  };
+  "routes/_layout+/settings.team._index.tsx": {
+    id: "routes/_layout+/settings.team._index";
+    page: "/settings/team";
+  };
+  "routes/_layout+/tags.tsx": {
+    id: "routes/_layout+/tags";
+    page: "/tags" | "/tags/:tagId/edit" | "/tags/new";
+  };
+  "routes/_layout+/tags.$tagId_.edit.tsx": {
+    id: "routes/_layout+/tags.$tagId_.edit";
+    page: "/tags/:tagId/edit";
+  };
+  "routes/_layout+/tags.new.tsx": {
+    id: "routes/_layout+/tags.new";
+    page: "/tags/new";
+  };
+  "routes/_layout+/updates.tsx": {
+    id: "routes/_layout+/updates";
+    page: "/updates";
+  };
+  "routes/_welcome+/_layout.tsx": {
+    id: "routes/_welcome+/_layout";
+    page:
+      | "/onboarding"
+      | "/select-plan"
+      | "/sso-pending-assignment"
+      | "/welcome";
+  };
+  "routes/_welcome+/onboarding.tsx": {
+    id: "routes/_welcome+/onboarding";
+    page: "/onboarding";
+  };
+  "routes/_welcome+/select-plan.tsx": {
+    id: "routes/_welcome+/select-plan";
+    page: "/select-plan";
+  };
+  "routes/_welcome+/sso-pending-assignment.tsx": {
+    id: "routes/_welcome+/sso-pending-assignment";
+    page: "/sso-pending-assignment";
+  };
+  "routes/_welcome+/welcome.tsx": {
+    id: "routes/_welcome+/welcome";
+    page: "/welcome";
+  };
 };
 
 type RouteModules = {
   root: typeof import("./app/root.tsx");
   "routes/$": typeof import("./app/routes/$.tsx");
-  "routes/[.well-known].apple-app-site-association": typeof import("./app/routes/[.well-known].apple-app-site-association.tsx");
-  "routes/[.well-known].assetlinks[.json]": typeof import("./app/routes/[.well-known].assetlinks[.json].tsx");
-  "routes/_auth+/_auth": typeof import("./app/routes/_auth+/_auth.tsx");
-  "routes/_auth+/accept-invite.$inviteId": typeof import("./app/routes/_auth+/accept-invite.$inviteId.tsx");
-  "routes/_auth+/forgot-password": typeof import("./app/routes/_auth+/forgot-password.tsx");
-  "routes/_auth+/join": typeof import("./app/routes/_auth+/join.tsx");
-  "routes/_auth+/login": typeof import("./app/routes/_auth+/login.tsx");
-  "routes/_auth+/logout": typeof import("./app/routes/_auth+/logout.tsx");
-  "routes/_auth+/oauth.callback": typeof import("./app/routes/_auth+/oauth.callback.tsx");
-  "routes/_auth+/oauth.callback_.mobile": typeof import("./app/routes/_auth+/oauth.callback_.mobile.tsx");
-  "routes/_auth+/otp": typeof import("./app/routes/_auth+/otp.tsx");
-  "routes/_auth+/resend-otp": typeof import("./app/routes/_auth+/resend-otp.tsx");
-  "routes/_auth+/send-otp": typeof import("./app/routes/_auth+/send-otp.tsx");
-  "routes/_auth+/sso-login": typeof import("./app/routes/_auth+/sso-login.tsx");
-  "routes/_index": typeof import("./app/routes/_index.tsx");
-  "routes/_layout+/_layout": typeof import("./app/routes/_layout+/_layout.tsx");
-  "routes/_layout+/account-details": typeof import("./app/routes/_layout+/account-details.tsx");
-  "routes/_layout+/account-details.calendars": typeof import("./app/routes/_layout+/account-details.calendars.tsx");
-  "routes/_layout+/account-details.general": typeof import("./app/routes/_layout+/account-details.general.tsx");
-  "routes/_layout+/account-details.index": typeof import("./app/routes/_layout+/account-details.index.tsx");
-  "routes/_layout+/account-details.subscription": typeof import("./app/routes/_layout+/account-details.subscription.tsx");
-  "routes/_layout+/account-details.subscription.customer-portal": typeof import("./app/routes/_layout+/account-details.subscription.customer-portal.tsx");
-  "routes/_layout+/account-details.workspace": typeof import("./app/routes/_layout+/account-details.workspace.tsx");
-  "routes/_layout+/account-details.workspace.$workspaceId.edit": typeof import("./app/routes/_layout+/account-details.workspace.$workspaceId.edit.tsx");
-  "routes/_layout+/account-details.workspace.index": typeof import("./app/routes/_layout+/account-details.workspace.index.tsx");
-  "routes/_layout+/account-details.workspace.new": typeof import("./app/routes/_layout+/account-details.workspace.new.tsx");
-  "routes/_layout+/admin-dashboard+/_layout": typeof import("./app/routes/_layout+/admin-dashboard+/_layout.tsx");
-  "routes/_layout+/admin-dashboard+/$userId": typeof import("./app/routes/_layout+/admin-dashboard+/$userId.tsx");
-  "routes/_layout+/admin-dashboard+/announcements": typeof import("./app/routes/_layout+/admin-dashboard+/announcements.tsx");
-  "routes/_layout+/admin-dashboard+/announcements.new": typeof import("./app/routes/_layout+/admin-dashboard+/announcements.new.tsx");
-  "routes/_layout+/admin-dashboard+/generate-locations": typeof import("./app/routes/_layout+/admin-dashboard+/generate-locations.tsx");
-  "routes/_layout+/admin-dashboard+/move-location-images": typeof import("./app/routes/_layout+/admin-dashboard+/move-location-images.tsx");
-  "routes/_layout+/admin-dashboard+/org.$organizationId": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.tsx");
-  "routes/_layout+/admin-dashboard+/org.$organizationId.assets": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.assets.tsx");
-  "routes/_layout+/admin-dashboard+/org.$organizationId.members": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.members.tsx");
-  "routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes.tsx");
-  "routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership.tsx");
-  "routes/_layout+/admin-dashboard+/qrs": typeof import("./app/routes/_layout+/admin-dashboard+/qrs.tsx");
-  "routes/_layout+/admin-dashboard+/qrs.codes[.zip]": typeof import("./app/routes/_layout+/admin-dashboard+/qrs.codes[.zip].ts");
-  "routes/_layout+/admin-dashboard+/test-supabase-rls": typeof import("./app/routes/_layout+/admin-dashboard+/test-supabase-rls.tsx");
-  "routes/_layout+/admin-dashboard+/updates": typeof import("./app/routes/_layout+/admin-dashboard+/updates.tsx");
-  "routes/_layout+/admin-dashboard+/updates.$updateId.edit": typeof import("./app/routes/_layout+/admin-dashboard+/updates.$updateId.edit.tsx");
-  "routes/_layout+/admin-dashboard+/updates.new": typeof import("./app/routes/_layout+/admin-dashboard+/updates.new.tsx");
-  "routes/_layout+/admin-dashboard+/users": typeof import("./app/routes/_layout+/admin-dashboard+/users.tsx");
-  "routes/_layout+/assets": typeof import("./app/routes/_layout+/assets.tsx");
-  "routes/_layout+/assets.$assetId": typeof import("./app/routes/_layout+/assets.$assetId.tsx");
-  "routes/_layout+/assets.$assetId._index": typeof import("./app/routes/_layout+/assets.$assetId._index.tsx");
-  "routes/_layout+/assets.$assetId.activity": typeof import("./app/routes/_layout+/assets.$assetId.activity.tsx");
-  "routes/_layout+/assets.$assetId.activity[.csv]": typeof import("./app/routes/_layout+/assets.$assetId.activity[.csv].ts");
-  "routes/_layout+/assets.$assetId.bookings": typeof import("./app/routes/_layout+/assets.$assetId.bookings.tsx");
-  "routes/_layout+/assets.$assetId.index": typeof import("./app/routes/_layout+/assets.$assetId.index.tsx");
-  "routes/_layout+/assets.$assetId.note": typeof import("./app/routes/_layout+/assets.$assetId.note.tsx");
-  "routes/_layout+/assets.$assetId.overview": typeof import("./app/routes/_layout+/assets.$assetId.overview.tsx");
-  "routes/_layout+/assets.$assetId.overview.add-to-existing-booking": typeof import("./app/routes/_layout+/assets.$assetId.overview.add-to-existing-booking.tsx");
-  "routes/_layout+/assets.$assetId.overview.assign-custody": typeof import("./app/routes/_layout+/assets.$assetId.overview.assign-custody.tsx");
-  "routes/_layout+/assets.$assetId.overview.create-new-booking": typeof import("./app/routes/_layout+/assets.$assetId.overview.create-new-booking.tsx");
-  "routes/_layout+/assets.$assetId.overview.duplicate": typeof import("./app/routes/_layout+/assets.$assetId.overview.duplicate.tsx");
-  "routes/_layout+/assets.$assetId.overview.manage-placements": typeof import("./app/routes/_layout+/assets.$assetId.overview.manage-placements.tsx");
-  "routes/_layout+/assets.$assetId.overview.release-custody": typeof import("./app/routes/_layout+/assets.$assetId.overview.release-custody.tsx");
-  "routes/_layout+/assets.$assetId.overview.update-location": typeof import("./app/routes/_layout+/assets.$assetId.overview.update-location.tsx");
-  "routes/_layout+/assets.$assetId.reminders": typeof import("./app/routes/_layout+/assets.$assetId.reminders.tsx");
-  "routes/_layout+/assets.$assetId_.edit": typeof import("./app/routes/_layout+/assets.$assetId_.edit.tsx");
-  "routes/_layout+/assets._index": typeof import("./app/routes/_layout+/assets._index.tsx");
-  "routes/_layout+/assets.export.$fileName[.csv]": typeof import("./app/routes/_layout+/assets.export.$fileName[.csv].tsx");
-  "routes/_layout+/assets.import-update": typeof import("./app/routes/_layout+/assets.import-update.tsx");
-  "routes/_layout+/assets.import": typeof import("./app/routes/_layout+/assets.import.tsx");
-  "routes/_layout+/assets.new": typeof import("./app/routes/_layout+/assets.new.tsx");
-  "routes/_layout+/audits": typeof import("./app/routes/_layout+/audits.tsx");
-  "routes/_layout+/audits.$auditId": typeof import("./app/routes/_layout+/audits.$auditId.tsx");
-  "routes/_layout+/audits.$auditId._index": typeof import("./app/routes/_layout+/audits.$auditId._index.tsx");
-  "routes/_layout+/audits.$auditId.activity": typeof import("./app/routes/_layout+/audits.$auditId.activity.tsx");
-  "routes/_layout+/audits.$auditId.activity[.csv]": typeof import("./app/routes/_layout+/audits.$auditId.activity[.csv].ts");
-  "routes/_layout+/audits.$auditId.duplicate": typeof import("./app/routes/_layout+/audits.$auditId.duplicate.tsx");
-  "routes/_layout+/audits.$auditId.note": typeof import("./app/routes/_layout+/audits.$auditId.note.tsx");
-  "routes/_layout+/audits.$auditId.overview": typeof import("./app/routes/_layout+/audits.$auditId.overview.tsx");
-  "routes/_layout+/audits.$auditId.scan": typeof import("./app/routes/_layout+/audits.$auditId.scan.tsx");
-  "routes/_layout+/audits.$auditId.scan.$auditAssetId.details": typeof import("./app/routes/_layout+/audits.$auditId.scan.$auditAssetId.details.tsx");
-  "routes/_layout+/audits._index": typeof import("./app/routes/_layout+/audits._index.tsx");
-  "routes/_layout+/available-assets": typeof import("./app/routes/_layout+/available-assets.tsx");
-  "routes/_layout+/bookings": typeof import("./app/routes/_layout+/bookings.tsx");
-  "routes/_layout+/bookings.$bookingId": typeof import("./app/routes/_layout+/bookings.$bookingId.tsx");
-  "routes/_layout+/bookings.$bookingId._index": typeof import("./app/routes/_layout+/bookings.$bookingId._index.tsx");
-  "routes/_layout+/bookings.$bookingId.activity": typeof import("./app/routes/_layout+/bookings.$bookingId.activity.tsx");
-  "routes/_layout+/bookings.$bookingId.activity[.csv]": typeof import("./app/routes/_layout+/bookings.$bookingId.activity[.csv].ts");
-  "routes/_layout+/bookings.$bookingId.overview": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.cal[.ics]": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.cal[.ics].ts");
-  "routes/_layout+/bookings.$bookingId.overview.checkin-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.checkin-assets.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.checkout-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.checkout-assets.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.duplicate": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.duplicate.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.manage-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.manage-assets.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.manage-kits": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.manage-kits.tsx");
-  "routes/_layout+/bookings.$bookingId.overview.scan-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.scan-assets.tsx");
-  "routes/_layout+/bookings._index": typeof import("./app/routes/_layout+/bookings._index.tsx");
-  "routes/_layout+/bookings.export.$fileName[.csv]": typeof import("./app/routes/_layout+/bookings.export.$fileName[.csv].tsx");
-  "routes/_layout+/bookings.new": typeof import("./app/routes/_layout+/bookings.new.tsx");
-  "routes/_layout+/calendar": typeof import("./app/routes/_layout+/calendar.tsx");
-  "routes/_layout+/categories": typeof import("./app/routes/_layout+/categories.tsx");
-  "routes/_layout+/categories.$categoryId_.edit": typeof import("./app/routes/_layout+/categories.$categoryId_.edit.tsx");
-  "routes/_layout+/categories.new": typeof import("./app/routes/_layout+/categories.new.tsx");
-  "routes/_layout+/dashboard": typeof import("./app/routes/_layout+/dashboard.tsx");
-  "routes/_layout+/home": typeof import("./app/routes/_layout+/home.tsx");
-  "routes/_layout+/kits": typeof import("./app/routes/_layout+/kits.tsx");
-  "routes/_layout+/kits.$kitId": typeof import("./app/routes/_layout+/kits.$kitId.tsx");
-  "routes/_layout+/kits.$kitId._index": typeof import("./app/routes/_layout+/kits.$kitId._index.tsx");
-  "routes/_layout+/kits.$kitId.assets": typeof import("./app/routes/_layout+/kits.$kitId.assets.tsx");
-  "routes/_layout+/kits.$kitId.assets.add-to-existing-booking": typeof import("./app/routes/_layout+/kits.$kitId.assets.add-to-existing-booking.tsx");
-  "routes/_layout+/kits.$kitId.assets.assign-custody": typeof import("./app/routes/_layout+/kits.$kitId.assets.assign-custody.tsx");
-  "routes/_layout+/kits.$kitId.assets.create-new-booking": typeof import("./app/routes/_layout+/kits.$kitId.assets.create-new-booking.tsx");
-  "routes/_layout+/kits.$kitId.assets.manage-assets": typeof import("./app/routes/_layout+/kits.$kitId.assets.manage-assets.tsx");
-  "routes/_layout+/kits.$kitId.assets.release-custody": typeof import("./app/routes/_layout+/kits.$kitId.assets.release-custody.tsx");
-  "routes/_layout+/kits.$kitId.assets.update-location": typeof import("./app/routes/_layout+/kits.$kitId.assets.update-location.tsx");
-  "routes/_layout+/kits.$kitId.bookings": typeof import("./app/routes/_layout+/kits.$kitId.bookings.tsx");
-  "routes/_layout+/kits.$kitId.overview": typeof import("./app/routes/_layout+/kits.$kitId.overview.tsx");
-  "routes/_layout+/kits.$kitId.scan-assets": typeof import("./app/routes/_layout+/kits.$kitId.scan-assets.tsx");
-  "routes/_layout+/kits.$kitId_.edit": typeof import("./app/routes/_layout+/kits.$kitId_.edit.tsx");
-  "routes/_layout+/kits._index": typeof import("./app/routes/_layout+/kits._index.tsx");
-  "routes/_layout+/kits.new": typeof import("./app/routes/_layout+/kits.new.tsx");
-  "routes/_layout+/locations": typeof import("./app/routes/_layout+/locations.tsx");
-  "routes/_layout+/locations.$locationId": typeof import("./app/routes/_layout+/locations.$locationId.tsx");
-  "routes/_layout+/locations.$locationId.activity": typeof import("./app/routes/_layout+/locations.$locationId.activity.tsx");
-  "routes/_layout+/locations.$locationId.activity[.csv]": typeof import("./app/routes/_layout+/locations.$locationId.activity[.csv].ts");
-  "routes/_layout+/locations.$locationId.assets": typeof import("./app/routes/_layout+/locations.$locationId.assets.tsx");
-  "routes/_layout+/locations.$locationId.assets.manage-assets": typeof import("./app/routes/_layout+/locations.$locationId.assets.manage-assets.tsx");
-  "routes/_layout+/locations.$locationId.index": typeof import("./app/routes/_layout+/locations.$locationId.index.tsx");
-  "routes/_layout+/locations.$locationId.kits": typeof import("./app/routes/_layout+/locations.$locationId.kits.tsx");
-  "routes/_layout+/locations.$locationId.kits.manage-kits": typeof import("./app/routes/_layout+/locations.$locationId.kits.manage-kits.tsx");
-  "routes/_layout+/locations.$locationId.note": typeof import("./app/routes/_layout+/locations.$locationId.note.tsx");
-  "routes/_layout+/locations.$locationId.overview": typeof import("./app/routes/_layout+/locations.$locationId.overview.tsx");
-  "routes/_layout+/locations.$locationId.scan-assets-kits": typeof import("./app/routes/_layout+/locations.$locationId.scan-assets-kits.tsx");
-  "routes/_layout+/locations.$locationId_.edit": typeof import("./app/routes/_layout+/locations.$locationId_.edit.tsx");
-  "routes/_layout+/locations._index": typeof import("./app/routes/_layout+/locations._index.tsx");
-  "routes/_layout+/locations.new": typeof import("./app/routes/_layout+/locations.new.tsx");
-  "routes/_layout+/me": typeof import("./app/routes/_layout+/me.tsx");
-  "routes/_layout+/me._index": typeof import("./app/routes/_layout+/me._index.tsx");
-  "routes/_layout+/me.assets": typeof import("./app/routes/_layout+/me.assets.tsx");
-  "routes/_layout+/me.bookings": typeof import("./app/routes/_layout+/me.bookings.tsx");
-  "routes/_layout+/me.note": typeof import("./app/routes/_layout+/me.note.tsx");
-  "routes/_layout+/me.notes": typeof import("./app/routes/_layout+/me.notes.tsx");
-  "routes/_layout+/my-custody": typeof import("./app/routes/_layout+/my-custody.tsx");
-  "routes/_layout+/reminders": typeof import("./app/routes/_layout+/reminders.tsx");
-  "routes/_layout+/reminders._index": typeof import("./app/routes/_layout+/reminders._index.tsx");
-  "routes/_layout+/reports": typeof import("./app/routes/_layout+/reports.tsx");
-  "routes/_layout+/reports.$reportId": typeof import("./app/routes/_layout+/reports.$reportId.tsx");
-  "routes/_layout+/reports._index": typeof import("./app/routes/_layout+/reports._index.tsx");
-  "routes/_layout+/reports.export.$fileName[.csv]": typeof import("./app/routes/_layout+/reports.export.$fileName[.csv].tsx");
-  "routes/_layout+/requests": typeof import("./app/routes/_layout+/requests.tsx");
-  "routes/_layout+/scanner-sam-id": typeof import("./app/routes/_layout+/scanner-sam-id.ts");
-  "routes/_layout+/scanner": typeof import("./app/routes/_layout+/scanner.tsx");
-  "routes/_layout+/settings": typeof import("./app/routes/_layout+/settings.tsx");
-  "routes/_layout+/settings.asset-models": typeof import("./app/routes/_layout+/settings.asset-models.tsx");
-  "routes/_layout+/settings.asset-models.$assetModelId_.edit": typeof import("./app/routes/_layout+/settings.asset-models.$assetModelId_.edit.tsx");
-  "routes/_layout+/settings.asset-models.index": typeof import("./app/routes/_layout+/settings.asset-models.index.tsx");
-  "routes/_layout+/settings.asset-models.new": typeof import("./app/routes/_layout+/settings.asset-models.new.tsx");
-  "routes/_layout+/settings.bookings": typeof import("./app/routes/_layout+/settings.bookings.tsx");
-  "routes/_layout+/settings.custom-fields": typeof import("./app/routes/_layout+/settings.custom-fields.tsx");
-  "routes/_layout+/settings.custom-fields.$fieldId_.edit": typeof import("./app/routes/_layout+/settings.custom-fields.$fieldId_.edit.tsx");
-  "routes/_layout+/settings.custom-fields.index": typeof import("./app/routes/_layout+/settings.custom-fields.index.tsx");
-  "routes/_layout+/settings.custom-fields.new": typeof import("./app/routes/_layout+/settings.custom-fields.new.tsx");
-  "routes/_layout+/settings.emails": typeof import("./app/routes/_layout+/settings.emails.tsx");
-  "routes/_layout+/settings.general": typeof import("./app/routes/_layout+/settings.general.tsx");
-  "routes/_layout+/settings.index": typeof import("./app/routes/_layout+/settings.index.tsx");
-  "routes/_layout+/settings.team": typeof import("./app/routes/_layout+/settings.team.tsx");
-  "routes/_layout+/settings.team._index": typeof import("./app/routes/_layout+/settings.team._index.tsx");
-  "routes/_layout+/settings.team.invites": typeof import("./app/routes/_layout+/settings.team.invites.tsx");
-  "routes/_layout+/settings.team.nrm": typeof import("./app/routes/_layout+/settings.team.nrm.tsx");
-  "routes/_layout+/settings.team.nrm.$nrmId.edit": typeof import("./app/routes/_layout+/settings.team.nrm.$nrmId.edit.tsx");
-  "routes/_layout+/settings.team.nrm.add-member": typeof import("./app/routes/_layout+/settings.team.nrm.add-member.tsx");
-  "routes/_layout+/settings.team.nrm.import-members": typeof import("./app/routes/_layout+/settings.team.nrm.import-members.tsx");
-  "routes/_layout+/settings.team.users": typeof import("./app/routes/_layout+/settings.team.users.tsx");
-  "routes/_layout+/settings.team.users.$userId": typeof import("./app/routes/_layout+/settings.team.users.$userId.tsx");
-  "routes/_layout+/settings.team.users.$userId.$": typeof import("./app/routes/_layout+/settings.team.users.$userId.$.tsx");
-  "routes/_layout+/settings.team.users.$userId._index": typeof import("./app/routes/_layout+/settings.team.users.$userId._index.tsx");
-  "routes/_layout+/settings.team.users.$userId.assets": typeof import("./app/routes/_layout+/settings.team.users.$userId.assets.tsx");
-  "routes/_layout+/settings.team.users.$userId.bookings": typeof import("./app/routes/_layout+/settings.team.users.$userId.bookings.tsx");
-  "routes/_layout+/settings.team.users.$userId.note": typeof import("./app/routes/_layout+/settings.team.users.$userId.note.tsx");
-  "routes/_layout+/settings.team.users.$userId.notes": typeof import("./app/routes/_layout+/settings.team.users.$userId.notes.tsx");
-  "routes/_layout+/tags": typeof import("./app/routes/_layout+/tags.tsx");
-  "routes/_layout+/tags.$tagId_.edit": typeof import("./app/routes/_layout+/tags.$tagId_.edit.tsx");
-  "routes/_layout+/tags.new": typeof import("./app/routes/_layout+/tags.new.tsx");
-  "routes/_layout+/updates": typeof import("./app/routes/_layout+/updates.tsx");
-  "routes/_welcome+/_layout": typeof import("./app/routes/_welcome+/_layout.tsx");
-  "routes/_welcome+/onboarding": typeof import("./app/routes/_welcome+/onboarding.tsx");
-  "routes/_welcome+/select-plan": typeof import("./app/routes/_welcome+/select-plan.tsx");
-  "routes/_welcome+/sso-pending-assignment": typeof import("./app/routes/_welcome+/sso-pending-assignment.tsx");
-  "routes/_welcome+/welcome": typeof import("./app/routes/_welcome+/welcome.tsx");
   "routes/api+/$organizationId.qr-codes[.zip]": typeof import("./app/routes/api+/$organizationId.qr-codes[.zip].ts");
   "routes/api+/$organizationId.working-hours": typeof import("./app/routes/api+/$organizationId.working-hours.ts");
   "routes/api+/admin.export-org-assets.$organizationId.$fileName[.csv]": typeof import("./app/routes/api+/admin.export-org-assets.$organizationId.$fileName[.csv].tsx");
@@ -3606,6 +3462,7 @@ type RouteModules = {
   "routes/api+/categories.bulk-actions": typeof import("./app/routes/api+/categories.bulk-actions.ts");
   "routes/api+/client-notification": typeof import("./app/routes/api+/client-notification.ts");
   "routes/api+/command-palette.search": typeof import("./app/routes/api+/command-palette.search.ts");
+  "routes/api+/custody.request-return": typeof import("./app/routes/api+/custody.request-return.ts");
   "routes/api+/custom-fields.bulk-actions": typeof import("./app/routes/api+/custom-fields.bulk-actions.ts");
   "routes/api+/feedback": typeof import("./app/routes/api+/feedback.ts");
   "routes/api+/generate-sequential-ids": typeof import("./app/routes/api+/generate-sequential-ids.tsx");
@@ -3711,4 +3568,193 @@ type RouteModules = {
   "routes/qr+/_public+/$qrId": typeof import("./app/routes/qr+/_public+/$qrId.tsx");
   "routes/qr+/_public+/$qrId_.contact-owner": typeof import("./app/routes/qr+/_public+/$qrId_.contact-owner.tsx");
   "routes/qr+/_public+/$qrId_.not-logged-in": typeof import("./app/routes/qr+/_public+/$qrId_.not-logged-in.tsx");
+  "routes/[.well-known].apple-app-site-association": typeof import("./app/routes/[.well-known].apple-app-site-association.tsx");
+  "routes/[.well-known].assetlinks[.json]": typeof import("./app/routes/[.well-known].assetlinks[.json].tsx");
+  "routes/_auth+/_auth": typeof import("./app/routes/_auth+/_auth.tsx");
+  "routes/_auth+/accept-invite.$inviteId": typeof import("./app/routes/_auth+/accept-invite.$inviteId.tsx");
+  "routes/_auth+/forgot-password": typeof import("./app/routes/_auth+/forgot-password.tsx");
+  "routes/_auth+/join": typeof import("./app/routes/_auth+/join.tsx");
+  "routes/_auth+/login": typeof import("./app/routes/_auth+/login.tsx");
+  "routes/_auth+/logout": typeof import("./app/routes/_auth+/logout.tsx");
+  "routes/_auth+/oauth.callback": typeof import("./app/routes/_auth+/oauth.callback.tsx");
+  "routes/_auth+/oauth.callback_.mobile": typeof import("./app/routes/_auth+/oauth.callback_.mobile.tsx");
+  "routes/_auth+/otp": typeof import("./app/routes/_auth+/otp.tsx");
+  "routes/_auth+/resend-otp": typeof import("./app/routes/_auth+/resend-otp.tsx");
+  "routes/_auth+/send-otp": typeof import("./app/routes/_auth+/send-otp.tsx");
+  "routes/_auth+/sso-login": typeof import("./app/routes/_auth+/sso-login.tsx");
+  "routes/_index": typeof import("./app/routes/_index.tsx");
+  "routes/_layout+/_layout": typeof import("./app/routes/_layout+/_layout.tsx");
+  "routes/_layout+/account-details": typeof import("./app/routes/_layout+/account-details.tsx");
+  "routes/_layout+/account-details.calendars": typeof import("./app/routes/_layout+/account-details.calendars.tsx");
+  "routes/_layout+/account-details.general": typeof import("./app/routes/_layout+/account-details.general.tsx");
+  "routes/_layout+/account-details.index": typeof import("./app/routes/_layout+/account-details.index.tsx");
+  "routes/_layout+/account-details.subscription": typeof import("./app/routes/_layout+/account-details.subscription.tsx");
+  "routes/_layout+/account-details.subscription.customer-portal": typeof import("./app/routes/_layout+/account-details.subscription.customer-portal.tsx");
+  "routes/_layout+/account-details.workspace": typeof import("./app/routes/_layout+/account-details.workspace.tsx");
+  "routes/_layout+/account-details.workspace.$workspaceId.edit": typeof import("./app/routes/_layout+/account-details.workspace.$workspaceId.edit.tsx");
+  "routes/_layout+/account-details.workspace.index": typeof import("./app/routes/_layout+/account-details.workspace.index.tsx");
+  "routes/_layout+/account-details.workspace.new": typeof import("./app/routes/_layout+/account-details.workspace.new.tsx");
+  "routes/_layout+/admin-dashboard+/_layout": typeof import("./app/routes/_layout+/admin-dashboard+/_layout.tsx");
+  "routes/_layout+/admin-dashboard+/$userId": typeof import("./app/routes/_layout+/admin-dashboard+/$userId.tsx");
+  "routes/_layout+/admin-dashboard+/announcements": typeof import("./app/routes/_layout+/admin-dashboard+/announcements.tsx");
+  "routes/_layout+/admin-dashboard+/announcements.new": typeof import("./app/routes/_layout+/admin-dashboard+/announcements.new.tsx");
+  "routes/_layout+/admin-dashboard+/generate-locations": typeof import("./app/routes/_layout+/admin-dashboard+/generate-locations.tsx");
+  "routes/_layout+/admin-dashboard+/move-location-images": typeof import("./app/routes/_layout+/admin-dashboard+/move-location-images.tsx");
+  "routes/_layout+/admin-dashboard+/org.$organizationId": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.tsx");
+  "routes/_layout+/admin-dashboard+/org.$organizationId.assets": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.assets.tsx");
+  "routes/_layout+/admin-dashboard+/org.$organizationId.members": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.members.tsx");
+  "routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.qr-codes.tsx");
+  "routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership": typeof import("./app/routes/_layout+/admin-dashboard+/org.$organizationId.transfer-ownership.tsx");
+  "routes/_layout+/admin-dashboard+/qrs": typeof import("./app/routes/_layout+/admin-dashboard+/qrs.tsx");
+  "routes/_layout+/admin-dashboard+/qrs.codes[.zip]": typeof import("./app/routes/_layout+/admin-dashboard+/qrs.codes[.zip].ts");
+  "routes/_layout+/admin-dashboard+/test-supabase-rls": typeof import("./app/routes/_layout+/admin-dashboard+/test-supabase-rls.tsx");
+  "routes/_layout+/admin-dashboard+/updates": typeof import("./app/routes/_layout+/admin-dashboard+/updates.tsx");
+  "routes/_layout+/admin-dashboard+/updates.$updateId.edit": typeof import("./app/routes/_layout+/admin-dashboard+/updates.$updateId.edit.tsx");
+  "routes/_layout+/admin-dashboard+/updates.new": typeof import("./app/routes/_layout+/admin-dashboard+/updates.new.tsx");
+  "routes/_layout+/admin-dashboard+/users": typeof import("./app/routes/_layout+/admin-dashboard+/users.tsx");
+  "routes/_layout+/assets": typeof import("./app/routes/_layout+/assets.tsx");
+  "routes/_layout+/assets.$assetId": typeof import("./app/routes/_layout+/assets.$assetId.tsx");
+  "routes/_layout+/assets.$assetId.activity": typeof import("./app/routes/_layout+/assets.$assetId.activity.tsx");
+  "routes/_layout+/assets.$assetId.activity[.csv]": typeof import("./app/routes/_layout+/assets.$assetId.activity[.csv].ts");
+  "routes/_layout+/assets.$assetId.bookings": typeof import("./app/routes/_layout+/assets.$assetId.bookings.tsx");
+  "routes/_layout+/assets.$assetId.index": typeof import("./app/routes/_layout+/assets.$assetId.index.tsx");
+  "routes/_layout+/assets.$assetId.note": typeof import("./app/routes/_layout+/assets.$assetId.note.tsx");
+  "routes/_layout+/assets.$assetId.overview": typeof import("./app/routes/_layout+/assets.$assetId.overview.tsx");
+  "routes/_layout+/assets.$assetId.overview.add-to-existing-booking": typeof import("./app/routes/_layout+/assets.$assetId.overview.add-to-existing-booking.tsx");
+  "routes/_layout+/assets.$assetId.overview.assign-custody": typeof import("./app/routes/_layout+/assets.$assetId.overview.assign-custody.tsx");
+  "routes/_layout+/assets.$assetId.overview.create-new-booking": typeof import("./app/routes/_layout+/assets.$assetId.overview.create-new-booking.tsx");
+  "routes/_layout+/assets.$assetId.overview.custody-handover": typeof import("./app/routes/_layout+/assets.$assetId.overview.custody-handover.tsx");
+  "routes/_layout+/assets.$assetId.overview.duplicate": typeof import("./app/routes/_layout+/assets.$assetId.overview.duplicate.tsx");
+  "routes/_layout+/assets.$assetId.overview.manage-placements": typeof import("./app/routes/_layout+/assets.$assetId.overview.manage-placements.tsx");
+  "routes/_layout+/assets.$assetId.overview.release-custody": typeof import("./app/routes/_layout+/assets.$assetId.overview.release-custody.tsx");
+  "routes/_layout+/assets.$assetId.overview.update-location": typeof import("./app/routes/_layout+/assets.$assetId.overview.update-location.tsx");
+  "routes/_layout+/assets.$assetId.reminders": typeof import("./app/routes/_layout+/assets.$assetId.reminders.tsx");
+  "routes/_layout+/assets.$assetId._index": typeof import("./app/routes/_layout+/assets.$assetId._index.tsx");
+  "routes/_layout+/assets.$assetId_.edit": typeof import("./app/routes/_layout+/assets.$assetId_.edit.tsx");
+  "routes/_layout+/assets.export.$fileName[.csv]": typeof import("./app/routes/_layout+/assets.export.$fileName[.csv].tsx");
+  "routes/_layout+/assets.import-update": typeof import("./app/routes/_layout+/assets.import-update.tsx");
+  "routes/_layout+/assets.import": typeof import("./app/routes/_layout+/assets.import.tsx");
+  "routes/_layout+/assets.new": typeof import("./app/routes/_layout+/assets.new.tsx");
+  "routes/_layout+/assets._index": typeof import("./app/routes/_layout+/assets._index.tsx");
+  "routes/_layout+/audits": typeof import("./app/routes/_layout+/audits.tsx");
+  "routes/_layout+/audits.$auditId": typeof import("./app/routes/_layout+/audits.$auditId.tsx");
+  "routes/_layout+/audits.$auditId.activity": typeof import("./app/routes/_layout+/audits.$auditId.activity.tsx");
+  "routes/_layout+/audits.$auditId.activity[.csv]": typeof import("./app/routes/_layout+/audits.$auditId.activity[.csv].ts");
+  "routes/_layout+/audits.$auditId.duplicate": typeof import("./app/routes/_layout+/audits.$auditId.duplicate.tsx");
+  "routes/_layout+/audits.$auditId.note": typeof import("./app/routes/_layout+/audits.$auditId.note.tsx");
+  "routes/_layout+/audits.$auditId.overview": typeof import("./app/routes/_layout+/audits.$auditId.overview.tsx");
+  "routes/_layout+/audits.$auditId.scan": typeof import("./app/routes/_layout+/audits.$auditId.scan.tsx");
+  "routes/_layout+/audits.$auditId.scan.$auditAssetId.details": typeof import("./app/routes/_layout+/audits.$auditId.scan.$auditAssetId.details.tsx");
+  "routes/_layout+/audits.$auditId._index": typeof import("./app/routes/_layout+/audits.$auditId._index.tsx");
+  "routes/_layout+/audits._index": typeof import("./app/routes/_layout+/audits._index.tsx");
+  "routes/_layout+/available-assets": typeof import("./app/routes/_layout+/available-assets.tsx");
+  "routes/_layout+/bookings": typeof import("./app/routes/_layout+/bookings.tsx");
+  "routes/_layout+/bookings.$bookingId": typeof import("./app/routes/_layout+/bookings.$bookingId.tsx");
+  "routes/_layout+/bookings.$bookingId.activity": typeof import("./app/routes/_layout+/bookings.$bookingId.activity.tsx");
+  "routes/_layout+/bookings.$bookingId.activity[.csv]": typeof import("./app/routes/_layout+/bookings.$bookingId.activity[.csv].ts");
+  "routes/_layout+/bookings.$bookingId.overview": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.cal[.ics]": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.cal[.ics].ts");
+  "routes/_layout+/bookings.$bookingId.overview.checkin-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.checkin-assets.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.checkout-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.checkout-assets.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.duplicate": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.duplicate.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.fulfil-and-checkout.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.manage-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.manage-assets.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.manage-kits": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.manage-kits.tsx");
+  "routes/_layout+/bookings.$bookingId.overview.scan-assets": typeof import("./app/routes/_layout+/bookings.$bookingId.overview.scan-assets.tsx");
+  "routes/_layout+/bookings.$bookingId._index": typeof import("./app/routes/_layout+/bookings.$bookingId._index.tsx");
+  "routes/_layout+/bookings.export.$fileName[.csv]": typeof import("./app/routes/_layout+/bookings.export.$fileName[.csv].tsx");
+  "routes/_layout+/bookings.new": typeof import("./app/routes/_layout+/bookings.new.tsx");
+  "routes/_layout+/bookings._index": typeof import("./app/routes/_layout+/bookings._index.tsx");
+  "routes/_layout+/calendar": typeof import("./app/routes/_layout+/calendar.tsx");
+  "routes/_layout+/categories": typeof import("./app/routes/_layout+/categories.tsx");
+  "routes/_layout+/categories.$categoryId_.edit": typeof import("./app/routes/_layout+/categories.$categoryId_.edit.tsx");
+  "routes/_layout+/categories.new": typeof import("./app/routes/_layout+/categories.new.tsx");
+  "routes/_layout+/dashboard": typeof import("./app/routes/_layout+/dashboard.tsx");
+  "routes/_layout+/handovers": typeof import("./app/routes/_layout+/handovers.tsx");
+  "routes/_layout+/handovers_.$handoverId": typeof import("./app/routes/_layout+/handovers_.$handoverId.tsx");
+  "routes/_layout+/home": typeof import("./app/routes/_layout+/home.tsx");
+  "routes/_layout+/kits": typeof import("./app/routes/_layout+/kits.tsx");
+  "routes/_layout+/kits.$kitId": typeof import("./app/routes/_layout+/kits.$kitId.tsx");
+  "routes/_layout+/kits.$kitId.assets": typeof import("./app/routes/_layout+/kits.$kitId.assets.tsx");
+  "routes/_layout+/kits.$kitId.assets.add-to-existing-booking": typeof import("./app/routes/_layout+/kits.$kitId.assets.add-to-existing-booking.tsx");
+  "routes/_layout+/kits.$kitId.assets.assign-custody": typeof import("./app/routes/_layout+/kits.$kitId.assets.assign-custody.tsx");
+  "routes/_layout+/kits.$kitId.assets.create-new-booking": typeof import("./app/routes/_layout+/kits.$kitId.assets.create-new-booking.tsx");
+  "routes/_layout+/kits.$kitId.assets.manage-assets": typeof import("./app/routes/_layout+/kits.$kitId.assets.manage-assets.tsx");
+  "routes/_layout+/kits.$kitId.assets.release-custody": typeof import("./app/routes/_layout+/kits.$kitId.assets.release-custody.tsx");
+  "routes/_layout+/kits.$kitId.assets.update-location": typeof import("./app/routes/_layout+/kits.$kitId.assets.update-location.tsx");
+  "routes/_layout+/kits.$kitId.bookings": typeof import("./app/routes/_layout+/kits.$kitId.bookings.tsx");
+  "routes/_layout+/kits.$kitId.overview": typeof import("./app/routes/_layout+/kits.$kitId.overview.tsx");
+  "routes/_layout+/kits.$kitId.scan-assets": typeof import("./app/routes/_layout+/kits.$kitId.scan-assets.tsx");
+  "routes/_layout+/kits.$kitId._index": typeof import("./app/routes/_layout+/kits.$kitId._index.tsx");
+  "routes/_layout+/kits.$kitId_.edit": typeof import("./app/routes/_layout+/kits.$kitId_.edit.tsx");
+  "routes/_layout+/kits.new": typeof import("./app/routes/_layout+/kits.new.tsx");
+  "routes/_layout+/kits._index": typeof import("./app/routes/_layout+/kits._index.tsx");
+  "routes/_layout+/locations": typeof import("./app/routes/_layout+/locations.tsx");
+  "routes/_layout+/locations.$locationId": typeof import("./app/routes/_layout+/locations.$locationId.tsx");
+  "routes/_layout+/locations.$locationId.activity": typeof import("./app/routes/_layout+/locations.$locationId.activity.tsx");
+  "routes/_layout+/locations.$locationId.activity[.csv]": typeof import("./app/routes/_layout+/locations.$locationId.activity[.csv].ts");
+  "routes/_layout+/locations.$locationId.assets": typeof import("./app/routes/_layout+/locations.$locationId.assets.tsx");
+  "routes/_layout+/locations.$locationId.assets.manage-assets": typeof import("./app/routes/_layout+/locations.$locationId.assets.manage-assets.tsx");
+  "routes/_layout+/locations.$locationId.index": typeof import("./app/routes/_layout+/locations.$locationId.index.tsx");
+  "routes/_layout+/locations.$locationId.kits": typeof import("./app/routes/_layout+/locations.$locationId.kits.tsx");
+  "routes/_layout+/locations.$locationId.kits.manage-kits": typeof import("./app/routes/_layout+/locations.$locationId.kits.manage-kits.tsx");
+  "routes/_layout+/locations.$locationId.note": typeof import("./app/routes/_layout+/locations.$locationId.note.tsx");
+  "routes/_layout+/locations.$locationId.overview": typeof import("./app/routes/_layout+/locations.$locationId.overview.tsx");
+  "routes/_layout+/locations.$locationId.scan-assets-kits": typeof import("./app/routes/_layout+/locations.$locationId.scan-assets-kits.tsx");
+  "routes/_layout+/locations.$locationId_.edit": typeof import("./app/routes/_layout+/locations.$locationId_.edit.tsx");
+  "routes/_layout+/locations.new": typeof import("./app/routes/_layout+/locations.new.tsx");
+  "routes/_layout+/locations._index": typeof import("./app/routes/_layout+/locations._index.tsx");
+  "routes/_layout+/me": typeof import("./app/routes/_layout+/me.tsx");
+  "routes/_layout+/me.assets": typeof import("./app/routes/_layout+/me.assets.tsx");
+  "routes/_layout+/me.bookings": typeof import("./app/routes/_layout+/me.bookings.tsx");
+  "routes/_layout+/me.note": typeof import("./app/routes/_layout+/me.note.tsx");
+  "routes/_layout+/me.notes": typeof import("./app/routes/_layout+/me.notes.tsx");
+  "routes/_layout+/me._index": typeof import("./app/routes/_layout+/me._index.tsx");
+  "routes/_layout+/my-custody": typeof import("./app/routes/_layout+/my-custody.tsx");
+  "routes/_layout+/reminders": typeof import("./app/routes/_layout+/reminders.tsx");
+  "routes/_layout+/reminders._index": typeof import("./app/routes/_layout+/reminders._index.tsx");
+  "routes/_layout+/reports": typeof import("./app/routes/_layout+/reports.tsx");
+  "routes/_layout+/reports.$reportId": typeof import("./app/routes/_layout+/reports.$reportId.tsx");
+  "routes/_layout+/reports.export.$fileName[.csv]": typeof import("./app/routes/_layout+/reports.export.$fileName[.csv].tsx");
+  "routes/_layout+/reports._index": typeof import("./app/routes/_layout+/reports._index.tsx");
+  "routes/_layout+/requests": typeof import("./app/routes/_layout+/requests.tsx");
+  "routes/_layout+/scanner-sam-id": typeof import("./app/routes/_layout+/scanner-sam-id.ts");
+  "routes/_layout+/scanner": typeof import("./app/routes/_layout+/scanner.tsx");
+  "routes/_layout+/settings": typeof import("./app/routes/_layout+/settings.tsx");
+  "routes/_layout+/settings.asset-models": typeof import("./app/routes/_layout+/settings.asset-models.tsx");
+  "routes/_layout+/settings.asset-models.$assetModelId_.edit": typeof import("./app/routes/_layout+/settings.asset-models.$assetModelId_.edit.tsx");
+  "routes/_layout+/settings.asset-models.index": typeof import("./app/routes/_layout+/settings.asset-models.index.tsx");
+  "routes/_layout+/settings.asset-models.new": typeof import("./app/routes/_layout+/settings.asset-models.new.tsx");
+  "routes/_layout+/settings.bookings": typeof import("./app/routes/_layout+/settings.bookings.tsx");
+  "routes/_layout+/settings.custom-fields": typeof import("./app/routes/_layout+/settings.custom-fields.tsx");
+  "routes/_layout+/settings.custom-fields.$fieldId_.edit": typeof import("./app/routes/_layout+/settings.custom-fields.$fieldId_.edit.tsx");
+  "routes/_layout+/settings.custom-fields.index": typeof import("./app/routes/_layout+/settings.custom-fields.index.tsx");
+  "routes/_layout+/settings.custom-fields.new": typeof import("./app/routes/_layout+/settings.custom-fields.new.tsx");
+  "routes/_layout+/settings.emails": typeof import("./app/routes/_layout+/settings.emails.tsx");
+  "routes/_layout+/settings.general": typeof import("./app/routes/_layout+/settings.general.tsx");
+  "routes/_layout+/settings.index": typeof import("./app/routes/_layout+/settings.index.tsx");
+  "routes/_layout+/settings.team": typeof import("./app/routes/_layout+/settings.team.tsx");
+  "routes/_layout+/settings.team.invites": typeof import("./app/routes/_layout+/settings.team.invites.tsx");
+  "routes/_layout+/settings.team.nrm": typeof import("./app/routes/_layout+/settings.team.nrm.tsx");
+  "routes/_layout+/settings.team.nrm.$nrmId.edit": typeof import("./app/routes/_layout+/settings.team.nrm.$nrmId.edit.tsx");
+  "routes/_layout+/settings.team.nrm.add-member": typeof import("./app/routes/_layout+/settings.team.nrm.add-member.tsx");
+  "routes/_layout+/settings.team.nrm.import-members": typeof import("./app/routes/_layout+/settings.team.nrm.import-members.tsx");
+  "routes/_layout+/settings.team.users": typeof import("./app/routes/_layout+/settings.team.users.tsx");
+  "routes/_layout+/settings.team.users.$userId": typeof import("./app/routes/_layout+/settings.team.users.$userId.tsx");
+  "routes/_layout+/settings.team.users.$userId.$": typeof import("./app/routes/_layout+/settings.team.users.$userId.$.tsx");
+  "routes/_layout+/settings.team.users.$userId.assets": typeof import("./app/routes/_layout+/settings.team.users.$userId.assets.tsx");
+  "routes/_layout+/settings.team.users.$userId.bookings": typeof import("./app/routes/_layout+/settings.team.users.$userId.bookings.tsx");
+  "routes/_layout+/settings.team.users.$userId.note": typeof import("./app/routes/_layout+/settings.team.users.$userId.note.tsx");
+  "routes/_layout+/settings.team.users.$userId.notes": typeof import("./app/routes/_layout+/settings.team.users.$userId.notes.tsx");
+  "routes/_layout+/settings.team.users.$userId._index": typeof import("./app/routes/_layout+/settings.team.users.$userId._index.tsx");
+  "routes/_layout+/settings.team._index": typeof import("./app/routes/_layout+/settings.team._index.tsx");
+  "routes/_layout+/tags": typeof import("./app/routes/_layout+/tags.tsx");
+  "routes/_layout+/tags.$tagId_.edit": typeof import("./app/routes/_layout+/tags.$tagId_.edit.tsx");
+  "routes/_layout+/tags.new": typeof import("./app/routes/_layout+/tags.new.tsx");
+  "routes/_layout+/updates": typeof import("./app/routes/_layout+/updates.tsx");
+  "routes/_welcome+/_layout": typeof import("./app/routes/_welcome+/_layout.tsx");
+  "routes/_welcome+/onboarding": typeof import("./app/routes/_welcome+/onboarding.tsx");
+  "routes/_welcome+/select-plan": typeof import("./app/routes/_welcome+/select-plan.tsx");
+  "routes/_welcome+/sso-pending-assignment": typeof import("./app/routes/_welcome+/sso-pending-assignment.tsx");
+  "routes/_welcome+/welcome": typeof import("./app/routes/_welcome+/welcome.tsx");
 };

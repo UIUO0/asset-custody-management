@@ -1,5 +1,5 @@
 /**
- * "Assets in my custody" page (الأصول التي في عهدتي)
+ * "Assets in my custody" page (الأصناف التي في عهدتي)
  *
  * The employee's own view of what they are holding. Open to every role — a
  * warehouse operator can be a custodian just as an ordinary employee can — and
@@ -15,19 +15,28 @@
  */
 
 import type { ReactNode } from "react";
-import { BookingStatus } from "@prisma/client";
+import { useState } from "react";
+import {
+  BookingStatus,
+  CustodyHandoverKind,
+  CustodyHandoverState,
+} from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
-import { useLoaderData } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { ErrorContent } from "~/components/errors";
+import Input from "~/components/forms/input";
+import { Dialog, DialogPortal } from "~/components/layout/dialog";
 import Header from "~/components/layout/header";
 import { Badge } from "~/components/shared/badge";
 import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { EmptyTableValue } from "~/components/shared/empty-table-value";
 import { Table, Td, Th, Tr } from "~/components/table";
+import { db } from "~/database/db.server";
+import { useDisabled } from "~/hooks/use-disabled";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import type {
@@ -65,11 +74,32 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       userId,
     });
 
+    /**
+     * Return records already open for these assets, keyed by asset id.
+     *
+     * Fetched so a row can offer "finish signing" instead of "request return"
+     * when a محضر is already in flight — otherwise the employee taps a button
+     * that appears to do nothing, because the service is (correctly) idempotent
+     * and hands back the record that already exists.
+     */
+    const openReturns = await db.custodyHandover.findMany({
+      where: {
+        organizationId,
+        kind: CustodyHandoverKind.RETURN,
+        state: CustodyHandoverState.AWAITING_SIGNATURES,
+        assetId: { in: custodies.map((custody) => custody.asset.id) },
+      },
+      select: { id: true, assetId: true },
+    });
+
     return payload({
       // `<Header/>` reads this off loader data rather than taking it as a prop.
       header: { title: "My custody" },
       custodies,
       checkedOut,
+      openReturnByAssetId: Object.fromEntries(
+        openReturns.map((record) => [record.assetId, record.id]),
+      ) as Record<string, string>,
     });
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -90,7 +120,8 @@ export const ErrorBoundary = () => <ErrorContent />;
 
 export default function MyCustodyPage() {
   const { t } = useTranslation();
-  const { custodies, checkedOut } = useLoaderData<typeof loader>();
+  const { custodies, checkedOut, openReturnByAssetId } =
+    useLoaderData<typeof loader>();
 
   const holdsNothing = custodies.length === 0 && checkedOut.length === 0;
 
@@ -122,11 +153,16 @@ export default function MyCustodyPage() {
                 <Th className="text-end">{t("myCustody.quantity")}</Th>
                 <Th>{t("myCustody.source")}</Th>
                 <Th>{t("myCustody.since")}</Th>
+                <Th className="text-end">{t("common.actions")}</Th>
               </tr>
             </thead>
             <tbody>
               {custodies.map((custody) => (
-                <CustodyRow key={custody.id} custody={custody} />
+                <CustodyRow
+                  key={custody.id}
+                  custody={custody}
+                  openHandoverId={openReturnByAssetId[custody.asset.id]}
+                />
               ))}
             </tbody>
           </Table>
@@ -247,8 +283,133 @@ function CategoryCell({
   );
 }
 
+/**
+ * "Request return" cell — a dialog asking why before it opens a محضر.
+ *
+ * A reason is mandatory because the warehouse triages this queue: a return with
+ * no stated reason forces them to chase the person to find out what they are
+ * about to receive and why. It is required by the service too, not just here —
+ * the dialog is the prompt, the service is the rule.
+ *
+ * When a record is already open for the asset the button changes to "finish
+ * signing" and links straight to it, rather than re-submitting. The service is
+ * idempotent and would hand back the same record, which from the employee's
+ * side looks like a button that does nothing.
+ */
+function RequestReturnCell({
+  assetId,
+  openHandoverId,
+}: {
+  assetId: string;
+  openHandoverId?: string;
+}) {
+  const { t } = useTranslation();
+  const fetcher = useFetcher<{ error?: { message?: string } }>();
+  const disabled = useDisabled(fetcher);
+  const [open, setOpen] = useState(false);
+
+  if (openHandoverId) {
+    return (
+      <Td className="text-end">
+        <Button
+          to={`/handovers/${openHandoverId}`}
+          variant="secondary"
+          size="sm"
+        >
+          {t("myCustody.finishReturn")}
+        </Button>
+      </Td>
+    );
+  }
+
+  return (
+    <Td className="text-end">
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
+        {t("myCustody.requestReturn")}
+      </Button>
+
+      {/* Portalled: the dialog is rendered from inside a <td>, and a modal
+          nested in a table cell inherits the table's stacking and overflow. */}
+      <DialogPortal>
+        <Dialog
+          open={open}
+          onClose={() => setOpen(false)}
+          title={<h4>{t("myCustody.requestReturnTitle")}</h4>}
+        >
+          <fetcher.Form
+            method="post"
+            action="/api/custody/request-return"
+            className="p-6"
+          >
+            <input type="hidden" name="assetId" value={assetId} />
+
+            <p className="mb-4 text-sm text-gray-600">
+              {t("myCustody.requestReturnIntro")}
+            </p>
+
+            <div className="mb-4">
+              <Input
+                inputType="textarea"
+                name="requestReason"
+                label={t("myCustody.returnReason")}
+                placeholder={t("myCustody.returnReasonPlaceholder")}
+                required
+                rows={3}
+                /* Server-side error shown as the fallback: client validation can
+                 be bypassed, and the service enforces the same rule. */
+                error={fetcher.data?.error?.message}
+              />
+            </div>
+
+            <div className="mb-5">
+              <Input
+                inputType="textarea"
+                name="conditionNotes"
+                label={t("custodySignature.conditionNotes")}
+                placeholder={t("custodySignature.conditionNotesHint")}
+                rows={2}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="secondary"
+                width="full"
+                disabled={disabled}
+                onClick={() => setOpen(false)}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                width="full"
+                disabled={disabled}
+              >
+                {t("myCustody.continueToSign")}
+              </Button>
+            </div>
+          </fetcher.Form>
+        </Dialog>
+      </DialogPortal>
+    </Td>
+  );
+}
+
 /** One asset held on custody. */
-function CustodyRow({ custody }: { custody: MyCustodyItem }) {
+function CustodyRow({
+  custody,
+  openHandoverId,
+}: {
+  custody: MyCustodyItem;
+  openHandoverId?: string;
+}) {
   const { t } = useTranslation();
   const { asset } = custody;
 
@@ -285,6 +446,8 @@ function CustodyRow({ custody }: { custody: MyCustodyItem }) {
       <Td className="whitespace-nowrap">
         <DateS date={custody.createdAt} options={{ dateStyle: "medium" }} />
       </Td>
+
+      <RequestReturnCell assetId={asset.id} openHandoverId={openHandoverId} />
     </Tr>
   );
 }

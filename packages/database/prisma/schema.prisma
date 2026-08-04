@@ -86,6 +86,10 @@ model User {
   sentInvites        Invite[]           @relation("inviter")
   receivedInvites    Invite[]           @relation("invitee")
   teamMembers        TeamMember[]
+  /// EPDA: handover records this user opened as the warehouse operator.
+  custodyHandoversOperated  CustodyHandover[]          @relation("CustodyHandoverOperator")
+  /// EPDA: handover signatures this user put their name to, on either side.
+  custodyHandoverSignatures CustodyHandoverSignature[] @relation("CustodyHandoverSignatory")
   userOrganizations  UserOrganization[]
   bookings           Booking[]          @relation("creator")
   custodies          Booking[]          @relation("custodian")
@@ -244,6 +248,9 @@ model Asset {
   // `enforce_individual_asset_single_location` trigger.
 
   custody      Custody[]
+  /// EPDA: signed تسليم/استرجاع records. Survive custody being released — the
+  /// audit trail is the point.
+  custodyHandovers CustodyHandover[]
   notes        Note[]
   qrCodes      Qr[]
   barcodes     Barcode[]              @relation("AssetBarcodes")
@@ -854,6 +861,8 @@ model TeamMember {
   organization    Organization @relation(fields: [organizationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   organizationId  String
   custodies       Custody[]
+  /// EPDA: handover records where this member is the employee side.
+  custodyHandovers CustodyHandover[]
   receivedInvites Invite[]
   user            User?        @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: SetNull)
   userId          String?
@@ -919,6 +928,159 @@ model Custody {
   @@index([kitCustodyId])
 }
 
+/// EPDA: whether a handover record covers giving an asset out or taking it back.
+///
+/// Two rows rather than a boolean because the parties swap roles between them —
+/// on `HANDOVER` المستودعات release and the employee receives; on `RETURN` the
+/// employee releases and المستودعات receive. Reading the direction off an
+/// `isReturn` flag makes every downstream `if` re-derive that mapping.
+enum CustodyHandoverKind {
+  /// تسليم — المستودعات → الموظف. Signed before `Custody` is created.
+  HANDOVER
+  /// استرجاع — الموظف → المستودعات. Signed before `Custody` is deleted.
+  RETURN
+}
+
+/// EPDA: lifecycle of a handover record.
+///
+/// Deliberately NOT folded into `Custody` itself. A custody row answers "who
+/// holds this asset right now"; a handover record answers "what was agreed, by
+/// whom, and when". The first is mutable state, the second is an immutable
+/// audit artefact that must survive the custody being released.
+enum CustodyHandoverState {
+  /// Opened, at least one party has not signed yet. Blocks the custody change.
+  AWAITING_SIGNATURES
+  /// Both parties signed. The custody change may proceed exactly once.
+  COMPLETED
+  /// Abandoned before completion — kept, not deleted, so an abandoned handover
+  /// is still visible in the asset's history.
+  VOIDED
+}
+
+/// EPDA: which side of a handover a signature belongs to.
+///
+/// Named by role in the transaction rather than by job title, because the same
+/// person can be `RELEASING` on one record and `RECEIVING` on the next.
+enum CustodyHandoverParty {
+  /// The party giving the asset up.
+  RELEASING
+  /// The party taking the asset on.
+  RECEIVING
+}
+
+/// EPDA: signed handover record (محضر تسليم/استلام).
+///
+/// Created *before* the custody change and gates it: `assignCustody` and
+/// `releaseCustody` refuse to run unless a `COMPLETED` record exists for that
+/// exact asset and direction. The gate lives in the service layer, not the UI —
+/// several entry points (web modal, mobile scanner, a stale open tab) reach the
+/// same operation and only the service sees all of them.
+///
+/// @see {@link file://./../../../apps/webapp/app/modules/custody/handover.server.ts}
+/// @see {@link file://./../../../apps/docs/epda-custody-signatures.md}
+model CustodyHandover {
+  id String @id @default(cuid())
+
+  /// Human-facing reference printed on the محضر, unique per workspace
+  /// (e.g. "EPDA-HO-2026-0042"). Stored rather than derived so a reissued PDF
+  /// always carries the same number as the one already signed on paper.
+  reference String
+
+  kind  CustodyHandoverKind
+  state CustodyHandoverState @default(AWAITING_SIGNATURES)
+
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  assetId String
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String
+
+  /// The employee side of the transaction — receiving on `HANDOVER`, releasing
+  /// on `RETURN`. Kept as a `TeamMember` (not `User`) because custody itself is
+  /// team-member scoped and non-user members must be able to hold assets.
+  counterparty   TeamMember @relation(fields: [counterpartyTeamMemberId], references: [id])
+  counterpartyTeamMemberId String
+
+  /// The warehouse operator who opened the record. `SetNull` on delete: the
+  /// محضر must outlive the staff account that produced it.
+  operator   User?   @relation("CustodyHandoverOperator", fields: [operatorUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  operatorUserId String?
+
+  /// Free-text condition note captured at handover time ("خدش في الغطاء
+  /// الخلفي"). Printed on the محضر so a later dispute has a baseline.
+  conditionNotes String?
+
+  /// Why the custodian asked to hand the asset back ("الجهاز يسخن", "انتهى
+  /// المشروع"). Deliberately separate from `conditionNotes`: the reason for a
+  /// return and the physical state of the thing being returned are different
+  /// facts, and a warehouse triaging a queue reads them for different purposes.
+  ///
+  /// Nullable in the schema because warehouse-initiated handovers have no
+  /// requester to give one. Mandatory for employee-initiated returns, enforced
+  /// in `openReturnRequest` — same posture as the mandatory rejection reason on
+  /// booking requests.
+  requestReason String?
+
+  signatures CustodyHandoverSignature[]
+
+  /// Set when the second signature lands. Null while `AWAITING_SIGNATURES`.
+  completedAt DateTime?
+  /// Reason the record was abandoned. Required by the service when voiding.
+  voidedReason String?
+  voidedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, reference], name: "custody_handover_org_reference_unique")
+  // Serves the "is there a completed record I can consume for this asset?"
+  // gate, which is on the hot path of every custody change.
+  @@index([assetId, kind, state], name: "CustodyHandover_asset_kind_state_idx")
+  @@index([organizationId, createdAt(sort: Desc)], name: "CustodyHandover_org_createdAt_idx")
+  @@index([counterpartyTeamMemberId])
+  @@index([operatorUserId])
+}
+
+/// EPDA: one party's signature on a handover record.
+///
+/// A separate table rather than four columns on `CustodyHandover` so the
+/// `@@unique([handoverId, party])` constraint makes "one signature per side"
+/// a database invariant instead of an application convention — a double-submit
+/// or a replayed request cannot overwrite a signature that already exists.
+model CustodyHandoverSignature {
+  id String @id @default(cuid())
+
+  handover   CustodyHandover @relation(fields: [handoverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  handoverId String
+
+  party CustodyHandoverParty
+
+  /// Signing user, when the party has an account. Null for team members
+  /// without a user row. `SetNull` — the signature outlives the account.
+  signedByUser   User?   @relation("CustodyHandoverSignatory", fields: [signedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  signedByUserId String?
+
+  /// Name as typed by the signatory at signing time. Snapshotted rather than
+  /// joined: the محضر must keep reading the name that was agreed to even after
+  /// the person renames their profile or leaves the workspace.
+  declaredName String
+
+  /// Path of the PNG inside the private `custody-signatures` bucket. Not a
+  /// public URL — signature images are personal data and are served through
+  /// short-lived signed URLs only.
+  signatureImagePath String
+
+  /// Captured for evidentiary value. Nullable because a proxy or a native
+  /// client may not supply them, and a missing IP must not block a signature.
+  ipAddress String?
+  userAgent String?
+
+  signedAt DateTime @default(now())
+
+  @@unique([handoverId, party], name: "custody_handover_signature_party_unique")
+  @@index([signedByUserId])
+}
+
 model Organization {
   id   String           @id @default(cuid())
   name String           @default("Personal")
@@ -932,6 +1094,9 @@ model Organization {
   assets  Asset[]
   assetKits AssetKit[]
   assetLocations AssetLocation[]
+  /// EPDA: signed تسليم/استرجاع records for this workspace. Scoped here so the
+  /// `reference` counter and every listing query stay workspace-isolated.
+  custodyHandovers CustodyHandover[]
 
   image   Image?  @relation("orgImage", fields: [imageId], references: [id])
   imageId String? @unique
