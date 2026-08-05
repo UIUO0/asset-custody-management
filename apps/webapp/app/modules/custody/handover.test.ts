@@ -36,11 +36,12 @@ vi.mock("~/database/db.server", () => ({
     custody: { deleteMany: vi.fn(), findFirst: vi.fn() },
     custodyHandover: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
       count: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
-      findUniqueOrThrow: vi.fn(),
+      findFirstOrThrow: vi.fn(),
     },
     custodyHandoverSignature: { create: vi.fn(), count: vi.fn() },
     teamMember: { findUnique: vi.fn() },
@@ -73,6 +74,7 @@ vi.mock("~/modules/note/service.server", () => ({
 const { db } = await import("~/database/db.server");
 const {
   applyHandoverEffect,
+  countHandoversAwaitingMySignature,
   decodeSignatureDataUrl,
   openHandover,
   openReturnRequest,
@@ -309,6 +311,59 @@ describe("openReturnRequest", () => {
 
     expect(result).toMatchObject({ id: "ho-existing" });
     expect(db.$transaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("countHandoversAwaitingMySignature", () => {
+  it("counts a record an employee signed and the desk has not", async () => {
+    // The regression this exists for: an employee-initiated return sat signed
+    // and invisible, because the badge only ever counted the employee side.
+    // The warehouse was the blocking party and nothing told them so.
+    const mock = db as unknown as Record<
+      string,
+      Record<string, ReturnType<typeof vi.fn>>
+    >;
+    mock.teamMember.findFirst.mockResolvedValue({ id: "tm-operator" });
+    mock.custodyHandover.findMany.mockResolvedValue([
+      {
+        kind: CustodyHandoverKind.RETURN,
+        counterpartyTeamMemberId: "tm-employee",
+        // On a return the employee holds RELEASING; the desk's RECEIVING is
+        // still open.
+        signatures: [{ party: CustodyHandoverParty.RELEASING }],
+      },
+    ]);
+
+    await expect(
+      countHandoversAwaitingMySignature({
+        userId: "user-operator",
+        organizationId: "org-1",
+        canOperate: true,
+      }),
+    ).resolves.toBe(1);
+  });
+
+  it("does not count that record for an ordinary employee", async () => {
+    const mock = db as unknown as Record<
+      string,
+      Record<string, ReturnType<typeof vi.fn>>
+    >;
+    mock.teamMember.findFirst.mockResolvedValue({ id: "tm-employee" });
+    mock.custodyHandover.findMany.mockResolvedValue([
+      {
+        kind: CustodyHandoverKind.RETURN,
+        counterpartyTeamMemberId: "tm-employee",
+        signatures: [{ party: CustodyHandoverParty.RELEASING }],
+      },
+    ]);
+
+    await expect(
+      countHandoversAwaitingMySignature({
+        userId: "user-employee",
+        organizationId: "org-1",
+        canOperate: false,
+      }),
+    ).resolves.toBe(0);
   });
 });
 

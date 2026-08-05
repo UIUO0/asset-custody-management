@@ -239,12 +239,20 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       /**
        * Counted for everyone, unlike the requests badge: anybody can be named
        * as the employee on a handover, so there is no role that provably never
-       * has one waiting. The query is a single indexed lookup on the viewer's
-       * own team-member row, not a workspace-wide scan.
+       * has one waiting.
+       *
+       * `canOperate` decides whether desk-side signatures count too. Without
+       * it an employee-initiated return sits signed and unannounced — the
+       * warehouse is the blocking party but nothing tells them so.
        */
       countHandoversAwaitingMySignature({
         userId: authSession.userId,
         organizationId: currentOrganization.id,
+        canOperate: userHasPermission({
+          roles: currentOrganizationUserRoles ?? [],
+          entity: PermissionEntity.asset,
+          action: PermissionAction.custody,
+        }),
       }),
     ]);
 

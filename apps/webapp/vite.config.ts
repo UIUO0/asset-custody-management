@@ -53,6 +53,24 @@ export default defineConfig({
   server: {
     port: 3000,
     https: httpsConfig,
+    /**
+     * Poll the filesystem instead of relying on OS change notifications.
+     *
+     * Vite's default watcher uses native events (ReadDirectoryChangesW on
+     * Windows, inotify on Linux). Those never fire when the file is written
+     * through a layer that does not raise them — a mounted volume, a network
+     * share, a container bind mount, or an editor/agent writing from outside
+     * the host filesystem. The symptom is brutal to diagnose because nothing
+     * errors: the file on disk is demonstrably correct, and the dev server
+     * keeps serving the copy it loaded at boot until it is restarted.
+     *
+     * Polling costs a little idle CPU and trades it for a watcher that cannot
+     * silently miss a write. Dev-only — `server` config is ignored in builds.
+     */
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
     warmup: {
       clientFiles: [
         "./app/entry.client.tsx",

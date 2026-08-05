@@ -46,7 +46,7 @@ import { recordEvent } from "~/modules/activity-event/service.server";
 // `partyFor` lives in a neutral module because route *components* render from
 // it — importing it from here would drag this whole server module into the
 // client bundle. See the docblock in `./handover.ts`.
-import { partyFor } from "~/modules/custody/handover";
+import { partyFor, resolveSignableParty } from "~/modules/custody/handover";
 import { createNote } from "~/modules/note/service.server";
 import { ShelfError } from "~/utils/error";
 import {
@@ -886,41 +886,71 @@ export async function signatureImageUrls(
 /**
  * Counts records waiting on this user's signature, for the sidebar badge.
  *
- * Only counts the employee side. An operator's own pending desk-signatures are
- * not chased here — they are mid-flow in a modal they just left, not a task
- * someone else is blocked on.
+ * Counts two different things, because a user can be blocking a handover in two
+ * different capacities:
+ *
+ * 1. **As the named employee** — a محضر someone opened naming them.
+ * 2. **As the warehouse desk**, when they hold `asset.custody` — a محضر an
+ *    employee opened and signed, now waiting on the desk to receive the asset.
+ *
+ * The second case was missing in the first cut, and the omission was not
+ * cosmetic: an employee-initiated return would sit signed and invisible,
+ * because operators only met it if they happened to open `/handovers`. The
+ * queue existed; nothing pointed at it. A workflow whose next step nobody is
+ * told about is a workflow that stops.
  *
  * @param userId - Signed-in user
  * @param organizationId - Current workspace
- * @returns Number of records awaiting this user's signature
+ * @param canOperate - Whether the viewer holds `asset.custody`, i.e. may sign
+ *   as the warehouse side. Passed in rather than re-derived so the caller's
+ *   permission check stays the single source of truth
+ * @returns Number of records this user is currently blocking
  */
 export async function countHandoversAwaitingMySignature({
   userId,
   organizationId,
+  canOperate,
 }: {
   userId: User["id"];
   organizationId: string;
+  canOperate: boolean;
 }): Promise<number> {
   const member = await db.teamMember.findFirst({
     where: { organizationId, userId, deletedAt: null },
     select: { id: true },
   });
 
-  if (!member) return 0;
+  // Nothing to count for a user who is neither a possible counterparty nor an
+  // operator — and no query worth running for them either.
+  if (!member && !canOperate) return 0;
 
   const open = await db.custodyHandover.findMany({
     where: {
       organizationId,
-      counterpartyTeamMemberId: member.id,
       state: CustodyHandoverState.AWAITING_SIGNATURES,
+      ...(canOperate ? {} : { counterpartyTeamMemberId: member!.id }),
     },
-    select: { kind: true, signatures: { select: { party: true } } },
+    select: {
+      kind: true,
+      counterpartyTeamMemberId: true,
+      signatures: { select: { party: true } },
+    },
   });
 
-  return open.filter((handover) => {
-    const slot = partyFor(handover.kind, "counterparty");
-    return !handover.signatures.some((s) => s.party === slot);
-  }).length;
+  return open.filter((handover) =>
+    Boolean(
+      resolveSignableParty({
+        // `state` is `AWAITING_SIGNATURES` by the query above; restating it
+        // keeps the shared guard the only place that decides.
+        handover: {
+          ...handover,
+          state: CustodyHandoverState.AWAITING_SIGNATURES,
+        },
+        canOperate,
+        ownTeamMemberId: member?.id ?? null,
+      }),
+    ),
+  ).length;
 }
 
 /**
