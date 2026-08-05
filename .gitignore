@@ -58,3 +58,6 @@ Thumbs.db
 # Misc
 *.tsbuildinfo
 .fly/
+
+# React Router generated route types
+apps/webapp/.react-router/
