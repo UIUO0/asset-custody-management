@@ -60,7 +60,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
     const rawFormData = await clonedRequest.formData();
     const { type, message, currentUrl, viewport, ...errorContext } = parseData(
       rawFormData,
-      feedbackSchema
+      feedbackSchema,
     );
 
     const [user, { currentOrganization }] = await Promise.all([

@@ -43,7 +43,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
         link: z.string(),
         linkText: z.string(),
         published: z.coerce.boolean(),
-      })
+      }),
     );
 
     await db.announcement

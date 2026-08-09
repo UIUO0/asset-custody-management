@@ -5,7 +5,9 @@ import {
   hasOrgWideNonOwnerRole,
   hasWorkspaceAdminRole,
   rolesAreScopedToOwnRecords,
+  resolveDepartmentDeskId,
   ROLES_WITH_ORG_WIDE_VISIBILITY,
+  visibleCustodianIds,
 } from "./role-scope";
 
 /**
@@ -163,5 +165,179 @@ describe("Role2PermissionMap coverage for EPDA roles", () => {
     for (const role of epdaRoles) {
       expect(Role2PermissionMap[role]?.teamMember).toEqual(["read"]);
     }
+  });
+});
+
+/**
+ * `DEPARTMENT` (إدارة المرافق) is a third scope: narrower than the workspace,
+ * wider than one person. These tests pin both halves of that — it must not see
+ * everything, and it must not be reduced to seeing only its own staff member's
+ * personal custody, which would show a department desk nothing at all.
+ */
+describe("DEPARTMENT scope", () => {
+  const DEPT = "tm-facilities";
+  const OWN = "tm-me";
+
+  it("does not grant organization-wide visibility", () => {
+    // The desk receives stock; it does not supervise the register.
+    expect(rolesAreScopedToOwnRecords(OrganizationRoles.DEPARTMENT)).toBe(true);
+    expect(ROLES_WITH_ORG_WIDE_VISIBILITY).not.toContain(
+      OrganizationRoles.DEPARTMENT,
+    );
+  });
+
+  it("is not a workspace administrator", () => {
+    expect(hasWorkspaceAdminRole(OrganizationRoles.DEPARTMENT)).toBe(false);
+  });
+
+  it("sees its department's custody alongside its own", () => {
+    const ids = visibleCustodianIds({
+      roles: [OrganizationRoles.DEPARTMENT],
+      ownTeamMemberId: OWN,
+      departmentTeamMemberId: DEPT,
+    });
+
+    expect(ids).toEqual(expect.arrayContaining([OWN, DEPT]));
+    expect(ids).toHaveLength(2);
+  });
+
+  it("does not leak a department to an employee who merely belongs to one", () => {
+    // why: the pointer records where someone works, the role is what grants the
+    // desk's view. Reading the pointer alone would hand every employee of a
+    // department the whole department's stock.
+    const ids = visibleCustodianIds({
+      roles: [OrganizationRoles.BASE],
+      ownTeamMemberId: OWN,
+      departmentTeamMemberId: DEPT,
+    });
+
+    expect(ids).toEqual([OWN]);
+  });
+
+  it("returns null — meaning do not filter — for organization-wide roles", () => {
+    expect(
+      visibleCustodianIds({
+        roles: [OrganizationRoles.WAREHOUSE],
+        ownTeamMemberId: OWN,
+        departmentTeamMemberId: DEPT,
+      }),
+    ).toBeNull();
+  });
+
+  it("returns an empty list, never null, for a scoped user with no rows", () => {
+    // why: `null` means "no filter" downstream. A scoped user who resolves to
+    // nothing must produce `[]` (show nothing), not `null` (show everything) —
+    // the difference between an empty page and a full data leak.
+    expect(
+      visibleCustodianIds({
+        roles: [OrganizationRoles.BASE],
+        ownTeamMemberId: null,
+      }),
+    ).toEqual([]);
+  });
+
+  it("can hand over but cannot create, approve or delete assets", () => {
+    const dept = Role2PermissionMap.DEPARTMENT?.asset;
+    expect(dept).toContain("custody");
+    expect(dept).toContain("read");
+    expect(dept).not.toContain("create");
+    expect(dept).not.toContain("approve");
+    expect(dept).not.toContain("delete");
+    expect(dept).not.toContain("import");
+  });
+
+  it("cannot author goods receipts", () => {
+    // Stock enters through /receipts, and the desk signs for it rather than
+    // writing it — otherwise a department could author what it was handed.
+    expect(Role2PermissionMap.DEPARTMENT?.goodsReceipt).toEqual([]);
+  });
+});
+
+/**
+ * `admin@epda.local` is BOTH the workspace owner and the officer who receives
+ * for إدارة تقنية المعلومات — the authority runs IT on the admin account.
+ *
+ * That combination broke the first implementation: the desk was derived from
+ * visibility, and an owner is never "filtered", so the answer came back "no
+ * desk" for exactly the account that speaks for it. These pin that the desk is
+ * a function of role + pointer, nothing else.
+ */
+describe("resolveDepartmentDeskId", () => {
+  const IT_DESK = "tm-it";
+
+  it("gives an owner who also holds DEPARTMENT their desk", () => {
+    expect(
+      resolveDepartmentDeskId({
+        roles: [OrganizationRoles.OWNER, OrganizationRoles.DEPARTMENT],
+        departmentTeamMemberId: IT_DESK,
+      }),
+    ).toBe(IT_DESK);
+  });
+
+  it("gives an owner WITHOUT the department role nothing", () => {
+    // why: the pointer alone must never confer the desk — that is what stops a
+    // stray membership row handing someone a department's stock.
+    expect(
+      resolveDepartmentDeskId({
+        roles: [OrganizationRoles.OWNER],
+        departmentTeamMemberId: IT_DESK,
+      }),
+    ).toBeNull();
+  });
+
+  it("gives a department holder with no pointer nothing", () => {
+    expect(
+      resolveDepartmentDeskId({
+        roles: [OrganizationRoles.DEPARTMENT],
+        departmentTeamMemberId: null,
+      }),
+    ).toBeNull();
+  });
+
+  it("still returns null — do not filter — from visibleCustodianIds for that owner", () => {
+    // The two questions stay separate: the owner sees everything (`null`), and
+    // separately speaks for a desk. Neither answer may be derived from the other.
+    expect(
+      visibleCustodianIds({
+        roles: [OrganizationRoles.OWNER, OrganizationRoles.DEPARTMENT],
+        ownTeamMemberId: "tm-me",
+        departmentTeamMemberId: IT_DESK,
+      }),
+    ).toBeNull();
+  });
+});
+
+/**
+ * `requirePermission` collapses a membership to `roles[0]`.
+ *
+ * That is fine for permission checks — the widest role wins anyway — but it is
+ * lossy, and any caller that needs "does this person hold DEPARTMENT?" must
+ * read the full array from the membership instead. Passing the collapsed value
+ * is what hid IT's stock from `admin@epda.local`, whose roles are stored as
+ * `[OWNER, DEPARTMENT]`: `roles[0]` is `OWNER`, and the desk resolved to null.
+ */
+describe("resolveDepartmentDeskId — multi-role memberships", () => {
+  const IT_DESK = "tm-it";
+
+  it("finds the desk regardless of where DEPARTMENT sits in the array", () => {
+    for (const roles of [
+      [OrganizationRoles.OWNER, OrganizationRoles.DEPARTMENT],
+      [OrganizationRoles.DEPARTMENT, OrganizationRoles.OWNER],
+    ]) {
+      expect(
+        resolveDepartmentDeskId({ roles, departmentTeamMemberId: IT_DESK }),
+      ).toBe(IT_DESK);
+    }
+  });
+
+  it("returns null when only the first role is passed", () => {
+    // why: this is the failure mode itself — a caller handing over
+    // `[requirePermission().role]` instead of the membership's full list.
+    expect(
+      resolveDepartmentDeskId({
+        roles: [OrganizationRoles.OWNER],
+        departmentTeamMemberId: IT_DESK,
+      }),
+    ).toBeNull();
   });
 });

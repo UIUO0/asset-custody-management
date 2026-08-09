@@ -24,12 +24,9 @@ import CustodiansList from "~/components/dashboard/custodians";
 import InventoryValueChart from "~/components/dashboard/inventory-value-chart";
 import NewestAssets from "~/components/dashboard/newest-assets";
 import { ErrorContent } from "~/components/errors";
-import ActiveBookings from "~/components/home/active-bookings";
 import AssetGrowthChart from "~/components/home/asset-growth-chart";
 import KpiCards from "~/components/home/kpi-cards";
 import LocationDistribution from "~/components/home/location-distribution";
-import OverdueBookings from "~/components/home/overdue-bookings";
-import UpcomingBookings from "~/components/home/upcoming-bookings";
 import UpcomingReminders from "~/components/home/upcoming-reminders";
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
@@ -37,7 +34,6 @@ import { db } from "~/database/db.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { getUpcomingRemindersForHomePage } from "~/modules/asset-reminder/service.server";
-import { getBookings } from "~/modules/booking/service.server";
 
 import styles from "~/styles/layout/skeleton-loading.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -87,14 +83,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       baselineCount,
       // 1d. Top custodians (direct custody)
       directCustodians,
-      // 1d. Bookings for custodian merge (ongoing + overdue)
-      { bookings: ongoingAndOverdueBookings },
-      // Upcoming bookings
-      { bookings: upcomingBookings },
-      // Overdue bookings
-      { bookings: overdueBookings },
-      // Active/ongoing bookings
-      { bookings: activeBookings },
       // 1e. Newest 5 assets
       newAssets,
       // Upcoming reminders
@@ -200,65 +188,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         take: 20,
       }),
 
-      // 1d. Ongoing + overdue bookings for custodian merge
-      getBookings({
-        organizationId,
-        userId,
-        page: 1,
-        perPage: 1000,
-        statuses: ["ONGOING", "OVERDUE"],
-        extraInclude: {
-          custodianTeamMember: true,
-          custodianUser: true,
-          _count: { select: { bookingAssets: true } },
-        },
-      }),
-
-      // Upcoming bookings (RESERVED, starting from now)
-      // Both bookingFrom and bookingTo are required for date filtering
-      getBookings({
-        organizationId,
-        userId,
-        page: 1,
-        perPage: 5,
-        statuses: ["RESERVED"],
-        bookingFrom: new Date(),
-        bookingTo: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-        extraInclude: {
-          custodianTeamMember: true,
-          custodianUser: true,
-          _count: { select: { bookingAssets: true } },
-        },
-      }),
-
-      // Overdue bookings
-      getBookings({
-        organizationId,
-        userId,
-        page: 1,
-        perPage: 5,
-        statuses: ["OVERDUE"],
-        extraInclude: {
-          custodianTeamMember: true,
-          custodianUser: true,
-          _count: { select: { bookingAssets: true } },
-        },
-      }),
-
-      // Active/ongoing bookings
-      getBookings({
-        organizationId,
-        userId,
-        page: 1,
-        perPage: 5,
-        statuses: ["ONGOING"],
-        extraInclude: {
-          custodianTeamMember: true,
-          custodianUser: true,
-          _count: { select: { bookingAssets: true } },
-        },
-      }),
-
       // 1e. Newest 5 assets
       db.asset
         .findMany({
@@ -354,9 +283,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       locationsCount,
       categoriesCount,
       // Widget data
-      upcomingBookings,
-      overdueBookings,
-      activeBookings,
       upcomingReminders,
       locationDistribution,
       // Existing dashboard data
@@ -368,7 +294,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       skipOnboardingChecklist: cookieResult.skipOnboardingChecklist,
       custodiansData: getCustodiansOrderedByTotalCustodies({
         directCustodians,
-        bookings: ongoingAndOverdueBookings as any,
+        // Bookings are gone; custodian ranking is now direct custody only.
+        bookings: [] as never[],
       }),
       assetsByStatus: buildAssetsByStatusChart(statusGroups),
       assetGrowthData: buildMonthlyGrowthData(monthlyRows, baselineCount),
@@ -439,11 +366,6 @@ export default function HomePage() {
 
           {/* Widget Grid — 3-column rows */}
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {/* Row 2: Bookings pipeline */}
-            <UpcomingBookings />
-            <ActiveBookings />
-            <OverdueBookings />
-
             {/* Row 3: Reminders, Status & Locations */}
             <UpcomingReminders />
             <AssetsByStatusChart />

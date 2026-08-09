@@ -81,7 +81,7 @@ export default function NewestAssets() {
           <DashboardEmptyState
             text={t("assets.empty")}
             subText={t("home.newestAssetsEmpty")}
-            ctaTo="/assets/new"
+            ctaTo="/receipts/new"
             ctaText={t("assets.createAsset")}
           />
         </div>

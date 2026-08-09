@@ -2,7 +2,6 @@ import type { ComponentType, SVGProps } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Fuse from "fuse.js";
 import {
-  CalendarIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
   CompassIcon,
@@ -49,7 +48,6 @@ export type CommandPaletteSearchResponse = DataOrErrorResponse<{
   assets: AssetSearchResult[];
   audits: AuditSearchResult[];
   kits: KitSearchResult[];
-  bookings: BookingSearchResult[];
   locations: LocationSearchResult[];
   teamMembers: TeamMemberSearchResult[];
 }>;
@@ -85,16 +83,6 @@ export type KitSearchResult = {
   description: string | null;
   status: string;
   assetCount: number;
-};
-
-export type BookingSearchResult = {
-  id: string;
-  name: string;
-  description: string | null;
-  status: string;
-  custodianName: string | null;
-  from: Date;
-  to: Date;
 };
 
 export type LocationSearchResult = {
@@ -138,7 +126,6 @@ type QuickAction = QuickCommand & {
  */
 type CommandContext = {
   canInviteUsers: boolean;
-  canCreateBookings: boolean;
   isPersonalWorkspace: boolean;
   canReadAudits: boolean;
   canReadTeam: boolean;
@@ -164,16 +151,6 @@ const NAVIGATION_COMMANDS: QuickCommand[] = [
     href: "/kits",
     keywords: ["packages", "bundles", "collections"],
     icon: PackageIcon,
-  },
-  {
-    id: "bookings",
-    label: "Bookings",
-    description: "View upcoming and past bookings",
-    href: "/bookings",
-    keywords: ["reservations", "schedule", "calendar"],
-    icon: CalendarIcon,
-    isVisible: ({ canCreateBookings, isPersonalWorkspace }) =>
-      canCreateBookings && !isPersonalWorkspace,
   },
   {
     id: "audits",
@@ -219,7 +196,7 @@ const ACTION_COMMANDS: QuickAction[] = [
     id: "create-asset",
     label: "Create asset",
     description: "Add a new asset to your inventory",
-    href: "/assets/new",
+    href: "/receipts/new",
     keywords: ["new", "asset", "inventory"],
     icon: FilePlus2Icon,
     isVisible: ({ canCreateAssets }) => canCreateAssets,
@@ -232,15 +209,6 @@ const ACTION_COMMANDS: QuickAction[] = [
     keywords: ["new", "kit", "inventory", "collection"],
     icon: PackageIcon,
     isVisible: ({ canCreateKits }) => canCreateKits,
-  },
-  {
-    id: "create-booking",
-    label: "Create booking",
-    description: "Reserve assets for a new booking",
-    href: "/bookings/new",
-    keywords: ["book", "reservation", "calendar"],
-    icon: CalendarIcon,
-    isVisible: ({ canCreateBookings }) => canCreateBookings,
   },
   {
     id: "invite-user",
@@ -412,17 +380,6 @@ export function getAuditCommandValue(audit: AuditSearchResult) {
   return [`audit-${audit.id}`, ...searchableFields].join(" ").trim();
 }
 
-export function getBookingCommandValue(booking: BookingSearchResult) {
-  const searchableFields = [
-    booking.name,
-    booking.description ?? "",
-    booking.custodianName ?? "",
-    booking.id,
-  ].filter(Boolean);
-
-  return [`booking-${booking.id}`, ...searchableFields].join(" ").trim();
-}
-
 export function getLocationCommandValue(location: LocationSearchResult) {
   const searchableFields = [
     location.name,
@@ -517,7 +474,6 @@ export function CommandPalette() {
     enabled: open && Boolean(debouncedQuery),
   });
 
-  const canCreateBookings = layoutData?.canUseBookings ?? false;
   const isPersonalWorkspace = isPersonalOrg(layoutData?.currentOrganization);
   const { roles } = useUserRoleHelper();
 
@@ -530,7 +486,6 @@ export function CommandPalette() {
       // role list that would have handed invite rights to any new role that
       // slipped past the old `!isBaseOrSelfService` checks elsewhere.
       canInviteUsers: can(PermissionEntity.teamMember, PermissionAction.create),
-      canCreateBookings,
       isPersonalWorkspace,
       canReadAudits: can(PermissionEntity.audit, PermissionAction.read),
       canReadTeam: can(PermissionEntity.teamMember, PermissionAction.read),
@@ -543,7 +498,7 @@ export function CommandPalette() {
       canCreateAssets: can(PermissionEntity.asset, PermissionAction.create),
       canCreateKits: can(PermissionEntity.kit, PermissionAction.create),
     };
-  }, [roles, canCreateBookings, isPersonalWorkspace]);
+  }, [roles, isPersonalWorkspace]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -645,13 +600,6 @@ export function CommandPalette() {
     return searchData.audits || [];
   }, [searchData]);
 
-  const bookingResults = useMemo(() => {
-    if (!searchData || searchData.error) {
-      return [];
-    }
-    return searchData.bookings || [];
-  }, [searchData]);
-
   const locationResults = useMemo(() => {
     if (!searchData || searchData.error) {
       return [];
@@ -687,7 +635,7 @@ export function CommandPalette() {
         ref={inputRef}
         value={query}
         onValueChange={setQuery}
-        placeholder="Search assets, audits, kits, bookings, locations, team members..."
+        placeholder="Search assets, audits, kits, locations, team members..."
         className="my-4 rounded border-gray-100"
       />
       <CommandList className="divide-y divide-gray-100">
@@ -779,37 +727,6 @@ export function CommandPalette() {
                   <span className="truncate text-xs text-gray-500">
                     {kit.status} • {kit.assetCount} assets
                     {kit.description ? ` • ${kit.description}` : ""}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        ) : null}
-
-        {bookingResults.length > 0 ? (
-          <CommandGroup heading="Bookings">
-            {bookingResults.map((booking) => (
-              <CommandItem
-                key={booking.id}
-                value={getBookingCommandValue(booking)}
-                onSelect={() => handleSelect(`/bookings/${booking.id}`)}
-                className="gap-3"
-              >
-                <CalendarIcon className="size-4 text-gray-500" />
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate font-medium text-gray-900">
-                    {booking.name}
-                  </span>
-                  <span className="truncate text-xs text-gray-500">
-                    {booking.status}
-                    {booking.custodianName ? ` • ${booking.custodianName}` : ""}
-                    {booking.from && booking.to
-                      ? ` • ${new Date(
-                          booking.from,
-                        ).toLocaleDateString()} - ${new Date(
-                          booking.to,
-                        ).toLocaleDateString()}`
-                      : ""}
                   </span>
                 </div>
               </CommandItem>
@@ -933,7 +850,7 @@ export function CommandPalette() {
           <SearchIcon className="size-4" />
           {isPersonalOrg(layoutData?.currentOrganization)
             ? "Search across all assets, audits, kits, and locations"
-            : "Search across all assets, audits, kits, bookings, locations, and team members"}
+            : "Search across all assets, audits, kits, locations, and team members"}
         </div>
         <CommandShortcut className={tw("bg-white")}>
           {shortcutLabel}

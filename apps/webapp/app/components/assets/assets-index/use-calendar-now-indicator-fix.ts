@@ -99,7 +99,7 @@ export function useCalendarNowIndicatorFix({
       switchToTargetView,
       addTimer,
       removeTimer,
-    ]
+    ],
   );
 
   // Cleanup function

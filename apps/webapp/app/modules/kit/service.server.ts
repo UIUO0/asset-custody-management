@@ -80,7 +80,6 @@ import {
   getAssetsWhereInput,
   getKitLocationUpdateNoteContent,
 } from "../asset/utils.server";
-import { createSystemBookingNote } from "../booking-note/service.server";
 import { lockAssetForQuantityUpdate } from "../consumption-log/quantity-lock.server";
 import { getPrimaryCustody, hasCustody } from "../custody/utils";
 import { createSystemLocationNote } from "../location-note/service.server";
@@ -160,7 +159,7 @@ type KitCustodyInheritTxClient = {
  * be converted to standalone (via the DB-level `SET NULL` cascade) when
  * the given `AssetKit` rows are deleted. Call this BEFORE the
  * `tx.assetKit.deleteMany(...)` inside the same transaction; pair the
- * returned array with {@link emitAssetKitDetachmentNotes} after the
+ * returned array after the
  * delete completes to log a per-booking system note.
  *
  * Scope filter: only DRAFT / RESERVED / ONGOING / OVERDUE bookings get
@@ -176,7 +175,7 @@ type KitCustodyInheritTxClient = {
 export async function fetchAssetKitDetachmentImpact(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,
-  assetKitIds: string[]
+  assetKitIds: string[],
 ): Promise<
   Array<{
     bookingAssetId: string;
@@ -220,8 +219,8 @@ export async function fetchAssetKitDetachmentImpact(
     { id: string; kitId: string; kit: { name: string } }
   >(
     assetKitRows.map(
-      (ak: { id: string; kitId: string; kit: { name: string } }) => [ak.id, ak]
-    )
+      (ak: { id: string; kitId: string; kit: { name: string } }) => [ak.id, ak],
+    ),
   );
   return rows.map(
     (r: {
@@ -241,7 +240,7 @@ export async function fetchAssetKitDetachmentImpact(
         kitId: ak?.kitId ?? "",
         kitName: ak?.kit?.name ?? "",
       };
-    }
+    },
   );
 }
 
@@ -285,7 +284,7 @@ export async function fetchAssetKitDetachmentImpact(
 export async function mergeStandaloneCollisionsForKitDetachment(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,
-  assetKitIds: string[]
+  assetKitIds: string[],
 ): Promise<void> {
   if (assetKitIds.length === 0) return;
   const kitDrivenRows: Array<{
@@ -317,7 +316,7 @@ export async function mergeStandaloneCollisionsForKitDetachment(
   if (standaloneMatches.length === 0) return;
 
   const standaloneByPair = new Map<string, (typeof standaloneMatches)[number]>(
-    standaloneMatches.map((s) => [`${s.bookingId}::${s.assetId}`, s])
+    standaloneMatches.map((s) => [`${s.bookingId}::${s.assetId}`, s]),
   );
 
   for (const kdr of kitDrivenRows) {
@@ -328,67 +327,6 @@ export async function mergeStandaloneCollisionsForKitDetachment(
       data: { quantity: standalone.quantity + kdr.quantity },
     });
     await tx.bookingAsset.delete({ where: { id: kdr.id } });
-  }
-}
-
-export async function emitAssetKitDetachmentNotes({
-  impact,
-  actorUserId,
-  actorFirstName,
-  actorLastName,
-  organizationId,
-}: {
-  impact: Awaited<ReturnType<typeof fetchAssetKitDetachmentImpact>>;
-  actorUserId: string;
-  actorFirstName: string | null;
-  actorLastName: string | null;
-  organizationId: string;
-}) {
-  if (impact.length === 0) return;
-  const actorLink = wrapUserLinkForNote({
-    id: actorUserId,
-    firstName: actorFirstName,
-    lastName: actorLastName,
-  });
-  // One note per (booking, kit) pair. Multiple assets removed from the
-  // same kit in the same delete are collapsed to a single note per
-  // booking so we don't spam the booking activity feed.
-  type Group = {
-    bookingId: string;
-    kitName: string;
-    assetTitles: string[];
-  };
-  const groups = new Map<string, Group>();
-  for (const row of impact) {
-    const key = `${row.bookingId}::${row.kitId}`;
-    const existing = groups.get(key);
-    if (existing) {
-      existing.assetTitles.push(row.assetTitle);
-    } else {
-      groups.set(key, {
-        bookingId: row.bookingId,
-        kitName: row.kitName,
-        assetTitles: [row.assetTitle],
-      });
-    }
-  }
-  for (const group of groups.values()) {
-    const subjects =
-      group.assetTitles.length === 1
-        ? `**${group.assetTitles[0]}**`
-        : `**${group.assetTitles.length} assets** (${group.assetTitles
-            .map((t) => `*${t}*`)
-            .join(", ")})`;
-    // `createSystemBookingNote` doesn't accept a tx (matches the other
-    // booking-note call sites). The note creates outside the kit-delete
-    // tx; in the unlikely event the tx rolls back, the note is
-    // orphaned. Acceptable per the existing pattern in
-    // `apps/webapp/app/modules/booking/service.server.ts`.
-    await createSystemBookingNote({
-      bookingId: group.bookingId,
-      organizationId,
-      content: `${actorLink} removed ${subjects} from kit **${group.kitName}**. The kit's booked slice has been converted to a standalone reservation in this booking.`,
-    });
   }
 }
 
@@ -459,7 +397,7 @@ export async function buildKitCustodyInheritData({
 
     const preExistingCustody = asset.custody.reduce(
       (sum, row) => sum + (row.quantity ?? 0),
-      0
+      0,
     );
     const availableCeiling = (asset.quantity ?? 0) - preExistingCustody;
     const quantity = Math.max(0, Math.min(kitSlice, availableCeiling));
@@ -556,7 +494,7 @@ export async function createKit({
     /** If barcodes are passed, create them */
     if (barcodes && barcodes.length > 0) {
       const barcodesToAdd = barcodes.filter(
-        (barcode) => !!barcode.value && !!barcode.type
+        (barcode) => !!barcode.value && !!barcode.type,
       );
 
       Object.assign(data, {
@@ -594,7 +532,7 @@ export async function createKit({
           entityId: created.id,
           kitId: created.id,
         },
-        tx
+        tx,
       );
 
       return created;
@@ -615,7 +553,7 @@ export async function createKit({
         barcodes.length > 0
       ) {
         const barcodesToAdd = barcodes.filter(
-          (barcode) => !!barcode.value && !!barcode.type
+          (barcode) => !!barcode.value && !!barcode.type,
         );
         if (barcodesToAdd.length > 0) {
           // Use existing validation function for detailed error messages
@@ -800,7 +738,7 @@ export async function refreshExpiredKitImages<
 >(kits: T[]): Promise<T[]> {
   const now = new Date();
   const expiredKits = kits.filter(
-    (k) => k.image && k.imageExpiration && new Date(k.imageExpiration) < now
+    (k) => k.image && k.imageExpiration && new Date(k.imageExpiration) < now,
   );
 
   if (expiredKits.length === 0) return kits;
@@ -831,7 +769,7 @@ export async function refreshExpiredKitImages<
       // Kit deleted, or file removed from storage between query and update —
       // expected, not a bug. Log and skip; the row keeps its stale URL.
       Logger.info(
-        `Failed to refresh image for kit ${kit.id}, proceeding with stale URL`
+        `Failed to refresh image for kit ${kit.id}, proceeding with stale URL`,
       );
       return null;
     }
@@ -875,7 +813,7 @@ export async function getPaginatedAndFilterableKits<
   // signal that the caller wants the asset list available for the
   // hide-empty filter below.
   function hasAssetsIncluded(
-    extraInclude?: Prisma.KitInclude
+    extraInclude?: Prisma.KitInclude,
   ): extraInclude is Prisma.KitInclude & { assetKits: boolean } {
     return !!extraInclude?.assetKits;
   }
@@ -1119,7 +1057,7 @@ export async function getKit<const T extends Prisma.KitInclude | undefined>({
 }) {
   try {
     const otherOrganizationIds = userOrganizations?.map(
-      (org) => org.organizationId
+      (org) => org.organizationId,
     );
 
     // Merge static includes with dynamic includes
@@ -1158,7 +1096,7 @@ export async function getKit<const T extends Prisma.KitInclude | undefined>({
         additionalData: {
           model: "kit",
           organization: userOrganizations.find(
-            (org) => org.organizationId === kit.organizationId
+            (org) => org.organizationId === kit.organizationId,
           ),
           redirectTo,
         },
@@ -1395,13 +1333,13 @@ async function performKitDeletion({
         // Map each row's source kit so events carry the correct
         // `kitId` + `targetUserId`.
         const kitByKitCustodyId = new Map(
-          inCustodyKits.map((k) => [k.custody!.id, k])
+          inCustodyKits.map((k) => [k.custody!.id, k]),
         );
 
         // Asset shape (type / unitOfMeasure) for the qty-tracked unit count.
         // The Custody rows only carry `assetId`, so look the asset up here.
         const assetById = new Map(
-          kits.flatMap((k) => k.assets).map((a) => [a.id, a])
+          kits.flatMap((k) => k.assets).map((a) => [a.id, a]),
         );
 
         // Record the released quantity per asset so the post-tx note can
@@ -1432,7 +1370,7 @@ async function performKitDeletion({
               },
             };
           }),
-          tx
+          tx,
         );
       }
     }
@@ -1477,7 +1415,7 @@ async function performKitDeletion({
             meta: asset ? { ...assetQtyMeta(asset, asset.kitQuantity) } : {},
           };
         }),
-        tx
+        tx,
       );
     }
 
@@ -1491,10 +1429,10 @@ async function performKitDeletion({
         select: { assetId: true },
       });
       const stillCustodiedAssetIds = new Set(
-        assetsWithRemainingCustody.map((c) => c.assetId)
+        assetsWithRemainingCustody.map((c) => c.assetId),
       );
       const assetsToFlipAvailable = allAssetIds.filter(
-        (assetId) => !stillCustodiedAssetIds.has(assetId)
+        (assetId) => !stillCustodiedAssetIds.has(assetId),
       );
       if (assetsToFlipAvailable.length > 0) {
         await tx.asset.updateMany({
@@ -1520,7 +1458,7 @@ async function performKitDeletion({
         return k.assets.map((asset) => {
           const count = formatUnitCount(
             asset,
-            releasedQtyByAssetId.get(asset.id)
+            releasedQtyByAssetId.get(asset.id),
           );
           const custodyPhrase = count ? `custody of ${count}` : "custody";
           return {
@@ -1538,7 +1476,7 @@ async function performKitDeletion({
 
   const kitWithImages = kits.filter((k) => !!k.image);
   await Promise.all(
-    kitWithImages.map((k) => deleteKitImage({ url: k.image! }))
+    kitWithImages.map((k) => deleteKitImage({ url: k.image! })),
   );
 }
 
@@ -1669,7 +1607,7 @@ export async function deleteKitImage({
         message: "Failed to delete kit image",
         additionalData: { url, bucketName },
         label,
-      })
+      }),
     );
   }
 }
@@ -1804,7 +1742,7 @@ export async function releaseCustody({
               },
             };
           }),
-          tx
+          tx,
         );
       }
 
@@ -1827,10 +1765,10 @@ export async function releaseCustody({
         select: { assetId: true },
       });
       const stillCustodiedAssetIds = new Set(
-        assetsWithRemainingCustody.map((c) => c.assetId)
+        assetsWithRemainingCustody.map((c) => c.assetId),
       );
       const assetsToFlipAvailable = assetIds.filter(
-        (id) => !stillCustodiedAssetIds.has(id)
+        (id) => !stillCustodiedAssetIds.has(id),
       );
       if (assetsToFlipAvailable.length > 0) {
         await tx.asset.updateMany({
@@ -1873,7 +1811,7 @@ export async function releaseCustody({
 }
 
 export async function updateKitsWithBookingCustodians<T extends Kit>(
-  kits: T[]
+  kits: T[],
 ): Promise<T[]> {
   try {
     /** When kits are checked out, we have to display the custodian from that booking */
@@ -1964,7 +1902,7 @@ export async function updateKitsWithBookingCustodians<T extends Kit>(
             message: "Could not find custodian for kit",
             additionalData: { kit },
             label,
-          })
+          }),
         );
       }
     }
@@ -2017,7 +1955,7 @@ export function getKitCurrentBooking(kit: {
       bookingAssets: a.bookingAssets.filter(
         (ba) =>
           ba.booking.status === BookingStatus.ONGOING ||
-          ba.booking.status === BookingStatus.OVERDUE
+          ba.booking.status === BookingStatus.OVERDUE,
       ),
     }))
     // Only consider assets that are actually checked out
@@ -2227,7 +2165,7 @@ export async function bulkAssignKitCustody({
       (kit.assetKits ?? []).map((ak) => ({
         ...ak.asset,
         kit: { id: kit.id, name: kit.name },
-      }))
+      })),
     );
 
     // INDIVIDUAL assets block the assign; QUANTITY_TRACKED don't.
@@ -2238,7 +2176,7 @@ export async function bulkAssignKitCustody({
     // block here.
     const someAssetsUnavailable = allAssetsOfAllKits.some(
       (asset) =>
-        asset.type !== "QUANTITY_TRACKED" && asset.status !== "AVAILABLE"
+        asset.type !== "QUANTITY_TRACKED" && asset.status !== "AVAILABLE",
     );
     if (someAssetsUnavailable) {
       throw new ShelfError({
@@ -2262,7 +2200,7 @@ export async function bulkAssignKitCustody({
       // attacker could assign a foreign-org team member as kit/asset custodian.
       await assertTeamMemberBelongsToOrg(
         { teamMemberId: custodianId, organizationId },
-        tx
+        tx,
       );
 
       /** Creating custodies over kits */
@@ -2291,7 +2229,7 @@ export async function bulkAssignKitCustody({
         select: { id: true, kitId: true },
       });
       const kitCustodyByKitId = new Map(
-        kitCustodyRows.map((kc) => [kc.kitId, kc.id])
+        kitCustodyRows.map((kc) => [kc.kitId, kc.id]),
       );
 
       /** If a kit is going to be in custody, then all it's assets should also inherit the same status */
@@ -2308,7 +2246,7 @@ export async function bulkAssignKitCustody({
             teamMemberId: custodianId,
             assetIds: (kit.assetKits ?? []).map((ak) => ak.asset.id),
           });
-        })
+        }),
       );
       const inheritData = inheritDataPerKit.flat();
       if (inheritData.length > 0) {
@@ -2322,7 +2260,7 @@ export async function bulkAssignKitCustody({
         inheritData.map((row) => [
           `${row.kitCustodyId}:${row.assetId}`,
           row.quantity ?? 0,
-        ])
+        ]),
       );
       const inheritedQtyFor = (asset: { id: string; kit?: { id: string } }) => {
         const kitCustodyId = asset.kit
@@ -2386,7 +2324,7 @@ export async function bulkAssignKitCustody({
             ...assetQtyMeta(asset, inheritedQtyFor(asset)),
           },
         })),
-        tx
+        tx,
       );
     });
   } catch (cause) {
@@ -2533,14 +2471,14 @@ export async function bulkReleaseKitCustody({
       // event). This is one tiny lookup map; we already have everything in
       // memory.
       const kitIdByKitCustodyId = new Map(
-        kitCustodyRows.map((kc) => [kc.id, kc.kitId])
+        kitCustodyRows.map((kc) => [kc.id, kc.kitId]),
       );
 
       // Asset shape (type / unitOfMeasure) and released-quantity per asset,
       // keyed by id, for the qty-tracked unit count in the event + note.
       const assetById = new Map(allAssetsOfAllKits.map((a) => [a.id, a]));
       const releasedQtyByAssetId = new Map(
-        releasedCustodyRows.map((row) => [row.assetId, row.quantity])
+        releasedCustodyRows.map((row) => [row.assetId, row.quantity]),
       );
 
       // Activity events emitted FIRST so they roll back atomically with the
@@ -2568,7 +2506,7 @@ export async function bulkReleaseKitCustody({
               },
             };
           }),
-          tx
+          tx,
         );
       }
 
@@ -2602,7 +2540,7 @@ export async function bulkReleaseKitCustody({
       });
       const stillCustodiedIds = new Set(stillCustodied.map((c) => c.assetId));
       const assetsToFlipAvailable = allAssetIds.filter(
-        (id) => !stillCustodiedIds.has(id)
+        (id) => !stillCustodiedIds.has(id),
       );
       if (assetsToFlipAvailable.length > 0) {
         await tx.asset.updateMany({
@@ -2630,7 +2568,7 @@ export async function bulkReleaseKitCustody({
           // units"); INDIVIDUAL phrasing is unchanged.
           const count = formatUnitCount(
             asset,
-            releasedQtyByAssetId.get(asset.id)
+            releasedQtyByAssetId.get(asset.id),
           );
           const custodyPhrase = count ? `custody of ${count}` : "custody";
           return {
@@ -2673,8 +2611,8 @@ export async function createKitsIfNotExists({
       new Set(
         data
           .map((asset) => asset.kit?.trim())
-          .filter((kit): kit is string => !!kit)
-      )
+          .filter((kit): kit is string => !!kit),
+      ),
     );
 
     // Handle the case where there are no kits
@@ -2888,7 +2826,7 @@ export async function relinkKitQrCode({
  */
 export async function getAvailableKitAssetForBooking(
   kitIds: Kit["id"][],
-  organizationId: string
+  organizationId: string,
 ): Promise<string[]> {
   try {
     const selectedKits = await db.kit.findMany({
@@ -2903,7 +2841,7 @@ export async function getAvailableKitAssetForBooking(
     });
 
     const allAssets = selectedKits.flatMap((kit) =>
-      (kit.assetKits ?? []).map((ak) => ak.asset)
+      (kit.assetKits ?? []).map((ak) => ak.asset),
     );
 
     return allAssets.map((asset) => asset.id);
@@ -2990,7 +2928,7 @@ export async function updateKitLocation({
     if (newLocationId) {
       // Only emit events for assets whose location actually changes.
       const assetsWithLocationChange = kit.assets.filter(
-        (asset) => (getPrimaryLocation(asset)?.id ?? null) !== newLocationId
+        (asset) => (getPrimaryLocation(asset)?.id ?? null) !== newLocationId,
       );
 
       // Lifted out of the tx so the post-tx note loop can also use it
@@ -3007,7 +2945,7 @@ export async function updateKitLocation({
         // caller's org before connecting kit/assets to it (cross-org IDOR).
         await assertLocationBelongsToOrg(
           { locationId: newLocationId, organizationId },
-          tx
+          tx,
         );
         await tx.location.update({
           // eslint-disable-next-line local-rules/require-org-scope-on-id-queries -- idor-safe: newLocationId proven org-owned by assertLocationBelongsToOrg above (same tx)
@@ -3050,7 +2988,7 @@ export async function updateKitLocation({
                 },
                 select: { assetId: true },
               })
-            ).map((r) => r.assetId)
+            ).map((r) => r.assetId),
           );
           const dataToCreate = assetKitsForKit
             .filter((ak) => !manualAssetIds.has(ak.assetId))
@@ -3074,7 +3012,7 @@ export async function updateKitLocation({
         // row) don't actually move with the kit — exclude them from the
         // activity event so the audit trail matches the persisted state.
         const cascadedAssetsForEvents = assetsWithLocationChange.filter(
-          (asset) => cascadedAssetIds.has(asset.id)
+          (asset) => cascadedAssetIds.has(asset.id),
         );
 
         if (userId && cascadedAssetsForEvents.length > 0) {
@@ -3095,7 +3033,7 @@ export async function updateKitLocation({
               // `AssetKit.quantity` cascaded into the kit-driven location row.
               meta: { viaKit: true, ...assetQtyMeta(asset, asset.kitQuantity) },
             })),
-            tx
+            tx,
           );
         }
       });
@@ -3105,7 +3043,7 @@ export async function updateKitLocation({
       // row) don't actually move with the kit — exclude them from the
       // per-asset note so the audit trail matches the persisted state.
       const cascadedAssetsForNotes = kit.assets.filter((asset) =>
-        cascadedAssetIds.has(asset.id)
+        cascadedAssetIds.has(asset.id),
       );
       if (userId && cascadedAssetsForNotes.length > 0) {
         const user = await getUserByID(userId, {
@@ -3145,14 +3083,14 @@ export async function updateKitLocation({
               // organizationId) — pass the kit's org so the note is
               // validated against the asset's true org
               organizationId,
-            })
-          )
+            }),
+          ),
         );
       }
     } else if (!newLocationId && currentLocationId) {
       // Only emit events for assets that actually had this kit's location.
       const assetsWithLocationChange = kit.assets.filter(
-        (asset) => getPrimaryLocation(asset)?.id === currentLocationId
+        (asset) => getPrimaryLocation(asset)?.id === currentLocationId,
       );
 
       // Disconnect kit from the old location AND drop per-asset placement
@@ -3163,7 +3101,7 @@ export async function updateKitLocation({
         // the caller's org before disconnecting kit/assets (cross-org IDOR).
         await assertLocationBelongsToOrg(
           { locationId: currentLocationId, organizationId },
-          tx
+          tx,
         );
         await tx.location.update({
           // eslint-disable-next-line local-rules/require-org-scope-on-id-queries -- idor-safe: currentLocationId proven org-owned by assertLocationBelongsToOrg above (same tx)
@@ -3201,7 +3139,7 @@ export async function updateKitLocation({
               // `AssetKit.quantity` removed with the kit-driven location row.
               meta: { viaKit: true, ...assetQtyMeta(asset, asset.kitQuantity) },
             })),
-            tx
+            tx,
           );
         }
       });
@@ -3248,8 +3186,8 @@ export async function updateKitLocation({
               // organizationId) — pass the kit's org so the note is
               // validated against the asset's true org
               organizationId,
-            })
-          )
+            }),
+          ),
         );
       }
     }
@@ -3347,7 +3285,7 @@ export async function bulkUpdateKitLocation({
     ) {
       // Only emit events for assets whose location actually changes.
       const assetsWithLocationChange = allAssets.filter(
-        (asset) => (getPrimaryLocation(asset)?.id ?? null) !== newLocationId
+        (asset) => (getPrimaryLocation(asset)?.id ?? null) !== newLocationId,
       );
 
       // Lifted out of the tx so the post-tx per-asset note loop can also use it
@@ -3364,7 +3302,7 @@ export async function bulkUpdateKitLocation({
         // caller's org before connecting kits/assets to it (cross-org IDOR).
         await assertLocationBelongsToOrg(
           { locationId: newLocationId, organizationId },
-          tx
+          tx,
         );
         await tx.location.update({
           // eslint-disable-next-line local-rules/require-org-scope-on-id-queries -- idor-safe: newLocationId proven org-owned by assertLocationBelongsToOrg above (same tx)
@@ -3406,7 +3344,7 @@ export async function bulkUpdateKitLocation({
                 },
                 select: { assetId: true },
               })
-            ).map((r) => r.assetId)
+            ).map((r) => r.assetId),
           );
           const dataToCreate = assetKitsForKits
             .filter((ak) => !manualAssetIds.has(ak.assetId))
@@ -3430,7 +3368,7 @@ export async function bulkUpdateKitLocation({
         // row) don't actually move with the kit — exclude them from the
         // activity event so the audit trail matches the persisted state.
         const cascadedAssetsForEvents = assetsWithLocationChange.filter(
-          (asset) => cascadedAssetIds.has(asset.id)
+          (asset) => cascadedAssetIds.has(asset.id),
         );
 
         if (cascadedAssetsForEvents.length > 0) {
@@ -3451,7 +3389,7 @@ export async function bulkUpdateKitLocation({
               // `AssetKit.quantity` cascaded into the kit-driven location row.
               meta: { viaKit: true, ...assetQtyMeta(asset, asset.kitQuantity) },
             })),
-            tx
+            tx,
           );
         }
       });
@@ -3463,7 +3401,7 @@ export async function bulkUpdateKitLocation({
       // (Kit-level system notes below are emitted per-kit and remain
       // unfiltered — they describe the kit-level movement, not asset rows.)
       const cascadedAssetsForNotes = allAssets.filter((asset) =>
-        cascadedAssetIds.has(asset.id)
+        cascadedAssetIds.has(asset.id),
       );
       if (cascadedAssetsForNotes.length > 0) {
         const user = await getUserByID(userId, {
@@ -3502,14 +3440,14 @@ export async function bulkUpdateKitLocation({
               // organizationId — pass the org so the note is validated
               // against the asset's true org
               organizationId,
-            })
-          )
+            }),
+          ),
         );
       }
     } else {
       // Only assets that currently have a location actually change.
       const assetsWithLocationChange = allAssets.filter(
-        (asset) => getPrimaryLocation(asset)?.id
+        (asset) => getPrimaryLocation(asset)?.id,
       );
 
       // Removing location - clear the kit FK and the per-asset pivot rows,
@@ -3546,7 +3484,7 @@ export async function bulkUpdateKitLocation({
               // `AssetKit.quantity` removed with the kit-driven location row.
               meta: { viaKit: true, ...assetQtyMeta(asset, asset.kitQuantity) },
             })),
-            tx
+            tx,
           );
         }
       });
@@ -3585,8 +3523,8 @@ export async function bulkUpdateKitLocation({
               // organizationId — pass the org so the note is validated
               // against the asset's true org
               organizationId,
-            })
-          )
+            }),
+          ),
         );
       }
     }
@@ -3615,12 +3553,12 @@ export async function bulkUpdateKitLocation({
       if (location) {
         const locLink = wrapLinkForNote(
           `/locations/${location.id}`,
-          location.name
+          location.name,
         );
 
         // Only count kits not already at the target location
         const actuallyMovedKits = kitsWithAssets.filter(
-          (k) => k.locationId !== newLocationId
+          (k) => k.locationId !== newLocationId,
         );
 
         if (actuallyMovedKits.length > 0) {
@@ -3829,7 +3767,7 @@ export async function updateKitAssets({
       : undefined;
 
     const removedAssets = kit.assets.filter(
-      (asset) => !assetIds.includes(asset.id)
+      (asset) => !assetIds.includes(asset.id),
     );
 
     /**
@@ -3917,7 +3855,7 @@ export async function updateKitAssets({
     // Identify which assets are actually new (not already in this kit)
     const newlyAddedAssets = allAssetsForKit.filter(
       (asset) =>
-        !kit.assets.some((existingAsset) => existingAsset.id === asset.id)
+        !kit.assets.some((existingAsset) => existingAsset.id === asset.id),
     );
 
     /**
@@ -3986,7 +3924,7 @@ export async function updateKitAssets({
             newQuantity: newQty,
           },
         ];
-      }
+      },
     );
 
     /**
@@ -4033,12 +3971,12 @@ export async function updateKitAssets({
         .reduce((sum, c) => sum + (c.quantity ?? 0), 0);
       const ongoingBookings = (asset.bookingAssets ?? []).reduce(
         (sum, ba) => sum + (ba.quantity ?? 0),
-        0
+        0,
       );
 
       const spaceWithoutMe = Math.max(
         0,
-        totalQty - otherKitsQty - operatorOnlyCustody - ongoingBookings
+        totalQty - otherKitsQty - operatorOnlyCustody - ongoingBookings,
       );
       const max = Math.max(currentInThisKit, spaceWithoutMe);
 
@@ -4084,7 +4022,7 @@ export async function updateKitAssets({
       (asset) =>
         asset.type !== AssetType.QUANTITY_TRACKED &&
         hasCustody(asset.custody) &&
-        asset.assetKits[0]?.kitId !== kit.id
+        asset.assetKits[0]?.kitId !== kit.id,
     );
     if (isSomeAssetInCustody) {
       throw new ShelfError({
@@ -4108,7 +4046,7 @@ export async function updateKitAssets({
     // Collect AssetKit ids being deleted across both disconnect branches
     // so we can pre-fetch the kit-driven BookingAsset rows that will be
     // SET-NULL'd before the delete fires. The corresponding
-    // `emitAssetKitDetachmentNotes` call runs at the end of the tx body
+    // the detachment bookkeeping runs at the end of the tx body
     // so bookings get a system note explaining the
     // conversion-to-standalone for their kit-driven slices.
     let detachmentImpact: Awaited<
@@ -4128,7 +4066,7 @@ export async function updateKitAssets({
         });
         const aksToDeleteIds = aksToDelete.map((ak: { id: string }) => ak.id);
         detachmentImpact = detachmentImpact.concat(
-          await fetchAssetKitDetachmentImpact(tx, aksToDeleteIds)
+          await fetchAssetKitDetachmentImpact(tx, aksToDeleteIds),
         );
         await mergeStandaloneCollisionsForKitDetachment(tx, aksToDeleteIds);
         await tx.assetKit.deleteMany({
@@ -4153,7 +4091,7 @@ export async function updateKitAssets({
         .filter(
           (asset) =>
             asset.type === AssetType.INDIVIDUAL &&
-            (asset.assetKits?.length ?? 0) > 0
+            (asset.assetKits?.length ?? 0) > 0,
         )
         .map((asset) => asset.id);
       if (movedFromOtherKitIds.length > 0) {
@@ -4166,7 +4104,7 @@ export async function updateKitAssets({
         });
         const aksToDeleteIds = aksToDelete.map((ak: { id: string }) => ak.id);
         detachmentImpact = detachmentImpact.concat(
-          await fetchAssetKitDetachmentImpact(tx, aksToDeleteIds)
+          await fetchAssetKitDetachmentImpact(tx, aksToDeleteIds),
         );
         await mergeStandaloneCollisionsForKitDetachment(tx, aksToDeleteIds);
         await tx.assetKit.deleteMany({
@@ -4236,7 +4174,7 @@ export async function updateKitAssets({
           aksToSync.map((ak: { id: string; assetId: string }) => {
             const change = qtyChangedAssets.find((c) => c.id === ak.assetId);
             return [ak.id, change?.newQuantity ?? null] as const;
-          })
+          }),
         );
 
         // Check-in floor guard (Polish-7b): the kit's slice quantity is
@@ -4298,7 +4236,7 @@ export async function updateKitAssets({
                       `"${row.asset.title}" on booking "${row.booking.name}" (${checkedIn} already checked in)`,
                     ]
                   : [];
-              }
+              },
             );
             if (violations.length > 0) {
               throw new ShelfError({
@@ -4306,7 +4244,7 @@ export async function updateKitAssets({
                 status: 400,
                 label,
                 message: `Cannot reduce kit quantity below units already checked in: ${violations.join(
-                  "; "
+                  "; ",
                 )}. Check in fewer units or choose a higher quantity.`,
                 shouldBeCaptured: false,
               });
@@ -4331,15 +4269,6 @@ export async function updateKitAssets({
 
     // Notify each affected booking that its kit-driven BookingAsset
     // slice has been converted to standalone (via the DB-level
-    // `SET NULL` cascade that ran inside the tx above). Outside the tx
-    // so the notes only land if the cascade actually committed.
-    await emitAssetKitDetachmentNotes({
-      impact: detachmentImpact,
-      actorUserId: userId,
-      actorFirstName: user?.firstName ?? null,
-      actorLastName: user?.lastName ?? null,
-      organizationId,
-    });
 
     // We synthesise the `{ kit }` field the note helper consumes from
     // each asset's current `assetKits` pivot rows.
@@ -4374,7 +4303,7 @@ export async function updateKitAssets({
         // flattened off `assetKits` for this kit — so the source kit
         // is the parent kit we're editing.
         kit: { id: kit.id, name: kit.name },
-      })
+      }),
     );
 
     await createBulkKitChangeNotes({
@@ -4462,7 +4391,7 @@ export async function updateKitAssets({
             viaKit: true,
             ...assetQtyMeta(asset, addedAssetKitQuantity(asset)),
           },
-        }))
+        })),
       );
 
       // Create notes describing the new kit-driven placement. The
@@ -4500,8 +4429,8 @@ export async function updateKitAssets({
             // pass the org so the note is validated against the asset's
             // true org.
             organizationId,
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -4509,7 +4438,7 @@ export async function updateKitAssets({
      * If a kit is in custody then the assets added to kit will also inherit the status
      */
     const assetsToInheritStatus = newlyAddedAssets.filter(
-      (asset) => !hasCustody(asset.custody)
+      (asset) => !hasCustody(asset.custody),
     );
 
     if (
@@ -4572,7 +4501,7 @@ export async function updateKitAssets({
             targetUserId: kit.custody?.custodian?.user?.id ?? undefined,
             meta: { viaKit: true, quantity: row.quantity },
           })),
-          tx
+          tx,
         );
         return inheritData.map((row) => ({
           assetId: row.assetId,
@@ -4650,7 +4579,7 @@ export async function updateKitAssets({
           select: { id: true, assetId: true, quantity: true },
         });
         const existingByAssetId = new Map(
-          existingRows.map((r) => [r.assetId, r])
+          existingRows.map((r) => [r.assetId, r]),
         );
 
         const events: Parameters<typeof recordEvents>[0] = [];
@@ -4748,7 +4677,7 @@ export async function updateKitAssets({
                 },
               };
             }),
-            tx
+            tx,
           );
         }
 
@@ -4769,7 +4698,7 @@ export async function updateKitAssets({
         });
         const stillCustodiedIds = new Set(stillCustodied.map((c) => c.assetId));
         const assetsToFlipAvailable = assetIds.filter(
-          (id) => !stillCustodiedIds.has(id)
+          (id) => !stillCustodiedIds.has(id),
         );
         if (assetsToFlipAvailable.length > 0) {
           await tx.asset.updateMany({
@@ -4788,7 +4717,7 @@ export async function updateKitAssets({
       const releaseNoteData = removedAssets.map((asset) => {
         const count = formatUnitCount(
           asset,
-          releasedQtyByAssetId.get(asset.id)
+          releasedQtyByAssetId.get(asset.id),
         );
         const custodyPhrase = count ? `custody of ${count}` : "custody";
         return {
@@ -4812,7 +4741,7 @@ export async function updateKitAssets({
         b.status === "DRAFT" ||
         b.status === "RESERVED" ||
         b.status === "ONGOING" ||
-        b.status === "OVERDUE"
+        b.status === "OVERDUE",
     );
 
     if (bookingsToUpdate?.length) {
@@ -4850,7 +4779,7 @@ export async function updateKitAssets({
                   };
                 }),
                 skipDuplicates: true,
-              })
+              }),
             );
           }
           // why: removing an asset from a kit no longer deletes its
@@ -4859,7 +4788,7 @@ export async function updateKitAssets({
           // the AssetKit row is dropped (the actual delete happens in
           // the outer tx above), converting the kit-driven booking slice
           // into a standalone reservation. A per-booking system note
-          // emitted by `emitAssetKitDetachmentNotes` explains the
+          // the detachment note explains the
           // conversion to the user. Deleting the row here would undo
           // the SET NULL and silently shrink the booking — the opposite
           // of the documented behaviour.
@@ -4867,7 +4796,7 @@ export async function updateKitAssets({
           // Asset-bulk-remove (asset-side flow) is unaffected; it still
           // goes through `removeAssets` which deletes the rows explicitly.
           return ops;
-        })
+        }),
       );
     }
 
@@ -5022,7 +4951,7 @@ export async function bulkRemoveAssetsFromKits({
        * this kit-removal.
        */
       const assetsWhoseKitsInCustody = assets.filter(
-        (asset) => !!asset.kit?.custody && hasCustody(asset.custody)
+        (asset) => !!asset.kit?.custody && hasCustody(asset.custody),
       );
 
       /** Pairs of (asset, kit-allocated custody row) to delete */
@@ -5041,14 +4970,14 @@ export async function bulkRemoveAssetsFromKits({
               // Units this row releases — drives the qty-tracked count.
               quantity: c.quantity,
             }));
-        }
+        },
       );
 
       // Asset shape (type / unitOfMeasure) and released-quantity per asset,
       // keyed by id, for the qty-tracked unit count in the event + note.
       const assetById = new Map(assets.map((a) => [a.id, a]));
       const releasedQtyByAssetId = new Map(
-        kitAllocatedCustodyToDelete.map((row) => [row.assetId, row.quantity])
+        kitAllocatedCustodyToDelete.map((row) => [row.assetId, row.quantity]),
       );
 
       if (kitAllocatedCustodyToDelete.length > 0) {
@@ -5073,7 +5002,7 @@ export async function bulkRemoveAssetsFromKits({
               },
             };
           }),
-          tx
+          tx,
         );
 
         await tx.custody.deleteMany({
@@ -5095,7 +5024,7 @@ export async function bulkRemoveAssetsFromKits({
       });
       const stillCustodiedIds = new Set(stillCustodied.map((c) => c.assetId));
       const assetsToFlipAvailable = allRemovedAssetIds.filter(
-        (id) => !stillCustodiedIds.has(id)
+        (id) => !stillCustodiedIds.has(id),
       );
 
       // Pre-fetch the kit-driven BookingAsset rows that the AssetKit
@@ -5113,8 +5042,8 @@ export async function bulkRemoveAssetsFromKits({
       bulkDetachmentImpact = bulkDetachmentImpact.concat(
         await fetchAssetKitDetachmentImpact(
           tx,
-          aksToDelete.map((ak: { id: string }) => ak.id)
-        )
+          aksToDelete.map((ak: { id: string }) => ak.id),
+        ),
       );
 
       // Detach all from the kit regardless of remaining custody.
@@ -5148,7 +5077,7 @@ export async function bulkRemoveAssetsFromKits({
             // units"); INDIVIDUAL phrasing is unchanged.
             const count = formatUnitCount(
               asset,
-              releasedQtyByAssetId.get(asset.id)
+              releasedQtyByAssetId.get(asset.id),
             );
             const custodyPhrase = count ? `custody of ${count}` : "custody";
             return {
@@ -5168,7 +5097,7 @@ export async function bulkRemoveAssetsFromKits({
           data: assetsRemovedFromKit.map((asset) => {
             const kitLink = wrapLinkForNote(
               `/kits/${asset.kit!.id}`,
-              asset.kit!.name.trim()
+              asset.kit!.name.trim(),
             );
             // Qty-tracked: name the unit count being removed from this
             // kit ("removed 50 units from Camera Kit") using the per-row
@@ -5208,7 +5137,7 @@ export async function bulkRemoveAssetsFromKits({
             // the detached kit (NOT Asset.quantity); {} for INDIVIDUAL.
             meta: { ...assetQtyMeta(asset, asset.kitQuantity) },
           })),
-          tx
+          tx,
         );
       }
 
@@ -5234,19 +5163,9 @@ export async function bulkRemoveAssetsFromKits({
               meta: { viaKit: true },
             };
           }),
-          tx
+          tx,
         );
       }
-    });
-
-    // Notify each affected booking that its kit-driven BookingAsset
-    // slice has been converted to standalone.
-    await emitAssetKitDetachmentNotes({
-      impact: bulkDetachmentImpact,
-      actorUserId: userId,
-      actorFirstName: user?.firstName ?? null,
-      actorLastName: user?.lastName ?? null,
-      organizationId,
     });
 
     return true;
@@ -5293,7 +5212,7 @@ export async function bulkRemoveAssetsFromKits({
  *   cross-org IDOR attempt
  */
 export async function moveAssetKitUnits(
-  args: MoveAssetKitUnitsArgs
+  args: MoveAssetKitUnitsArgs,
 ): Promise<MoveUnitsResult> {
   const { assetId, organizationId, userId, fromKitId, toKitId, quantity } =
     args;
@@ -5328,7 +5247,7 @@ export async function moveAssetKitUnits(
       //    Per `.claude/rules/org-scope-user-supplied-ids.md`.
       await assertAssetsBelongToOrg(
         { assetIds: [assetId], organizationId },
-        tx
+        tx,
       );
 
       const [fromKit, toKit] = await Promise.all([
@@ -5600,7 +5519,7 @@ export async function moveAssetKitUnits(
             },
           },
         ],
-        tx
+        tx,
       );
 
       // Load the acting user once for the post-tx note write. Reads

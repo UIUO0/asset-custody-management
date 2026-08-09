@@ -25,7 +25,6 @@ import {
   setSelectedBulkItemsAtom,
 } from "~/atoms/list";
 import { CategoryBadge } from "~/components/assets/category-badge";
-import { StatusFilter } from "~/components/booking/status-filter";
 import { Form } from "~/components/custom-form";
 import KitImage from "~/components/kits/kit-image";
 import { KitStatusBadge } from "~/components/kits/kit-status-badge";
@@ -43,6 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "~/components/shared/modal";
+import { StatusFilter } from "~/components/shared/status-filter";
 import {
   Tabs,
   TabsContent,

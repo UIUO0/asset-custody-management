@@ -63,7 +63,6 @@ export function getUIFieldType({
     case "location":
     case "kit":
     case "type":
-    case "upcomingBookings":
     case "assetModel":
       fieldType = "enum";
       break;

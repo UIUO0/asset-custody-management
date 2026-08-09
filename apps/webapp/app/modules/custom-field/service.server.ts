@@ -74,7 +74,7 @@ export async function createCustomField({
           const columns = Array.from(entry.columns as Prisma.JsonArray);
           const prevHighestPosition = (columns as Column[]).reduce(
             (acc, col) => (col.position > acc ? col.position : acc),
-            0
+            0,
           );
 
           columns.push({
@@ -87,7 +87,7 @@ export async function createCustomField({
             where: { id: entry.id, organizationId },
             data: { columns },
           });
-        })
+        }),
       );
     }
 
@@ -157,7 +157,7 @@ export async function getFilteredAndPaginatedCustomFields(params: {
 
     /** Create a map of custom field ID to usage count */
     const usageCountMap = new Map(
-      usageCounts.map((item) => [item.customFieldId, Number(item.count)])
+      usageCounts.map((item) => [item.customFieldId, Number(item.count)]),
     );
 
     /** Attach usage count to each custom field */
@@ -201,7 +201,7 @@ export async function getCustomField<
 }) {
   try {
     const otherOrganizationIds = userOrganizations?.map(
-      (org) => org.organizationId
+      (org) => org.organizationId,
     );
 
     const customField = await db.customField.findFirstOrThrow({
@@ -235,7 +235,7 @@ export async function getCustomField<
         additionalData: {
           model: "customField",
           organization: userOrganizations.find(
-            (org) => org.organizationId === customField.organizationId
+            (org) => org.organizationId === customField.organizationId,
           ),
           redirectTo,
         },
@@ -398,7 +398,7 @@ export async function softDeleteCustomField({
       },
       {
         timeout: 30000, // 30 second timeout for consistency
-      }
+      },
     );
 
     return customField;
@@ -418,7 +418,7 @@ export async function softDeleteCustomField({
 }
 
 export async function upsertCustomField(
-  definitions: CustomFieldDraftPayload[]
+  definitions: CustomFieldDraftPayload[],
 ): Promise<{
   customFields: Record<string, CustomField>;
   newOrUpdatedFields: CustomField[];
@@ -461,12 +461,12 @@ export async function upsertCustomField(
         }
         if (existingCustomField.type === "OPTION") {
           const newOptions = def.options?.filter(
-            (op) => !existingCustomField?.options?.includes(op)
+            (op) => !existingCustomField?.options?.includes(op),
           );
           if (newOptions?.length) {
             //create non existing options
             const options = (existingCustomField?.options || []).concat(
-              Array.from(new Set(newOptions))
+              Array.from(new Set(newOptions)),
             );
             const updatedCustomField = await updateCustomField({
               id: existingCustomField.id,
@@ -682,14 +682,14 @@ export async function bulkActivateOrDeactivateCustomFields({
         const oldField = field;
         const newField = { ...field, active };
         const cfIndex = columns.findIndex(
-          (col) => col?.name === `cf_${oldField.name}`
+          (col) => col?.name === `cf_${oldField.name}`,
         );
         if (newField.active) {
           /** Field is missing so we add it */
           if (cfIndex === -1) {
             const prevHighestPosition = columns.reduce(
               (acc, col) => (col.position > acc ? col.position : acc),
-              0
+              0,
             );
             columns.push({
               name: `cf_${newField.name}`,

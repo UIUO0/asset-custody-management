@@ -59,7 +59,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           MarkdownNoteSchema,
           {
             additionalData: { userId, locationId },
-          }
+          },
         );
 
         const note = await createLocationNote({
@@ -95,7 +95,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({ noteId: z.string() }),
           {
             additionalData: { userId, locationId },
-          }
+          },
         );
 
         await deleteLocationNote({

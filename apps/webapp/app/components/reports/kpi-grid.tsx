@@ -52,7 +52,7 @@ export function KpiGrid({
       className={tw(
         "grid grid-cols-2 gap-4",
         columnClasses[columns],
-        className
+        className,
       )}
     >
       {kpis.map((kpi) => (

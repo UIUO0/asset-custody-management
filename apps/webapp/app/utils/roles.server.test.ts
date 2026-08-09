@@ -39,21 +39,21 @@ describe("getRoleFromGroupId", () => {
   it("matches an exact single admin group", () => {
     const sso = makeSso({ adminGroupId: "shelf-admins" });
     expect(getRoleFromGroupId(sso, ["shelf-admins"])).toBe(
-      OrganizationRoles.ADMIN
+      OrganizationRoles.ADMIN,
     );
   });
 
   it("matches case-insensitively", () => {
     const sso = makeSso({ adminGroupId: "Shelf-Admins" });
     expect(getRoleFromGroupId(sso, ["shelf-admins"])).toBe(
-      OrganizationRoles.ADMIN
+      OrganizationRoles.ADMIN,
     );
   });
 
   it("trims surrounding whitespace on both sides", () => {
     const sso = makeSso({ selfServiceGroupId: "  self-service  " });
     expect(getRoleFromGroupId(sso, ["self-service"])).toBe(
-      OrganizationRoles.SELF_SERVICE
+      OrganizationRoles.SELF_SERVICE,
     );
   });
 
@@ -62,7 +62,7 @@ describe("getRoleFromGroupId", () => {
       adminGroupId: "it-admins, sys-admins , shelf-admins",
     });
     expect(getRoleFromGroupId(sso, ["sys-admins"])).toBe(
-      OrganizationRoles.ADMIN
+      OrganizationRoles.ADMIN,
     );
   });
 
@@ -71,7 +71,7 @@ describe("getRoleFromGroupId", () => {
       baseUserGroupId: "cn=shelf-base,ou=groups,dc=example,dc=edu",
     });
     expect(
-      getRoleFromGroupId(sso, ["cn=shelf-base,ou=groups,dc=example,dc=edu"])
+      getRoleFromGroupId(sso, ["cn=shelf-base,ou=groups,dc=example,dc=edu"]),
     ).toBe(OrganizationRoles.BASE);
   });
 
@@ -91,7 +91,7 @@ describe("getRoleFromGroupId", () => {
       selfServiceGroupId: "shelf-users",
     });
     expect(getRoleFromGroupId(sso, ["shelf-users", "shelf-admins"])).toBe(
-      OrganizationRoles.ADMIN
+      OrganizationRoles.ADMIN,
     );
   });
 
@@ -101,7 +101,7 @@ describe("getRoleFromGroupId", () => {
       selfServiceGroupId: "shelf-users",
     });
     expect(getRoleFromGroupId(sso, ["shelf-users"])).toBe(
-      OrganizationRoles.SELF_SERVICE
+      OrganizationRoles.SELF_SERVICE,
     );
   });
 

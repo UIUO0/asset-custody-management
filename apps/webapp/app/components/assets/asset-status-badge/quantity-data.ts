@@ -115,7 +115,7 @@ export function getQuantityData(asset?: QuantityAwareAsset | null) {
   const checkedOut = bookingAssets
     .filter(
       (ba) =>
-        ba.booking?.status === "ONGOING" || ba.booking?.status === "OVERDUE"
+        ba.booking?.status === "ONGOING" || ba.booking?.status === "OVERDUE",
     )
     .reduce((sum, ba) => sum + (ba.quantity ?? 0), 0);
 

@@ -137,7 +137,7 @@ export async function getLocationPickerMeta({
     rows.map((row) => {
       const totalQty = row.quantity ?? 0;
       const otherLocations = row.assetLocations.filter(
-        (al) => al.locationId !== locationId
+        (al) => al.locationId !== locationId,
       );
       // The picker only edits the MANUAL row at this location.
       // Kit-driven rows at this location stay read-only and their
@@ -146,14 +146,14 @@ export async function getLocationPickerMeta({
       // `undefined` — fixtures may omit `assetKitId` entirely and we
       // want them to read as manual placements.
       const manualAtThisLocation = row.assetLocations.find(
-        (al) => al.locationId === locationId && al.assetKitId == null
+        (al) => al.locationId === locationId && al.assetKitId == null,
       );
       const kitDrivenAtThisLocation = row.assetLocations
         .filter((al) => al.locationId === locationId && al.assetKitId != null)
         .reduce((sum, al) => sum + (al.quantity ?? 0), 0);
       const otherLocationsQty = otherLocations.reduce(
         (sum, al) => sum + (al.quantity ?? 0),
-        0
+        0,
       );
       const currentAtThisLocation = manualAtThisLocation?.quantity ?? 0;
       // `spaceWithoutMe` excludes ALL rows elsewhere AND the kit-driven
@@ -161,11 +161,11 @@ export async function getLocationPickerMeta({
       // manual row at this location can claim.
       const spaceWithoutMe = Math.max(
         0,
-        totalQty - otherLocationsQty - kitDrivenAtThisLocation
+        totalQty - otherLocationsQty - kitDrivenAtThisLocation,
       );
       const maxAllowedForThisLocation = Math.max(
         currentAtThisLocation,
-        spaceWithoutMe
+        spaceWithoutMe,
       );
 
       const meta: PickerAssetMeta = {
@@ -180,6 +180,6 @@ export async function getLocationPickerMeta({
         unitOfMeasure: row.unitOfMeasure,
       };
       return [row.id, meta];
-    })
+    }),
   );
 }

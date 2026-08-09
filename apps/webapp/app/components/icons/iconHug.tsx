@@ -43,7 +43,7 @@ export default function IconHug({ size = "sm", children, className }: Props) {
         "inline-flex items-center justify-center", //positioning
         "rounded hover:cursor-pointer", //styling
         sizeClass,
-        className
+        className,
       )}
     >
       {children}

@@ -38,7 +38,7 @@ interface UseEditorViewOptions {
 export function useEditorView(
   editorContainerRef: RefObject<HTMLDivElement | null>,
   viewRef: MutableRefObject<EditorView | null>,
-  options: UseEditorViewOptions
+  options: UseEditorViewOptions,
 ) {
   const {
     schema,
@@ -101,7 +101,7 @@ export function useEditorView(
         class: tw(
           EDITOR_BASE_CLASS,
           isDisabled ? EDITOR_DISABLED_CLASS : "",
-          "cursor-text"
+          "cursor-text",
         ),
       },
       editable: () => !disabledRef.current,
@@ -144,7 +144,7 @@ export function useEditorView(
             "absolute right-3 top-3 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 shadow-sm hover:bg-gray-100";
           button.textContent = "Edit source";
           button.addEventListener("mousedown", (event) =>
-            event.preventDefault()
+            event.preventDefault(),
           );
           button.addEventListener("click", () => {
             const resolvedPos =
@@ -173,7 +173,7 @@ export function useEditorView(
         // Check if the pasted text contains markdown syntax
         const hasMarkdown =
           /(?:^#{1,4}\s|^[*-]\s|^>\s|^(\d+)\.\s|\*\*.+\*\*|__.+__|\[.+\]\(.+\))/m.test(
-            text
+            text,
           );
         if (!hasMarkdown) return false;
 
@@ -187,13 +187,13 @@ export function useEditorView(
       handleDOMEvents: {
         focus: (_view, event) => {
           onFocusRef.current?.(
-            event as unknown as FocusEvent<HTMLTextAreaElement>
+            event as unknown as FocusEvent<HTMLTextAreaElement>,
           );
           return false;
         },
         blur: (_view, event) => {
           onBlurRef.current?.(
-            event as unknown as FocusEvent<HTMLTextAreaElement>
+            event as unknown as FocusEvent<HTMLTextAreaElement>,
           );
           return false;
         },
@@ -222,7 +222,7 @@ export function useEditorView(
     if (shouldAutoFocus) {
       const isMobile =
         /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
+          navigator.userAgent,
         );
       if (!isMobile) {
         view.focus();
@@ -246,7 +246,7 @@ export function useEditorView(
     const nextClass = tw(
       EDITOR_BASE_CLASS,
       disabled ? EDITOR_DISABLED_CLASS : "",
-      "cursor-text"
+      "cursor-text",
     );
     view.setProps({
       editable: () => !disabled,
@@ -269,7 +269,7 @@ export function useEditorView(
     const tr = view.state.tr.replaceWith(
       0,
       view.state.doc.content.size,
-      doc.content
+      doc.content,
     );
     view.dispatch(tr);
   }, [defaultValue, schema, viewRef]);

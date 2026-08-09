@@ -31,7 +31,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       expect(result.current.announcement).toBe("");
@@ -50,7 +50,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -64,7 +64,7 @@ describe("useKeyboardReorder", () => {
       ]);
 
       expect(result.current.announcement).toBe(
-        "Second moved up. Now at position 1 of 3"
+        "Second moved up. Now at position 1 of 3",
       );
     });
 
@@ -74,7 +74,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -83,7 +83,7 @@ describe("useKeyboardReorder", () => {
 
       expect(mockOnReorder).not.toHaveBeenCalled();
       expect(result.current.announcement).toBe(
-        "Already at the top of the list"
+        "Already at the top of the list",
       );
     });
 
@@ -94,7 +94,7 @@ describe("useKeyboardReorder", () => {
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
           onItemMoved: mockOnItemMoved,
-        })
+        }),
       );
 
       act(() => {
@@ -112,7 +112,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -126,7 +126,7 @@ describe("useKeyboardReorder", () => {
       ]);
 
       expect(result.current.announcement).toBe(
-        "First moved down. Now at position 2 of 3"
+        "First moved down. Now at position 2 of 3",
       );
     });
 
@@ -136,7 +136,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -145,7 +145,7 @@ describe("useKeyboardReorder", () => {
 
       expect(mockOnReorder).not.toHaveBeenCalled();
       expect(result.current.announcement).toBe(
-        "Already at the bottom of the list"
+        "Already at the bottom of the list",
       );
     });
 
@@ -156,7 +156,7 @@ describe("useKeyboardReorder", () => {
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
           onItemMoved: mockOnItemMoved,
-        })
+        }),
       );
 
       act(() => {
@@ -174,7 +174,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       const mockEvent = {
@@ -197,7 +197,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       const mockEvent = {
@@ -220,7 +220,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       const mockEvent = {
@@ -243,7 +243,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       const mockEvent = {
@@ -270,7 +270,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -278,7 +278,7 @@ describe("useKeyboardReorder", () => {
       });
 
       expect(result.current.announcement).toBe(
-        "First moved down. Now at position 2 of 3"
+        "First moved down. Now at position 2 of 3",
       );
 
       act(() => {
@@ -298,7 +298,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       expect(Array.isArray(result.current.itemRefs.current)).toBe(true);
@@ -316,7 +316,7 @@ describe("useKeyboardReorder", () => {
           items: mockItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       // Simulate setting refs
@@ -347,7 +347,7 @@ describe("useKeyboardReorder", () => {
           items: singleItem,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -370,7 +370,7 @@ describe("useKeyboardReorder", () => {
           items: emptyItems,
           onReorder: mockOnReorder,
           getItemName: (item) => item.name,
-        })
+        }),
       );
 
       act(() => {
@@ -399,7 +399,7 @@ describe("useKeyboardReorder", () => {
           items: customItems,
           onReorder: mockOnReorder,
           getItemName: (item) => `${item.title} (Priority ${item.priority})`,
-        })
+        }),
       );
 
       act(() => {
@@ -407,7 +407,7 @@ describe("useKeyboardReorder", () => {
       });
 
       expect(result.current.announcement).toBe(
-        "Task A (Priority 1) moved down. Now at position 2 of 2"
+        "Task A (Priority 1) moved down. Now at position 2 of 2",
       );
     });
   });

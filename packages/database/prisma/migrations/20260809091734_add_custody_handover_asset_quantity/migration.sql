@@ -1,0 +1,17 @@
+-- Units each محضر line moves.
+--
+-- A receipt line of 30 pens is ONE asset with `quantity = 30`; the department
+-- that received the batch then hands 10 to one employee and 20 to another.
+-- Without a per-line count a محضر could only ever move the entire stock, which
+-- is why handing pens on was impossible before this column existed.
+--
+-- `DEFAULT 1` makes this backfill-free: every existing row is a single-asset
+-- محضر written before quantities existed, and 1 is exactly right for those.
+--
+-- NOTE: Prisma's generated diff also carried `DROP CONSTRAINT` for
+-- `BookingAsset_assetKitId_fkey` and `ConsumptionLog_bookingAssetId_fkey`.
+-- Both are deliberately un-declared relations (the columns are plain `String?`
+-- in the schema, the FKs were added by hand), so Prisma reads them as drift and
+-- tries to drop them in whatever migration comes next. They are removed here —
+-- see the pitfall recorded in CLAUDE.md.
+ALTER TABLE "CustodyHandoverAsset" ADD COLUMN "quantity" INTEGER NOT NULL DEFAULT 1;

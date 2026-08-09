@@ -257,7 +257,7 @@ describe("estimateNextSequentialId (pooler-safe sequence peek)", () => {
     });
 
     expect(await estimateNextSequentialId("org_123", "EQUIP")).toBe(
-      "EQUIP-0006"
+      "EQUIP-0006",
     );
   });
 });

@@ -20,7 +20,7 @@ import type { TimeframePreset, ResolvedTimeframe } from "./types";
 export function resolveTimeframe(
   preset: TimeframePreset,
   customFrom?: Date,
-  customTo?: Date
+  customTo?: Date,
 ): ResolvedTimeframe {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -166,7 +166,7 @@ export function getDefaultTimeframe(): ResolvedTimeframe {
  * Parse timeframe from URL search params.
  */
 export function parseTimeframeFromParams(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
 ): ResolvedTimeframe {
   const preset =
     (searchParams.get("timeframe") as TimeframePreset) || "last_30d";
@@ -176,6 +176,6 @@ export function parseTimeframeFromParams(
   return resolveTimeframe(
     preset,
     customFrom ? new Date(customFrom) : undefined,
-    customTo ? new Date(customTo) : undefined
+    customTo ? new Date(customTo) : undefined,
   );
 }

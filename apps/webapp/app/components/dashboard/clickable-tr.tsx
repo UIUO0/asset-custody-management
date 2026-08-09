@@ -35,7 +35,7 @@ export function ClickableTr({
       role="link"
       className={tw(
         "cursor-pointer hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1",
-        className
+        className,
       )}
       onClick={(e) => {
         const target = e.target as HTMLElement;

@@ -141,7 +141,7 @@ describe("onboarding action validation", () => {
 
   function buildRequest(
     fields: Record<string, string>,
-    { urlSuffix = "" }: { urlSuffix?: string } = {}
+    { urlSuffix = "" }: { urlSuffix?: string } = {},
   ) {
     const body = createRequestBody({
       username: "jane", // satisfies schema but not relevant
@@ -172,7 +172,7 @@ describe("onboarding action validation", () => {
         context,
         request,
         params: {},
-      })
+      }),
     )) as Response;
 
     expect(response.status).toBe(400);
@@ -185,7 +185,7 @@ describe("onboarding action validation", () => {
         companyName: "   ",
         organizationId: "fake-org", // forged invite
       },
-      { urlSuffix: "?organizationId=fake-org" }
+      { urlSuffix: "?organizationId=fake-org" },
     );
 
     const response = (await action(
@@ -193,7 +193,7 @@ describe("onboarding action validation", () => {
         context,
         request,
         params: {},
-      })
+      }),
     )) as Response;
 
     expect(response.status).toBe(400);
@@ -213,7 +213,7 @@ describe("onboarding action validation", () => {
         context,
         request,
         params: {},
-      })
+      }),
     )) as Response;
 
     expect(response.status).toBe(302);
@@ -233,7 +233,7 @@ describe("onboarding action validation", () => {
         context,
         request,
         params: {},
-      })
+      }),
     )) as Response;
 
     expect(response.status).toBe(400);
@@ -258,7 +258,7 @@ describe("onboarding action validation", () => {
         referralSource: "Google search",
         organizationId: "org-123",
       },
-      { urlSuffix: "?organizationId=org-123" }
+      { urlSuffix: "?organizationId=org-123" },
     );
 
     const response = (await action(
@@ -266,7 +266,7 @@ describe("onboarding action validation", () => {
         context,
         request,
         params: {},
-      })
+      }),
     )) as Response;
 
     expect(response.status).toBe(302);

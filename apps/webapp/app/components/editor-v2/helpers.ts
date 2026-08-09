@@ -56,7 +56,7 @@ export const placeholderPluginKey = new Plugin({
 }) as Plugin & {
   props: {
     decorations: (
-      state: EditorState & { placeholder?: string }
+      state: EditorState & { placeholder?: string },
     ) => DecorationSet | null;
   };
 };
@@ -80,7 +80,7 @@ export function createInputRules(schema: Schema) {
         const { tr } = state;
         const from = Math.max(0, start - 1);
         return tr.replaceWith(from, end, horizontalRule.create());
-      })
+      }),
     );
   }
 
@@ -298,7 +298,7 @@ export function createSlashCommands(schema: Schema): SlashCommandItem[] {
 
 export function filterSlashCommands(
   commands: SlashCommandItem[],
-  query: string
+  query: string,
 ) {
   if (!query) {
     return commands;
@@ -309,7 +309,7 @@ export function filterSlashCommands(
       return true;
     }
     return command.aliases.some((alias) =>
-      alias.toLowerCase().includes(normalized)
+      alias.toLowerCase().includes(normalized),
     );
   });
 }

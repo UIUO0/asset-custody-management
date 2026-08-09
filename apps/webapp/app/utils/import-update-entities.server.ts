@@ -32,7 +32,7 @@ import type {
 export async function fetchAssetsForUpdate(
   identifierValues: string[],
   organizationId: string,
-  dbField: "sequentialId" | "id"
+  dbField: "sequentialId" | "id",
 ): Promise<Map<string, AssetForUpdate>> {
   const assets = await db.asset.findMany({
     where: { [dbField]: { in: identifierValues }, organizationId },
@@ -68,7 +68,7 @@ export async function fetchAssetsForUpdate(
       };
       const key = dbField === "id" ? asset.id : asset.sequentialId ?? "";
       return [key, asset];
-    })
+    }),
   );
 }
 
@@ -88,7 +88,7 @@ export async function fetchAssetsForUpdate(
 export async function detectNewEntities(
   assetsToUpdate: AssetChangePreview[],
   headerAnalysis: HeaderAnalysis,
-  organizationId: string
+  organizationId: string,
 ): Promise<{ categories: string[]; locations: string[]; tags: string[] }> {
   const categoryNames = new Set<string>();
   const locationNames = new Set<string>();
@@ -97,7 +97,7 @@ export async function detectNewEntities(
   for (const asset of assetsToUpdate) {
     for (const change of asset.changes) {
       const col = headerAnalysis.updatableColumns.find(
-        (c) => c.csvHeader === change.field
+        (c) => c.csvHeader === change.field,
       );
       if (!col) continue;
 
@@ -129,10 +129,10 @@ export async function detectNewEntities(
         })
       : [];
   const existingCatNamesLc = new Set(
-    existingCats.map((c) => c.name.toLowerCase())
+    existingCats.map((c) => c.name.toLowerCase()),
   );
   const newCategories = categoryNamesArr.filter(
-    (n) => !existingCatNamesLc.has(n.toLowerCase())
+    (n) => !existingCatNamesLc.has(n.toLowerCase()),
   );
 
   // Batch check locations
@@ -148,10 +148,10 @@ export async function detectNewEntities(
         })
       : [];
   const existingLocNamesLc = new Set(
-    existingLocs.map((l) => l.name.toLowerCase())
+    existingLocs.map((l) => l.name.toLowerCase()),
   );
   const newLocations = locationNamesArr.filter(
-    (n) => !existingLocNamesLc.has(n.toLowerCase())
+    (n) => !existingLocNamesLc.has(n.toLowerCase()),
   );
 
   // Batch check tags
@@ -167,10 +167,10 @@ export async function detectNewEntities(
         })
       : [];
   const existingTagNamesLc = new Set(
-    existingTags.map((t) => t.name.toLowerCase())
+    existingTags.map((t) => t.name.toLowerCase()),
   );
   const newTags = tagNamesArr.filter(
-    (n) => !existingTagNamesLc.has(n.toLowerCase())
+    (n) => !existingTagNamesLc.has(n.toLowerCase()),
   );
 
   return {
@@ -196,7 +196,7 @@ export async function detectNewEntities(
 export async function batchResolveCategoryNames(
   names: string[],
   userId: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   const trimmedNames = names.map((n) => n.trim()).filter(Boolean);
@@ -209,7 +209,7 @@ export async function batchResolveCategoryNames(
   }
 
   const namesToResolve = trimmedNames.filter(
-    (n) => n.toLowerCase() !== "uncategorized"
+    (n) => n.toLowerCase() !== "uncategorized",
   );
   if (namesToResolve.length === 0) return result;
 
@@ -280,7 +280,7 @@ export async function batchResolveCategoryNames(
 export async function batchResolveLocationNames(
   names: string[],
   userId: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   const trimmedNames = names.map((n) => n.trim()).filter(Boolean);
@@ -371,7 +371,7 @@ export async function batchResolveLocationNames(
 export async function batchResolveAssetModelNames(
   names: string[],
   userId: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   const trimmedNames = names.map((n) => n.trim()).filter(Boolean);
@@ -439,7 +439,7 @@ export async function batchResolveAssetModelNames(
 export async function resolveTagNamesToIds(
   names: string[],
   userId: string,
-  organizationId: string
+  organizationId: string,
 ): Promise<{ id: string }[]> {
   const trimmedNames = names.map((n) => n.trim()).filter((n) => n.length > 0);
   if (trimmedNames.length === 0) return [];

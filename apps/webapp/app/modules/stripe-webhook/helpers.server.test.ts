@@ -107,7 +107,7 @@ describe("isAddonSubscription", () => {
         tierId: "tier_1",
         productType: undefined,
         event: baseEvent,
-      })
+      }),
     ).toBe(false);
   });
 
@@ -117,7 +117,7 @@ describe("isAddonSubscription", () => {
         tierId: undefined,
         productType: "addon",
         event: baseEvent,
-      })
+      }),
     ).toBe(true);
   });
 
@@ -127,7 +127,7 @@ describe("isAddonSubscription", () => {
         tierId: undefined,
         productType: "something_else",
         event: baseEvent,
-      })
+      }),
     ).toThrow(ShelfError);
   });
 });
@@ -185,7 +185,7 @@ describe("sendAdminInvoiceEmail", () => {
       expect.objectContaining({
         to: "admin@test.com",
         subject: "Invoice alert",
-      })
+      }),
     );
   });
 
@@ -208,7 +208,7 @@ describe("constructVerifiedWebhookEvent", () => {
 
   function makeRequest(
     body = "{}",
-    headers: Record<string, string> = { "stripe-signature": "sig_test" }
+    headers: Record<string, string> = { "stripe-signature": "sig_test" },
   ) {
     return new Request("https://app.shelf.nu/api/stripe-webhook", {
       method: "POST",
@@ -245,7 +245,7 @@ describe("constructVerifiedWebhookEvent", () => {
       expect(e).toBeInstanceOf(ShelfError);
       expect((e as ShelfError).status).toBe(500);
       expect((e as ShelfError).message).toMatch(
-        /STRIPE_WEBHOOK_ENDPOINT_SECRET/
+        /STRIPE_WEBHOOK_ENDPOINT_SECRET/,
       );
     }
   });
@@ -271,7 +271,7 @@ describe("constructVerifiedWebhookEvent", () => {
 
   it("throws ShelfError (status 400) on StripeSignatureVerificationError", async () => {
     mockConstructEventAsync.mockRejectedValue(
-      new FakeStripeSignatureVerificationError("bad sig")
+      new FakeStripeSignatureVerificationError("bad sig"),
     );
 
     const req = makeRequest();

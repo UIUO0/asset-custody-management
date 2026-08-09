@@ -130,5 +130,5 @@ export const belongsToCurrentUser = (qr: Qr, userId: User["id"]) =>
 
 export const belongsToCurrentUsersOrg = (
   qr: Qr,
-  orgs?: Organization[]
+  orgs?: Organization[],
 ): boolean => Boolean(orgs?.find(({ id }) => id === qr.organizationId));

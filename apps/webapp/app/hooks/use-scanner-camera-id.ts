@@ -7,7 +7,7 @@ import type { LayoutLoaderResponse } from "~/routes/_layout+/_layout";
  */
 export function useScannerCameraId() {
   const layoutData = useRouteLoaderData<LayoutLoaderResponse>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   );
 
   return layoutData?.scannerCameraId;

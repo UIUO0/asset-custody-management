@@ -40,7 +40,7 @@ const GET_ALL_KEY = "getAll";
  */
 function isAllDataLoaded(
   items: ModelFilterItem[],
-  totalItems: number
+  totalItems: number,
 ): boolean {
   return items.length === totalItems && totalItems > 0;
 }
@@ -55,7 +55,7 @@ function containsQueryDeep(obj: unknown, normalizedQuery: string): boolean {
   }
   if (obj !== null && typeof obj === "object") {
     return Object.values(obj).some((value) =>
-      containsQueryDeep(value, normalizedQuery)
+      containsQueryDeep(value, normalizedQuery),
     );
   }
   return false;
@@ -68,7 +68,7 @@ function containsQueryDeep(obj: unknown, normalizedQuery: string): boolean {
  */
 function filterItemsLocally(
   items: ModelFilterItem[],
-  query: string
+  query: string,
 ): ModelFilterItem[] {
   const normalizedQuery = query.toLowerCase().trim();
   if (!normalizedQuery) return items;
@@ -89,7 +89,7 @@ export function useModelFilters({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedItems, setSelectedItems] = useState<string[]>(
-    defaultValues ?? []
+    defaultValues ?? [],
   );
 
   const fetcher = useFetcherWithReset<typeof loader>();
@@ -101,11 +101,11 @@ export function useModelFilters({
       isAllDataLoaded(
         transformItemUsingTransformer(
           initialData[initialDataKey],
-          transformItem
+          transformItem,
         ),
-        totalItems
+        totalItems,
       ),
-    [initialData, initialDataKey, totalItems, transformItem]
+    [initialData, initialDataKey, totalItems, transformItem],
   );
 
   useEffect(
@@ -121,7 +121,7 @@ export function useModelFilters({
         setSelectedItems(searchParams.getAll(model.name));
       }
     },
-    [model.name, searchParams, selectionMode]
+    [model.name, searchParams, selectionMode],
   );
   const items = useMemo(() => {
     const baseItems =
@@ -131,7 +131,7 @@ export function useModelFilters({
 
     const transformedItems = transformItemUsingTransformer(
       baseItems,
-      transformItem
+      transformItem,
     );
 
     // Use client-side filtering if all data is loaded
@@ -176,14 +176,14 @@ export function useModelFilters({
             }
             return prev;
           },
-          { preventScrollReset: true }
+          { preventScrollReset: true },
         );
       } else if (selectionMode === "append") {
         // In append mode, we maintain multiple values
         setSelectedItems((prev) =>
           isDeselecting
             ? prev.filter((item) => item !== value)
-            : [...prev, value]
+            : [...prev, value],
         );
         setSearchParams(
           (prev) => {
@@ -194,7 +194,7 @@ export function useModelFilters({
             }
             return prev;
           },
-          { preventScrollReset: true }
+          { preventScrollReset: true },
         );
       }
 
@@ -208,11 +208,11 @@ export function useModelFilters({
       selectionMode,
       setSearchParams,
       model.name,
-    ]
+    ],
   );
 
   const handleSearchQueryChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     if (!e.currentTarget.value) {
       clearFilters();
@@ -230,7 +230,7 @@ export function useModelFilters({
           {
             method: "GET",
             action: "/api/model-filters",
-          }
+          },
         );
       }
     }
@@ -313,7 +313,7 @@ export function useModelFilters({
  */
 export function hasGetAllValue(
   searchParams: URLSearchParams,
-  value: string
+  value: string,
 ): boolean {
   // Get all values for the getAll parameter
   const getAllValues = searchParams.getAll("getAll");

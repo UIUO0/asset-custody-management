@@ -3,7 +3,7 @@ import { config } from "~/config/shelf.config";
 
 // Geocoding using OpenStreetMap Nominatim (free service)
 export const geolocate = async (
-  address: string | null
+  address: string | null,
 ): Promise<{ lat: number; lon: number } | null> => {
   if (!address || address === "") return null;
 

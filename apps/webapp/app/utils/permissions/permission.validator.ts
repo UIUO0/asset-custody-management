@@ -21,9 +21,11 @@
  * implementation in a neutral module fixes the crash at the root and lets
  * server-rendered chrome gate on permissions like everything else.
  *
- * Every call site now imports from here. `permission.validator.client.ts`
- * remains only as a deprecated re-export so nothing breaks if a stray import
- * survives somewhere; it has no importers left and can be deleted.
+ * Every call site imports from here. The `.client` module lingered for a while
+ * as a deprecated re-export and has now been deleted: keeping it around was a
+ * standing invitation to import the broken path again and reintroduce the same
+ * silent 500. Do not recreate it — a permission check has no business being
+ * client-only.
  *
  * @see {@link file://./permission.validator.server.ts} — the server variant,
  *   which additionally falls back to a DB lookup when roles aren't supplied

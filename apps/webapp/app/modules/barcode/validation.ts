@@ -171,7 +171,7 @@ function calculateEAN13CheckDigit(first12Digits: string): number {
  */
 export function normalizeBarcodeValue(
   type: BarcodeType,
-  value: string
+  value: string,
 ): string {
   switch (type) {
     case BarcodeType.ExternalQR:
@@ -191,7 +191,7 @@ export function normalizeBarcodeValue(
  */
 export function shouldWarnLongBarcode(
   type: BarcodeType,
-  value: string
+  value: string,
 ): boolean {
   return (
     type === BarcodeType.Code128 &&
@@ -204,7 +204,7 @@ export function shouldWarnLongBarcode(
  */
 export function validateBarcodeValue(
   type: BarcodeType,
-  value: string
+  value: string,
 ): string | null {
   switch (type) {
     case BarcodeType.Code128:

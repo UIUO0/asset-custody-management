@@ -47,6 +47,6 @@ export async function expandLocationHierarchyFilters({
         operator: "containsAny",
         value: descendantIds,
       };
-    })
+    }),
   );
 }

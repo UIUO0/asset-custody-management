@@ -10,33 +10,25 @@
 import { data, type LoaderFunctionArgs } from "react-router";
 
 import {
-  resolveTimeframe,
-  bookingComplianceReport,
+  readAssetActivityFilters,
+  readAssetInventoryFilters,
+  readCustodySnapshotFilters,
+  readIdleAssetsFilters,
+} from "~/modules/reports/filters";
+import {
   custodySnapshotReport,
-  overdueItemsReport,
   idleAssetsReport,
-  topBookedAssetsReport,
-  topBookedKitsReport,
   assetInventoryReport,
-  assetUtilizationReport,
   assetActivityReport,
   assetDistributionReport,
-  monthlyBookingTrendsReport,
 } from "~/modules/reports/helpers.server";
 import { getReportById } from "~/modules/reports/registry";
 import type {
-  TimeframePreset,
-  BookingComplianceRow,
   CustodySnapshotRow,
-  OverdueItemRow,
   IdleAssetRow,
-  TopBookedAssetRow,
-  TopBookedKitRow,
   AssetInventoryRow,
-  AssetUtilizationRow,
   AssetActivityRow,
   DistributionBreakdown,
-  MonthlyBookingTrendRow,
 } from "~/modules/reports/types";
 import { makeShelfError, ShelfError } from "~/utils/error";
 import { error, getCurrentSearchParams } from "~/utils/http.server";
@@ -94,118 +86,50 @@ export const loader = async ({
       });
     }
 
-    // Parse filters
-    const timeframePreset =
-      (searchParams.get("timeframe") as TimeframePreset) || "last_30d";
-    const customFrom = searchParams.get("from");
-    const customTo = searchParams.get("to");
-
-    const timeframe = resolveTimeframe(
-      timeframePreset,
-      customFrom ? new Date(customFrom) : undefined,
-      customTo ? new Date(customTo) : undefined
-    );
+    /**
+     * Exports take the whole result set, not a page of it.
+     *
+     * That is the one thing the screen and the exports legitimately disagree
+     * about, which is why paging is not part of the shared filter readers —
+     * every *filter* below now comes from `modules/reports/filters.ts`, the
+     * same source the screen reads.
+     */
+    const paging = { page: 1, pageSize: 10000 };
 
     // Generate CSV based on report type
     let csvString: string;
 
     switch (reportId) {
-      case "booking-compliance": {
-        const reportData = await bookingComplianceReport({
-          organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000, // Export up to 10k rows
-        });
-        csvString = generateBookingComplianceCsv(
-          reportData.rows as BookingComplianceRow[]
-        );
-        break;
-      }
-
       case "custody-snapshot": {
         const reportData = await custodySnapshotReport({
           organizationId,
-          page: 1,
-          pageSize: 10000,
+          ...readCustodySnapshotFilters(searchParams),
+          ...paging,
         });
         csvString = generateCustodySnapshotCsv(
-          reportData.rows as CustodySnapshotRow[]
-        );
-        break;
-      }
-
-      case "overdue-items": {
-        const reportData = await overdueItemsReport({
-          organizationId,
-          page: 1,
-          pageSize: 10000,
-        });
-        csvString = generateOverdueItemsCsv(
-          reportData.rows as OverdueItemRow[]
+          reportData.rows as CustodySnapshotRow[],
         );
         break;
       }
 
       case "idle-assets": {
-        const idleThreshold = parseInt(searchParams.get("days") || "30", 10);
         const reportData = await idleAssetsReport({
           organizationId,
-          idleThresholdDays: idleThreshold,
-          page: 1,
-          pageSize: 10000,
+          ...readIdleAssetsFilters(searchParams),
+          ...paging,
         });
         csvString = generateIdleAssetsCsv(reportData.rows as IdleAssetRow[]);
-        break;
-      }
-
-      case "top-booked-assets": {
-        const reportData = await topBookedAssetsReport({
-          organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000,
-        });
-        csvString = generateTopBookedAssetsCsv(
-          reportData.rows as TopBookedAssetRow[]
-        );
-        break;
-      }
-
-      case "top-booked-kits": {
-        const reportData = await topBookedKitsReport({
-          organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000,
-        });
-        csvString = generateTopBookedKitsCsv(
-          reportData.rows as TopBookedKitRow[]
-        );
         break;
       }
 
       case "asset-inventory": {
         const reportData = await assetInventoryReport({
           organizationId,
-          page: 1,
-          pageSize: 10000,
+          ...readAssetInventoryFilters(searchParams),
+          ...paging,
         });
         csvString = generateAssetInventoryCsv(
-          reportData.rows as AssetInventoryRow[]
-        );
-        break;
-      }
-
-      case "asset-utilization": {
-        const reportData = await assetUtilizationReport({
-          organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000,
-        });
-        csvString = generateAssetUtilizationCsv(
-          reportData.rows as AssetUtilizationRow[]
+          reportData.rows as AssetInventoryRow[],
         );
         break;
       }
@@ -213,36 +137,22 @@ export const loader = async ({
       case "asset-activity": {
         const reportData = await assetActivityReport({
           organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000,
+          ...readAssetActivityFilters(searchParams),
+          ...paging,
         });
         csvString = generateAssetActivityCsv(
-          reportData.rows as AssetActivityRow[]
+          reportData.rows as AssetActivityRow[],
         );
         break;
       }
 
       case "distribution": {
+        // Takes no filters — it summarises the whole workspace.
         const reportData = await assetDistributionReport({
           organizationId,
-          page: 1,
-          pageSize: 10000,
+          ...paging,
         });
         csvString = generateDistributionCsv(reportData.distributionBreakdown);
-        break;
-      }
-
-      case "monthly-booking-trends": {
-        const reportData = await monthlyBookingTrendsReport({
-          organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000,
-        });
-        csvString = generateMonthlyBookingTrendsCsv(
-          reportData.rows as MonthlyBookingTrendRow[]
-        );
         break;
       }
 
@@ -271,39 +181,6 @@ export const loader = async ({
     return data(error(reason), { status: reason.status });
   }
 };
-
-/**
- * Generate CSV for Booking Compliance report.
- *
- * Columns match the UI table display:
- * - Status: booking status (Complete, Ongoing, etc.)
- * - Return Status: "On time" or lateness duration (e.g., "4h 30m late")
- */
-function generateBookingComplianceCsv(rows: BookingComplianceRow[]): string {
-  const headers = [
-    "Booking ID",
-    "Booking Name",
-    "Status",
-    "Booked By",
-    "Asset Count",
-    "Scheduled Start",
-    "Due Date",
-    "Return Status",
-  ];
-
-  const csvRows = rows.map((row) => [
-    row.bookingId,
-    escapeCsvField(row.bookingName),
-    formatStatus(row.status),
-    row.custodian || "",
-    row.assetCount.toString(),
-    formatDateForCsv(row.scheduledStart),
-    formatDateForCsv(row.scheduledEnd),
-    formatReturnStatus(row.isOnTime, row.latenessMs),
-  ]);
-
-  return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
-}
 
 /**
  * Generate CSV for Custody Snapshot report.
@@ -335,59 +212,6 @@ function generateCustodySnapshotCsv(rows: CustodySnapshotRow[]): string {
 }
 
 /**
- * Format booking status for CSV (human-readable).
- */
-function formatStatus(status: string): string {
-  const labels: Record<string, string> = {
-    DRAFT: "Draft",
-    RESERVED: "Reserved",
-    ONGOING: "Ongoing",
-    OVERDUE: "Overdue",
-    COMPLETE: "Complete",
-    CANCELLED: "Cancelled",
-    ARCHIVED: "Archived",
-  };
-  return labels[status] || status;
-}
-
-/**
- * Format return status for CSV - matches the UI table display.
- * Shows "On time" or the lateness duration (e.g., "4h 30m late").
- */
-function formatReturnStatus(
-  isOnTime: boolean,
-  latenessMs: number | null
-): string {
-  if (isOnTime) {
-    return "On time";
-  }
-
-  if (latenessMs === null) {
-    return "Pending";
-  }
-
-  // Format lateness as human-readable
-  const absMs = Math.abs(latenessMs);
-  const minutes = Math.floor(absMs / (1000 * 60));
-  const hours = Math.floor(absMs / (1000 * 60 * 60));
-  const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
-
-  let value: string;
-  if (days > 0) {
-    const remainingHours = hours % 24;
-    value = remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
-  } else if (hours > 0) {
-    const remainingMinutes = minutes % 60;
-    value =
-      remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  } else {
-    value = `${minutes}m`;
-  }
-
-  return latenessMs > 0 ? `${value} late` : `${value} early`;
-}
-
-/**
  * Escape a field for CSV format.
  */
 function escapeCsvField(field: string): string {
@@ -415,33 +239,6 @@ function formatDateForCsv(date: Date | null): string {
 }
 
 /**
- * Generate CSV for Overdue Items report.
- */
-function generateOverdueItemsCsv(rows: OverdueItemRow[]): string {
-  const headers = [
-    "Booking ID",
-    "Booking Name",
-    "Booked By",
-    "Asset Count",
-    "Due Date",
-    "Days Overdue",
-    "Value at Risk",
-  ];
-
-  const csvRows = rows.map((row) => [
-    row.bookingId,
-    escapeCsvField(row.bookingName),
-    row.custodian || "",
-    row.assetCount.toString(),
-    formatDateForCsv(row.scheduledEnd),
-    row.daysOverdue.toString(),
-    row.valueAtRisk?.toString() || "",
-  ]);
-
-  return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
-}
-
-/**
  * Generate CSV for Idle Assets report.
  */
 function generateIdleAssetsCsv(rows: IdleAssetRow[]): string {
@@ -463,68 +260,6 @@ function generateIdleAssetsCsv(rows: IdleAssetRow[]): string {
     row.lastBookedAt ? formatDateForCsv(row.lastBookedAt) : "Never",
     row.daysSinceLastUse.toString(),
     row.valuation?.toString() || "",
-  ]);
-
-  return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
-}
-
-/**
- * Generate CSV for Top Booked Assets report.
- */
-function generateTopBookedAssetsCsv(rows: TopBookedAssetRow[]): string {
-  const headers = [
-    "Rank",
-    "Asset ID",
-    "Asset Name",
-    "Category",
-    "Location",
-    "Booking Count",
-    "Total Days Booked",
-    "Avg Days per Booking",
-  ];
-
-  const csvRows = rows.map((row, index) => [
-    (index + 1).toString(),
-    row.assetId,
-    escapeCsvField(row.assetName),
-    row.category || "",
-    row.location || "",
-    row.bookingCount.toString(),
-    row.totalDaysBooked.toString(),
-    row.bookingCount > 0
-      ? (row.totalDaysBooked / row.bookingCount).toFixed(1)
-      : "0",
-  ]);
-
-  return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
-}
-
-/**
- * Generate CSV for Top Booked Kits report.
- */
-function generateTopBookedKitsCsv(rows: TopBookedKitRow[]): string {
-  const headers = [
-    "Rank",
-    "Kit ID",
-    "Kit Name",
-    "Category",
-    "Location",
-    "Booking Count",
-    "Total Days Booked",
-    "Avg Days per Booking",
-  ];
-
-  const csvRows = rows.map((row, index) => [
-    (index + 1).toString(),
-    escapeCsvField(row.kitId),
-    escapeCsvField(row.kitName),
-    escapeCsvField(row.category || ""),
-    escapeCsvField(row.location || ""),
-    row.bookingCount.toString(),
-    row.totalDaysBooked.toString(),
-    row.bookingCount > 0
-      ? (row.totalDaysBooked / row.bookingCount).toFixed(1)
-      : "0",
   ]);
 
   return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
@@ -556,35 +291,6 @@ function generateAssetInventoryCsv(rows: AssetInventoryRow[]): string {
     row.valuation?.toString() || "",
     formatDateForCsv(row.createdAt),
     row.qrId || "",
-  ]);
-
-  return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
-}
-
-/**
- * Generate CSV for Asset Utilization report.
- */
-function generateAssetUtilizationCsv(rows: AssetUtilizationRow[]): string {
-  const headers = [
-    "Asset ID",
-    "Asset Name",
-    "Category",
-    "Location",
-    "Booking Count",
-    "Days in Use",
-    "Total Days",
-    "Utilization Rate",
-  ];
-
-  const csvRows = rows.map((row) => [
-    row.assetId,
-    escapeCsvField(row.assetName),
-    row.category || "",
-    row.location || "",
-    row.bookingCount.toString(),
-    row.daysInUse.toString(),
-    row.totalDays.toString(),
-    `${row.utilizationRate}%`,
   ]);
 
   return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
@@ -662,7 +368,7 @@ function generateDistributionCsv(breakdown: DistributionBreakdown): string {
 
   const formatRows = (
     type: string,
-    rows: DistributionBreakdown["byCategory"]
+    rows: DistributionBreakdown["byCategory"],
   ) =>
     rows.map((row) => [
       type,
@@ -679,31 +385,4 @@ function generateDistributionCsv(breakdown: DistributionBreakdown): string {
   ];
 
   return [headers.join(","), ...allRows.map((row) => row.join(","))].join("\n");
-}
-
-/**
- * Generate CSV for Monthly Booking Trends report.
- */
-function generateMonthlyBookingTrendsCsv(
-  rows: MonthlyBookingTrendRow[]
-): string {
-  const headers = [
-    "Month",
-    "Bookings Created",
-    "Bookings Completed",
-    "Unique Assets Booked",
-    "Month-over-Month Change",
-  ];
-
-  const csvRows = rows.map((row) => [
-    row.month,
-    row.bookingsCreated.toString(),
-    row.bookingsCompleted.toString(),
-    row.uniqueAssetsBooked.toString(),
-    row.momChange !== null
-      ? `${row.momChange > 0 ? "+" : ""}${row.momChange}%`
-      : "—",
-  ]);
-
-  return [headers.join(","), ...csvRows.map((row) => row.join(","))].join("\n");
 }

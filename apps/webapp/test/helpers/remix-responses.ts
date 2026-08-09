@@ -41,7 +41,7 @@ export function getResponseStatus(response: unknown): number {
     return response.status;
   }
   throw new Error(
-    `Expected Response but got: ${typeof response}. Did you forget to mock react-router data()?`
+    `Expected Response but got: ${typeof response}. Did you forget to mock react-router data()?`,
   );
 }
 
@@ -54,12 +54,12 @@ export function getResponseStatus(response: unknown): number {
  * expect(data).toEqual({ error: null, items: [...] });
  */
 export async function getResponseData<T = unknown>(
-  response: unknown
+  response: unknown,
 ): Promise<T> {
   if (response instanceof Response) {
     return response.json();
   }
   throw new Error(
-    `Expected Response but got: ${typeof response}. Did you forget to mock react-router data()?`
+    `Expected Response but got: ${typeof response}. Did you forget to mock react-router data()?`,
   );
 }

@@ -12,7 +12,7 @@ export function handleInputChange(
       [key: string]: any;
     }>
   >,
-  field: string
+  field: string,
 ) {
   setState((currentState) => ({
     ...currentState,

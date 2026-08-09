@@ -27,7 +27,7 @@ export const AdvancedAssetRow = memo(function AdvancedAssetRow({
 
   const _cols = useMemo(
     () => [NAME_COLUMN, ...(rawColumns ?? [])] as Column[],
-    [rawColumns]
+    [rawColumns],
   );
 
   return (
@@ -39,7 +39,7 @@ export const AdvancedAssetRow = memo(function AdvancedAssetRow({
             item={item}
             key={column.name}
           />
-        ) : null
+        ) : null,
       )}
     </>
   );

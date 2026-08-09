@@ -48,7 +48,7 @@ describe("updateScanGeolocation", () => {
         qrId: QR_ID,
         latitude: "1",
         longitude: "2",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
     expect(db.scan.update).not.toHaveBeenCalled();
   });
@@ -69,7 +69,7 @@ describe("updateScanGeolocation", () => {
         qrId: QR_ID,
         latitude: "1",
         longitude: "2",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
     expect(db.scan.update).not.toHaveBeenCalled();
   });
@@ -90,7 +90,7 @@ describe("updateScanGeolocation", () => {
         qrId: QR_ID,
         latitude: "1",
         longitude: "2",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
     expect(db.scan.update).not.toHaveBeenCalled();
   });
@@ -114,7 +114,7 @@ describe("updateScanGeolocation", () => {
         qrId: QR_ID,
         latitude: "10",
         longitude: "20",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
     expect(db.scan.update).not.toHaveBeenCalled();
   });
@@ -138,7 +138,7 @@ describe("updateScanGeolocation", () => {
         qrId: QR_ID,
         latitude: "10",
         longitude: "20",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
     expect(db.scan.update).not.toHaveBeenCalled();
   });
@@ -165,7 +165,7 @@ describe("updateScanGeolocation", () => {
       expect.objectContaining({
         where: { id: SCAN_ID },
         data: expect.objectContaining({ latitude: "10", longitude: "20" }),
-      })
+      }),
     );
   });
 });

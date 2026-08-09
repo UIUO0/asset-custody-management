@@ -44,7 +44,7 @@ describe("buildCustomFieldValue", () => {
 
     expect(buildInvalidValue).toThrowError(ShelfError);
     expect(buildInvalidValue).toThrowError(
-      "Custom field 'Budget': Invalid value 'invalid'. Contains non-numeric characters. Expected format: Plain numbers with optional decimal separator (e.g., 600, 600.50, or 600,50). Currency symbols will be automatically removed."
+      "Custom field 'Budget': Invalid value 'invalid'. Contains non-numeric characters. Expected format: Plain numbers with optional decimal separator (e.g., 600, 600.50, or 600,50). Currency symbols will be automatically removed.",
     );
   });
 
@@ -96,13 +96,13 @@ describe("buildCustomFieldValue", () => {
     } as CustomField;
 
     expect(() =>
-      buildCustomFieldValue({ raw: "1,234" }, customField)
+      buildCustomFieldValue({ raw: "1,234" }, customField),
     ).toThrowError(ShelfError);
     expect(() =>
-      buildCustomFieldValue({ raw: "1,234.56" }, customField)
+      buildCustomFieldValue({ raw: "1,234.56" }, customField),
     ).toThrowError(ShelfError);
     expect(() =>
-      buildCustomFieldValue({ raw: "12,345,678.90" }, customField)
+      buildCustomFieldValue({ raw: "12,345,678.90" }, customField),
     ).toThrowError(ShelfError);
   });
 
@@ -113,13 +113,13 @@ describe("buildCustomFieldValue", () => {
     } as CustomField;
 
     expect(() =>
-      buildCustomFieldValue({ raw: "1.234" }, customField)
+      buildCustomFieldValue({ raw: "1.234" }, customField),
     ).toThrowError(ShelfError);
     expect(() =>
-      buildCustomFieldValue({ raw: "1.234,56" }, customField)
+      buildCustomFieldValue({ raw: "1.234,56" }, customField),
     ).toThrowError(ShelfError);
     expect(() =>
-      buildCustomFieldValue({ raw: "12.345.678,90" }, customField)
+      buildCustomFieldValue({ raw: "12.345.678,90" }, customField),
     ).toThrowError(ShelfError);
   });
 
@@ -169,13 +169,13 @@ describe("buildCustomFieldValue", () => {
     } as CustomField;
 
     expect(() => buildCustomFieldValue({ raw: NaN }, customField)).toThrowError(
-      ShelfError
+      ShelfError,
     );
     expect(() =>
-      buildCustomFieldValue({ raw: Infinity }, customField)
+      buildCustomFieldValue({ raw: Infinity }, customField),
     ).toThrowError(ShelfError);
     expect(() =>
-      buildCustomFieldValue({ raw: -Infinity }, customField)
+      buildCustomFieldValue({ raw: -Infinity }, customField),
     ).toThrowError(ShelfError);
   });
 
@@ -186,10 +186,10 @@ describe("buildCustomFieldValue", () => {
     } as CustomField;
 
     expect(() =>
-      buildCustomFieldValue({ raw: "1e10" }, customField)
+      buildCustomFieldValue({ raw: "1e10" }, customField),
     ).toThrowError(ShelfError);
     expect(() =>
-      buildCustomFieldValue({ raw: "1E5" }, customField)
+      buildCustomFieldValue({ raw: "1E5" }, customField),
     ).toThrowError(ShelfError);
   });
 
@@ -228,10 +228,10 @@ describe("buildCustomFieldValue", () => {
 
     it("returns undefined for unrecognized boolean strings", () => {
       expect(
-        buildCustomFieldValue({ raw: "invalid" }, booleanField)
+        buildCustomFieldValue({ raw: "invalid" }, booleanField),
       ).toBeUndefined();
       expect(
-        buildCustomFieldValue({ raw: "true" }, booleanField)
+        buildCustomFieldValue({ raw: "true" }, booleanField),
       ).toBeUndefined();
       expect(buildCustomFieldValue({ raw: "1" }, booleanField)).toBeUndefined();
     });

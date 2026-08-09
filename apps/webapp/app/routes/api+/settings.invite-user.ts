@@ -28,7 +28,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { email, teamMemberId, role, inviteMessage } = parseData(
       await request.formData(),
-      InviteUserFormSchema
+      InviteUserFormSchema,
     );
 
     let teamMemberName = email.split("@")[0];

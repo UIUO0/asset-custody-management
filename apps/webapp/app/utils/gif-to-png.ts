@@ -4,7 +4,7 @@ export async function gifToPng(dataUrl: string) {
 
   const gifBuffer = Buffer.from(
     dataUrl.replace(/^data:image\/\w+;base64,/, ""),
-    "base64"
+    "base64",
   );
   const pngBuffer = await sharp(gifBuffer).png().toBuffer();
   return `data:image/png;base64,${pngBuffer.toString("base64")}`;

@@ -47,7 +47,7 @@ export function loader({ context, request }: LoaderFunctionArgs) {
             message: "Failed to send SSE notification",
             additionalData: { userId: authSession.userId },
             label: "Notification",
-          })
+          }),
         );
       }
     }

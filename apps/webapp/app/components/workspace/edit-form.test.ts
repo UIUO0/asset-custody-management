@@ -31,7 +31,7 @@ describe("EditWorkspaceSSOSettingsFormSchema", () => {
       if (!result.success) {
         // The "at least one group" error is surfaced on the Administrator field
         const issue = result.error.issues.find((i) =>
-          i.path.includes("adminGroupId")
+          i.path.includes("adminGroupId"),
         );
         expect(issue?.message).toMatch(/at least one group/i);
       }

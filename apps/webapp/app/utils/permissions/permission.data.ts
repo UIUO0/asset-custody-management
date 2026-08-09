@@ -25,10 +25,15 @@ export enum PermissionAction {
   /**
    * EPDA: freezing an item for review without deciding it.
    *
-   * Deliberately NOT a weaker form of `approve`. المخزون hold booking requests
-   * they want a second look at, but may never accept or reject one; المستودعات
-   * decide requests but do not place holds. Two different jobs, two different
-   * actions — collapsing them into one would hand each role the other's power.
+   * Deliberately NOT a weaker form of `approve`: one role flags something for a
+   * second look, another decides it. Collapsing them would hand each role the
+   * other's power.
+   *
+   * ⚠️ **Currently granted to nobody.** Its only subject was the booking-request
+   * queue, which was removed with the booking system (2026-08-06). Kept rather
+   * than deleted because the separation is a documented design decision and the
+   * next review workflow will want it — see CLAUDE.md. If you add a `hold`
+   * grant, make sure no role also holds `approve` on the same entity.
    */
   hold = "hold",
 }
@@ -36,8 +41,6 @@ export enum PermissionEntity {
   asset = "asset",
   assetIndexSettings = "assetIndexSettings",
   qr = "qr",
-  booking = "booking",
-  bookingNote = "bookingNote",
   tag = "tag",
   category = "category",
   location = "location",
@@ -63,6 +66,15 @@ export enum PermissionEntity {
   userData = "user-data", // This is for the user to load their own data.
   update = "update",
   commandPaletteSearch = "command-palette-search",
+  /**
+   * EPDA: the intake forms (مذكرة استلام / محضر استلام).
+   *
+   * Separate from `asset` on purpose. Filling in a receipt is the warehouse's
+   * job and produces stock; editing an asset afterwards is a different act that
+   * المالية also perform. Folding the receipt into `asset.create` would have
+   * handed المالية the ability to book in a delivery.
+   */
+  goodsReceipt = "goodsReceipt",
 }
 
 /**
@@ -94,19 +106,9 @@ export const Role2PermissionMap: {
   [OrganizationRoles.BASE]: {
     [PermissionEntity.asset]: [PermissionAction.read],
     [PermissionEntity.assetIndexSettings]: [PermissionAction.read],
-    [PermissionEntity.booking]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete, // This is for the user to delete their own bookings only when they are draft.
-      PermissionAction.manageAssets,
-      PermissionAction.manageKits,
-      PermissionAction.export,
-    ],
-    [PermissionEntity.bookingNote]: [
-      PermissionAction.read,
-      PermissionAction.create,
-    ],
+    // Employees do not book in deliveries; the receipt forms are a
+    // warehouse instrument.
+    [PermissionEntity.goodsReceipt]: [],
     [PermissionEntity.auditNote]: [
       PermissionAction.read,
       PermissionAction.create,
@@ -143,24 +145,7 @@ export const Role2PermissionMap: {
   [OrganizationRoles.SELF_SERVICE]: {
     [PermissionEntity.asset]: [PermissionAction.read, PermissionAction.custody],
     [PermissionEntity.assetIndexSettings]: [PermissionAction.read],
-    [PermissionEntity.booking]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.checkout,
-      PermissionAction.checkin,
-      PermissionAction.delete, // This is for the user to delete their own bookings only when they are draft.
-      PermissionAction.archive,
-      PermissionAction.manageAssets,
-      PermissionAction.manageKits,
-      PermissionAction.cancel,
-      PermissionAction.extend,
-      PermissionAction.export,
-    ],
-    [PermissionEntity.bookingNote]: [
-      PermissionAction.read,
-      PermissionAction.create,
-    ],
+    [PermissionEntity.goodsReceipt]: [],
     [PermissionEntity.auditNote]: [
       PermissionAction.read,
       PermissionAction.create,
@@ -208,23 +193,9 @@ export const Role2PermissionMap: {
       PermissionAction.read,
       PermissionAction.update,
     ],
-    [PermissionEntity.booking]: [
+    [PermissionEntity.goodsReceipt]: [
       PermissionAction.create,
       PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-      PermissionAction.checkout,
-      PermissionAction.checkin,
-      PermissionAction.archive,
-      PermissionAction.manageAssets,
-      PermissionAction.manageKits,
-      PermissionAction.cancel,
-      PermissionAction.extend,
-      PermissionAction.export,
-    ],
-    [PermissionEntity.bookingNote]: [
-      PermissionAction.read,
-      PermissionAction.create,
       PermissionAction.update,
       PermissionAction.delete,
     ],
@@ -353,23 +324,9 @@ export const Role2PermissionMap: {
       PermissionAction.read,
       PermissionAction.update,
     ],
-    [PermissionEntity.booking]: [
+    [PermissionEntity.goodsReceipt]: [
       PermissionAction.create,
       PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-      PermissionAction.checkout,
-      PermissionAction.checkin,
-      PermissionAction.archive,
-      PermissionAction.manageAssets,
-      PermissionAction.manageKits,
-      PermissionAction.cancel,
-      PermissionAction.extend,
-      PermissionAction.export,
-    ],
-    [PermissionEntity.bookingNote]: [
-      PermissionAction.read,
-      PermissionAction.create,
       PermissionAction.update,
       PermissionAction.delete,
     ],
@@ -502,7 +459,6 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      PermissionAction.delete,
       PermissionAction.custody,
       // why: the matrix's "إضافة" covers both single-asset entry and the bulk
       // Excel template path described in the workflow spec (section 2).
@@ -516,27 +472,14 @@ export const Role2PermissionMap: {
       PermissionAction.read,
       PermissionAction.update,
     ],
-    [PermissionEntity.booking]: [
-      PermissionAction.read,
-      PermissionAction.delete,
-      PermissionAction.checkout,
-      PermissionAction.checkin,
-      PermissionAction.archive,
-      PermissionAction.manageAssets,
-      PermissionAction.manageKits,
-      PermissionAction.cancel,
-      PermissionAction.extend,
-      PermissionAction.export,
-      /**
-       * المستودعات decide employee requests: accept (the booking may now hold
-       * inventory) or reject with a reason. They cannot place a review hold —
-       * that is المخزون's check on this decision.
-       */
-      PermissionAction.approve,
-    ],
-    [PermissionEntity.bookingNote]: [
-      PermissionAction.read,
+    /**
+     * المستودعات own intake: they fill the form in, and stock now enters the
+     * system no other way. `delete` is void-the-document, not delete-the-stock
+     * (see `voidGoodsReceipt`).
+     */
+    [PermissionEntity.goodsReceipt]: [
       PermissionAction.create,
+      PermissionAction.read,
       PermissionAction.update,
       PermissionAction.delete,
     ],
@@ -662,8 +605,9 @@ export const Role2PermissionMap: {
       PermissionAction.read,
       PermissionAction.update,
     ],
-    [PermissionEntity.booking]: [PermissionAction.read],
-    [PermissionEntity.bookingNote]: [PermissionAction.read],
+    // المالية read receipts for their prices and supplier data; booking a
+    // delivery in is not theirs, matching their lack of `asset.create`.
+    [PermissionEntity.goodsReceipt]: [PermissionAction.read],
     [PermissionEntity.auditNote]: [PermissionAction.read],
     [PermissionEntity.qr]: [PermissionAction.read],
     [PermissionEntity.category]: [PermissionAction.read],
@@ -706,18 +650,87 @@ export const Role2PermissionMap: {
    * (workflow spec section 3). That is a lifecycle transition, not an entity
    * action, and lands in phase 3 with the asset state machine.
    */
+  /**
+   * إدارة (المرافق اليوم؛ تقنية المعلومات تعمل بـ OWNER).
+   *
+   * A receiving desk, not an administrator. It takes a whole purchase order
+   * from the warehouse in one signed محضر, then hands single assets to its own
+   * staff — so it needs `asset.custody` and the ability to name an employee,
+   * and nothing else.
+   *
+   * Deliberately absent:
+   * - `create` / `update` / `delete` on `asset` — stock enters through
+   *   `/receipts` only, and a department that could edit the register could
+   *   rewrite what it was handed.
+   * - `approve` — releasing an asset into circulation is the warehouse's call.
+   * - `goodsReceipt` — the department signs a محضر, it does not author receipts.
+   *
+   * Data scope is NOT set here: `DEPARTMENT` is absent from
+   * `ROLES_WITH_ORG_WIDE_VISIBILITY`, and `visibleCustodianIds` widens it from
+   * "own records" to "own + the department's" — see `role-scope.ts`. The two
+   * questions stay separate on purpose.
+   */
+  [OrganizationRoles.DEPARTMENT]: {
+    [PermissionEntity.asset]: [PermissionAction.read, PermissionAction.custody],
+    [PermissionEntity.assetIndexSettings]: [PermissionAction.read],
+    [PermissionEntity.goodsReceipt]: [],
+    [PermissionEntity.auditNote]: [],
+    [PermissionEntity.audit]: [],
+    [PermissionEntity.qr]: [PermissionAction.read],
+    [PermissionEntity.category]: [],
+    [PermissionEntity.customField]: [],
+    [PermissionEntity.location]: [],
+    [PermissionEntity.locationNote]: [],
+    [PermissionEntity.tag]: [],
+    // Read-only, and only so the desk can name the employee it is handing an
+    // asset to. No create/update — a department does not manage the roster.
+    [PermissionEntity.teamMember]: [PermissionAction.read],
+    [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
+    [PermissionEntity.workspace]: [],
+    [PermissionEntity.dashboard]: [],
+    [PermissionEntity.generalSettings]: [],
+    [PermissionEntity.workingHours]: [],
+    [PermissionEntity.subscription]: [],
+    [PermissionEntity.kit]: [PermissionAction.read, PermissionAction.custody],
+    [PermissionEntity.note]: [],
+    [PermissionEntity.scan]: [],
+    [PermissionEntity.custody]: [PermissionAction.read],
+    [PermissionEntity.assetReminders]: [],
+    [PermissionEntity.teamMemberNote]: [],
+    [PermissionEntity.assetModel]: [],
+    [PermissionEntity.emailSettings]: [],
+    [PermissionEntity.userData]: [
+      PermissionAction.read,
+      PermissionAction.update,
+    ],
+    [PermissionEntity.update]: [PermissionAction.read],
+    [PermissionEntity.commandPaletteSearch]: [PermissionAction.read],
+  },
   [OrganizationRoles.INVENTORY]: {
     // Matrix: عرض + حذف. No create/update — المخزون observes and prunes,
     // it does not author asset data.
     [PermissionEntity.asset]: [PermissionAction.read, PermissionAction.delete],
     [PermissionEntity.assetIndexSettings]: [PermissionAction.read],
     /**
+     * المخزون monitor intake without performing it — plus `delete`, which here
+     * means *voiding the document*, not erasing stock (`voidGoodsReceipt` keeps
+     * the record and never touches the items it created).
+     *
+     * Granted provisionally at the authority's request: المخزون are the ones
+     * who notice a receipt entered against the wrong supplier or in duplicate,
+     * and previously had to find a warehouse operator to cancel it. Revisit
+     * once the review workflow gives them a `hold` on receipts the way they
+     * have one on booking requests.
+     */
+    [PermissionEntity.goodsReceipt]: [
+      PermissionAction.read,
+      PermissionAction.delete,
+    ],
+    /**
      * المخزون review the request queue without deciding it: they may freeze a
      * request (and release their own freeze), but accept/reject stays with
      * المستودعات. `hold` without `approve` is exactly that separation.
      */
-    [PermissionEntity.booking]: [PermissionAction.read, PermissionAction.hold],
-    [PermissionEntity.bookingNote]: [PermissionAction.read],
     [PermissionEntity.auditNote]: [PermissionAction.read],
     [PermissionEntity.qr]: [PermissionAction.read],
     [PermissionEntity.category]: [PermissionAction.read],

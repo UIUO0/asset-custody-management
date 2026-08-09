@@ -7,7 +7,7 @@ import type { loader } from "~/routes/_layout+/_layout";
  */
 export function useCurrentOrganization() {
   const layoutData = useRouteLoaderData<typeof loader>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   );
 
   /** We make sure that currentOrganization exists within the loader, so layoutData cannot be null in this case */

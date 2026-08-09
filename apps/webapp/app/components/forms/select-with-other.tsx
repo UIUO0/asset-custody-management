@@ -169,7 +169,7 @@ export function SelectWithOther({
     if (selection === OTHER_OPTION_VALUE)
       return otherValue || t("reports.other");
     return selection;
-  }, [selection, otherValue, placeholder]);
+  }, [selection, otherValue, placeholder, t]);
 
   return (
     <div className="flex flex-col gap-2">

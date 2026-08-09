@@ -71,7 +71,7 @@ type PrismaLike = RecordEventTxClient;
  */
 export async function recordEvent(
   input: ActivityEventInput,
-  tx?: PrismaLike
+  tx?: PrismaLike,
 ): Promise<void> {
   const client: PrismaLike = tx ?? db;
 
@@ -116,7 +116,7 @@ export async function recordEvent(
  */
 export async function recordEvents(
   inputs: ActivityEventInput[],
-  tx?: PrismaLike
+  tx?: PrismaLike,
 ): Promise<void> {
   if (inputs.length === 0) return;
 
@@ -131,7 +131,7 @@ export async function recordEvents(
       const actorSnapshot = await resolveActorSnapshot(
         input,
         client,
-        snapshotCache
+        snapshotCache,
       );
       rows.push(toPrismaData(input, actorSnapshot));
     }
@@ -163,7 +163,7 @@ export async function recordEvents(
 async function resolveActorSnapshot(
   input: ActivityEventInput,
   client: PrismaLike,
-  cache?: Map<string, ActorSnapshot | null>
+  cache?: Map<string, ActorSnapshot | null>,
 ): Promise<ActorSnapshot | null> {
   if (input.actorSnapshot !== undefined) {
     return input.actorSnapshot;
@@ -197,7 +197,7 @@ async function resolveActorSnapshot(
  */
 function toPrismaData(
   input: ActivityEventInput,
-  actorSnapshot: ActorSnapshot | null
+  actorSnapshot: ActorSnapshot | null,
 ): Prisma.ActivityEventUncheckedCreateInput {
   const field = "field" in input ? input.field : null;
   const fromValue = "fromValue" in input ? input.fromValue : null;

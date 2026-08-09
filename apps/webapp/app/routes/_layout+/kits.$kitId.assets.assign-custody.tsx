@@ -78,7 +78,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         request,
         entity: PermissionEntity.kit,
         action: PermissionAction.custody,
-      }
+      },
     );
 
     const kit = await getKit({
@@ -134,7 +134,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
      */
     const someUnavailableAsset = kit.assetKits.some(
       (ak) =>
-        ak.asset.type !== "QUANTITY_TRACKED" && ak.asset.status !== "AVAILABLE"
+        ak.asset.type !== "QUANTITY_TRACKED" && ak.asset.status !== "AVAILABLE",
     );
     if (someUnavailableAsset) {
       sendNotification({
@@ -227,7 +227,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       {
         additionalData: { userId, kitId },
         message: "Please select a team member",
-      }
+      },
     );
 
     const { id: custodianId, name: custodianName } = custodian;
@@ -357,7 +357,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             targetUserId: custodianTeamMember.user?.id ?? undefined,
             meta: { viaKit: true, quantity: row.quantity },
           })),
-          tx
+          tx,
         );
       }
 
@@ -388,7 +388,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     // path in `bulkAssignKitCustody`).
     if (kit.inheritData.length > 0) {
       const assetById = new Map(
-        kit.assetKits.map((ak) => [ak.asset.id, ak.asset])
+        kit.assetKits.map((ak) => [ak.asset.id, ak.asset]),
       );
       await Promise.all(
         kit.inheritData.map((row) => {
@@ -402,7 +402,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
             assetIds: [row.assetId],
             organizationId,
           });
-        })
+        }),
       );
     }
 
@@ -434,7 +434,7 @@ export default function GiveKitCustody() {
   const { isSelfService } = useUserRoleHelper();
 
   const hasBookings = kit.assetKits.some(
-    (ak) => ak.asset.bookingAssets.length > 0
+    (ak) => ak.asset.bookingAssets.length > 0,
   );
   const zo = useZorm("BulkAssignCustody", AssignCustodySchema);
   const error = zo.errors.custodian()?.message || actionData?.error?.message;

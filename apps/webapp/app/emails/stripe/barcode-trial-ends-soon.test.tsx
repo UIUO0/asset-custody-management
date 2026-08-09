@@ -46,7 +46,7 @@ describe("barcodeTrialEndsSoonEmailText", () => {
     });
     expect(text).toContain("ACTION REQUIRED");
     expect(text).toContain(
-      "automatically charged at the regular subscription rate"
+      "automatically charged at the regular subscription rate",
     );
   });
 
@@ -97,7 +97,7 @@ describe("sendBarcodeTrialEndsSoonEmail", () => {
       expect.objectContaining({
         to: "alice@example.com",
         subject: "Your Barcodes trial ends in 3 days — auto-charge reminder",
-      })
+      }),
     );
   });
 
@@ -112,7 +112,7 @@ describe("sendBarcodeTrialEndsSoonEmail", () => {
         email: "alice@example.com",
         hasPaymentMethod: true,
         trialEndDate: new Date("2026-03-24T00:00:00Z"),
-      })
+      }),
     ).resolves.toBeUndefined();
   });
 });

@@ -49,11 +49,11 @@ const ASSET_CREATE_END_OFFSET_MS = 7 * 24 * 60 * 60 * 1000;
  */
 export async function runAssetsPhase(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   if (!state.markerTagId) {
     throw new Error(
-      "runAssetsPhase: state.markerTagId is missing — Phase 2 must run first."
+      "runAssetsPhase: state.markerTagId is missing — Phase 2 must run first.",
     );
   }
 
@@ -71,7 +71,7 @@ export async function runAssetsPhase(
     const createdAt = randomDateBetween(
       createWindow.start,
       createWindow.end,
-      ctx.rng
+      ctx.rng,
     );
     const creator = ctx.actors.pick(ctx.rng);
 
@@ -88,7 +88,7 @@ export async function runAssetsPhase(
     const extraTagIds = sampleWithoutReplacement(
       contentTagIds,
       extraTagCount,
-      ctx.rng
+      ctx.rng,
     );
     const tagIdsToConnect = [state.markerTagId, ...extraTagIds];
 
@@ -130,7 +130,7 @@ export async function runAssetsPhase(
         occurredAt: createdAt,
         actor: creator,
         assetId: asset.id,
-      })
+      }),
     );
 
     if (ctx.rng() < CHANGE_TRAIL_FRACTION) {
@@ -172,13 +172,13 @@ function buildChangeTrail(
     initialValuation: number | null;
     initialCategoryId: string;
     initialLocationId: string | null;
-  }
+  },
 ): ActivityEventInput[] {
   const events: ActivityEventInput[] = [];
   const count = randomIntInRange(
     CHANGES_PER_ASSET_MIN,
     CHANGES_PER_ASSET_MAX,
-    ctx.rng
+    ctx.rng,
   );
 
   // Running "current" values so successive events chain. These start at
@@ -212,7 +212,7 @@ function buildChangeTrail(
             field: "name",
             fromValue: current.name,
             toValue: next,
-          })
+          }),
         );
         current.name = next;
         break;
@@ -229,7 +229,7 @@ function buildChangeTrail(
             field: "description",
             fromValue: current.description,
             toValue: next,
-          })
+          }),
         );
         current.description = next;
         break;
@@ -246,7 +246,7 @@ function buildChangeTrail(
             field: "valuation",
             fromValue: current.valuation,
             toValue: next,
-          })
+          }),
         );
         current.valuation = next;
         break;
@@ -254,7 +254,7 @@ function buildChangeTrail(
       case "ASSET_CATEGORY_CHANGED": {
         const next = pickRandom(
           state.categoryIds.filter((id) => id !== current.categoryId),
-          ctx.rng
+          ctx.rng,
         );
         events.push(
           assetFieldChangedEvent({
@@ -266,14 +266,14 @@ function buildChangeTrail(
             field: "category",
             fromValue: current.categoryId,
             toValue: next,
-          })
+          }),
         );
         current.categoryId = next;
         break;
       }
       case "ASSET_LOCATION_CHANGED": {
         const others = state.locationIds.filter(
-          (id) => id !== current.locationId
+          (id) => id !== current.locationId,
         );
         const next = others.length ? pickRandom(others, ctx.rng) : null;
         events.push(
@@ -286,7 +286,7 @@ function buildChangeTrail(
             field: "location",
             fromValue: current.locationId,
             toValue: next,
-          })
+          }),
         );
         current.locationId = next;
         break;
@@ -324,7 +324,7 @@ function pickRandom<T>(arr: readonly T[], rng: () => number): T {
 function sampleWithoutReplacement<T>(
   arr: readonly T[],
   n: number,
-  rng: () => number
+  rng: () => number,
 ): T[] {
   const size = Math.min(n, arr.length);
   if (size === 0) return [];
@@ -349,7 +349,7 @@ function spreadTimes(
   start: Date,
   end: Date,
   count: number,
-  rng: () => number
+  rng: () => number,
 ): Date[] {
   const times: Date[] = [];
   for (let i = 0; i < count; i++) {

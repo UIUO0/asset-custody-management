@@ -20,8 +20,8 @@ export async function loader() {
           cause,
           message: "Healthcheck failed",
           label: "Healthcheck",
-        })
-      )
+        }),
+      ),
     );
   }
 }

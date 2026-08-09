@@ -123,7 +123,7 @@ export async function buildUpdatePreview({
   const existingAssets = await fetchAssetsForUpdate(
     allIds,
     organizationId,
-    headerAnalysis.idDbField
+    headerAnalysis.idDbField,
   );
 
   // If a fallback identifier column exists, also fetch by that
@@ -137,7 +137,7 @@ export async function buildUpdatePreview({
       fallbackAssets = await fetchAssetsForUpdate(
         fallbackIds,
         organizationId,
-        headerAnalysis.fallbackId.dbField
+        headerAnalysis.fallbackId.dbField,
       );
     }
   }
@@ -153,7 +153,7 @@ export async function buildUpdatePreview({
   // Compute field change stats
   const totalFieldChanges = diffs.assetsToUpdate.reduce(
     (sum, a) => sum + a.changes.length,
-    0
+    0,
   );
   // Total possible fields = rows with found assets × updatable columns
   const assetsWithData =
@@ -166,7 +166,7 @@ export async function buildUpdatePreview({
   const newEntities = await detectNewEntities(
     diffs.assetsToUpdate,
     headerAnalysis,
-    organizationId
+    organizationId,
   );
 
   return {
@@ -246,7 +246,7 @@ export async function applyBulkUpdatesFromImport({
   const existingAssets = await fetchAssetsForUpdate(
     allIds,
     organizationId,
-    headerAnalysis.idDbField
+    headerAnalysis.idDbField,
   );
 
   // Fetch by fallback identifier if available
@@ -259,7 +259,7 @@ export async function applyBulkUpdatesFromImport({
       fallbackAssets = await fetchAssetsForUpdate(
         fallbackIds,
         organizationId,
-        headerAnalysis.fallbackId.dbField
+        headerAnalysis.fallbackId.dbField,
       );
     }
   }
@@ -290,7 +290,7 @@ export async function applyBulkUpdatesFromImport({
     for (const change of asset.changes) {
       if (change.warning) continue;
       const col = headerAnalysis.updatableColumns.find(
-        (c) => c.csvHeader === change.field
+        (c) => c.csvHeader === change.field,
       );
       if (!col) continue;
       if (col.internalKey === "category") allCategoryNames.add(change.newValue);
@@ -433,7 +433,7 @@ export async function applyBulkUpdatesFromImport({
         assetModel: readCell("assetModel"),
       },
       { type: existingType },
-      rowNumber
+      rowNumber,
     );
 
     // Collect warnings (per decision #3: assetModel on qty-tracked).
@@ -474,7 +474,7 @@ export async function applyBulkUpdatesFromImport({
       ? await batchResolveAssetModelNames(
           [...assetModelNamesToResolve],
           userId,
-          organizationId
+          organizationId,
         )
       : new Map<string, string>();
 
@@ -522,7 +522,7 @@ export async function applyBulkUpdatesFromImport({
 
         // Match by field display name
         const col = headerAnalysis.updatableColumns.find(
-          (c) => c.csvHeader === change.field
+          (c) => c.csvHeader === change.field,
         );
         if (!col) continue;
 
@@ -596,7 +596,7 @@ export async function applyBulkUpdatesFromImport({
 
       for (const change of otherChanges) {
         const col = headerAnalysis.updatableColumns.find(
-          (c) => c.csvHeader === change.field
+          (c) => c.csvHeader === change.field,
         );
         if (!col) continue;
 
@@ -642,7 +642,7 @@ export async function applyBulkUpdatesFromImport({
               valuation = 0;
             } else {
               const normalized = normalizeExportedCurrencyValue(
-                change.newValue
+                change.newValue,
               );
               const val = Number(normalized);
               if (Number.isFinite(val)) {
@@ -688,7 +688,7 @@ export async function applyBulkUpdatesFromImport({
 
                   const builtValue = buildCustomFieldValue(
                     { raw: rawValue },
-                    fullCf
+                    fullCf,
                   );
                   if (builtValue) {
                     customFieldsValues.push({
@@ -884,7 +884,7 @@ export async function applyBulkUpdatesFromImport({
           additionalData: { matchId, rowNumber, organizationId, userId },
           label: "Assets",
           shouldBeCaptured: true,
-        })
+        }),
       );
       failed.push({
         id: matchId,

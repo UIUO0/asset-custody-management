@@ -4,7 +4,7 @@ import type { Organization, OrganizationType } from "@prisma/client";
  * Factory for creating Organization test data
  */
 export function createOrganization(
-  overrides: Partial<Organization> = {}
+  overrides: Partial<Organization> = {},
 ): Partial<Organization> {
   return {
     id: "org-123",

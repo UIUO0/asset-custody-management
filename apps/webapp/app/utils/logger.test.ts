@@ -38,7 +38,7 @@ describe("Logger.handledClientError", () => {
 
     expect(Sentry.logger.info).toHaveBeenCalledWith(
       "Please select a date in the future",
-      expect.objectContaining({ status: 400, label: "Request validation" })
+      expect.objectContaining({ status: 400, label: "Request validation" }),
     );
   });
 
@@ -49,11 +49,11 @@ describe("Logger.handledClientError", () => {
 
   it("attaches the userId when present", () => {
     Logger.handledClientError(
-      make4xx({ additionalData: { userId: "real-user-1" } })
+      make4xx({ additionalData: { userId: "real-user-1" } }),
     );
     expect(Sentry.logger.info).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ userId: "real-user-1" })
+      expect.objectContaining({ userId: "real-user-1" }),
     );
   });
 });

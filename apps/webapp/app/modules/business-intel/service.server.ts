@@ -13,7 +13,7 @@ const label: ErrorLabel = "User onboarding";
  * Create business intelligence record for a user
  */
 export async function createBusinessIntel(
-  payload: CreateBusinessIntelPayload
+  payload: CreateBusinessIntelPayload,
 ): Promise<UserBusinessIntel> {
   try {
     const businessIntel = await db.userBusinessIntel.create({
@@ -47,7 +47,7 @@ export async function createBusinessIntel(
  */
 export async function updateBusinessIntel(
   userId: string,
-  payload: UpdateBusinessIntelPayload
+  payload: UpdateBusinessIntelPayload,
 ): Promise<UserBusinessIntel> {
   try {
     const businessIntel = await db.userBusinessIntel.update({
@@ -81,7 +81,7 @@ export async function updateBusinessIntel(
  * Creates if doesn't exist, updates if exists
  */
 export async function upsertBusinessIntel(
-  payload: CreateBusinessIntelPayload
+  payload: CreateBusinessIntelPayload,
 ): Promise<UserBusinessIntel> {
   try {
     const businessIntel = await db.userBusinessIntel.upsert({
@@ -124,7 +124,7 @@ export async function upsertBusinessIntel(
  * Get business intelligence record by user ID
  */
 export async function getBusinessIntelByUserId(
-  userId: string
+  userId: string,
 ): Promise<UserBusinessIntel | null> {
   try {
     const businessIntel = await db.userBusinessIntel.findUnique({
@@ -147,7 +147,7 @@ export async function getBusinessIntelByUserId(
  * Delete business intelligence record for a user
  */
 export async function deleteBusinessIntel(
-  userId: string
+  userId: string,
 ): Promise<UserBusinessIntel> {
   try {
     const businessIntel = await db.userBusinessIntel.delete({

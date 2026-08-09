@@ -27,6 +27,7 @@ function mockUserOrg(roles: OrganizationRoles[]) {
     createdAt: new Date(),
     updatedAt: new Date(),
     calendarTokenId: null,
+    departmentTeamMemberId: null,
   });
 }
 
@@ -39,6 +40,7 @@ function mockUpdateSuccess(newRole: OrganizationRoles) {
     createdAt: new Date(),
     updatedAt: new Date(),
     calendarTokenId: null,
+    departmentTeamMemberId: null,
   });
 }
 
@@ -50,7 +52,7 @@ describe("changeUserRole", () => {
         organizationId: ORG_ID,
         newRole: OrganizationRoles.OWNER,
         callerRole: OrganizationRoles.OWNER,
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     await expect(
@@ -59,7 +61,7 @@ describe("changeUserRole", () => {
         organizationId: ORG_ID,
         newRole: OrganizationRoles.OWNER,
         callerRole: OrganizationRoles.OWNER,
-      })
+      }),
     ).rejects.toThrow(/Cannot assign Owner role/);
   });
 
@@ -72,7 +74,7 @@ describe("changeUserRole", () => {
         organizationId: ORG_ID,
         newRole: OrganizationRoles.BASE,
         callerRole: OrganizationRoles.OWNER,
-      })
+      }),
     ).rejects.toThrow(/not a member/);
   });
 
@@ -85,7 +87,7 @@ describe("changeUserRole", () => {
         organizationId: ORG_ID,
         newRole: OrganizationRoles.ADMIN,
         callerRole: OrganizationRoles.OWNER,
-      })
+      }),
     ).rejects.toThrow(/Cannot change the Owner's role/);
   });
 
@@ -98,7 +100,7 @@ describe("changeUserRole", () => {
         organizationId: ORG_ID,
         newRole: OrganizationRoles.ADMIN,
         callerRole: OrganizationRoles.ADMIN,
-      })
+      }),
     ).rejects.toThrow(/Only the workspace owner can promote/);
   });
 
@@ -111,7 +113,7 @@ describe("changeUserRole", () => {
         organizationId: ORG_ID,
         newRole: OrganizationRoles.BASE,
         callerRole: OrganizationRoles.ADMIN,
-      })
+      }),
     ).rejects.toThrow(/Only the workspace owner can change an Administrator/);
   });
 

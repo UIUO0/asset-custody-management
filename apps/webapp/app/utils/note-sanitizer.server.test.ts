@@ -23,7 +23,7 @@ describe("sanitizeNoteContent", () => {
       'Due {% date value="2023-12-25T10:30:00.000Z" includeTime=false /%} and scheduled {% date value="2023-12-25T10:30:00.000Z" /%}.';
 
     expect(sanitize(content)).toBe(
-      "Due 12/25/23 and scheduled 12/25/23, 10:30 AM."
+      "Due 12/25/23 and scheduled 12/25/23, 10:30 AM.",
     );
   });
 
@@ -63,7 +63,7 @@ Bold text with link and code const x = 1.`);
       '{% link to="/settings/team/users/94a8f5d8" text="Nikolayz Bonevz" /%} created a new reminder {% link to="/assets/asset-1/reminders?s=kekeroo" text="kekeroo" /%}.';
 
     expect(sanitize(content)).toBe(
-      "Nikolayz Bonevz created a new reminder kekeroo."
+      "Nikolayz Bonevz created a new reminder kekeroo.",
     );
   });
 
@@ -79,8 +79,8 @@ Bold text with link and code const x = 1.`);
     expect(
       sanitizeNoteContent(
         '{% date value="2024-01-15T12:00:00.000Z" includeTime=false /%}',
-        fallbackFormatter
-      )
+        fallbackFormatter,
+      ),
     ).toBe(dateOnly);
   });
 });

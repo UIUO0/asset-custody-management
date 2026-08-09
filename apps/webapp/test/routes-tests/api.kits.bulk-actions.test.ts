@@ -85,7 +85,7 @@ const requirePermissionMock = vi.mocked(requirePermission);
 const mockGetTeamMember = teamMemberServiceMocks.getTeamMember;
 
 function createActionArgs(
-  overrides: Partial<ActionFunctionArgs> = {}
+  overrides: Partial<ActionFunctionArgs> = {},
 ): ActionFunctionArgs {
   return {
     context: {
@@ -123,7 +123,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
       JSON.stringify({
         id: "foreign-team-member-123",
         name: "Foreign Team Member",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
@@ -133,7 +133,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
     });
 
     const response = (await action(
-      createActionArgs({ request })
+      createActionArgs({ request }),
     )) as unknown as Response;
 
     expect(response.status).toBe(404);
@@ -165,7 +165,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Valid Team Member",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
@@ -175,7 +175,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
     });
 
     const response = (await action(
-      createActionArgs({ request })
+      createActionArgs({ request }),
     )) as unknown as any;
 
     // Success case returns Response wrapping the payload
@@ -210,7 +210,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
       JSON.stringify({
         id: "team-member-456",
         name: "Other Team Member",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
@@ -220,7 +220,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
     });
 
     const response = (await action(
-      createActionArgs({ request })
+      createActionArgs({ request }),
     )) as unknown as Response;
 
     expect(response.status).toBe(403);
@@ -246,7 +246,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Self User",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
@@ -256,7 +256,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
     });
 
     const response = (await action(
-      createActionArgs({ request })
+      createActionArgs({ request }),
     )) as unknown as any;
 
     // Success case returns Response wrapping the payload
@@ -281,7 +281,7 @@ describe("api/kits/bulk-actions - bulk-assign-custody", () => {
     });
 
     const response = (await action(
-      createActionArgs({ request })
+      createActionArgs({ request }),
     )) as unknown as any;
 
     // Success case returns Response wrapping the payload

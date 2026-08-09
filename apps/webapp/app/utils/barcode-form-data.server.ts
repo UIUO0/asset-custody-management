@@ -11,7 +11,7 @@ export interface BarcodeFormData {
  * Handles form fields in the format: barcodes[0].type, barcodes[0].value, barcodes[0].id, etc.
  */
 export function extractBarcodesFromFormData(
-  formData: FormData
+  formData: FormData,
 ): BarcodeFormData[] {
   const barcodes: Array<{
     id?: string;
@@ -43,6 +43,6 @@ export function extractBarcodesFromFormData(
   // Filter out incomplete barcodes and return only valid ones
   return barcodes.filter(
     (barcode): barcode is BarcodeFormData =>
-      barcode.type !== null && !!barcode.value.trim()
+      barcode.type !== null && !!barcode.value.trim(),
   );
 }

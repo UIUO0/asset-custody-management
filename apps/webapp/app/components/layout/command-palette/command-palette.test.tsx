@@ -2,13 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   getAssetCommandValue,
-  getBookingCommandValue,
   getKitCommandValue,
   getLocationCommandValue,
   getTeamMemberCommandValue,
   getTeamMemberHref,
   type AssetSearchResult,
-  type BookingSearchResult,
   type KitSearchResult,
   type LocationSearchResult,
   type TeamMemberSearchResult,
@@ -79,39 +77,6 @@ describe("getKitCommandValue", () => {
 
     expect(value).toContain("kit-456");
     expect(value).toContain("Camera Kit");
-    expect(value).not.toContain("null");
-  });
-});
-
-describe("getBookingCommandValue", () => {
-  const baseBooking: BookingSearchResult = {
-    id: "booking-789",
-    name: "Photo Shoot",
-    description: "Wedding photography session",
-    status: "RESERVED",
-    custodianName: "John Doe",
-    from: new Date("2024-01-15T10:00:00Z"),
-    to: new Date("2024-01-15T18:00:00Z"),
-  };
-
-  it("includes the primary searchable fields", () => {
-    const value = getBookingCommandValue(baseBooking);
-
-    expect(value).toContain("booking-789");
-    expect(value).toContain("Photo Shoot");
-    expect(value).toContain("Wedding photography session");
-    expect(value).toContain("John Doe");
-  });
-
-  it("falls back gracefully when optional fields are missing", () => {
-    const value = getBookingCommandValue({
-      ...baseBooking,
-      description: null,
-      custodianName: null,
-    });
-
-    expect(value).toContain("booking-789");
-    expect(value).toContain("Photo Shoot");
     expect(value).not.toContain("null");
   });
 });
@@ -202,13 +167,13 @@ describe("getTeamMemberHref", () => {
 
   it("routes registered team members to their user settings page", () => {
     expect(getTeamMemberHref(registeredMember)).toBe(
-      "/settings/team/users/user-123"
+      "/settings/team/users/user-123",
     );
   });
 
   it("routes non-registered members to the NRM edit modal", () => {
     expect(getTeamMemberHref(nrmMember)).toBe(
-      "/settings/team/nrm/member-303/edit"
+      "/settings/team/nrm/member-303/edit",
     );
   });
 
@@ -217,7 +182,7 @@ describe("getTeamMemberHref", () => {
       getTeamMemberHref({
         ...registeredMember,
         userId: "",
-      })
+      }),
     ).toBe("/settings/team/users");
   });
 
@@ -226,7 +191,7 @@ describe("getTeamMemberHref", () => {
       getTeamMemberHref({
         ...nrmMember,
         id: "",
-      })
+      }),
     ).toBe("/settings/team/nrm");
   });
 });

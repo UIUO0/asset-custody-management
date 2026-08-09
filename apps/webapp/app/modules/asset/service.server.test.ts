@@ -1,4 +1,8 @@
-import { OrganizationRoles, type AssetIndexSettings } from "@prisma/client";
+import {
+  AssetLifecycleStage,
+  OrganizationRoles,
+  type AssetIndexSettings,
+} from "@prisma/client";
 import { describe, expect, it, vi, vitest, beforeEach } from "vitest";
 import { extractStoragePath } from "~/components/assets/asset-image/utils";
 import { db } from "~/database/db.server";
@@ -36,6 +40,8 @@ import {
   relinkAssetQrCode,
   renderBulkAssetTitle,
   updateAsset,
+  updateAssetBookingAvailability,
+  updateAssetLifecycleStage,
   uploadDuplicateAssetMainImage,
 } from "./service.server";
 
@@ -50,7 +56,7 @@ vitest.mock("~/database/db.server", () => ({
       .mockImplementation((callbackOrArray: unknown) =>
         typeof callbackOrArray === "function"
           ? (callbackOrArray as (tx: unknown) => unknown)(db)
-          : Promise.all(callbackOrArray as Promise<unknown>[])
+          : Promise.all(callbackOrArray as Promise<unknown>[]),
       ),
     asset: {
       findFirst: vitest.fn().mockResolvedValue(null),
@@ -129,6 +135,13 @@ vitest.mock("~/database/db.server", () => ({
       findFirst: vitest
         .fn()
         .mockResolvedValue({ firstName: "John", lastName: "Doe" }),
+      // why: `updateAssetLifecycleStage` resolves the actor for the asset-history
+      // note through `findUniqueOrThrow`, not `findFirst`.
+      findUniqueOrThrow: vitest.fn().mockResolvedValue({
+        id: "user-1",
+        firstName: "John",
+        lastName: "Doe",
+      }),
     },
   },
 }));
@@ -157,7 +170,7 @@ vitest.mock("./bulk-operations-helper.server", () => ({
   resolveAssetIdsForBulkOperation: vitest
     .fn()
     .mockImplementation(({ assetIds }: { assetIds: string[] }) =>
-      Promise.resolve(assetIds)
+      Promise.resolve(assetIds),
     ),
 }));
 
@@ -165,7 +178,7 @@ vitest.mock("./bulk-operations-helper.server", () => ({
 // being rejected by the org-scoped guard inside updateAsset.
 vitest.mock("~/modules/category/service.server", async () => {
   const actual = await vitest.importActual<Record<string, unknown>>(
-    "~/modules/category/service.server"
+    "~/modules/category/service.server",
   );
   return {
     ...actual,
@@ -193,14 +206,14 @@ vitest.mock("~/integrations/supabase/client", () => ({
 // why: control storage path extraction for refreshExpiredAssetImages tests
 vitest.mock("~/components/assets/asset-image/utils", async () => {
   const actual = await vitest.importActual<Record<string, unknown>>(
-    "~/components/assets/asset-image/utils"
+    "~/components/assets/asset-image/utils",
   );
   return {
     ...actual,
     extractStoragePath: vitest
       .fn()
       .mockImplementation(
-        actual.extractStoragePath as (...args: unknown[]) => unknown
+        actual.extractStoragePath as (...args: unknown[]) => unknown,
       ),
   };
 });
@@ -208,7 +221,7 @@ vitest.mock("~/components/assets/asset-image/utils", async () => {
 // why: avoid generating signed URLs during uploadDuplicateAssetMainImage tests
 vitest.mock("~/utils/storage.server", async () => {
   const actual = await vitest.importActual<Record<string, unknown>>(
-    "~/utils/storage.server"
+    "~/utils/storage.server",
   );
   return {
     ...actual,
@@ -285,7 +298,7 @@ describe("relinkAssetQrCode (asset)", () => {
         assetId: "asset-1",
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
   });
 
@@ -334,7 +347,7 @@ describe("uploadDuplicateAssetMainImage", () => {
     ]);
     const arrayBuffer = pngHeader.buffer.slice(
       pngHeader.byteOffset,
-      pngHeader.byteOffset + pngHeader.byteLength
+      pngHeader.byteOffset + pngHeader.byteLength,
     );
 
     const download = vitest.fn().mockResolvedValue({
@@ -370,7 +383,7 @@ describe("uploadDuplicateAssetMainImage", () => {
     const result = await uploadDuplicateAssetMainImage(
       "https://example.supabase.co/storage/v1/object/sign/assets/user-1/asset-1/main-image-123?token=abc",
       "asset-1",
-      "user-1"
+      "user-1",
     );
 
     expect(result).toBe("signed-url");
@@ -378,7 +391,7 @@ describe("uploadDuplicateAssetMainImage", () => {
     expect(upload).toHaveBeenCalledWith(
       expect.stringContaining("user-1/asset-1/main-image-"),
       expect.any(Buffer),
-      { contentType: "image/png", upsert: true }
+      { contentType: "image/png", upsert: true },
     );
     expect(createSignedUrl).toHaveBeenCalledWith({
       filename: "user-1/asset-1/main-image-123",
@@ -393,11 +406,11 @@ describe("uploadDuplicateAssetMainImage", () => {
         statusCode: "400",
         error: "InvalidJWT",
         message: '"exp" claim timestamp check failed',
-      })
+      }),
     );
     const arrayBuffer = jsonPayload.buffer.slice(
       jsonPayload.byteOffset,
-      jsonPayload.byteOffset + jsonPayload.byteLength
+      jsonPayload.byteOffset + jsonPayload.byteLength,
     );
 
     const download = vitest.fn().mockResolvedValue({
@@ -424,8 +437,8 @@ describe("uploadDuplicateAssetMainImage", () => {
       uploadDuplicateAssetMainImage(
         "https://example.supabase.co/storage/v1/object/sign/assets/user-1/asset-1/main-image-123?token=abc",
         "asset-1",
-        "user-1"
-      )
+        "user-1",
+      ),
     ).rejects.toBeInstanceOf(ShelfError);
 
     expect(upload).not.toHaveBeenCalled();
@@ -453,7 +466,7 @@ describe("refreshExpiredAssetImages", () => {
       mainImage: string | null;
       mainImageExpiration: Date | null;
       thumbnailImage: string | null;
-    }> = {}
+    }> = {},
   ) => ({
     id: "asset-1",
     organizationId: "org-1",
@@ -499,7 +512,7 @@ describe("refreshExpiredAssetImages", () => {
           mainImage: "https://new-main-url.com",
           thumbnailImage: "https://new-thumbnail-url.com",
         }),
-      })
+      }),
     );
   });
 
@@ -518,7 +531,7 @@ describe("refreshExpiredAssetImages", () => {
         data: expect.objectContaining({
           mainImageExpiration: expect.any(Date),
         }),
-      })
+      }),
     );
     expect(mockCreateSignedUrl).not.toHaveBeenCalled();
   });
@@ -529,7 +542,7 @@ describe("refreshExpiredAssetImages", () => {
         cause: new Error("rate limited"),
         message: "Failed to create signed URL",
         label: "Assets",
-      })
+      }),
     );
     const assets = [makeAsset()];
 
@@ -544,7 +557,7 @@ describe("refreshExpiredAssetImages", () => {
         data: expect.objectContaining({
           mainImageExpiration: expect.any(Date),
         }),
-      })
+      }),
     );
   });
 
@@ -553,8 +566,8 @@ describe("refreshExpiredAssetImages", () => {
     mockUpdate.mockRejectedValue(
       new ActualPrisma.PrismaClientKnownRequestError(
         "Record to update not found",
-        { code: "P2025", clientVersion: "5.0.0" }
-      )
+        { code: "P2025", clientVersion: "5.0.0" },
+      ),
     );
     const assets = [makeAsset()];
 
@@ -582,7 +595,7 @@ describe("createAsset quantity validation", () => {
         type: "QUANTITY_TRACKED",
         consumptionType: "ONE_WAY",
         // quantity intentionally omitted
-      })
+      }),
     ).rejects.toThrow("Quantity is required for quantity-tracked assets");
   });
 
@@ -598,9 +611,9 @@ describe("createAsset quantity validation", () => {
         type: "QUANTITY_TRACKED",
         quantity: 100,
         // consumptionType intentionally omitted
-      })
+      }),
     ).rejects.toThrow(
-      "Consumption type is required for quantity-tracked assets"
+      "Consumption type is required for quantity-tracked assets",
     );
   });
 
@@ -619,11 +632,11 @@ describe("createAsset quantity validation", () => {
         organizationId: "org-1",
         type: "INDIVIDUAL",
         // No quantity or consumptionType — should not throw validation error
-      })
+      }),
     ).rejects.toThrow(
       expect.objectContaining({
         message: expect.not.stringContaining("Quantity is required"),
-      })
+      }),
     );
   });
 });
@@ -723,7 +736,7 @@ describe("checkOutQuantity — availability accounting", () => {
     expect(mockCustodyCreate).toHaveBeenCalledTimes(1);
     expect(mockCreateConsumptionLog).toHaveBeenCalledTimes(1);
     expect(mockCreateConsumptionLog).toHaveBeenCalledWith(
-      expect.objectContaining({ category: "CHECKOUT" })
+      expect.objectContaining({ category: "CHECKOUT" }),
     );
   });
 
@@ -752,7 +765,7 @@ describe("checkOutQuantity — availability accounting", () => {
           booking: { status: { in: ["ONGOING", "OVERDUE"] } },
         }),
         _sum: { quantity: true },
-      })
+      }),
     );
     expect(mockCustodyCreate).toHaveBeenCalledTimes(1);
     expect(mockCreateConsumptionLog).toHaveBeenCalledTimes(1);
@@ -813,7 +826,7 @@ describe("checkOutQuantity — activity events", () => {
         meta: { quantity: 5, viaQuantity: true },
       }),
       // Second arg is the tx client — assert it's truthy (the mocked db).
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -833,7 +846,7 @@ describe("checkOutQuantity — activity events", () => {
         action: "CUSTODY_ASSIGNED",
         targetUserId: undefined,
       }),
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -897,7 +910,7 @@ describe("releaseQuantity — activity events", () => {
         targetUserId: "user-42",
         meta: { quantity: 4, viaQuantity: true },
       }),
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -953,7 +966,7 @@ describe("releaseQuantity — activity events", () => {
     expect(mockAssetUpdate).not.toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: "AVAILABLE" }),
-      })
+      }),
     );
   });
 });
@@ -1149,7 +1162,7 @@ describe("bulkAssignAssetTags — activity events", () => {
         field: "tags",
         fromValue: ["tag-a"],
         toValue: ["tag-a", "tag-b"],
-      })
+      }),
     );
   });
 });
@@ -1179,7 +1192,7 @@ describe("updateAsset cross-org guards", () => {
           "The category you are trying to access does not exist or you do not have permission to access it.",
         label: "Category",
         status: 404,
-      })
+      }),
     );
 
     await expect(
@@ -1188,7 +1201,7 @@ describe("updateAsset cross-org guards", () => {
         userId: "user-1",
         organizationId: "org-A",
         categoryId: "category-from-org-B",
-      } as any)
+      } as any),
     ).rejects.toThrow();
 
     expect(getCategory).toHaveBeenCalledWith({
@@ -1200,7 +1213,7 @@ describe("updateAsset cross-org guards", () => {
   it("rejects newLocationId from a different organization", async () => {
     // location.findFirst returns null when scoped by org → guard throws
     (db.location.findFirst as ReturnType<typeof vitest.fn>).mockResolvedValue(
-      null
+      null,
     );
 
     await expect(
@@ -1210,7 +1223,7 @@ describe("updateAsset cross-org guards", () => {
         organizationId: "org-A",
         newLocationId: "location-from-org-B",
         currentLocationId: "current-loc-A",
-      } as any)
+      } as any),
     ).rejects.toThrow();
 
     expect(db.location.findFirst).toHaveBeenCalledWith({
@@ -1227,7 +1240,7 @@ describe("updateAsset cross-org guards", () => {
       db.assetCustomFieldValue.findMany as ReturnType<typeof vitest.fn>
     ).mockResolvedValue([]);
     (db.customField.findMany as ReturnType<typeof vitest.fn>).mockResolvedValue(
-      []
+      [],
     );
 
     await expect(
@@ -1236,7 +1249,7 @@ describe("updateAsset cross-org guards", () => {
         userId: "user-1",
         organizationId: "org-A",
         customFieldsValues: [{ id: "cf-from-org-B", value: { raw: "x" } }],
-      } as any)
+      } as any),
     ).rejects.toThrow(ShelfError);
 
     expect(db.customField.findMany).toHaveBeenCalledWith({
@@ -1256,7 +1269,7 @@ describe("createAsset cross-org guards", () => {
     // Foreign-org custom field → org-scoped lookup returns nothing → the guard
     // (run inside the create transaction) rejects before the asset is written.
     (db.customField.findMany as ReturnType<typeof vitest.fn>).mockResolvedValue(
-      []
+      [],
     );
 
     await expect(
@@ -1265,7 +1278,7 @@ describe("createAsset cross-org guards", () => {
         userId: "user-1",
         organizationId: "org-A",
         customFieldsValues: [{ id: "cf-from-org-B", value: { raw: "x" } }],
-      } as any)
+      } as any),
     ).rejects.toThrow(ShelfError);
 
     expect(db.customField.findMany).toHaveBeenCalledWith({
@@ -1310,7 +1323,7 @@ describe("updateAsset custom-field writes", () => {
       [
         { id: "cf-existing", name: "Existing", type: "TEXT" },
         { id: "cf-new", name: "New", type: "TEXT" },
-      ]
+      ],
     );
 
     await updateAsset({
@@ -1362,7 +1375,7 @@ describe("updateAsset newLocationQuantity", () => {
         type: "QUANTITY_TRACKED",
         quantity: 80,
         assetKits: [],
-      }
+      },
     );
 
     // Org-scope check passes so the validator gets a chance to run.
@@ -1379,7 +1392,7 @@ describe("updateAsset newLocationQuantity", () => {
         currentLocationId: "loc-2",
         // 100 > 80 — should throw before the transaction runs.
         newLocationQuantity: 100,
-      } as any)
+      } as any),
     ).rejects.toMatchObject({
       status: 400,
       title: "Quantity exceeds available pool",
@@ -1426,7 +1439,7 @@ describe("bulkCheckOutAssets — SELF_SERVICE guard", () => {
           lastName: "Person",
           displayName: null,
         },
-      }
+      },
     );
 
     let caught: unknown;
@@ -1447,7 +1460,7 @@ describe("bulkCheckOutAssets — SELF_SERVICE guard", () => {
     expect(caught).toBeInstanceOf(ShelfError);
     expect((caught as ShelfError).status).toBe(403);
     expect((caught as ShelfError).message).toContain(
-      "Self user can only assign custody to themselves"
+      "Self user can only assign custody to themselves",
     );
   });
 
@@ -1469,7 +1482,7 @@ describe("bulkCheckOutAssets — SELF_SERVICE guard", () => {
           lastName: "User",
           displayName: null,
         },
-      }
+      },
     );
 
     // Should not throw the 403; downstream calls may stub-fail but the
@@ -1509,7 +1522,7 @@ describe("bulkCheckOutAssets — SELF_SERVICE guard", () => {
           lastName: "B",
           displayName: null,
         },
-      }
+      },
     );
 
     let threw403 = false;
@@ -1547,7 +1560,7 @@ describe("bulkCheckOutAssets — SELF_SERVICE guard", () => {
           lastName: "B",
           displayName: null,
         },
-      }
+      },
     );
 
     let threw403 = false;
@@ -1602,7 +1615,7 @@ describe("parseAssetValuation", () => {
       expect.objectContaining({
         status: 400,
         message: "Value must be a valid number",
-      })
+      }),
     );
   });
 
@@ -1659,7 +1672,7 @@ describe("getActiveCustomFieldsForAsset", () => {
       getActiveCustomFieldsForAsset({
         id: "asset-from-other-org",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrowError(expect.objectContaining({ status: 404 }));
     expect(getActiveCustomFieldsMock).not.toHaveBeenCalled();
   });
@@ -1737,10 +1750,10 @@ describe("bulkUpdateAssetCategory", () => {
           toValue: "cat-new",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
     expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0]
+      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
     ).toHaveLength(2);
   });
 
@@ -1779,7 +1792,7 @@ describe("bulkUpdateAssetCategory", () => {
         categoryId: "foreign-cat",
         // @ts-expect-error settings not relevant for this test
         settings: {},
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -1835,10 +1848,10 @@ describe("bulkAssignAssetTags", () => {
           assetId: "asset-2",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
     expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0]
+      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
     ).toHaveLength(2);
   });
 
@@ -1857,7 +1870,7 @@ describe("bulkAssignAssetTags", () => {
         remove: false,
         // @ts-expect-error settings not relevant for this test
         settings: {},
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -1924,10 +1937,10 @@ describe("bulkDeleteAssets", () => {
           assetId: "asset-2",
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
     expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0]
+      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
     ).toHaveLength(2);
   });
 
@@ -1979,7 +1992,7 @@ describe("custody SELF_SERVICE self-restriction (bulk services)", () => {
   it("blocks a SELF_SERVICE user from assigning custody to someone else", async () => {
     // why: the custodian resolves to a DIFFERENT user than the caller.
     (db.teamMember.findFirst as ReturnType<typeof vitest.fn>).mockResolvedValue(
-      { name: "Other Person", user: { id: "other-user" } }
+      { name: "Other Person", user: { id: "other-user" } },
     );
 
     await expect(
@@ -1991,7 +2004,7 @@ describe("custody SELF_SERVICE self-restriction (bulk services)", () => {
         custodianName: "Other Person",
         organizationId: "org-1",
         settings: fakeSettings,
-      })
+      }),
     ).rejects.toThrow("Self user can only assign custody to themselves only");
 
     // The mutation must never run.
@@ -2011,7 +2024,7 @@ describe("custody SELF_SERVICE self-restriction (bulk services)", () => {
 describe("renderBulkAssetTitle", () => {
   it("substitutes the {i} token with the index value", () => {
     expect(renderBulkAssetTitle("Dell Latitude {i}", 5)).toBe(
-      "Dell Latitude 5"
+      "Dell Latitude 5",
     );
   });
 
@@ -2174,7 +2187,7 @@ describe("moveAssetLocationUnits", () => {
     // org-scope guard passes by default.
     mockAssetFindMany.mockImplementation(
       ({ where }: { where: { id: { in: string[] } } }) =>
-        Promise.resolve(where.id.in.map((id) => ({ id })))
+        Promise.resolve(where.id.in.map((id) => ({ id }))),
     );
     // why: `assertLocationBelongsToOrg` runs `db.location.findFirst` —
     // by default return the queried id so both src/dest validate. Also
@@ -2182,7 +2195,7 @@ describe("moveAssetLocationUnits", () => {
     // sequence at the end of the service.
     mockLocationFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
-        Promise.resolve({ id: where.id, name: where.id })
+        Promise.resolve({ id: where.id, name: where.id }),
     );
   });
 
@@ -2198,7 +2211,7 @@ describe("moveAssetLocationUnits", () => {
     expect(result.toQuantity).toBe(25);
     expect(result.sourceRowDeleted).toBe(false);
     expect(result.moveCorrelationId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
 
     expect(mockAssetLocationUpdate).toHaveBeenCalledWith({
@@ -2275,7 +2288,7 @@ describe("moveAssetLocationUnits", () => {
     // Both halves of the move share the same correlation id, AND it
     // matches the one returned to the caller.
     expect(events[0].meta.moveCorrelationId).toBe(
-      events[1].meta.moveCorrelationId
+      events[1].meta.moveCorrelationId,
     );
     expect(events[0].meta.moveCorrelationId).toBe(result.moveCorrelationId);
   });
@@ -2328,7 +2341,7 @@ describe("moveAssetLocationUnits", () => {
     expect(err).toBeInstanceOf(ShelfError);
     expect((err as ShelfError).status).toBe(400);
     expect((err as ShelfError).message).toContain(
-      "not placed at the source location"
+      "not placed at the source location",
     );
   });
 
@@ -2369,8 +2382,8 @@ describe("moveAssetLocationUnits", () => {
     mockLocationFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
         Promise.resolve(
-          where.id === "loc-to" ? null : { id: where.id, name: where.id }
-        )
+          where.id === "loc-to" ? null : { id: where.id, name: where.id },
+        ),
     );
 
     const err = await moveAssetLocationUnits(baseArgs).catch((e) => e);
@@ -2444,11 +2457,11 @@ describe("placeUnplacedUnits", () => {
     (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({});
     mockAssetFindMany.mockImplementation(
       ({ where }: { where: { id: { in: string[] } } }) =>
-        Promise.resolve(where.id.in.map((id) => ({ id })))
+        Promise.resolve(where.id.in.map((id) => ({ id }))),
     );
     mockLocationFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
-        Promise.resolve({ id: where.id, name: where.id })
+        Promise.resolve({ id: where.id, name: where.id }),
     );
   });
 
@@ -2462,7 +2475,7 @@ describe("placeUnplacedUnits", () => {
 
     expect(result.toQuantity).toBe(10);
     expect(result.moveCorrelationId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
     expect(mockAssetLocationCreate).toHaveBeenCalledWith({
       data: {
@@ -2557,8 +2570,8 @@ describe("placeUnplacedUnits", () => {
     mockLocationFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
         Promise.resolve(
-          where.id === "loc-office" ? null : { id: where.id, name: where.id }
-        )
+          where.id === "loc-office" ? null : { id: where.id, name: where.id },
+        ),
     );
 
     const err = await placeUnplacedUnits(baseArgs).catch((e) => e);
@@ -2838,14 +2851,14 @@ describe("setKitCustodyAfterAssetImport — kit custody + member inheritance", (
         custodianName: "Alice",
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     );
     expect(mockBulkAssignKitCustody).toHaveBeenCalledWith(
       expect.objectContaining({
         kitIds: ["kit-2"],
         custodianId: "tm-2",
         custodianName: "Bob",
-      })
+      }),
     );
   });
 
@@ -2862,5 +2875,184 @@ describe("setKitCustodyAfterAssetImport — kit custody + member inheritance", (
     });
 
     expect(mockBulkAssignKitCustody).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Approval and booking availability.
+ *
+ * These two fields answer different questions — `lifecycleStage` is the intake
+ * gate (visible, holdable, bookable at all), while `availableToBook` governs
+ * bookings only and is ignored entirely by custody. But they used to have no
+ * relationship, which produced a screen with two controls that both read as
+ * "make this usable" and an approved asset that could sit in circulation with
+ * booking quietly switched off.
+ *
+ * Approval now opens booking as part of releasing the asset. The tests below
+ * pin both halves of that, because the second is what keeps the toggle
+ * meaningful rather than merely coupling the fields:
+ *
+ *   1. Approving sets `availableToBook`.
+ *   2. It is a *one-time* effect at the moment of approval — not a lock. The
+ *      warehouse can still withdraw an asset from booking afterwards (a printer
+ *      bolted to a desk, a laptop held as permanent custody).
+ *
+ * @see {@link file://./service.server.ts} `updateAssetLifecycleStage`, `bulkApproveAssets`
+ */
+describe("approval opens booking availability", () => {
+  const baseArgs = {
+    id: "asset-1",
+    organizationId: "org-1",
+    userId: "user-1",
+  };
+
+  beforeEach(() => {
+    vitest.clearAllMocks();
+    (
+      db.user.findUniqueOrThrow as ReturnType<typeof vitest.fn>
+    ).mockResolvedValue({ id: "user-1", firstName: "John", lastName: "Doe" });
+  });
+
+  it("makes an approved asset bookable in the same write", async () => {
+    (db.asset.findFirst as ReturnType<typeof vitest.fn>).mockResolvedValue({
+      id: "asset-1",
+      title: "Laptop",
+      lifecycleStage: AssetLifecycleStage.PENDING,
+    });
+    (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({});
+
+    await updateAssetLifecycleStage({
+      ...baseArgs,
+      stage: AssetLifecycleStage.READY,
+    });
+
+    expect(db.asset.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          lifecycleStage: AssetLifecycleStage.READY,
+          availableToBook: true,
+        },
+      }),
+    );
+  });
+
+  it("leaves booking availability alone when sending an asset back for review", async () => {
+    // The stage already blocks everything, so clearing the flag here would
+    // silently discard a deliberate "not bookable" decision — and it would
+    // come back wrong if the asset were later re-approved.
+    (db.asset.findFirst as ReturnType<typeof vitest.fn>).mockResolvedValue({
+      id: "asset-1",
+      title: "Laptop",
+      lifecycleStage: AssetLifecycleStage.READY,
+    });
+    (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({});
+
+    await updateAssetLifecycleStage({
+      ...baseArgs,
+      stage: AssetLifecycleStage.PENDING,
+      reason: "Missing financial coding",
+    });
+
+    const updateArg = (db.asset.update as ReturnType<typeof vitest.fn>).mock
+      .calls[0]![0] as { data: Record<string, unknown> };
+    expect(updateArg.data).not.toHaveProperty("availableToBook");
+  });
+
+  it("keeps the toggle usable after approval — the coupling is not a lock", async () => {
+    // The whole point of leaving the switch on the page: an asset can be in
+    // circulation and still not be something you book by date.
+    (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({});
+
+    await updateAssetBookingAvailability({
+      id: "asset-1",
+      organizationId: "org-1",
+      availableToBook: false,
+    });
+
+    expect(db.asset.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { availableToBook: false } }),
+    );
+  });
+});
+
+describe("getAssets — excludeCurrentlyBooked", () => {
+  const findManyMock = vi.mocked(db.asset.findMany);
+  const countMock = vi.mocked(db.asset.count);
+
+  const baseParams = {
+    organizationId: "org-1",
+    page: 1,
+    perPage: 8,
+    orderBy: "createdAt" as const,
+    orderDirection: "desc" as const,
+  };
+
+  /** The `where` handed to Prisma by the call under test. */
+  const whereOf = () => (findManyMock.mock.calls[0][0] as any).where;
+
+  /** The two branches of the "is something holding this?" predicate. */
+  const branches = () => whereOf().bookingAssets.none.booking.OR;
+
+  beforeEach(() => {
+    findManyMock.mockReset();
+    countMock.mockReset();
+    findManyMock.mockResolvedValue([] as never);
+    countMock.mockResolvedValue(0 as never);
+  });
+
+  it("adds no booking clause unless asked", async () => {
+    // Every pre-existing caller must keep its behaviour: the main inventory
+    // index would otherwise start hiding reserved stock.
+    await getAssets({ ...baseParams });
+
+    expect(whereOf().bookingAssets).toBeUndefined();
+  });
+
+  it("hides an asset reserved for a window containing now", async () => {
+    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
+
+    const reserved = branches().find((b: any) => b.status === "RESERVED");
+
+    expect(reserved.from.lte).toBeInstanceOf(Date);
+    expect(reserved.to.gte).toBeInstanceOf(Date);
+  });
+
+  it("hides an asset that is out, regardless of its end date", async () => {
+    // The bug this replaced: OVERDUE was ANDed with `to >= now`, but a booking
+    // is overdue precisely because it is past `to` — so the branch could never
+    // fire and an unreturned item still read as available.
+    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
+
+    const out = branches().find((b: any) => Array.isArray(b.status?.in));
+
+    expect(out.status.in).toEqual(
+      expect.arrayContaining(["ONGOING", "OVERDUE"]),
+    );
+    // No window test on this branch — that is the whole point.
+    expect(out.from).toBeUndefined();
+    expect(out.to).toBeUndefined();
+  });
+
+  it("does not let a DRAFT booking hide an asset", async () => {
+    // A draft is unsubmitted and holds nothing. If drafts hid stock, one
+    // employee could empty the catalogue with drafts they never submit.
+    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
+
+    const mentionsDraft = JSON.stringify(branches()).includes("DRAFT");
+
+    expect(mentionsDraft).toBe(false);
+  });
+
+  it("bounds the reserved window to this instant, so a future booking hides nothing", async () => {
+    const before = Date.now();
+    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
+    const after = Date.now();
+
+    const reserved = branches().find((b: any) => b.status === "RESERVED");
+
+    // `from <= now <= to` selects only bookings straddling the present.
+    expect(reserved.from.lte.getTime()).toBeGreaterThanOrEqual(before);
+    expect(reserved.from.lte.getTime()).toBeLessThanOrEqual(after);
+    expect(reserved.to.gte.getTime()).toEqual(reserved.from.lte.getTime());
   });
 });

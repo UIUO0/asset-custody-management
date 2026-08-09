@@ -14,5 +14,5 @@ export default remixRoutesOptionAdapter((defineRoutes) =>
     // into the SSR server build, which then throws "vitest is not defined" at
     // runtime (the test-only global doesn't exist outside the vitest env).
     ignoredRouteFiles: ["**/.*", "**/*.test.*"],
-  })
+  }),
 );

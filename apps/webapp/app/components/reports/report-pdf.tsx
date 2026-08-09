@@ -19,7 +19,6 @@ import { Spinner } from "~/components/shared/spinner";
 import useApiQuery from "~/hooks/use-api-query";
 import type {
   ReportPdfMeta,
-  CompliancePdfMeta,
   AssetInventoryPdfMeta,
   CustodySnapshotPdfMeta,
 } from "~/modules/reports/types";
@@ -183,9 +182,6 @@ function ReportPreview({
         ref={componentRef}
       >
         {/* Route to specific preview based on reportId */}
-        {pdfMeta.reportId === "booking-compliance" && (
-          <CompliancePreview pdfMeta={pdfMeta as CompliancePdfMeta} />
-        )}
         {pdfMeta.reportId === "asset-inventory" && (
           <AssetInventoryPreview pdfMeta={pdfMeta as AssetInventoryPdfMeta} />
         )}
@@ -341,176 +337,6 @@ function AssetStatusBadge({ status }: { status: string }) {
 // =============================================================================
 // Compliance Report Preview (existing)
 // =============================================================================
-
-function CompliancePreview({ pdfMeta }: { pdfMeta: CompliancePdfMeta }) {
-  return (
-    <>
-      <ReportHeader pdfMeta={pdfMeta} subtitle={pdfMeta.timeframeLabel} />
-
-      {/* Summary Metrics */}
-      <section className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">Summary</h2>
-        <div className="flex gap-6">
-          <MetricBox
-            label="Compliance Rate"
-            value={`${pdfMeta.complianceRate}%`}
-            highlight
-          />
-          <MetricBox label="On-time" value={pdfMeta.onTimeCount} />
-          <MetricBox label="Late" value={pdfMeta.lateCount} />
-          <MetricBox label="Total" value={pdfMeta.totalCount} />
-          {pdfMeta.overdueCount > 0 && (
-            <MetricBox
-              label="Currently Overdue"
-              value={pdfMeta.overdueCount}
-              warning
-            />
-          )}
-        </div>
-        {pdfMeta.priorPeriod && pdfMeta.priorPeriod.delta !== 0 && (
-          <p className="mt-2 text-xs text-gray-500">
-            {pdfMeta.priorPeriod.delta > 0 ? "+" : ""}
-            {pdfMeta.priorPeriod.delta}% vs {pdfMeta.priorPeriod.periodLabel}
-          </p>
-        )}
-      </section>
-
-      {/* Team Performance */}
-      {pdfMeta.custodianPerformance.length > 0 && (
-        <section className="mb-6">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">
-            Team Member Performance
-          </h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-gray-200 text-left text-xs text-gray-500">
-                <th className="pb-2">Name</th>
-                <th className="pb-2 text-right">Rate</th>
-                <th className="pb-2 text-right">On-time</th>
-                <th className="pb-2 text-right">Late</th>
-                <th className="pb-2 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pdfMeta.custodianPerformance.map((c) => (
-                <tr
-                  key={c.custodianId ?? c.custodianName}
-                  className="border-b border-gray-100"
-                >
-                  <td className="py-1.5">{c.custodianName}</td>
-                  <td className="py-1.5 text-right">{c.rate}%</td>
-                  <td className="py-1.5 text-right">{c.onTime}</td>
-                  <td className="py-1.5 text-right">{c.late}</td>
-                  <td className="py-1.5 text-right">{c.total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-
-      {/* Bookings Table */}
-      <section>
-        <h2 className="mb-3 text-sm font-semibold text-gray-700">
-          Booking Details
-          <span className="ml-2 font-normal text-gray-400">
-            ({pdfMeta.rows.length.toLocaleString()})
-          </span>
-        </h2>
-        <table className="report-table w-full border border-gray-200 text-xs">
-          <thead>
-            <tr className="bg-gray-50 text-left">
-              <th className="border-b border-gray-200 p-2">Booking</th>
-              <th className="border-b border-gray-200 p-2">Status</th>
-              <th className="border-b border-gray-200 p-2">Custodian</th>
-              <th className="border-b border-gray-200 p-2 text-right">
-                Assets
-              </th>
-              <th className="border-b border-gray-200 p-2">Due</th>
-              <th className="border-b border-gray-200 p-2">Return Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pdfMeta.rows.map((row) => (
-              <tr key={row.bookingId}>
-                <td className="border-b border-gray-100 p-2">
-                  {row.bookingName}
-                </td>
-                <td className="border-b border-gray-100 p-2">
-                  <BookingStatusBadge status={row.status} />
-                </td>
-                <td className="border-b border-gray-100 p-2">
-                  {row.custodian || "—"}
-                </td>
-                <td className="border-b border-gray-100 p-2 text-right">
-                  {row.assetCount}
-                </td>
-                <td className="border-b border-gray-100 p-2">
-                  {row.scheduledEnd}
-                </td>
-                <td className="border-b border-gray-100 p-2">
-                  <ReturnStatusBadge
-                    returnStatus={row.returnStatus}
-                    isOnTime={row.isOnTime}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </>
-  );
-}
-
-function BookingStatusBadge({ status }: { status: string }) {
-  const labels: Record<string, string> = {
-    DRAFT: "Draft",
-    RESERVED: "Reserved",
-    ONGOING: "Ongoing",
-    OVERDUE: "Overdue",
-    COMPLETE: "Complete",
-    CANCELLED: "Cancelled",
-    ARCHIVED: "Archived",
-  };
-
-  const colors: Record<string, string> = {
-    COMPLETE: "bg-green-100 text-green-800",
-    OVERDUE: "bg-red-100 text-red-800",
-    ONGOING: "bg-blue-100 text-blue-800",
-    RESERVED: "bg-yellow-100 text-yellow-900",
-  };
-
-  return (
-    <span
-      className={tw(
-        "inline-block rounded px-1.5 py-0.5 text-xs font-medium",
-        colors[status] || "bg-gray-100 text-gray-600",
-      )}
-    >
-      {labels[status] || status}
-    </span>
-  );
-}
-
-function ReturnStatusBadge({
-  returnStatus,
-  isOnTime,
-}: {
-  returnStatus: string;
-  isOnTime: boolean;
-}) {
-  return (
-    <span
-      className={tw(
-        "inline-block rounded px-1.5 py-0.5 text-xs font-medium",
-        isOnTime ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800",
-      )}
-    >
-      {returnStatus}
-    </span>
-  );
-}
 
 // =============================================================================
 // Asset Inventory Preview

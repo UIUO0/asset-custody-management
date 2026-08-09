@@ -101,7 +101,7 @@ export async function loader({ context, request }: ActionFunctionArgs) {
         assets: assetsWithQrObj,
         qrIdDisplayPreference: currentOrganization.qrIdDisplayPreference,
         showShelfBranding: currentOrganization.showShelfBranding,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

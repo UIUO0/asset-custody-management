@@ -104,7 +104,7 @@ describe("/api/feedback", () => {
 
     (sendFeedbackEmail as any).mockResolvedValue(undefined);
     (getPublicFileURL as any).mockReturnValue(
-      "https://storage.example.com/file.png"
+      "https://storage.example.com/file.png",
     );
   });
 
@@ -116,7 +116,7 @@ describe("/api/feedback", () => {
       });
 
       const result = await action(
-        createActionArgs({ request, context: mockContext })
+        createActionArgs({ request, context: mockContext }),
       );
 
       expect(result instanceof Response).toBe(true);
@@ -160,7 +160,7 @@ describe("/api/feedback", () => {
             fit: "inside",
             withoutEnlargement: true,
           },
-        })
+        }),
       );
     });
 
@@ -178,7 +178,7 @@ describe("/api/feedback", () => {
         expect.objectContaining({
           currentUrl:
             "https://app.shelf.nu/reset-password?token=redacted&search=laptop",
-        })
+        }),
       );
     });
 
@@ -211,7 +211,7 @@ describe("/api/feedback", () => {
             errorTitle: "Kit error",
             errorMessage: "Something went wrong while fetching the kit",
           },
-        })
+        }),
       );
     });
 
@@ -238,7 +238,7 @@ describe("/api/feedback", () => {
       });
 
       expect(sendFeedbackEmail).toHaveBeenCalledWith(
-        expect.objectContaining({ organizationName: "Acme Corp" })
+        expect.objectContaining({ organizationName: "Acme Corp" }),
       );
     });
 
@@ -255,7 +255,7 @@ describe("/api/feedback", () => {
       (makeShelfError as any).mockReturnValue(shelfError);
 
       const result = await action(
-        createActionArgs({ request, context: mockContext })
+        createActionArgs({ request, context: mockContext }),
       );
 
       expect(result instanceof Response).toBe(true);
@@ -274,7 +274,7 @@ describe("/api/feedback", () => {
       (makeShelfError as any).mockReturnValue(shelfError);
 
       const result = await action(
-        createActionArgs({ request, context: mockContext })
+        createActionArgs({ request, context: mockContext }),
       );
 
       expect(result instanceof Response).toBe(true);
@@ -305,7 +305,7 @@ describe("/api/feedback", () => {
       expect(sendFeedbackEmail).toHaveBeenCalledWith(
         expect.objectContaining({
           screenshotUrl: "https://storage.example.com/file.png",
-        })
+        }),
       );
     });
   });

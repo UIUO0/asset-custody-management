@@ -9,7 +9,7 @@ import { getWeekStartingAndEndingDates } from "./date-fns";
 export function getStatusClasses(
   status: BookingStatus,
   oneDayEvent: boolean = false,
-  viewType?: string
+  viewType?: string,
 ) {
   /** Default classes */
   const classes = [
@@ -102,7 +102,7 @@ export const statusClassesOnHover: Record<BookingStatus, string> = {
 
 export function isOneDayEvent(
   from: Date | string | null,
-  to: Date | string | null
+  to: Date | string | null,
 ) {
   if (!from || !to) {
     return false;
@@ -128,7 +128,7 @@ export const handleEventMouseEnter =
   (allowedViewType: string | string[]) => (info: EventHoveringArg) => {
     // Show the new tab icon on hover
     const newTabIcon = info.el?.querySelector(
-      ".external-link-icon"
+      ".external-link-icon",
     ) as HTMLElement | null;
     if (newTabIcon) {
       newTabIcon.classList.remove("hidden");
@@ -147,7 +147,7 @@ export const handleEventMouseEnter =
       // Store original right style for restoration later
       const originalRight = parent.style.right;
       const innerWrapper = info.el.querySelector(
-        ".inner-event-card-wrapper"
+        ".inner-event-card-wrapper",
       ) as HTMLElement;
       (info.el as any)._originalRight = originalRight;
 
@@ -196,7 +196,7 @@ export const handleEventMouseLeave =
   (allowedViewType: string | string[]) => (info: EventHoveringArg) => {
     // Show the new tab icon on hover
     const newTabIcon = info.el?.querySelector(
-      ".external-link-icon"
+      ".external-link-icon",
     ) as HTMLElement | null;
     if (newTabIcon) {
       newTabIcon.classList.add("hidden");
@@ -253,7 +253,7 @@ export function handleEventClick(info: EventClickArg) {
   window.open(
     event.extendedProps.url || `/bookings/${event.id}`,
     "_blank",
-    "noopener,noreferrer"
+    "noopener,noreferrer",
   );
 }
 
@@ -302,7 +302,7 @@ export function getCalendarTitleAndSubtitle({
 export const scrollToNow = () => {
   setTimeout(() => {
     const nowIndicator = document.querySelector(
-      ".fc-timeline-now-indicator-line"
+      ".fc-timeline-now-indicator-line",
     ) as HTMLElement;
 
     if (nowIndicator) {

@@ -322,7 +322,9 @@ export default function QrLinkExisting() {
           customEmptyStateContent={{
             title: t("assets.pickerEmptyTitle"),
             text: t("assets.pickerEmptyText"),
-            newButtonRoute: `/assets/new?qrId=${qrId}`,
+            // EPDA: the empty-state CTA points at the receipt forms, not at a
+            // direct asset create — stock enters only through مذكرة/محضر استلام.
+            newButtonRoute: `/receipts/new`,
             newButtonContent: t("qr.createNewAssetAndLink"),
           }}
           className="h-full border-t-0"

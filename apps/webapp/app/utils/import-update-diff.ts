@@ -101,7 +101,7 @@ export function parseYesNo(value: string): boolean | undefined {
  */
 export function analyzeUpdateHeaders(
   headers: string[],
-  orgCustomFields: Pick<CustomField, "id" | "name" | "type">[]
+  orgCustomFields: Pick<CustomField, "id" | "name" | "type">[],
 ): HeaderAnalysis {
   const updatableColumns: ParsedColumn[] = [];
   const ignoredColumns: string[] = [];
@@ -135,12 +135,12 @@ export function analyzeUpdateHeaders(
   // `EXPORT_HEADER_TO_FIELD_MAP` lookup result (the map gained
   // import-only aliases that aren't in `ColumnLabelKey`).
   const identifierFields = new Set<string>(
-    IDENTIFIER_COLUMNS.map((c) => c.internalField)
+    IDENTIFIER_COLUMNS.map((c) => c.internalField),
   );
 
   // Build a lookup of org custom fields by name (case-insensitive)
   const cfByName = new Map(
-    orgCustomFields.map((cf) => [cf.name.toLowerCase(), cf])
+    orgCustomFields.map((cf) => [cf.name.toLowerCase(), cf]),
   );
 
   for (let i = 0; i < headers.length; i++) {
@@ -191,7 +191,7 @@ export function analyzeUpdateHeaders(
           });
         } else {
           ignoredColumns.push(
-            `${header} (${cf.type.toLowerCase()} fields not supported for update)`
+            `${header} (${cf.type.toLowerCase()} fields not supported for update)`,
           );
         }
       } else {
@@ -239,7 +239,7 @@ export function compareCoreField(
   fieldKey: string,
   csvValue: string,
   asset: AssetForUpdate,
-  displayName: string
+  displayName: string,
 ): FieldChange | null {
   switch (fieldKey) {
     case "name": {
@@ -501,11 +501,11 @@ export function compareCustomField(
   cfDef: NonNullable<ParsedColumn["cfDef"]>,
   csvValue: string,
   asset: AssetForUpdate,
-  displayName: string
+  displayName: string,
 ): FieldChange | null {
   // Find the existing custom field value on this asset
   const existingCfv = asset.customFields.find(
-    (cf) => cf.customField.name.toLowerCase() === cfDef.name.toLowerCase()
+    (cf) => cf.customField.name.toLowerCase() === cfDef.name.toLowerCase(),
   );
 
   const existingValue = existingCfv?.value as
@@ -655,7 +655,7 @@ const NON_CLEARABLE_CORE_FIELDS = new Set(["name", "availableToBook"]);
 export function detectClearing(
   column: ParsedColumn,
   asset: AssetForUpdate,
-  displayName: string
+  displayName: string,
 ): FieldChange | null {
   if (column.kind === "core") {
     // Name and availableToBook cannot be cleared
@@ -726,7 +726,7 @@ export function detectClearing(
     // Check if the asset has a value for this custom field
     const existingCfv = asset.customFields.find(
       (cf) =>
-        cf.customField.name.toLowerCase() === column.cfDef!.name.toLowerCase()
+        cf.customField.name.toLowerCase() === column.cfDef!.name.toLowerCase(),
     );
     const existingValue = existingCfv?.value as
       | ShelfAssetCustomFieldValueType["value"]
@@ -897,7 +897,7 @@ export function computeAssetDiffs({
         const clearChange = detectClearing(
           column,
           existingAsset,
-          column.csvHeader
+          column.csvHeader,
         );
         if (clearChange) {
           changes.push(clearChange);
@@ -910,7 +910,7 @@ export function computeAssetDiffs({
           column.internalKey,
           csvValue,
           existingAsset,
-          column.csvHeader
+          column.csvHeader,
         );
         if (change) {
           changes.push(change);
@@ -920,7 +920,7 @@ export function computeAssetDiffs({
           column.cfDef,
           csvValue,
           existingAsset,
-          column.csvHeader
+          column.csvHeader,
         );
         if (change) {
           changes.push(change);

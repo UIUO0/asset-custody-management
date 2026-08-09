@@ -94,7 +94,7 @@ export class BlockedAddressError extends ShelfError {
 type LookupCallback = (
   err: NodeJS.ErrnoException | null,
   address: string | LookupAddress[],
-  family?: number
+  family?: number,
 ) => void;
 
 /**
@@ -113,7 +113,7 @@ type LookupCallback = (
 export function ssrfGuardedLookup(
   hostname: string,
   options: LookupOptions,
-  callback: LookupCallback
+  callback: LookupCallback,
 ): void {
   // Always resolve ALL records so we can reject a host that publishes both a
   // public and a private address, then hand back the shape the caller wants.
@@ -126,7 +126,7 @@ export function ssrfGuardedLookup(
       return callback(
         new BlockedAddressError(hostname, blocked.address),
         "",
-        0
+        0,
       );
     }
 
@@ -238,7 +238,7 @@ function isRedirectStatus(status: number): boolean {
  */
 export async function safeFetch(
   url: string,
-  options: SafeFetchOptions = {}
+  options: SafeFetchOptions = {},
 ): Promise<SafeFetchResult> {
   const maxBytes = options.maxBytes ?? ASSET_MAX_IMAGE_UPLOAD_SIZE;
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -316,7 +316,7 @@ export async function safeFetch(
         response,
         maxBytes,
         url,
-        controller.signal
+        controller.signal,
       );
       return { buffer, contentType };
     }
@@ -361,7 +361,7 @@ export async function readBodyWithLimit(
   response: Response,
   maxBytes: number,
   url: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<Buffer> {
   if (!response.body) {
     throw new ShelfError({

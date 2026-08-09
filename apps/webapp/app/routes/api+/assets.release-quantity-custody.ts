@@ -64,7 +64,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { assetId, teamMemberId, quantity, note } = parseData(
       formData,
-      ReleaseQuantityCustodySchema
+      ReleaseQuantityCustodySchema,
     );
 
     /** Fetch team member with user info for the audit note */
@@ -140,7 +140,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           message: "Failed to create audit note for quantity operation",
           label: "Assets",
           additionalData: { assetId, userId },
-        })
+        }),
       );
     }
 

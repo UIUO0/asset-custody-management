@@ -15,7 +15,7 @@ import { cva } from "class-variance-authority";
 
 import { MenuIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLocation } from "react-router";
+import { useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { SwitchIcon } from "~/components/icons/library";
 import { Button } from "~/components/shared/button";
@@ -28,7 +28,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/shared/tooltip";
-import { useIsAvailabilityView } from "~/hooks/use-is-availability-view";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { isFormProcessing } from "~/utils/form";
 import { tw } from "~/utils/tw";
@@ -392,22 +391,16 @@ const SidebarRail = forwardRef<HTMLButtonElement, ComponentProps<"button">>(
 SidebarRail.displayName = "SidebarRail";
 
 const SidebarInset = forwardRef<HTMLDivElement, ComponentProps<"main">>(
-  ({ className, ...props }, ref) => {
-    const { isAvailabilityView } = useIsAvailabilityView();
-    const location = useLocation();
-    const isKitIndex = location.pathname.includes("/kits");
-    return (
-      <main
-        ref={ref}
-        className={tw(
-          "h-dvh w-full overflow-auto bg-gray-25 px-4",
-          isAvailabilityView ? (isKitIndex ? "pb-0" : "pb-[46px]") : "pb-10",
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
+  ({ className, ...props }, ref) => (
+    <main
+      ref={ref}
+      className={tw(
+        "h-dvh w-full overflow-auto bg-gray-25 px-4 pb-10",
+        className,
+      )}
+      {...props}
+    />
+  ),
 );
 SidebarInset.displayName = "SidebarInset";
 

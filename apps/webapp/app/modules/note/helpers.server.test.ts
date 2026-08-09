@@ -48,25 +48,25 @@ describe("buildNameChangeNote", () => {
         userLink,
         previous: "Test Asset",
         next: "Test Asset",
-      })
+      }),
     ).toBeNull();
   });
 
   it("returns null when previous name is missing", () => {
     expect(
-      buildNameChangeNote({ userLink, previous: null, next: "New Name" })
+      buildNameChangeNote({ userLink, previous: null, next: "New Name" }),
     ).toBeNull();
   });
 
   it("returns null when next name is missing", () => {
     expect(
-      buildNameChangeNote({ userLink, previous: "Old Name", next: null })
+      buildNameChangeNote({ userLink, previous: "Old Name", next: null }),
     ).toBeNull();
   });
 
   it("returns null when both names are empty strings", () => {
     expect(
-      buildNameChangeNote({ userLink, previous: "", next: "" })
+      buildNameChangeNote({ userLink, previous: "", next: "" }),
     ).toBeNull();
   });
 
@@ -78,7 +78,7 @@ describe("buildNameChangeNote", () => {
     });
 
     expect(result).toBe(
-      `${userLink} updated the asset name from **Old Asset** to **New Asset**.`
+      `${userLink} updated the asset name from **Old Asset** to **New Asset**.`,
     );
   });
 
@@ -92,7 +92,7 @@ describe("buildNameChangeNote", () => {
     expect(result).toContain("\\*");
     expect(result).toContain("\\_");
     expect(result).toBe(
-      `${userLink} updated the asset name from **Asset\\*with\\*stars** to **Asset\\_with\\_underscores**.`
+      `${userLink} updated the asset name from **Asset\\*with\\*stars** to **Asset\\_with\\_underscores**.`,
     );
   });
 
@@ -115,7 +115,7 @@ describe("buildNameChangeNote", () => {
     });
 
     expect(result).toBe(
-      `${userLink} updated the asset name from **Old** to **New**.`
+      `${userLink} updated the asset name from **Old** to **New**.`,
     );
   });
 });
@@ -127,7 +127,7 @@ describe("buildCategoryChangeNote", () => {
         userLink,
         previous: { id: "1", name: "Electronics", color: "#FF0000" },
         next: { id: "1", name: "Electronics", color: "#FF0000" },
-      })
+      }),
     ).toBeNull();
   });
 
@@ -137,7 +137,7 @@ describe("buildCategoryChangeNote", () => {
         userLink,
         previous: null,
         next: null,
-      })
+      }),
     ).toBeNull();
   });
 
@@ -179,7 +179,7 @@ describe("buildCategoryChangeNote", () => {
 describe("buildDescriptionChangeNote", () => {
   it("returns null when description did not change", () => {
     expect(
-      buildDescriptionChangeNote({ userLink, previous: "Test", next: "Test" })
+      buildDescriptionChangeNote({ userLink, previous: "Test", next: "Test" }),
     ).toBeNull();
   });
 
@@ -191,7 +191,7 @@ describe("buildDescriptionChangeNote", () => {
     });
 
     expect(result).toBe(
-      `${userLink} added an asset description {% description newText="New details" /%}.`
+      `${userLink} added an asset description {% description newText="New details" /%}.`,
     );
   });
 
@@ -203,7 +203,7 @@ describe("buildDescriptionChangeNote", () => {
     });
 
     expect(result).toBe(
-      `${userLink} removed the asset description {% description oldText="Old details" /%}.`
+      `${userLink} removed the asset description {% description oldText="Old details" /%}.`,
     );
   });
 
@@ -215,7 +215,7 @@ describe("buildDescriptionChangeNote", () => {
     });
 
     expect(result).toBe(
-      `${userLink} updated the asset description {% description oldText="Old description" newText="Updated description" /%}.`
+      `${userLink} updated the asset description {% description oldText="Old description" newText="Updated description" /%}.`,
     );
   });
 
@@ -288,7 +288,7 @@ describe("buildValuationChangeNote", () => {
         next: 100,
         currency,
         locale,
-      })
+      }),
     ).toBeNull();
   });
 
@@ -351,7 +351,7 @@ describe("buildValuationChangeNote", () => {
         next: 0,
         currency,
         locale,
-      })
+      }),
     ).toBeNull();
   });
 

@@ -79,7 +79,7 @@ describe("/api/assets", () => {
   describe("loader", () => {
     it("should return assets for valid IDs", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1,asset-2"
+        "http://localhost:3000/api/assets?ids=asset-1,asset-2",
       );
 
       (db.asset.findMany as any).mockResolvedValue(mockAssets);
@@ -89,7 +89,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(requirePermission).toHaveBeenCalledWith({
@@ -131,7 +131,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       // Success case returns Response wrapping the payload
@@ -153,7 +153,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       // Success case returns Response wrapping the payload
@@ -169,7 +169,7 @@ describe("/api/assets", () => {
 
     it("should filter out empty strings from ids", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1,,asset-2,"
+        "http://localhost:3000/api/assets?ids=asset-1,,asset-2,",
       );
 
       (db.asset.findMany as any).mockResolvedValue(mockAssets);
@@ -179,7 +179,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.asset.findMany).toHaveBeenCalledWith({
@@ -200,7 +200,7 @@ describe("/api/assets", () => {
 
     it("should handle single asset ID", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1"
+        "http://localhost:3000/api/assets?ids=asset-1",
       );
 
       const singleAsset = [mockAssets[0]];
@@ -211,7 +211,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.asset.findMany).toHaveBeenCalledWith({
@@ -240,7 +240,7 @@ describe("/api/assets", () => {
 
     it("should enforce organization-level security", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1,asset-2"
+        "http://localhost:3000/api/assets?ids=asset-1,asset-2",
       );
 
       await loader(
@@ -248,7 +248,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.asset.findMany).toHaveBeenCalledWith({
@@ -269,7 +269,7 @@ describe("/api/assets", () => {
 
     it("should handle permission errors", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1"
+        "http://localhost:3000/api/assets?ids=asset-1",
       );
 
       const permissionError = new Error("Permission denied");
@@ -283,7 +283,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(makeShelfError).toHaveBeenCalledWith(permissionError, {
@@ -303,7 +303,7 @@ describe("/api/assets", () => {
 
     it("should handle database errors", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1"
+        "http://localhost:3000/api/assets?ids=asset-1",
       );
 
       const dbError = new Error("Database connection failed");
@@ -317,7 +317,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(makeShelfError).toHaveBeenCalledWith(dbError, {
@@ -337,7 +337,7 @@ describe("/api/assets", () => {
 
     it("should return assets ordered by title", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1,asset-2"
+        "http://localhost:3000/api/assets?ids=asset-1,asset-2",
       );
 
       (db.asset.findMany as any).mockResolvedValue(mockAssets);
@@ -347,7 +347,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.asset.findMany).toHaveBeenCalledWith(
@@ -355,13 +355,13 @@ describe("/api/assets", () => {
           orderBy: {
             title: "asc",
           },
-        })
+        }),
       );
     });
 
     it("should only select required fields", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/assets?ids=asset-1"
+        "http://localhost:3000/api/assets?ids=asset-1",
       );
 
       (db.asset.findMany as any).mockResolvedValue([mockAssets[0]]);
@@ -371,7 +371,7 @@ describe("/api/assets", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.asset.findMany).toHaveBeenCalledWith(
@@ -381,7 +381,7 @@ describe("/api/assets", () => {
             title: true,
             mainImage: true,
           },
-        })
+        }),
       );
     });
   });

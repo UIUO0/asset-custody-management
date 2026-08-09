@@ -7,14 +7,14 @@ import { vi } from "vitest";
 
 // why: testing service logic without actual database queries
 export const createDbMock = <T extends Record<string, any>>(
-  modelMethods: T
+  modelMethods: T,
 ) => {
   const mockedMethods = Object.entries(modelMethods).reduce(
     (acc, [key, value]) => {
       acc[key] = typeof value === "function" ? value : vi.fn();
       return acc;
     },
-    {} as Record<string, any>
+    {} as Record<string, any>,
   );
 
   return mockedMethods as { [K in keyof T]: ReturnType<typeof vi.fn> };

@@ -14,7 +14,7 @@ export function useAssetIndexShowImage() {
   const fetchers = useFetchers();
   /** Find the fetcher used for toggling between asset index modes */
   const fetcher = fetchers.find(
-    (fetcher) => fetcher.key === "asset-index-settings-show-image"
+    (fetcher) => fetcher.key === "asset-index-settings-show-image",
   );
 
   if (fetcher?.formData) {

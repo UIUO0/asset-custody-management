@@ -35,7 +35,7 @@ describe("InventoryValueChart", () => {
     render(
       <MemoryRouter>
         <InventoryValueChart />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     const layout = screen.getByTestId("inventory-value-layout");
@@ -48,7 +48,7 @@ describe("InventoryValueChart", () => {
       {
         style: "currency",
         currency: (loaderData as any).currency,
-      }
+      },
     );
 
     const valueElement = screen.getByText(expectedValue);

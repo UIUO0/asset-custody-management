@@ -44,7 +44,7 @@ describe("PreferredBarcodeSelector", () => {
         barcodes={barcodes}
         defaultValue={null}
         workspacePreference="Code128"
-      />
+      />,
     );
 
     // why: getByRole(radio, { name }) matches each input by its accessible
@@ -52,7 +52,7 @@ describe("PreferredBarcodeSelector", () => {
     // /ALPHA/i would also match the AssetCodeBadge chip's aria-label that
     // contains the barcode value, causing "multiple elements" errors.
     expect(
-      screen.getByRole("radio", { name: /^Workspace default/i })
+      screen.getByRole("radio", { name: /^Workspace default/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /^ALPHA/i })).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /^BETA/i })).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe("PreferredBarcodeSelector", () => {
         barcodes={[{ id: "bc-a", type: "Code128", value: "ALPHA" }]}
         defaultValue="bc-removed"
         workspacePreference="Code128"
-      />
+      />,
     );
 
     const workspaceRadio = screen.getByRole("radio", {
@@ -85,7 +85,7 @@ describe("PreferredBarcodeSelector", () => {
         barcodes={barcodes}
         defaultValue={null}
         workspacePreference="Code128"
-      />
+      />,
     );
 
     const alphaRadio = screen.getByRole("radio", {
@@ -104,11 +104,11 @@ describe("PreferredBarcodeSelector", () => {
         barcodes={[]}
         defaultValue={null}
         workspacePreference="Code128"
-      />
+      />,
     );
 
     expect(
-      screen.getByText(/This asset has no barcodes yet/i)
+      screen.getByText(/This asset has no barcodes yet/i),
     ).toBeInTheDocument();
   });
 });

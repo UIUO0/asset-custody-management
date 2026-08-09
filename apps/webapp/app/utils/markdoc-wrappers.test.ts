@@ -32,7 +32,7 @@ describe("markdoc-wrappers", () => {
     it("should escape quotes in tag name", () => {
       const result = wrapTagForNote({ id: "tag-2", name: 'Quality "Control"' });
       expect(result).toBe(
-        '{% tag name="Quality &quot;Control&quot;" id="tag-2" /%}'
+        '{% tag name="Quality &quot;Control&quot;" id="tag-2" /%}',
       );
     });
   });
@@ -50,7 +50,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapDateForNote(date, false);
 
       expect(result).toBe(
-        '{% date value="2023-12-25T10:30:00.000Z" includeTime=false /%}'
+        '{% date value="2023-12-25T10:30:00.000Z" includeTime=false /%}',
       );
     });
 
@@ -68,7 +68,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapKitsForNote(kitIds, "added");
 
       expect(result).toBe(
-        '{% kits_list count=1 ids="kit-1" action="added" /%}'
+        '{% kits_list count=1 ids="kit-1" action="added" /%}',
       );
     });
 
@@ -77,7 +77,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapKitsForNote(kitIds, "removed");
 
       expect(result).toBe(
-        '{% kits_list count=2 ids="kit-1,kit-2" action="removed" /%}'
+        '{% kits_list count=2 ids="kit-1,kit-2" action="removed" /%}',
       );
     });
 
@@ -86,7 +86,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapKitsForNote(kitIds);
 
       expect(result).toBe(
-        '{% kits_list count=1 ids="kit-1" action="added" /%}'
+        '{% kits_list count=1 ids="kit-1" action="added" /%}',
       );
     });
   });
@@ -107,7 +107,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapAssetsWithDataForNote(assets, "removed");
 
       expect(result).toBe(
-        '{% assets_list count=2 ids="asset-1,asset-2" action="removed" /%}'
+        '{% assets_list count=2 ids="asset-1,asset-2" action="removed" /%}',
       );
     });
 
@@ -132,7 +132,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapKitsWithDataForNote(kit, "added");
 
       expect(result).toBe(
-        '{% link to="/kits/kit-1" text="Photography Kit" /%}'
+        '{% link to="/kits/kit-1" text="Photography Kit" /%}',
       );
     });
 
@@ -144,7 +144,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapKitsWithDataForNote(kits, "removed");
 
       expect(result).toBe(
-        '{% kits_list count=2 ids="kit-1,kit-2" action="removed" /%}'
+        '{% kits_list count=2 ids="kit-1,kit-2" action="removed" /%}',
       );
     });
 
@@ -153,7 +153,7 @@ describe("markdoc-wrappers", () => {
       const result = wrapKitsWithDataForNote(kits, "added");
 
       expect(result).toBe(
-        '{% link to="/kits/kit-1" text="Photography Kit" /%}'
+        '{% link to="/kits/kit-1" text="Photography Kit" /%}',
       );
     });
   });
@@ -278,7 +278,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "123", firstName: "John", lastName: "Doe" };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/123" text="John Doe" /%}`
+      `{% link to="/settings/team/users/123" text="John Doe" /%}`,
     );
   });
 
@@ -286,7 +286,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "456", firstName: "Jane", lastName: null };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/456" text="Jane" /%}`
+      `{% link to="/settings/team/users/456" text="Jane" /%}`,
     );
   });
 
@@ -294,7 +294,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "789", firstName: null, lastName: "Smith" };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/789" text="Smith" /%}`
+      `{% link to="/settings/team/users/789" text="Smith" /%}`,
     );
   });
 
@@ -302,7 +302,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "abc", firstName: "", lastName: "" };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/abc" text="Unknown User" /%}`
+      `{% link to="/settings/team/users/abc" text="Unknown User" /%}`,
     );
   });
 
@@ -310,7 +310,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "def", firstName: null, lastName: null };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/def" text="Unknown User" /%}`
+      `{% link to="/settings/team/users/def" text="Unknown User" /%}`,
     );
   });
 
@@ -318,7 +318,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "ghi", firstName: "  John  ", lastName: "  Doe  " };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/ghi" text="John Doe" /%}`
+      `{% link to="/settings/team/users/ghi" text="John Doe" /%}`,
     );
   });
 
@@ -326,7 +326,7 @@ describe("wrapUserLinkForNote", () => {
     const user = { id: "jkl", firstName: "José", lastName: "García-López" };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/jkl" text="José García-López" /%}`
+      `{% link to="/settings/team/users/jkl" text="José García-López" /%}`,
     );
   });
 
@@ -338,7 +338,7 @@ describe("wrapUserLinkForNote", () => {
     };
     const result = wrapUserLinkForNote(user);
     expect(result).toBe(
-      `{% link to="/settings/team/users/mno" text="John &quot;Johnny&quot; O'Malley" /%}`
+      `{% link to="/settings/team/users/mno" text="John &quot;Johnny&quot; O'Malley" /%}`,
     );
   });
 });
@@ -363,17 +363,17 @@ describe("wrapLinkForNote", () => {
   it("should handle links with special characters in text", () => {
     const result = wrapLinkForNote("/bookings/abc", 'Booking "Special Event"');
     expect(result).toBe(
-      `{% link to="/bookings/abc" text="Booking &quot;Special Event&quot;" /%}`
+      `{% link to="/bookings/abc" text="Booking &quot;Special Event&quot;" /%}`,
     );
   });
 
   it("should handle external-style paths", () => {
     const result = wrapLinkForNote(
       "/settings/organization",
-      "Organization Settings"
+      "Organization Settings",
     );
     expect(result).toBe(
-      `{% link to="/settings/organization" text="Organization Settings" /%}`
+      `{% link to="/settings/organization" text="Organization Settings" /%}`,
     );
   });
 });
@@ -392,7 +392,7 @@ describe("wrapCustodianForNote", () => {
     };
     const result = wrapCustodianForNote(custodian);
     expect(result).toBe(
-      `{% link to="/settings/team/users/user123" text="John Doe" /%}`
+      `{% link to="/settings/team/users/user123" text="John Doe" /%}`,
     );
   });
 
@@ -420,7 +420,7 @@ describe("wrapCustodianForNote", () => {
     };
     const result = wrapCustodianForNote(custodian);
     expect(result).toBe(
-      `{% link to="/settings/team/users/user456" text="Jane" /%}`
+      `{% link to="/settings/team/users/user456" text="Jane" /%}`,
     );
   });
 
@@ -437,7 +437,7 @@ describe("wrapCustodianForNote", () => {
     };
     const result = wrapCustodianForNote(custodian);
     expect(result).toBe(
-      `{% link to="/settings/team/users/user789" text="Unknown User" /%}`
+      `{% link to="/settings/team/users/user789" text="Unknown User" /%}`,
     );
   });
 });
@@ -446,24 +446,24 @@ describe("wrapDescriptionForNote", () => {
   it("should wrap single new description", () => {
     const result = wrapDescriptionForNote(null, "This is a new description");
     expect(result).toBe(
-      `{% description newText="This is a new description" /%}`
+      `{% description newText="This is a new description" /%}`,
     );
   });
 
   it("should wrap single old description", () => {
     const result = wrapDescriptionForNote("This is an old description", null);
     expect(result).toBe(
-      `{% description oldText="This is an old description" /%}`
+      `{% description oldText="This is an old description" /%}`,
     );
   });
 
   it("should wrap both old and new descriptions for changes", () => {
     const result = wrapDescriptionForNote(
       "Old description text",
-      "New description text"
+      "New description text",
     );
     expect(result).toBe(
-      `{% description oldText="Old description text" newText="New description text" /%}`
+      `{% description oldText="Old description text" newText="New description text" /%}`,
     );
   });
 
@@ -472,7 +472,7 @@ describe("wrapDescriptionForNote", () => {
     const newText = 'Another "quoted" description';
     const result = wrapDescriptionForNote(oldText, newText);
     expect(result).toBe(
-      `{% description oldText="Description with &quot;quotes&quot; in it" newText="Another &quot;quoted&quot; description" /%}`
+      `{% description oldText="Description with &quot;quotes&quot; in it" newText="Another &quot;quoted&quot; description" /%}`,
     );
   });
 
@@ -504,7 +504,7 @@ describe("wrapDescriptionForNote", () => {
       "This is a very long description that goes on and on and on and contains multiple sentences with lots of detail about the booking and what it includes and excludes.";
     const result = wrapDescriptionForNote(null, longText);
     expect(result).toBe(
-      `{% description newText="This is a very long description that goes on and on and on and contains multiple sentences with lots of detail about the booking and what it includes and excludes." /%}`
+      `{% description newText="This is a very long description that goes on and on and on and contains multiple sentences with lots of detail about the booking and what it includes and excludes." /%}`,
     );
   });
 
@@ -513,7 +513,7 @@ describe("wrapDescriptionForNote", () => {
       "Description with émojis 🚀 and spëcial chars & symbols < > /";
     const result = wrapDescriptionForNote(textWithSpecial, null);
     expect(result).toBe(
-      `{% description oldText="Description with émojis 🚀 and spëcial chars & symbols < > /" /%}`
+      `{% description oldText="Description with émojis 🚀 and spëcial chars & symbols < > /" /%}`,
     );
   });
 
@@ -522,7 +522,7 @@ describe("wrapDescriptionForNote", () => {
       'Multi-line\ndescription with\n"multiple" "quotes"';
     const result = wrapDescriptionForNote(null, textWithNewlines);
     expect(result).toBe(
-      `{% description newText="Multi-line\ndescription with\n&quot;multiple&quot; &quot;quotes&quot;" /%}`
+      `{% description newText="Multi-line\ndescription with\n&quot;multiple&quot; &quot;quotes&quot;" /%}`,
     );
   });
 });

@@ -9,7 +9,7 @@ import {
 describe("validateInvitationMessage", () => {
   it("should accept valid messages", () => {
     const result = validateInvitationMessage(
-      "Welcome to our team! We're excited to have you."
+      "Welcome to our team! We're excited to have you.",
     );
     expect(result.isValid).toBe(true);
     expect(result.error).toBeUndefined();
@@ -17,7 +17,7 @@ describe("validateInvitationMessage", () => {
 
   it("should accept messages with line breaks", () => {
     const result = validateInvitationMessage(
-      "Welcome to our team!\n\nWe're excited to have you."
+      "Welcome to our team!\n\nWe're excited to have you.",
     );
     expect(result.isValid).toBe(true);
     expect(result.error).toBeUndefined();
@@ -61,7 +61,7 @@ describe("validateInvitationMessage", () => {
 
   it("should accept messages that don't match phishing patterns", () => {
     const result = validateInvitationMessage(
-      "Your account has been approved and is ready to use"
+      "Your account has been approved and is ready to use",
     );
     expect(result.isValid).toBe(true);
   });
@@ -90,7 +90,7 @@ describe("validateInvitationMessage", () => {
   it("should block messages containing email-like addresses due to URL pattern", () => {
     // Known limitation: the bare-domain pattern matches email domains too
     const result = validateInvitationMessage(
-      "Contact us at support@example.com for help"
+      "Contact us at support@example.com for help",
     );
     expect(result.isValid).toBe(false);
     expect(result.error).toContain("URL");
@@ -100,7 +100,7 @@ describe("validateInvitationMessage", () => {
 describe("sanitizeInvitationMessage", () => {
   it("should remove HTML tags and preserve remaining text", () => {
     const result = sanitizeInvitationMessage(
-      "Hello <script>alert('xss')</script>world"
+      "Hello <script>alert('xss')</script>world",
     );
     // Tags are removed, text content is preserved as-is
     expect(result).toBe("Hello alert('xss')world");
@@ -116,7 +116,7 @@ describe("sanitizeInvitationMessage", () => {
 
   it("should preserve line breaks but normalize excessive ones", () => {
     const result = sanitizeInvitationMessage(
-      "Line 1\n\n\n\n\nLine 2\n\n\n\nLine 3"
+      "Line 1\n\n\n\n\nLine 2\n\n\n\nLine 3",
     );
     expect(result).toBe("Line 1\n\nLine 2\n\nLine 3");
   });
@@ -146,17 +146,17 @@ describe("sanitizeInvitationMessage", () => {
   it("should neutralize potential XSS vectors by stripping tags", () => {
     // Self-contained tags are completely removed
     expect(sanitizeInvitationMessage('<img src=x onerror="alert(1)">')).toBe(
-      ""
+      "",
     );
     expect(sanitizeInvitationMessage("<svg/onload=alert(1)>")).toBe("");
     expect(sanitizeInvitationMessage("<iframe src='evil.com'>")).toBe("");
     // Non-tag content is preserved as-is
     expect(sanitizeInvitationMessage("javascript:alert(1)")).toBe(
-      "javascript:alert(1)"
+      "javascript:alert(1)",
     );
     // Mixed content: tags removed, text preserved
     expect(sanitizeInvitationMessage("Click <a href='evil'>here</a>")).toBe(
-      "Click here"
+      "Click here",
     );
   });
 });

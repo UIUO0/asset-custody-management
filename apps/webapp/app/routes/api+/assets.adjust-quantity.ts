@@ -61,7 +61,7 @@ export const AdjustQuantitySchema = z
       message:
         "Invalid category/direction combination — RESTOCK must add, LOSS must subtract.",
       path: ["direction"],
-    }
+    },
   );
 
 export async function action({ context, request }: ActionFunctionArgs) {
@@ -82,7 +82,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { assetId, quantity, category, direction, note } = parseData(
       formData,
-      AdjustQuantitySchema
+      AdjustQuantitySchema,
     );
 
     await adjustQuantity({
@@ -126,7 +126,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           message: "Failed to create audit note for quantity operation",
           label: "Assets",
           additionalData: { assetId, userId },
-        })
+        }),
       );
     }
 

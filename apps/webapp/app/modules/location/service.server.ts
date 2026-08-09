@@ -153,7 +153,7 @@ export async function getLocation(
     request?: Request;
     include?: Prisma.LocationInclude;
     teamMemberIds?: string[] | null;
-  }
+  },
 ) {
   const {
     organizationId,
@@ -171,7 +171,7 @@ export async function getLocation(
 
   try {
     const otherOrganizationIds = userOrganizations?.map(
-      (org) => org.organizationId
+      (org) => org.organizationId,
     );
 
     const skip = page > 1 ? (page - 1) * perPage : 0;
@@ -379,7 +379,7 @@ export async function getLocation(
         additionalData: {
           model: "location",
           organization: userOrganizations.find(
-            (org) => org.organizationId === location.organizationId
+            (org) => org.organizationId === location.organizationId,
           ),
           redirectTo,
         },
@@ -624,7 +624,7 @@ export async function getLocations(params: {
      */
     const safeOrderBy = Object.prototype.hasOwnProperty.call(
       LOCATION_SORTING_OPTIONS,
-      orderBy
+      orderBy,
     )
       ? orderBy
       : "createdAt";
@@ -693,7 +693,7 @@ export async function getLocationTotalValuation({
         SELECT al."assetId" FROM "AssetLocation" al
         WHERE al."locationId" = ${locationId}
       )
-    `
+    `,
   );
 
   return Number(rows[0]?.total ?? 0);
@@ -750,7 +750,7 @@ async function validateParentLocation({
 
   const parentDepth = hierarchy.reduce(
     (maxDepth, location) => Math.max(maxDepth, location.depth),
-    0
+    0,
   );
 
   const subtreeDepth =
@@ -855,7 +855,7 @@ export async function createLocation({
           entityId: location.id,
           locationId: location.id,
         },
-        tx
+        tx,
       );
 
       return location;
@@ -982,7 +982,7 @@ export async function updateLocation(payload: {
           entityId: id,
           locationId: id,
         },
-        tx
+        tx,
       );
 
       return location;
@@ -1075,7 +1075,7 @@ async function createLocationEditNotes({
     const prevParent = previous.parent
       ? wrapLinkForNote(
           `/locations/${previous.parent.id}`,
-          previous.parent.name
+          previous.parent.name,
         )
       : "*none*";
 
@@ -1128,7 +1128,7 @@ export async function createLocationsIfNotExists({
     const locations = new Map(
       data
         .filter((asset) => asset.location)
-        .map((asset) => [asset.location, ""])
+        .map((asset) => [asset.location, ""]),
     );
 
     // now we loop through the locations and check if they exist
@@ -1204,7 +1204,7 @@ export async function bulkDeleteLocations({
 
       /** Deleting images of locations */
       const locationWithImages = locations.filter(
-        (location) => !!location.imageId
+        (location) => !!location.imageId,
       );
       await tx.image.deleteMany({
         where: {
@@ -1390,7 +1390,7 @@ export async function getLocationKits(
     orderBy?: string;
     orderDirection?: "asc" | "desc";
     teamMemberIds?: string[] | null;
-  }
+  },
 ) {
   const {
     organizationId,
@@ -1726,7 +1726,7 @@ async function createBulkLocationChangeNotes({
         // INDIVIDUAL keeps the original phrasing via `formatUnitCount`.
         const affectedQuantity = isRemoving
           ? asset.assetLocations.find(
-              (al) => al.locationId === location.id && al.assetKitId == null
+              (al) => al.locationId === location.id && al.assetKitId == null,
             )?.quantity ?? null
           : assetQuantities[asset.id] ?? asset.quantity ?? null;
 
@@ -1778,7 +1778,7 @@ async function createBulkLocationChangeNotes({
         }
       }
       const prevLocLinks = [...byPrevLoc.entries()].map(([id, name]) =>
-        wrapLinkForNote(`/locations/${id}`, name)
+        wrapLinkForNote(`/locations/${id}`, name),
       );
       const movedFromSuffix =
         prevLocLinks.length > 0
@@ -1787,7 +1787,7 @@ async function createBulkLocationChangeNotes({
 
       const content = `${userLink} added ${buildAssetListMarkup(
         addedAssets,
-        "added"
+        "added",
       )} to ${formatLocationLink(location)}.${movedFromSuffix}`;
       await createSystemLocationActivityNote({
         locationId: location.id,
@@ -1828,7 +1828,7 @@ async function createBulkLocationChangeNotes({
     if (removedAssetsSummary.length > 0) {
       const content = `${userLink} removed ${buildAssetListMarkup(
         removedAssetsSummary,
-        "removed"
+        "removed",
       )} from ${formatLocationLink(location)}.`;
       await createSystemLocationActivityNote({
         locationId: location.id,
@@ -1978,11 +1978,11 @@ export async function updateLocationAssets({
      * come from the pivot rows we loaded above (`location.assetLocations`).
      */
     const existingAssetIdQtyMap = new Map(
-      location.assetLocations.map((al) => [al.assetId, al.quantity])
+      location.assetLocations.map((al) => [al.assetId, al.quantity]),
     );
     const existingAssetIds = new Set(existingAssetIdQtyMap.keys());
     const actuallyNewAssetIds = assetIds.filter(
-      (id) => !existingAssetIds.has(id)
+      (id) => !existingAssetIds.has(id),
     );
 
     /**
@@ -1992,7 +1992,7 @@ export async function updateLocationAssets({
      * surfaces here as an empty set — only genuine changes hit the DB.
      */
     const alreadyAtLocationIds = assetIds.filter((id) =>
-      existingAssetIds.has(id)
+      existingAssetIds.has(id),
     );
     const qtyEditedAssetIds = alreadyAtLocationIds.filter((id) => {
       const submitted = assetQuantities[id];
@@ -2129,11 +2129,11 @@ export async function updateLocationAssets({
       // The manual row at this location is what the picker edits.
       const manualAtThisLocation =
         asset.assetLocations.find(
-          (al) => al.locationId === locationId && al.assetKitId == null
+          (al) => al.locationId === locationId && al.assetKitId == null,
         )?.quantity ?? 0;
       const spaceWithoutMe = Math.max(
         0,
-        totalQty - otherLocationsQty - kitDrivenAtThisLocation
+        totalQty - otherLocationsQty - kitDrivenAtThisLocation,
       );
       const max = Math.max(manualAtThisLocation, spaceWithoutMe);
 
@@ -2158,7 +2158,7 @@ export async function updateLocationAssets({
           parts.push(`requested ${o.submitted}, max ${o.max}`);
           if (o.breakdown.kitDrivenAtThisLocation > 0) {
             parts.push(
-              `${o.breakdown.kitDrivenAtThisLocation} via kits at this location`
+              `${o.breakdown.kitDrivenAtThisLocation} via kits at this location`,
             );
           }
           if (o.breakdown.otherLocations > 0) {
@@ -2216,7 +2216,7 @@ export async function updateLocationAssets({
       });
     }
     const crossLocationMovedIds = Array.from(
-      movedIndividualPriorLocations.keys()
+      movedIndividualPriorLocations.keys(),
     );
 
     await db.$transaction(async (tx) => {
@@ -2343,7 +2343,7 @@ export async function updateLocationAssets({
           const asset = assetById.get(assetId);
           // Removed qty = the MANUAL pivot row dropped at THIS location.
           const removedQty = asset?.assetLocations.find(
-            (al) => al.locationId === locationId && al.assetKitId == null
+            (al) => al.locationId === locationId && al.assetKitId == null,
           )?.quantity;
           return {
             organizationId,
@@ -2495,7 +2495,7 @@ export async function updateLocationKits({
      * so we don't create duplicate notes for them.
      */
     const existingKitAssetIds = new Set(
-      location.kits.flatMap((kit) => kit.assetKits.map((ak) => ak.asset.id))
+      location.kits.flatMap((kit) => kit.assetKits.map((ak) => ak.asset.id)),
     );
 
     if (kitIds.length > 0) {
@@ -2531,7 +2531,7 @@ export async function updateLocationKits({
       });
 
       const assetIds = kitsToAdd.flatMap((kit) =>
-        kit.assetKits.map((ak) => ak.asset.id)
+        kit.assetKits.map((ak) => ak.asset.id),
       );
 
       /**
@@ -2623,7 +2623,7 @@ export async function updateLocationKits({
 
         // Build "Moved from" context for kits coming from other locations
         const actuallyNewKits = kitsToAdd.filter((kit) =>
-          actuallyNewKitIds.includes(kit.id)
+          actuallyNewKitIds.includes(kit.id),
         );
         const prevLocLinks = [
           ...new Map(
@@ -2633,9 +2633,9 @@ export async function updateLocationKits({
                 k.locationId!,
                 wrapLinkForNote(
                   `/locations/${k.locationId}`,
-                  k.location?.name ?? "Unknown"
+                  k.location?.name ?? "Unknown",
                 ),
-              ])
+              ]),
           ).values(),
         ];
         const movedFromSuffix =
@@ -2647,7 +2647,7 @@ export async function updateLocationKits({
           locationId,
           content: `${userLink} added ${buildKitListMarkup(
             kitsSummary,
-            "added"
+            "added",
           )} to ${formatLocationLink(location)}.${movedFromSuffix}`,
           userId,
         });
@@ -2709,8 +2709,8 @@ export async function updateLocationKits({
               // organizationId — pass the org so the note is validated
               // against the asset's true org (cross-org IDOR guard)
               organizationId,
-            })
-          )
+            }),
+          ),
         );
       }
     }
@@ -2730,7 +2730,7 @@ export async function updateLocationKits({
       });
 
       const removedAssetIds = kitsBeingRemoved.flatMap((kit) =>
-        kit.assetKits.map((ak) => ak.asset.id)
+        kit.assetKits.map((ak) => ak.asset.id),
       );
 
       // Detach kits via the direct relation and drop the corresponding
@@ -2784,7 +2784,7 @@ export async function updateLocationKits({
           } satisfies Prisma.UserSelect,
         });
         const allRemovedAssets = kitsBeingRemoved.flatMap((kit) =>
-          kit.assetKits.map((ak) => ak.asset)
+          kit.assetKits.map((ak) => ak.asset),
         );
 
         // Create location activity note for removed kits
@@ -2804,7 +2804,7 @@ export async function updateLocationKits({
             locationId,
             content: `${userLink} removed ${buildKitListMarkup(
               removedKitsSummary,
-              "removed"
+              "removed",
             )} from ${formatLocationLink(location)}.`,
             userId,
           });
@@ -2829,8 +2829,8 @@ export async function updateLocationKits({
               // organizationId — pass the org so the note is validated
               // against the asset's true org (cross-org IDOR guard)
               organizationId,
-            })
-          )
+            }),
+          ),
         );
       }
     }

@@ -37,7 +37,7 @@ type MockDb = {
 const dbMock = vi.hoisted<MockDb>(() => ({
   $transaction: vi.fn(
     <T>(callback: (tx: MockDb) => Promise<T>): Promise<T> =>
-      callback(dbMock as MockDb)
+      callback(dbMock as MockDb),
   ) as <T>(callback: (tx: MockDb) => Promise<T>) => Promise<T>,
   assetFilterPreset: {
     findMany: vi.fn(),
@@ -58,7 +58,7 @@ describe("asset-filter-presets service", () => {
   beforeEach(() => {
     // Reset the transaction mock to re-execute callbacks
     (dbMock.$transaction as ReturnType<typeof vi.fn>).mockImplementation(
-      <T>(callback: (tx: MockDb) => Promise<T>): Promise<T> => callback(dbMock)
+      <T>(callback: (tx: MockDb) => Promise<T>): Promise<T> => callback(dbMock),
     );
 
     Object.values(dbMock.assetFilterPreset).forEach((mock) => {
@@ -115,7 +115,7 @@ describe("asset-filter-presets service", () => {
           ownerId: "user-1",
           name: "Latest",
           query: "status=AVAILABLE",
-        })
+        }),
       ).rejects.toBeInstanceOf(ShelfError);
     });
 
@@ -129,7 +129,7 @@ describe("asset-filter-presets service", () => {
           ownerId: "user-1",
           name: "My preset",
           query: "status=AVAILABLE",
-        })
+        }),
       ).rejects.toBeInstanceOf(ShelfError);
     });
 
@@ -140,7 +140,7 @@ describe("asset-filter-presets service", () => {
           ownerId: "user-1",
           name: "   ",
           query: "status=AVAILABLE",
-        })
+        }),
       ).rejects.toBeInstanceOf(ShelfError);
     });
   });
@@ -155,7 +155,7 @@ describe("asset-filter-presets service", () => {
           organizationId: "org-1",
           ownerId: "user-2",
           name: "New name",
-        })
+        }),
       ).rejects.toBeInstanceOf(ShelfError);
     });
 
@@ -221,7 +221,7 @@ describe("asset-filter-presets service", () => {
           id: "preset-1",
           organizationId: "org-1",
           ownerId: "user-2",
-        })
+        }),
       ).rejects.toBeInstanceOf(ShelfError);
     });
   });

@@ -12,7 +12,8 @@ export function UnpaidInvoiceBanner() {
         className="inline"
         buttonProps={{
           variant: "link",
-          className: "font-semibold text-static-white underline hover:text-static-white/80",
+          className:
+            "font-semibold text-static-white underline hover:text-static-white/80",
         }}
       />{" "}
       to avoid service interruption.

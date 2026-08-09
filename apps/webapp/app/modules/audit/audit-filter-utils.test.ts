@@ -82,7 +82,7 @@ describe("audit filter utils", () => {
 
     it("falls back to ALL metadata for invalid filter type", () => {
       const metadata = getAuditFilterMetadata(
-        "INVALID_TYPE" as AuditFilterType
+        "INVALID_TYPE" as AuditFilterType,
       );
 
       expect(metadata).toEqual({
@@ -167,7 +167,7 @@ describe("audit filter utils", () => {
             expected: true,
             auditStatus: "FOUND",
           },
-          true
+          true,
         );
         expect(status).toBe("Found");
       });
@@ -179,7 +179,7 @@ describe("audit filter utils", () => {
             expected: true,
             auditStatus: "PENDING",
           },
-          true
+          true,
         );
         expect(status).toBe("Missing");
       });
@@ -190,7 +190,7 @@ describe("audit filter utils", () => {
             expected: true,
             auditStatus: "MISSING",
           },
-          true
+          true,
         );
         expect(status).toBe("Missing");
       });
@@ -201,7 +201,7 @@ describe("audit filter utils", () => {
             expected: false,
             auditStatus: "UNEXPECTED",
           },
-          true
+          true,
         );
         expect(status).toBe("Unexpected");
       });

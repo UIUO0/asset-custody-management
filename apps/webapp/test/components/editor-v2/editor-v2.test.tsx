@@ -27,7 +27,7 @@ describe("EditorV2", () => {
   });
 
   async function setupEditor(
-    props: Partial<ComponentProps<typeof EditorV2>> = {}
+    props: Partial<ComponentProps<typeof EditorV2>> = {},
   ) {
     const handleChange = vi.fn();
 
@@ -38,14 +38,14 @@ describe("EditorV2", () => {
         name="content"
         onChange={handleChange}
         {...props}
-      />
+      />,
     );
 
     const container = await screen.findByTestId("editor-v2-content");
 
     await waitFor(() => {
       expect(
-        container.querySelector('[contenteditable="true"]')
+        container.querySelector('[contenteditable="true"]'),
       ).not.toBeNull();
     });
 
@@ -86,17 +86,17 @@ describe("EditorV2", () => {
 
     expect(activeView.state.doc.textContent).toBe("Hello");
     expect(serializeMarkdoc(activeView.state.doc, createEditorSchema())).toBe(
-      "Hello\n"
+      "Hello\n",
     );
 
     await waitFor(() => {
       expect(handleChange).toHaveBeenCalledWith(
-        expect.stringContaining("Hello")
+        expect.stringContaining("Hello"),
       );
     });
 
     expect(
-      (screen.getByTestId("editor-v2-input") as HTMLTextAreaElement).value
+      (screen.getByTestId("editor-v2-input") as HTMLTextAreaElement).value,
     ).toContain("Hello");
 
     rerender(
@@ -106,12 +106,12 @@ describe("EditorV2", () => {
         name="content"
         disabled
         onChange={handleChange}
-      />
+      />,
     );
 
     await waitFor(() => {
       expect(
-        (screen.getByTestId("editor-v2-input") as HTMLTextAreaElement).value
+        (screen.getByTestId("editor-v2-input") as HTMLTextAreaElement).value,
       ).toContain("Hello");
     });
 
@@ -122,7 +122,7 @@ describe("EditorV2", () => {
         name="content"
         disabled={false}
         onChange={handleChange}
-      />
+      />,
     );
 
     let reEnabledView = getView();
@@ -136,16 +136,16 @@ describe("EditorV2", () => {
     act(() => {
       const endSelection = TextSelection.atEnd(activeUpdatedView.state.doc);
       activeUpdatedView.dispatch(
-        activeUpdatedView.state.tr.setSelection(endSelection)
+        activeUpdatedView.state.tr.setSelection(endSelection),
       );
       activeUpdatedView.dispatch(
-        activeUpdatedView.state.tr.insertText(" World")
+        activeUpdatedView.state.tr.insertText(" World"),
       );
     });
 
     await waitFor(() => {
       expect(
-        (screen.getByTestId("editor-v2-input") as HTMLTextAreaElement).value
+        (screen.getByTestId("editor-v2-input") as HTMLTextAreaElement).value,
       ).toContain("Hello World");
     });
   });
@@ -168,8 +168,8 @@ describe("EditorV2", () => {
     act(() => {
       view.dispatch(
         view.state.tr.setSelection(
-          TextSelection.create(view.state.doc, linkFrom + 1)
-        )
+          TextSelection.create(view.state.doc, linkFrom + 1),
+        ),
       );
     });
 
@@ -194,8 +194,8 @@ describe("EditorV2", () => {
     act(() => {
       view.dispatch(
         view.state.tr.setSelection(
-          TextSelection.create(view.state.doc, 1, "Create".length + 1)
-        )
+          TextSelection.create(view.state.doc, 1, "Create".length + 1),
+        ),
       );
       view.focus();
     });
@@ -243,8 +243,8 @@ describe("EditorV2", () => {
     act(() => {
       view.dispatch(
         view.state.tr.setSelection(
-          TextSelection.create(view.state.doc, linkFrom + 1)
-        )
+          TextSelection.create(view.state.doc, linkFrom + 1),
+        ),
       );
     });
 
@@ -262,8 +262,8 @@ describe("EditorV2", () => {
 
     expect(
       screen.getByText(
-        "Content supports Markdown and Markdoc. Use / to access commands."
-      )
+        "Content supports Markdown and Markdoc. Use / to access commands.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -300,7 +300,7 @@ describe("EditorV2", () => {
     });
 
     const editable = container.querySelector(
-      '[contenteditable="true"]'
+      '[contenteditable="true"]',
     ) as HTMLElement;
 
     act(() => {
@@ -327,7 +327,7 @@ describe("EditorV2", () => {
 
     await waitFor(() => {
       expect(
-        screen.queryByRole("listbox", { name: "Slash command menu" })
+        screen.queryByRole("listbox", { name: "Slash command menu" }),
       ).not.toBeInTheDocument();
     });
 
@@ -359,8 +359,8 @@ describe("EditorV2", () => {
     act(() => {
       view.dispatch(
         view.state.tr.setSelection(
-          TextSelection.create(view.state.doc, 1, 1 + textLength)
-        )
+          TextSelection.create(view.state.doc, 1, 1 + textLength),
+        ),
       );
     });
 
@@ -481,7 +481,7 @@ describe("EditorV2", () => {
     expect(getComputedStyle(rawBlock).marginTop).toBe("0px");
 
     const paragraphAfterRaw = view.dom.querySelector(
-      ".raw-block + p"
+      ".raw-block + p",
     ) as HTMLElement;
     expect(paragraphAfterRaw).not.toBeNull();
     expect(getComputedStyle(paragraphAfterRaw).marginTop).toBe("16px");
@@ -503,7 +503,7 @@ describe("EditorV2", () => {
         selectedIndex={0}
         onSelect={vi.fn()}
         onRun={vi.fn()}
-      />
+      />,
     );
 
     const selected = screen.getByRole("option", { selected: true });

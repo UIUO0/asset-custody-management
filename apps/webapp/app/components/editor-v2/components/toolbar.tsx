@@ -44,7 +44,7 @@ export function ToolbarButton({
         active
           ? "text-foreground bg-muted"
           : "hover:text-foreground hover:bg-muted",
-        disabled ? "cursor-not-allowed opacity-50" : ""
+        disabled ? "cursor-not-allowed opacity-50" : "",
       )}
       aria-label={tooltip ?? label}
       title={tooltip ?? label}

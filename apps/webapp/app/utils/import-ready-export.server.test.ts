@@ -90,7 +90,7 @@ describe("buildImportReadyColumns", () => {
         "minQuantity",
         "unitOfMeasure",
         "consumptionType",
-      ])
+      ]),
     );
     // …the one extra visible column is included…
     expect(headers).toContain("category");
@@ -130,7 +130,7 @@ describe("buildImportReadyColumns", () => {
  * populated; the cast documents that this is a deliberate partial.
  */
 function makeAsset(
-  overrides: Partial<AdvancedIndexAsset> = {}
+  overrides: Partial<AdvancedIndexAsset> = {},
 ): AdvancedIndexAsset {
   return {
     id: "asset-1",
@@ -248,7 +248,7 @@ describe("custom-field value encoding", () => {
   function cfCell(
     cfType: CustomFieldType,
     name: string,
-    value: unknown
+    value: unknown,
   ): string {
     const args = {
       columnScope: "all" as const,
@@ -259,7 +259,7 @@ describe("custom-field value encoding", () => {
     };
     const columns = buildImportReadyColumns(args);
     const idx = columns.findIndex(
-      (c) => c.header === `cf:${name},type:${cfType}`
+      (c) => c.header === `cf:${name},type:${cfType}`,
     );
     return buildImportReadyRows(args)[1][idx];
   }
@@ -269,13 +269,13 @@ describe("custom-field value encoding", () => {
       cfCell(CustomFieldType.BOOLEAN, "Active", {
         raw: true,
         valueBoolean: true,
-      })
+      }),
     ).toBe("Yes");
     expect(
       cfCell(CustomFieldType.BOOLEAN, "Active", {
         raw: false,
         valueBoolean: false,
-      })
+      }),
     ).toBe("No");
   });
 
@@ -283,10 +283,10 @@ describe("custom-field value encoding", () => {
     // why: older/partial records may store only `raw` without `valueBoolean`;
     // emitting "No" there would silently flip a true value on re-import.
     expect(cfCell(CustomFieldType.BOOLEAN, "Active", { raw: true })).toBe(
-      "Yes"
+      "Yes",
     );
     expect(cfCell(CustomFieldType.BOOLEAN, "Active", { raw: "yes" })).toBe(
-      "Yes"
+      "Yes",
     );
     expect(cfCell(CustomFieldType.BOOLEAN, "Active", { raw: "no" })).toBe("No");
   });
@@ -300,7 +300,7 @@ describe("custom-field value encoding", () => {
 
   it("AMOUNT -> plain number (NOT currency formatted)", () => {
     expect(
-      cfCell(CustomFieldType.AMOUNT, "Warranty cost", { raw: 299.99 })
+      cfCell(CustomFieldType.AMOUNT, "Warranty cost", { raw: 299.99 }),
     ).toBe("299.99");
   });
 
@@ -309,7 +309,7 @@ describe("custom-field value encoding", () => {
       cfCell(CustomFieldType.DATE, "Purchase date", {
         raw: "2024-02-22",
         valueDate: "2024-02-22T00:00:00.000Z",
-      })
+      }),
     ).toBe("2024-02-22");
   });
 
@@ -318,7 +318,7 @@ describe("custom-field value encoding", () => {
       cfCell(CustomFieldType.OPTION, "Brand", {
         raw: "amd",
         valueOption: "amd",
-      })
+      }),
     ).toBe("amd");
   });
 });
@@ -377,7 +377,7 @@ describe("buildImportReadyCsvFromAssets (round-trip)", () => {
       extractCSVDataFromContentImport(rows, [
         // ASSET_CSV_HEADERS — imported at top of file
         ...ASSET_CSV_HEADERS,
-      ])
+      ]),
     ).not.toThrow();
 
     const parsed = extractCSVDataFromContentImport(rows, [

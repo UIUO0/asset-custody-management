@@ -41,7 +41,7 @@ describe("formatUnitCount", () => {
     // why: even though residual `/` survives the strip, no `{%` remains, so
     // Markdoc can't parse this as a tag — verifying the injection vector is dead.
     expect(
-      formatUnitCount(qty('{% link to="/login" text="Click" /%}'), 5)
+      formatUnitCount(qty('{% link to="/login" text="Click" /%}'), 5),
     ).toBe('5 link to="/login" text="Click" /');
     expect(formatUnitCount(qty("{%}"), 5)).toBe("5 units");
   });
@@ -99,19 +99,19 @@ describe("wrapAssetWithCountForNote", () => {
 
   it("prefixes the count before the asset link for qty-tracked assets", () => {
     expect(wrapAssetWithCountForNote(asset, 50)).toBe(
-      '50 units of {% link to="/assets/asset-1" text="Pens" /%}'
+      '50 units of {% link to="/assets/asset-1" text="Pens" /%}',
     );
   });
 
   it("returns the bare asset link for INDIVIDUAL assets (unchanged phrasing)", () => {
     expect(
-      wrapAssetWithCountForNote({ ...asset, type: AssetType.INDIVIDUAL }, 50)
+      wrapAssetWithCountForNote({ ...asset, type: AssetType.INDIVIDUAL }, 50),
     ).toBe('{% link to="/assets/asset-1" text="Pens" /%}');
   });
 
   it("returns the bare asset link when quantity is missing/zero", () => {
     expect(wrapAssetWithCountForNote(asset, null)).toBe(
-      '{% link to="/assets/asset-1" text="Pens" /%}'
+      '{% link to="/assets/asset-1" text="Pens" /%}',
     );
   });
 });

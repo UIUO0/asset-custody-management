@@ -49,7 +49,7 @@ import { db } from "~/database/db.server";
  *   are absent from the map.
  */
 export async function resolveCheckInTimes(
-  bookingIds: string[]
+  bookingIds: string[],
 ): Promise<Map<string, Date>> {
   const result = new Map<string, Date>();
 

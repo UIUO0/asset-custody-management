@@ -11,7 +11,7 @@ describe("MarkdownEditor", () => {
         name="body"
         placeholder="Start writing"
         defaultValue=""
-      />
+      />,
     );
 
     expect(screen.getByTestId("editor-v2-content")).toBeInTheDocument();

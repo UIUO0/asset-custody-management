@@ -124,7 +124,7 @@ describe("/api/kits", () => {
   describe("loader", () => {
     it("should return kits for valid IDs", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1,kit-2"
+        "http://localhost:3000/api/kits?ids=kit-1,kit-2",
       );
 
       (db.kit.findMany as any).mockResolvedValue(mockKits);
@@ -134,7 +134,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(requirePermission).toHaveBeenCalledWith({
@@ -200,7 +200,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       // Success case returns Response wrapping the payload
@@ -222,7 +222,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       // Success case returns Response wrapping the payload
@@ -238,7 +238,7 @@ describe("/api/kits", () => {
 
     it("should filter out empty strings from ids", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1,,kit-2,"
+        "http://localhost:3000/api/kits?ids=kit-1,,kit-2,",
       );
 
       (db.kit.findMany as any).mockResolvedValue(mockKits);
@@ -248,7 +248,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.kit.findMany).toHaveBeenCalledWith({
@@ -293,7 +293,7 @@ describe("/api/kits", () => {
 
     it("should handle single kit ID", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1"
+        "http://localhost:3000/api/kits?ids=kit-1",
       );
 
       const singleKit = [mockKits[0]];
@@ -304,7 +304,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.kit.findMany).toHaveBeenCalledWith({
@@ -357,7 +357,7 @@ describe("/api/kits", () => {
 
     it("should enforce organization-level security", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1,kit-2"
+        "http://localhost:3000/api/kits?ids=kit-1,kit-2",
       );
 
       await loader(
@@ -365,7 +365,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.kit.findMany).toHaveBeenCalledWith({
@@ -410,7 +410,7 @@ describe("/api/kits", () => {
 
     it("should handle permission errors", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1"
+        "http://localhost:3000/api/kits?ids=kit-1",
       );
 
       const permissionError = new Error("Permission denied");
@@ -424,7 +424,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(makeShelfError).toHaveBeenCalledWith(permissionError, {
@@ -444,7 +444,7 @@ describe("/api/kits", () => {
 
     it("should handle database errors", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1"
+        "http://localhost:3000/api/kits?ids=kit-1",
       );
 
       const dbError = new Error("Database connection failed");
@@ -458,7 +458,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(makeShelfError).toHaveBeenCalledWith(dbError, {
@@ -478,7 +478,7 @@ describe("/api/kits", () => {
 
     it("should return kits ordered by name", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1,kit-2"
+        "http://localhost:3000/api/kits?ids=kit-1,kit-2",
       );
 
       (db.kit.findMany as any).mockResolvedValue(mockKits);
@@ -488,7 +488,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.kit.findMany).toHaveBeenCalledWith(
@@ -496,13 +496,13 @@ describe("/api/kits", () => {
           orderBy: {
             name: "asc",
           },
-        })
+        }),
       );
     });
 
     it("should only select required fields", async () => {
       const mockRequest = new Request(
-        "http://localhost:3000/api/kits?ids=kit-1"
+        "http://localhost:3000/api/kits?ids=kit-1",
       );
 
       (db.kit.findMany as any).mockResolvedValue([mockKits[0]]);
@@ -512,7 +512,7 @@ describe("/api/kits", () => {
           request: mockRequest,
           context: mockContext,
           params: {},
-        })
+        }),
       );
 
       expect(db.kit.findMany).toHaveBeenCalledWith(
@@ -525,7 +525,7 @@ describe("/api/kits", () => {
             assetKits: expect.any(Object),
             _count: expect.any(Object),
           },
-        })
+        }),
       );
     });
   });

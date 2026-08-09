@@ -10,10 +10,10 @@ describe("asset index column metadata", () => {
 
   it("enables the last updated column by default after the created column", () => {
     const createdColumn = defaultFields.find(
-      (column) => column.name === "createdAt"
+      (column) => column.name === "createdAt",
     );
     const updatedColumn = defaultFields.find(
-      (column) => column.name === "updatedAt"
+      (column) => column.name === "updatedAt",
     );
 
     expect(createdColumn?.visible).toBe(true);

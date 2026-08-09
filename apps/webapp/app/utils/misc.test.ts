@@ -16,8 +16,8 @@ describe("isValidImageUrl", () => {
     // query-string guid, the kind of URL the old string heuristics rejected.
     expect(
       isValidImageUrl(
-        "https://rock.kcionline.org/GetImage.ashx?guid=bafe6c61-724b-4c7e-8c49-46a2ec19758e"
-      )
+        "https://rock.kcionline.org/GetImage.ashx?guid=bafe6c61-724b-4c7e-8c49-46a2ec19758e",
+      ),
     ).toBe(true);
   });
 

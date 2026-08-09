@@ -64,7 +64,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         SUPABASE_AUTH_ADMIN_USER_API,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthAdminUserAPI.set(requestId, request.clone());
@@ -76,15 +76,15 @@ describe(createUserAccountForTesting.name, () => {
         () =>
           HttpResponse.json(
             { message: "create-account-error", status: 400 },
-            { status: 400 }
+            { status: 400 },
           ),
-        { once: true }
-      )
+        { once: true },
+      ),
     );
     const result = await createUserAccountForTesting(
       USER_EMAIL,
       USER_PASSWORD,
-      username
+      username,
     );
     server.events.removeAllListeners();
     expect(result).toBeNull();
@@ -105,7 +105,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         SUPABASE_AUTH_TOKEN_API,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthTokenAPI.set(requestId, request.clone());
@@ -115,7 +115,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         `${SUPABASE_AUTH_ADMIN_USER_API}/:userId`,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthAdminUserAPI.set(requestId, request.clone());
@@ -126,15 +126,15 @@ describe(createUserAccountForTesting.name, () => {
         () =>
           HttpResponse.json(
             { message: "sign-in-error", status: 400 },
-            { status: 400 }
+            { status: 400 },
           ),
-        { once: true }
-      )
+        { once: true },
+      ),
     );
     const result = await createUserAccountForTesting(
       USER_EMAIL,
       USER_PASSWORD,
-      username
+      username,
     );
     server.events.removeAllListeners();
     expect(result).toBeNull();
@@ -149,7 +149,7 @@ describe(createUserAccountForTesting.name, () => {
     // expect call delete auth account with the expected user id
     const [authAdminUserReq] = fetchAuthAdminUserAPI.values();
     expect(new URL(authAdminUserReq.url).pathname).toEqual(
-      `${SUPABASE_AUTH_ADMIN_USER_API}/${USER_ID}`
+      `${SUPABASE_AUTH_ADMIN_USER_API}/${USER_ID}`,
     );
   });
   it("should return null and delete auth account if unable to create user in database", async () => {
@@ -161,7 +161,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         SUPABASE_AUTH_TOKEN_API,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthTokenAPI.set(requestId, request.clone());
@@ -171,7 +171,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         `${SUPABASE_AUTH_ADMIN_USER_API}/:userId`,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthAdminUserAPI.set(requestId, request.clone());
@@ -181,7 +181,7 @@ describe(createUserAccountForTesting.name, () => {
     const result = await createUserAccountForTesting(
       USER_EMAIL,
       USER_PASSWORD,
-      username
+      username,
     );
     server.events.removeAllListeners();
     expect(result).toBeNull();
@@ -190,7 +190,7 @@ describe(createUserAccountForTesting.name, () => {
     // expect call delete auth account with the expected user id
     const [authAdminUserReq] = fetchAuthAdminUserAPI.values();
     expect(new URL(authAdminUserReq.url).pathname).toEqual(
-      `${SUPABASE_AUTH_ADMIN_USER_API}/${USER_ID}`
+      `${SUPABASE_AUTH_ADMIN_USER_API}/${USER_ID}`,
     );
   });
   it("should create an account", async () => {
@@ -202,7 +202,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         SUPABASE_AUTH_ADMIN_USER_API,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthAdminUserAPI.set(requestId, request.clone());
@@ -212,7 +212,7 @@ describe(createUserAccountForTesting.name, () => {
       const matchesUrl = matchRequestUrl(
         new URL(request.url),
         SUPABASE_AUTH_TOKEN_API,
-        SUPABASE_URL
+        SUPABASE_URL,
       ).matches;
       if (matchesMethod && matchesUrl)
         fetchAuthTokenAPI.set(requestId, request.clone());
@@ -235,7 +235,7 @@ describe(createUserAccountForTesting.name, () => {
     const result = await createUserAccountForTesting(
       USER_EMAIL,
       USER_PASSWORD,
-      username
+      username,
     );
 
     // we don't want to test the implementation of the function
@@ -358,16 +358,16 @@ describe(createUserOrAttachOrg.name, () => {
         () =>
           HttpResponse.json(
             { message: "User already registered", status: 400 },
-            { status: 400 }
+            { status: 400 },
           ),
-        { once: true }
+        { once: true },
       ),
       // confirmExistingAuthAccount calls updateUserById (PUT)
       http.put(
         `${SUPABASE_URL}${SUPABASE_AUTH_ADMIN_USER_API}/:id`,
         () => HttpResponse.json(authAccount, { status: 200 }),
-        { once: true }
-      )
+        { once: true },
+      ),
     );
 
     // confirmExistingAuthAccount queries auth.users to find existing account
@@ -397,10 +397,10 @@ describe(createUserOrAttachOrg.name, () => {
         () =>
           HttpResponse.json(
             { message: "User already registered", status: 400 },
-            { status: 400 }
+            { status: 400 },
           ),
-        { once: true }
-      )
+        { once: true },
+      ),
     );
 
     // confirmExistingAuthAccount finds no auth user → returns null
@@ -415,7 +415,7 @@ describe(createUserOrAttachOrg.name, () => {
         password: USER_PASSWORD,
         firstName: "Test",
         createdWithInvite: true,
-      })
+      }),
     ).rejects.toThrow("We are facing some issue with your account");
   });
 

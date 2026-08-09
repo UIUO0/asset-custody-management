@@ -6,12 +6,11 @@ import type {
   MetaFunction,
   ShouldRevalidateFunctionArgs,
 } from "react-router";
-import { data, useLoaderData } from "react-router";
+import { data } from "react-router";
 import { z } from "zod";
 import { AssetsList } from "~/components/assets/assets-index/assets-list";
-import { ImportButton } from "~/components/assets/import-button";
-import { NewAssetDropdown } from "~/components/assets/new-asset-dropdown";
 import Header from "~/components/layout/header";
+import { Button } from "~/components/shared/button";
 import When from "~/components/when/when";
 import { db } from "~/database/db.server";
 
@@ -347,7 +346,6 @@ export const meta: MetaFunction<typeof loader> = ({ matches }) => {
 export default function AssetIndexPage() {
   const { t } = useTranslation();
   const { roles } = useUserRoleHelper();
-  const { canImportAssets } = useLoaderData<typeof loader>();
   const { modeIsAdvanced } = useAssetIndexViewState();
 
   return (
@@ -363,17 +361,21 @@ export default function AssetIndexPage() {
             action: PermissionAction.create,
           })}
         >
-          <>
-            <ImportButton canImportAssets={canImportAssets} />
-            <NewAssetDropdown canImportAssets={canImportAssets} />
-          </>
+          {/*
+           * EPDA: the split-button that offered "bulk create" and "import CSV"
+           * is gone — both doors are closed. Stock enters only through
+           * مذكرة/محضر استلام, so the index CTA opens the receipt form.
+           */}
+          <Button to="/receipts/new" icon="plus">
+            {t("receipts.newReceipt")}
+          </Button>
         </When>
       </Header>
       <AssetsList
         customEmptyStateContent={{
           title: t("assets.empty"),
           text: t("assets.emptyText"),
-          newButtonRoute: "/assets/new",
+          newButtonRoute: "/receipts/new",
           newButtonContent: t("assets.emptyCta"),
         }}
       />

@@ -45,7 +45,7 @@ export const loader = async ({ context, request }: LoaderFunctionArgs) => {
     const searchParams = getCurrentSearchParams(request);
     const assetIds = searchParams.get("assetIds");
     const assetIndexCurrentSearchParams = searchParams.get(
-      "assetIndexCurrentSearchParams"
+      "assetIndexCurrentSearchParams",
     );
     // `exportType=import` requests the importer-native CSV (re-importable
     // into another workspace) instead of the human/analytics export.

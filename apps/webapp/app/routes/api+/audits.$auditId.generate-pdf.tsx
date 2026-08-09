@@ -37,7 +37,7 @@ export const loader = async ({
     }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -55,7 +55,7 @@ export const loader = async ({
       organizationId,
       userId,
       role,
-      request
+      request,
     );
 
     // Format dates in user's local timezone for display in PDF

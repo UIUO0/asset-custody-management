@@ -126,7 +126,7 @@ describe("LocationNotes", () => {
     render(<LocationNotes />);
 
     expect(
-      screen.queryByRole("link", { name: "Export activity CSV" })
+      screen.queryByRole("link", { name: "Export activity CSV" }),
     ).not.toBeInTheDocument();
   });
 });

@@ -8,7 +8,7 @@ describe("resolveUserDisplayName", () => {
         displayName: "Custom Name",
         firstName: "John",
         lastName: "Doe",
-      })
+      }),
     ).toBe("Custom Name");
   });
 
@@ -18,13 +18,13 @@ describe("resolveUserDisplayName", () => {
         displayName: null,
         firstName: "John",
         lastName: "Doe",
-      })
+      }),
     ).toBe("John Doe");
   });
 
   it("falls back to firstName + lastName when displayName is undefined", () => {
     expect(resolveUserDisplayName({ firstName: "John", lastName: "Doe" })).toBe(
-      "John Doe"
+      "John Doe",
     );
   });
 
@@ -50,13 +50,13 @@ describe("resolveUserDisplayName", () => {
         displayName: null,
         firstName: null,
         lastName: null,
-      })
+      }),
     ).toBe("");
   });
 
   it("trims whitespace from firstName and lastName", () => {
     expect(
-      resolveUserDisplayName({ firstName: "  John  ", lastName: "  Doe  " })
+      resolveUserDisplayName({ firstName: "  John  ", lastName: "  Doe  " }),
     ).toBe("John Doe");
   });
 
@@ -66,7 +66,7 @@ describe("resolveUserDisplayName", () => {
         displayName: "",
         firstName: "John",
         lastName: "Doe",
-      })
+      }),
     ).toBe("John Doe");
   });
 
@@ -76,7 +76,7 @@ describe("resolveUserDisplayName", () => {
         displayName: "   ",
         firstName: "John",
         lastName: "Doe",
-      })
+      }),
     ).toBe("John Doe");
   });
 
@@ -86,7 +86,7 @@ describe("resolveUserDisplayName", () => {
         displayName: "  Custom Name  ",
         firstName: "John",
         lastName: "Doe",
-      })
+      }),
     ).toBe("Custom Name");
   });
 });
@@ -101,7 +101,7 @@ describe("resolveTeamMemberName", () => {
           firstName: "John",
           lastName: "Doe",
         },
-      })
+      }),
     ).toBe("Custom Name");
   });
 
@@ -110,13 +110,13 @@ describe("resolveTeamMemberName", () => {
       resolveTeamMemberName({
         name: "Team Member",
         user: { firstName: "John", lastName: "Doe" },
-      })
+      }),
     ).toBe("John Doe");
   });
 
   it("falls back to teamMember name when no user", () => {
     expect(resolveTeamMemberName({ name: "External Member" })).toBe(
-      "External Member"
+      "External Member",
     );
   });
 
@@ -132,8 +132,8 @@ describe("resolveTeamMemberName", () => {
             email: "john@example.com",
           },
         },
-        true
-      )
+        true,
+      ),
     ).toBe("Custom Name (john@example.com)");
   });
 
@@ -148,8 +148,8 @@ describe("resolveTeamMemberName", () => {
             email: "john@example.com",
           },
         },
-        true
-      )
+        true,
+      ),
     ).toBe("John Doe (john@example.com)");
   });
 
@@ -158,7 +158,7 @@ describe("resolveTeamMemberName", () => {
       resolveTeamMemberName({
         name: "Stored Name",
         user: {},
-      })
+      }),
     ).toBe("Stored Name");
   });
 });

@@ -6,7 +6,7 @@ vi.mock("~/utils/storage.server", () => ({
   removePublicFile: vi.fn(),
   getFileUploadPath: vi.fn(
     (params) =>
-      `${params.organizationId}/${params.type}/${params.typeId}/test.jpg`
+      `${params.organizationId}/${params.type}/${params.typeId}/test.jpg`,
   ),
 }));
 
@@ -51,7 +51,7 @@ describe("audit image service", () => {
         JSON.stringify({
           path: "org-1/audits/audit-1/image-123.jpg",
           thumbnailPath: "org-1/audits/audit-1/image-123-thumbnail.jpg",
-        })
+        }),
       );
       vi.mocked(parseFileFormData).mockResolvedValue(mockReturnFormData);
 
@@ -85,7 +85,7 @@ describe("audit image service", () => {
           bucketName: "files",
           generateThumbnail: true,
           thumbnailSize: 108,
-        })
+        }),
       );
 
       expect(db.auditImage.create).toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe("audit image service", () => {
         expect.objectContaining({
           id: "img-1",
           imageUrl: "org-1/audits/audit-1/image-123.jpg",
-        })
+        }),
       );
     });
 
@@ -115,7 +115,7 @@ describe("audit image service", () => {
           auditAssetId: undefined,
           organizationId: "org-1",
           uploadedById: "user-1",
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -135,7 +135,7 @@ describe("audit image service", () => {
           auditAssetId: "asset-1",
           organizationId: "org-1",
           uploadedById: "user-1",
-        })
+        }),
       ).rejects.toMatchObject({
         message: "Maximum of 3 images per asset exceeded",
         status: 400,
@@ -159,7 +159,7 @@ describe("audit image service", () => {
           auditAssetId: undefined,
           organizationId: "org-1",
           uploadedById: "user-1",
-        })
+        }),
       ).rejects.toMatchObject({
         message: "Maximum of 5 general images per audit exceeded",
         status: 400,
@@ -215,7 +215,7 @@ describe("audit image service", () => {
         deleteAuditImage({
           imageId: "nonexistent",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow();
 
       expect(db.auditImage.delete).not.toHaveBeenCalled();
@@ -302,7 +302,7 @@ describe("audit image service", () => {
           where: expect.objectContaining({
             auditAssetId: "asset-1",
           }),
-        })
+        }),
       );
     });
   });

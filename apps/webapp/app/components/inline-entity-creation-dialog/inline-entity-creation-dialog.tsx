@@ -38,7 +38,7 @@ type InlineEntityCreationDialogProps = {
           entity: Pick<AssetModel, "id" | "name"> & {
             description?: string | null;
           };
-        }
+        },
   ) => void;
 };
 

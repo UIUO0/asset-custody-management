@@ -138,7 +138,7 @@ export type AssetValueBreakdown = {
  */
 export function formatAssetValueWithBreakdown(
   asset: AssetForValue,
-  options: FormatAssetValueOptions
+  options: FormatAssetValueOptions,
 ): AssetValueBreakdown {
   const { currency, locale } = options;
   const total = getAssetTotalValue(asset);
@@ -159,7 +159,7 @@ export function formatAssetValueWithBreakdown(
   // string here, but the `?? null` keeps the type honest.
   const suffix = formatUnitCount(
     { type: asset.type as AssetType, unitOfMeasure: asset.unitOfMeasure },
-    quantity
+    quantity,
   );
 
   return {

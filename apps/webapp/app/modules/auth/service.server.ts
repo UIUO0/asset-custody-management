@@ -54,7 +54,7 @@ export async function createEmailAuthAccount(email: string, password: string) {
  */
 export async function confirmExistingAuthAccount(
   email: string,
-  password: string
+  password: string,
 ) {
   try {
     const result = await db.$queryRaw<{ id: string }[]>`
@@ -72,7 +72,7 @@ export async function confirmExistingAuthAccount(
       {
         email_confirm: true,
         password,
-      }
+      },
     );
 
     if (error) {
@@ -224,7 +224,7 @@ export async function signInWithSSO(
    * from the caller) so it is always an allow-listed, query-free Supabase
    * redirect URL — Supabase treats `?` as a wildcard in the allow-list.
    */
-  { platform = "web" }: { platform?: "web" | "mobile" } = {}
+  { platform = "web" }: { platform?: "web" | "mobile" } = {},
 ) {
   try {
     const redirectTo = `${SERVER_URL}/oauth/callback${
@@ -370,7 +370,7 @@ export async function sendResetPasswordLink(email: string) {
 export async function updateAccountPassword(
   id: string,
   password: string,
-  accessToken?: string | undefined
+  accessToken?: string | undefined,
 ) {
   try {
     const user = await db.user.findFirst({
@@ -424,7 +424,7 @@ export async function deleteAuthAccount(userId: string) {
           "Something went wrong while deleting the auth account. Please manually delete the user account in the Supabase dashboard.",
         additionalData: { userId },
         label,
-      })
+      }),
     );
   }
 }
@@ -487,7 +487,7 @@ export async function validateSession(token: string) {
           message: "Refresh token is invalid or has been revoked",
           label,
           shouldBeCaptured: false,
-        })
+        }),
       );
     }
     return result.length > 0;
@@ -498,14 +498,14 @@ export async function validateSession(token: string) {
         message: "Something went wrong while valdiating the session",
         label,
         shouldBeCaptured: false,
-      })
+      }),
     );
     return false;
   }
 }
 
 export async function refreshAccessToken(
-  refreshToken?: string
+  refreshToken?: string,
 ): Promise<AuthSession> {
   try {
     if (!refreshToken) {
@@ -552,7 +552,7 @@ export async function refreshAccessToken(
 export async function verifyAuthSession(authSession: AuthSession) {
   try {
     const authAccount = await getAuthResponseByAccessToken(
-      authSession.accessToken
+      authSession.accessToken,
     );
 
     return Boolean(authAccount);

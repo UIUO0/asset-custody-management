@@ -16,7 +16,7 @@ const filterValueSchema = {
         if (dates.length !== 2) return true;
         return new Date(dates[0]) <= new Date(dates[1]);
       },
-      { message: "Start date must be before or equal to end date" }
+      { message: "Start date must be before or equal to end date" },
     ),
   ]),
   amount: z.union([
@@ -42,7 +42,7 @@ const filterValueSchema = {
         },
         {
           message: "Start value must be less than or equal to end value",
-        }
+        },
       ),
   ]),
   number: z.union([
@@ -68,7 +68,7 @@ const filterValueSchema = {
         },
         {
           message: "Start value must be less than or equal to end value",
-        }
+        },
       ),
   ]),
   boolean: z.boolean(),
@@ -83,7 +83,7 @@ const filterValueSchema = {
  */
 export function useFilterFormValidation(
   filters: Filter[],
-  initialFilters: Filter[]
+  initialFilters: Filter[],
 ) {
   // Generate dynamic schema based on current filters
   const FormSchema = z.object({
@@ -92,7 +92,7 @@ export function useFilterFormValidation(
         z.object({
           name: z.string(),
           value: z.any(), // Use a specific schema if possible
-        })
+        }),
       )
       .min(1, "At least one filter is required"),
   });
@@ -116,7 +116,7 @@ export function useFilterFormValidation(
           // Validate array of numbers
           if (!Array.isArray(filter.value)) return false;
           return !filter.value.some(
-            (v) => v === "" || v === undefined || Number.isNaN(Number(v))
+            (v) => v === "" || v === undefined || Number.isNaN(Number(v)),
           );
         }
         // Validate single number
@@ -140,7 +140,7 @@ export function useFilterFormValidation(
    */
   const getValidationState = () => {
     const hasInvalidFilters = filters.some(
-      (filter) => !validateFilterValue(filter)
+      (filter) => !validateFilterValue(filter),
     );
     const haveFiltersChanged =
       JSON.stringify(initialFilters) !== JSON.stringify(filters);

@@ -17,33 +17,19 @@ import { useTranslation } from "react-i18next";
 import type {
   AssetActivityRow,
   AssetInventoryRow,
-  AssetUtilizationRow,
-  BookingComplianceRow,
-  ChartSeries,
-  ComplianceData,
   CustodySnapshotRow,
   DistributionBreakdown,
   IdleAssetRow,
-  MonthlyBookingTrendRow,
-  OverdueItemRow,
   ReportKpi,
   ResolvedTimeframe,
-  TopBookedAssetRow,
-  TopBookedKitRow,
 } from "~/modules/reports/types";
 
 import { AssetActivityContent } from "./asset-activity-content";
 import { AssetDistributionContent } from "./asset-distribution-content";
 import { AssetInventoryContent } from "./asset-inventory-content";
-import { AssetUtilizationContent } from "./asset-utilization-content";
-import { BookingComplianceContent } from "./booking-compliance-content";
 import { CustodySnapshotContent } from "./custody-snapshot-content";
 import { IdleAssetsContent } from "./idle-assets-content";
-import { MonthlyBookingTrendsContent } from "./monthly-booking-trends-content";
-import { OverdueItemsContent } from "./overdue-items-content";
 import { ReportEmptyState } from "./report-empty-state";
-import { TopBookedAssetsContent } from "./top-booked-assets-content";
-import { TopBookedKitsContent } from "./top-booked-kits-content";
 import type { ReportRowHandlers } from "./use-report-row-handlers";
 
 /** Props for {@link ReportContentSwitch}. */
@@ -60,16 +46,8 @@ type Props = {
   /** Resolved timeframe — used by some Content components for the
    *  hero label. */
   timeframe: ResolvedTimeframe;
-  /** Booking-compliance-only payload extra. */
-  complianceData?: ComplianceData;
-  /** Top-booked-assets-only payload extra (the singular #1 asset). */
-  topBookedAsset?: TopBookedAssetRow | null;
-  /** Top-booked-kits-only payload extra (the singular #1 kit). */
-  topBookedKit?: TopBookedKitRow | null;
   /** Distribution-only payload extra. */
   distributionBreakdown?: DistributionBreakdown;
-  /** Monthly-booking-trends-only payload extra. */
-  chartSeries?: ChartSeries[];
   /** Stable row-click handlers from `useReportRowHandlers`. */
   handlers: ReportRowHandlers;
 };
@@ -84,11 +62,7 @@ export function ReportContentSwitch({
   kpis,
   totalRows,
   timeframe,
-  complianceData,
-  topBookedAsset,
-  topBookedKit,
   distributionBreakdown,
-  chartSeries,
   handlers,
 }: Props) {
   const { t } = useTranslation();
@@ -121,27 +95,6 @@ export function ReportContentSwitch({
   }
 
   switch (reportId) {
-    case "booking-compliance":
-      return (
-        <BookingComplianceContent
-          rows={rows as BookingComplianceRow[]}
-          complianceData={complianceData}
-          totalBookings={totalRows}
-          timeframeLabel={timeframe.label}
-          onRowClick={handlers.onBookingRowClick}
-        />
-      );
-
-    case "overdue-items":
-      return (
-        <OverdueItemsContent
-          rows={rows as OverdueItemRow[]}
-          kpis={kpis}
-          totalRows={totalRows}
-          onRowClick={handlers.onBookingRowClick}
-        />
-      );
-
     case "idle-assets":
       return (
         <IdleAssetsContent
@@ -163,54 +116,10 @@ export function ReportContentSwitch({
         />
       );
 
-    case "top-booked-assets":
-      return (
-        <TopBookedAssetsContent
-          rows={rows as TopBookedAssetRow[]}
-          kpis={kpis}
-          totalRows={totalRows}
-          timeframeLabel={timeframe.label}
-          topBookedAsset={topBookedAsset}
-          onRowClick={handlers.onAssetRowClick}
-        />
-      );
-
-    case "top-booked-kits":
-      return (
-        <TopBookedKitsContent
-          rows={rows as TopBookedKitRow[]}
-          kpis={kpis}
-          totalRows={totalRows}
-          timeframeLabel={timeframe.label}
-          topBookedKit={topBookedKit}
-          onRowClick={handlers.onKitRowClick}
-        />
-      );
-
     case "asset-inventory":
       return (
         <AssetInventoryContent
           rows={rows as AssetInventoryRow[]}
-          kpis={kpis}
-          totalRows={totalRows}
-          onRowClick={handlers.onAssetRowClick}
-        />
-      );
-
-    case "monthly-booking-trends":
-      return (
-        <MonthlyBookingTrendsContent
-          rows={rows as MonthlyBookingTrendRow[]}
-          kpis={kpis}
-          totalRows={totalRows}
-          chartSeries={chartSeries}
-        />
-      );
-
-    case "asset-utilization":
-      return (
-        <AssetUtilizationContent
-          rows={rows as AssetUtilizationRow[]}
           kpis={kpis}
           totalRows={totalRows}
           onRowClick={handlers.onAssetRowClick}

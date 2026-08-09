@@ -133,7 +133,7 @@ describe("analyzeUpdateHeaders", () => {
   it("identifies Asset ID as primary identifier", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "Name", "Category"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.idColumnIndex).toBe(0);
     expect(result.idDbField).toBe("sequentialId");
@@ -144,7 +144,7 @@ describe("analyzeUpdateHeaders", () => {
   it("identifies ID (UUID) as primary when Asset ID is absent", () => {
     const result = analyzeUpdateHeaders(
       ["ID", "Name", "Category"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.idColumnIndex).toBe(0);
     expect(result.idDbField).toBe("id");
@@ -154,7 +154,7 @@ describe("analyzeUpdateHeaders", () => {
   it("uses Asset ID as primary and ID as fallback when both present", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "ID", "Name"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.idColumnIndex).toBe(0);
     expect(result.idDbField).toBe("sequentialId");
@@ -173,7 +173,7 @@ describe("analyzeUpdateHeaders", () => {
   it("classifies updatable core fields", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "Name", "Category", "Location", "Tags", "Value"],
-      mockCustomFields
+      mockCustomFields,
     );
     const updatableKeys = result.updatableColumns.map((c) => c.internalKey);
     expect(updatableKeys).toContain("name");
@@ -186,7 +186,7 @@ describe("analyzeUpdateHeaders", () => {
   it("classifies non-updatable fields as ignored", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "Name", "Status", "Kit", "Custody"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.ignoredColumns).toContain("Status");
     expect(result.ignoredColumns).toContain("Kit");
@@ -196,7 +196,7 @@ describe("analyzeUpdateHeaders", () => {
   it("matches custom fields by name (case-insensitive)", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "serial number"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.updatableColumns).toHaveLength(1);
     expect(result.updatableColumns[0].kind).toBe("customField");
@@ -206,18 +206,18 @@ describe("analyzeUpdateHeaders", () => {
   it("ignores unsupported custom field types (MULTILINE_TEXT)", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "Notes"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.updatableColumns).toHaveLength(0);
     expect(result.ignoredColumns).toContain(
-      "Notes (multiline_text fields not supported for update)"
+      "Notes (multiline_text fields not supported for update)",
     );
   });
 
   it("puts unknown columns in unrecognizedColumns", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "FooBar", "BazQux"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.unrecognizedColumns).toEqual(["FooBar", "BazQux"]);
   });
@@ -225,7 +225,7 @@ describe("analyzeUpdateHeaders", () => {
   it("builds columnIndexMap for updatable columns", () => {
     const result = analyzeUpdateHeaders(
       ["Asset ID", "Name", "Category"],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.columnIndexMap.size).toBe(2);
     expect(result.columnIndexMap.get(1)?.internalKey).toBe("name");
@@ -235,7 +235,7 @@ describe("analyzeUpdateHeaders", () => {
   it("trims header whitespace", () => {
     const result = analyzeUpdateHeaders(
       ["  Asset ID  ", "  Name  "],
-      mockCustomFields
+      mockCustomFields,
     );
     expect(result.idColumnIndex).toBe(0);
     expect(result.updatableColumns[0].internalKey).toBe("name");
@@ -271,7 +271,7 @@ describe("compareCoreField", () => {
         "category",
         "Furniture",
         asset,
-        "Category"
+        "Category",
       );
       expect(result?.newValue).toBe("Furniture");
     });
@@ -279,14 +279,14 @@ describe("compareCoreField", () => {
     it("returns null for same category different case", () => {
       const asset = makeAsset({ category: { name: "Electronics" } });
       expect(
-        compareCoreField("category", "electronics", asset, "Category")
+        compareCoreField("category", "electronics", asset, "Category"),
       ).toBeNull();
     });
 
     it('uses "Uncategorized" as default when asset has no category', () => {
       const asset = makeAsset({ category: null });
       expect(
-        compareCoreField("category", "Uncategorized", asset, "Category")
+        compareCoreField("category", "Uncategorized", asset, "Category"),
       ).toBeNull();
     });
   });
@@ -300,7 +300,7 @@ describe("compareCoreField", () => {
         "location",
         "Warehouse",
         asset,
-        "Location"
+        "Location",
       );
       expect(result?.newValue).toBe("Warehouse");
       expect(result?.currentValue).toBe("Office A");
@@ -362,7 +362,7 @@ describe("compareCoreField", () => {
     it("ignores changes within epsilon threshold", () => {
       const asset = makeAsset({ valuation: 100 });
       expect(
-        compareCoreField("valuation", "100.0001", asset, "Valuation")
+        compareCoreField("valuation", "100.0001", asset, "Valuation"),
       ).toBeNull();
     });
   });
@@ -374,7 +374,7 @@ describe("compareCoreField", () => {
         "availableToBook",
         "No",
         asset,
-        "Available to book"
+        "Available to book",
       );
       expect(result?.newValue).toBe("No");
     });
@@ -385,7 +385,7 @@ describe("compareCoreField", () => {
         "availableToBook",
         "Maybe",
         asset,
-        "Available to book"
+        "Available to book",
       );
       expect(result?.warning).toContain("expected");
     });
@@ -393,7 +393,7 @@ describe("compareCoreField", () => {
     it("returns null when value unchanged", () => {
       const asset = makeAsset({ availableToBook: true });
       expect(
-        compareCoreField("availableToBook", "Yes", asset, "Available to book")
+        compareCoreField("availableToBook", "Yes", asset, "Available to book"),
       ).toBeNull();
     });
   });
@@ -442,7 +442,7 @@ describe("compareCoreField", () => {
         "minQuantity",
         "10",
         asset,
-        "Min quantity"
+        "Min quantity",
       );
       expect(result?.newValue).toBe("10");
       expect(result?.currentValue).toBe("5");
@@ -458,7 +458,7 @@ describe("compareCoreField", () => {
         "minQuantity",
         "3",
         asset,
-        "Min quantity"
+        "Min quantity",
       );
       expect(result?.currentValue).toBe("(none)");
     });
@@ -469,7 +469,7 @@ describe("compareCoreField", () => {
         "minQuantity",
         "-5",
         asset,
-        "Min quantity"
+        "Min quantity",
       );
       expect(result?.warning).toContain("min quantity");
     });
@@ -477,7 +477,7 @@ describe("compareCoreField", () => {
     it("silently no-ops on INDIVIDUAL assets", () => {
       const asset = makeAsset({ type: "INDIVIDUAL", quantity: 1 });
       expect(
-        compareCoreField("minQuantity", "5", asset, "Min quantity")
+        compareCoreField("minQuantity", "5", asset, "Min quantity"),
       ).toBeNull();
     });
   });
@@ -493,7 +493,7 @@ describe("compareCoreField", () => {
         "unitOfMeasure",
         "tons",
         asset,
-        "Unit of measure"
+        "Unit of measure",
       );
       expect(result?.currentValue).toBe("boxes");
       expect(result?.newValue).toBe("tons");
@@ -506,7 +506,7 @@ describe("compareCoreField", () => {
         unitOfMeasure: "boxes",
       });
       expect(
-        compareCoreField("unitOfMeasure", "boxes", asset, "Unit of measure")
+        compareCoreField("unitOfMeasure", "boxes", asset, "Unit of measure"),
       ).toBeNull();
     });
 
@@ -520,7 +520,7 @@ describe("compareCoreField", () => {
         "unitOfMeasure",
         "tons",
         asset,
-        "Unit of measure"
+        "Unit of measure",
       );
       expect(result?.currentValue).toBe("(none)");
       expect(result?.newValue).toBe("tons");
@@ -529,7 +529,7 @@ describe("compareCoreField", () => {
     it("silently no-ops on INDIVIDUAL assets", () => {
       const asset = makeAsset({ type: "INDIVIDUAL", quantity: 1 });
       expect(
-        compareCoreField("unitOfMeasure", "x", asset, "Unit of measure")
+        compareCoreField("unitOfMeasure", "x", asset, "Unit of measure"),
       ).toBeNull();
     });
   });
@@ -545,7 +545,7 @@ describe("compareCoreField", () => {
         "consumptionType",
         "TWO_WAY",
         asset,
-        "Consumption type"
+        "Consumption type",
       );
       expect(result?.newValue).toBe("TWO_WAY");
       expect(result?.currentValue).toBe("ONE_WAY");
@@ -562,8 +562,8 @@ describe("compareCoreField", () => {
           "consumptionType",
           "one_way",
           asset,
-          "Consumption type"
-        )
+          "Consumption type",
+        ),
       ).toBeNull();
     });
 
@@ -577,7 +577,7 @@ describe("compareCoreField", () => {
         "consumptionType",
         "THREE_WAY",
         asset,
-        "Consumption type"
+        "Consumption type",
       );
       expect(result?.warning).toContain("Unrecognized");
     });
@@ -589,8 +589,8 @@ describe("compareCoreField", () => {
           "consumptionType",
           "ONE_WAY",
           asset,
-          "Consumption type"
-        )
+          "Consumption type",
+        ),
       ).toBeNull();
     });
   });
@@ -602,7 +602,7 @@ describe("compareCoreField", () => {
         "assetModel",
         "Dell Latitude",
         asset,
-        "Asset model"
+        "Asset model",
       );
       expect(result?.currentValue).toBe("(none)");
       expect(result?.newValue).toBe("Dell Latitude");
@@ -625,7 +625,7 @@ describe("compareCoreField", () => {
         "assetModel",
         "Dell Latitude",
         asset,
-        "Asset model"
+        "Asset model",
       );
       expect(result).not.toBeNull();
       expect(result?.warning).toMatch(/quantity-tracked/i);
@@ -643,7 +643,7 @@ describe("compareCoreField", () => {
     it("returns null regardless of cell value", () => {
       const asset = makeAsset({ type: "INDIVIDUAL", quantity: 1 });
       expect(
-        compareCoreField("type", "QUANTITY_TRACKED", asset, "Type")
+        compareCoreField("type", "QUANTITY_TRACKED", asset, "Type"),
       ).toBeNull();
       expect(compareCoreField("type", "INDIVIDUAL", asset, "Type")).toBeNull();
       expect(compareCoreField("type", "", asset, "Type")).toBeNull();
@@ -761,7 +761,7 @@ describe("compareCustomField", () => {
         dateCfDef,
         "2024-06-23",
         asset,
-        "Purchase Date"
+        "Purchase Date",
       );
       expect(result?.newValue).toBe("2024-06-23");
       expect(result?.warning).toBeUndefined();
@@ -773,7 +773,7 @@ describe("compareCustomField", () => {
         dateCfDef,
         "23 June 2024",
         asset,
-        "Purchase Date"
+        "Purchase Date",
       );
       expect(result?.warning).toContain("Invalid date format");
     });
@@ -784,7 +784,7 @@ describe("compareCustomField", () => {
         dateCfDef,
         "2024-02-31",
         asset,
-        "Purchase Date"
+        "Purchase Date",
       );
       expect(result?.warning).toContain("Invalid date format");
     });
@@ -822,7 +822,7 @@ describe("compareCustomField", () => {
         ],
       });
       expect(
-        compareCustomField(numberCfDef, "100.0001", asset, "Weight")
+        compareCustomField(numberCfDef, "100.0001", asset, "Weight"),
       ).toBeNull();
     });
 
@@ -842,7 +842,7 @@ describe("compareCustomField", () => {
 describe("computeAssetDiffs", () => {
   /** Builds a minimal HeaderAnalysis for testing */
   function makeHeaderAnalysis(
-    overrides: Partial<HeaderAnalysis> = {}
+    overrides: Partial<HeaderAnalysis> = {},
   ): HeaderAnalysis {
     const columnIndexMap = new Map<number, any>();
     columnIndexMap.set(1, {
@@ -927,7 +927,7 @@ describe("computeAssetDiffs", () => {
 
     expect(result.failedRows).toHaveLength(1);
     expect(result.failedRows[0].reason).toBe(
-      "Asset not found in your organization"
+      "Asset not found in your organization",
     );
   });
 
@@ -1087,7 +1087,7 @@ describe("computeAssetDiffs", () => {
     expect(result.assetsToUpdate).toHaveLength(1);
     expect(result.assetsToUpdate[0].changes[0].clearing).toBe(true);
     expect(result.assetsToUpdate[0].changes[0].currentValue).toBe(
-      "Electronics"
+      "Electronics",
     );
   });
 
@@ -1182,9 +1182,9 @@ describe("describeBulkUpdateRowFailure", () => {
     // why: mimic a Prisma known-request error shape (code + multi-line message)
     const prismaError = Object.assign(
       new Error(
-        "Invalid `prisma.asset.update()` invocation\n\n  The column `Asset.foo` does not exist."
+        "Invalid `prisma.asset.update()` invocation\n\n  The column `Asset.foo` does not exist.",
       ),
-      { code: "P2022" }
+      { code: "P2022" },
     );
     const wrapped = new ShelfError({
       cause: prismaError,

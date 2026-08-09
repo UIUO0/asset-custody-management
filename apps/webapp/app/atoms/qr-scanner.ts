@@ -60,7 +60,7 @@ export const setScannedAssetQuantityAtom = atom(
       ...current,
       [payload.assetId]: payload.quantity,
     });
-  }
+  },
 );
 
 /**
@@ -101,7 +101,7 @@ export const addScannedItemAtom = atom(
     set,
     qrId: string,
     error?: string,
-    codeType?: "qr" | "barcode" | "samId"
+    codeType?: "qr" | "barcode" | "samId",
   ) => {
     const currentItems = get(scannedItemsAtom);
     if (!currentItems[qrId]) {
@@ -134,7 +134,7 @@ export const addScannedItemAtom = atom(
         });
       }
     }
-  }
+  },
 );
 
 // Update item based on key
@@ -162,7 +162,7 @@ export const updateScannedItemAtom = atom(
             existingItem?.data?.id === assetOrKitId &&
             existingItem?.type === item.type
           );
-        }
+        },
       );
 
       if (existingDuplicateKey) {
@@ -186,7 +186,7 @@ export const updateScannedItemAtom = atom(
         [qrId]: item,
       });
     }
-  }
+  },
 );
 
 // Remove item based on key
@@ -225,7 +225,7 @@ export const removeMultipleScannedItemsAtom = atom(
       });
       set(scannedAssetQuantitiesAtom, qtyRest);
     }
-  }
+  },
 );
 
 // Remove items based on asset id
@@ -246,7 +246,7 @@ export const removeScannedItemsByAssetIdAtom = atom(
       delete qtyRest[id];
     });
     set(scannedAssetQuantitiesAtom, qtyRest);
-  }
+  },
 );
 
 // Clear all items
@@ -337,7 +337,7 @@ export const auditResultsAtom = atom((get) => {
   // Categorize assets
   const found = scannedAssets.filter((asset) => asset.auditStatus === "found");
   const unexpected = scannedAssets.filter(
-    (asset) => asset.auditStatus === "unexpected"
+    (asset) => asset.auditStatus === "unexpected",
   );
   const foundIds = new Set(found.map((asset) => asset.id));
   const missing = expectedAssets.filter((asset) => !foundIds.has(asset.id));
@@ -364,9 +364,9 @@ export const setAuditExpectedAssetsAtom = atom(
           imagesCount: asset.auditImagesCount ?? 0,
         };
         return acc;
-      }, {})
+      }, {}),
     );
-  }
+  },
 );
 
 export const incrementAuditAssetMetaAtom = atom(
@@ -382,7 +382,7 @@ export const incrementAuditAssetMetaAtom = atom(
       auditAssetId: string;
       notesDelta?: number;
       imagesDelta?: number;
-    }
+    },
   ) => {
     const current = get(auditAssetMetaAtom);
     const existing = current[auditAssetId] ?? {};
@@ -397,7 +397,7 @@ export const incrementAuditAssetMetaAtom = atom(
         imagesCount: Math.max(0, nextImages),
       },
     });
-  }
+  },
 );
 
 // Action atom to start an audit session
@@ -408,7 +408,7 @@ export const startAuditSessionAtom = atom(
     // Clear any existing scanned items when starting a new audit
     set(scannedItemsAtom, {});
     set(auditAssetMetaAtom, {});
-  }
+  },
 );
 
 // Action atom to end an audit session
@@ -503,7 +503,7 @@ export const setBookingExpectedAssetsAtom = atom(
   null,
   (_get, set, assets: BookingExpectedAsset[]) => {
     set(bookingExpectedAssetsAtom, assets);
-  }
+  },
 );
 
 /** Start a booking check-in session. Clears the scanned-items container
@@ -513,7 +513,7 @@ export const startBookingCheckinSessionAtom = atom(
   (_get, set, info: Exclude<BookingCheckinSessionInfo, null>) => {
     set(bookingCheckinSessionAtom, info);
     set(scannedItemsAtom, {});
-  }
+  },
 );
 
 /** End the session. Hook calls this on unmount. */
@@ -568,7 +568,7 @@ export const quickCheckinQtyAssetAtom = atom(
   (
     get,
     set,
-    asset: Extract<BookingExpectedAsset, { kind: "QUANTITY_TRACKED" }>
+    asset: Extract<BookingExpectedAsset, { kind: "QUANTITY_TRACKED" }>,
   ) => {
     // Keyed by `bookingAssetId` (Polish-7b), NOT `asset.id`. An asset can
     // have multiple BookingAsset slices in one booking (kit-driven +
@@ -611,7 +611,7 @@ export const quickCheckinQtyAssetAtom = atom(
       },
       ...current,
     });
-  }
+  },
 );
 
 /**
@@ -639,7 +639,7 @@ export const quickCheckoutQtyAssetAtom = atom(
   (
     get,
     set,
-    asset: Extract<BookingExpectedAsset, { kind: "QUANTITY_TRACKED" }>
+    asset: Extract<BookingExpectedAsset, { kind: "QUANTITY_TRACKED" }>,
   ) => {
     // Keyed by `bookingAssetId` (Polish-7b), NOT `asset.id`. An asset can
     // have multiple BookingAsset slices in one booking (kit-driven +
@@ -680,7 +680,7 @@ export const quickCheckoutQtyAssetAtom = atom(
       },
       ...current,
     });
-  }
+  },
 );
 
 /*******************************/
@@ -791,7 +791,7 @@ export const setFulfilSessionAtom = atom(
     set(fulfilSessionAtom, info);
     set(expectedModelRequestsAtom, info.expectedModelRequests);
     set(scannedItemsAtom, {});
-  }
+  },
 );
 
 /**

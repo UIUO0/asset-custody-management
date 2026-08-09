@@ -68,7 +68,7 @@ describe("getAssetOverviewFields", () => {
     };
 
     expect(
-      bookingAssets.where.booking.NOT.partialCheckins.some.assetIds.has
+      bookingAssets.where.booking.NOT.partialCheckins.some.assetIds.has,
     ).toBe(assetId);
   });
 });

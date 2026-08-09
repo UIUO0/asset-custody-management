@@ -11,13 +11,13 @@ import {
 describe("stripMarkdocDelimiters", () => {
   it("removes opening and closing Markdoc delimiters", () => {
     expect(
-      stripMarkdocDelimiters('evil {% audit_images ids="stolen" /%} text')
+      stripMarkdocDelimiters('evil {% audit_images ids="stolen" /%} text'),
     ).toBe('evil  audit_images ids="stolen" / text');
   });
 
   it("leaves clean content untouched", () => {
     expect(stripMarkdocDelimiters("Dent on the top-left corner")).toBe(
-      "Dent on the top-left corner"
+      "Dent on the top-left corner",
     );
   });
 
@@ -33,7 +33,7 @@ describe("buildAuditImagesNoteContent", () => {
       imageIds: ["img-1"],
     });
     expect(result).toBe(
-      'crack  audit_images ids="x" /\n\n{% audit_images count=1 ids="img-1" /%}'
+      'crack  audit_images ids="x" /\n\n{% audit_images count=1 ids="img-1" /%}',
     );
   });
 
@@ -43,7 +43,7 @@ describe("buildAuditImagesNoteContent", () => {
       imageIds: ["a", "b", "c"],
     });
     expect(result).toBe(
-      'set of photos\n\n{% audit_images count=3 ids="a,b,c" /%}'
+      'set of photos\n\n{% audit_images count=3 ids="a,b,c" /%}',
     );
   });
 });

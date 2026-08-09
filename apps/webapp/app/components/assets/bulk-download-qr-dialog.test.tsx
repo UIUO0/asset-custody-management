@@ -140,12 +140,12 @@ beforeEach(() => {
   // use-api-query.test.ts) so the dialog's request is captured here and never
   // reaches MSW (which errors on unhandled requests).
   vi.spyOn(globalThis, "fetch").mockImplementation(((
-    input: RequestInfo | URL
+    input: RequestInfo | URL,
   ) => {
     const url = String(input);
     fetchSpy(url);
     const ids = new URL(url, "http://localhost").searchParams.getAll(
-      "assetIds"
+      "assetIds",
     );
     if (fetchControl.mode === "manual") {
       return new Promise<Response>((resolve) => {
@@ -182,7 +182,7 @@ function renderDialog() {
   const utils = render(
     <Provider store={store}>
       <BulkDownloadQrDialog isDialogOpen onClose={onClose} />
-    </Provider>
+    </Provider>,
   );
   return { store, onClose, ...utils };
 }
@@ -191,13 +191,13 @@ function renderDialog() {
 async function setFilterAndSelection(
   store: ReturnType<typeof createStore>,
   filterQuery: string,
-  assetIds: string[]
+  assetIds: string[],
 ) {
   hoisted.searchParams = new URLSearchParams(filterQuery);
   await act(async () => {
     store.set(
       selectedBulkItemsAtom,
-      assetIds.map((id) => ({ id }) as unknown as ListItemData)
+      assetIds.map((id) => ({ id }) as unknown as ListItemData),
     );
     // Flush microtask-scheduled effects (useMemo recompute) so the dialog
     // observes the new filter + selection before we interact with it.
@@ -278,8 +278,8 @@ describe("BulkDownloadQrDialog", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/successfully downloaded qr codes/i)
-      ).toBeInTheDocument()
+        screen.getByText(/successfully downloaded qr codes/i),
+      ).toBeInTheDocument(),
     );
 
     // Only the latest request's assets are rasterized; the stale ones never are.

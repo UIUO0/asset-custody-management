@@ -60,6 +60,14 @@ export const FEEDBACK_ERROR_CONTEXT_FIELDS = [
   "errorMessage",
 ] as const;
 
+/**
+ * Shape backing {@link FeedbackErrorContext}.
+ *
+ * Only ever consumed by `z.infer` below, so the linter reads it as an unused
+ * value — but it cannot become a plain type: `pick()` is what derives it from
+ * {@link feedbackSchema}, which is exactly what stops the two from drifting.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- see above: a value used only in a type position
 const feedbackErrorContextSchema = feedbackSchema.pick({
   traceId: true,
   sentryEventId: true,

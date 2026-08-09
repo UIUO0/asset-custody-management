@@ -81,7 +81,7 @@ export async function createBarcode({
           [{ type, value }],
           organizationId,
           undefined, // No currentItemId for creates
-          relationshipType as "asset" | "kit"
+          relationshipType as "asset" | "kit",
         );
       }
     }
@@ -117,11 +117,11 @@ export async function createBarcodes({
     for (const barcode of barcodes) {
       const normalizedValue = normalizeBarcodeValue(
         barcode.type,
-        barcode.value
+        barcode.value,
       );
       const validationError = validateBarcodeValue(
         barcode.type,
-        normalizedValue
+        normalizedValue,
       );
       if (validationError) {
         throw new ShelfError({
@@ -160,7 +160,7 @@ export async function createBarcodes({
           barcodes,
           organizationId,
           undefined, // No currentItemId for creates
-          relationshipType as "asset" | "kit"
+          relationshipType as "asset" | "kit",
         );
       }
     }
@@ -228,7 +228,7 @@ export async function updateBarcode({
           [{ type: type || "Code128", value }], // Use provided type or default
           organizationId,
           currentItemId,
-          relationshipType as "asset" | "kit"
+          relationshipType as "asset" | "kit",
         );
       }
     }
@@ -454,7 +454,7 @@ export async function validateBarcodeUniqueness(
   barcodes: { type: BarcodeType; value: string }[],
   organizationId: Organization["id"],
   currentItemId?: string,
-  relationshipType?: "asset" | "kit"
+  relationshipType?: "asset" | "kit",
 ): Promise<void> {
   const validationErrors: ValidationError<any> = {};
 
@@ -465,7 +465,7 @@ export async function validateBarcodeUniqueness(
   for (let i = 0; i < barcodes.length; i++) {
     const normalizedValue = normalizeBarcodeValue(
       barcodes[i].type,
-      barcodes[i].value
+      barcodes[i].value,
     );
 
     if (seenValues.has(normalizedValue)) {
@@ -480,7 +480,7 @@ export async function validateBarcodeUniqueness(
 
   // OPTIMIZED: Single query to get all existing barcodes with these values
   const submittedValues = barcodes.map((b) =>
-    b.type === BarcodeType.ExternalQR ? b.value : b.value.toUpperCase()
+    b.type === BarcodeType.ExternalQR ? b.value : b.value.toUpperCase(),
   );
 
   const isEditing = !!currentItemId && !!relationshipType;
@@ -570,11 +570,11 @@ export async function updateBarcodes({
     for (const barcode of barcodes) {
       const normalizedValue = normalizeBarcodeValue(
         barcode.type,
-        barcode.value
+        barcode.value,
       );
       const validationError = validateBarcodeValue(
         barcode.type,
-        normalizedValue
+        normalizedValue,
       );
       if (validationError) {
         throw new ShelfError({
@@ -605,7 +605,7 @@ export async function updateBarcodes({
     // Find barcodes to delete (existing ones not in the new list)
     const submittedIds = new Set(barcodes.map((b) => b.id).filter(Boolean));
     const barcodesToDelete = existingBarcodes.filter(
-      (existing) => !submittedIds.has(existing.id)
+      (existing) => !submittedIds.has(existing.id),
     );
 
     const operations = [];
@@ -622,7 +622,7 @@ export async function updateBarcodes({
             type: barcode.type,
             value: normalizeBarcodeValue(barcode.type, barcode.value),
           },
-        })
+        }),
       );
     }
 
@@ -637,7 +637,7 @@ export async function updateBarcodes({
             ...(assetId && { assetId }),
             ...(kitId && { kitId }),
           },
-        })
+        }),
       );
     }
 
@@ -649,7 +649,7 @@ export async function updateBarcodes({
             id: { in: barcodesToDelete.map((b) => b.id) },
             organizationId, // Security: ensure we only delete from this org
           },
-        })
+        }),
       );
     }
 
@@ -670,7 +670,7 @@ export async function updateBarcodes({
           barcodes,
           organizationId,
           currentItemId,
-          relationshipType as "asset" | "kit"
+          relationshipType as "asset" | "kit",
         );
 
         // If validateBarcodeUniqueness completes without throwing,
@@ -737,7 +737,7 @@ export const BARCODE_IMPORT_COLUMNS: { column: string; type: BarcodeType }[] = [
  * @returns True if at least one row has a non-empty barcode cell.
  */
 export function importDataHasBarcodes(
-  data: CreateAssetFromContentImportPayload[]
+  data: CreateAssetFromContentImportPayload[],
 ): boolean {
   return data.some((asset) =>
     BARCODE_IMPORT_COLUMNS.some(({ column }) => {
@@ -745,7 +745,7 @@ export function importDataHasBarcodes(
       // mustn't trip the "barcodes disabled" 403 for those workspaces.
       const value = asset[column];
       return typeof value === "string" && value.trim() !== "";
-    })
+    }),
   );
 }
 
@@ -871,7 +871,7 @@ export async function parseBarcodesFromImportData({
 
     // Check for barcodes already linked to assets or kits in this organization
     const linkedBarcodes = existingBarcodes.filter(
-      (barcode) => barcode.assetId || barcode.kitId
+      (barcode) => barcode.assetId || barcode.kitId,
     );
 
     if (linkedBarcodes.length > 0) {
@@ -885,7 +885,7 @@ export async function parseBarcodesFromImportData({
       throw new ShelfError({
         cause: null,
         message: `Some barcodes are already linked to other assets or kits in your organization. Please use unlinked barcodes: ${linkedDetails.join(
-          ", "
+          ", ",
         )}`,
         additionalData: { linkedBarcodes: linkedDetails },
         label,

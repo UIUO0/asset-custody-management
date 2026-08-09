@@ -111,7 +111,7 @@ export function useStickyHeaderPortal() {
       {
         threshold: 0,
         rootMargin: `0px 0px 0px 0px`,
-      }
+      },
     );
 
     if (headerRefCurrent) {
@@ -226,6 +226,6 @@ export const StickyHeader = ({
     >
       {children}
     </div>,
-    document.body
+    document.body,
   );
 };

@@ -26,7 +26,7 @@ vi.mock("~/utils/error", () => ({
 const mockDb = await import("~/database/db.server");
 const activityEventCreateMock = vi.mocked(mockDb.db.activityEvent.create);
 const activityEventCreateManyMock = vi.mocked(
-  mockDb.db.activityEvent.createMany
+  mockDb.db.activityEvent.createMany,
 );
 const userFindUniqueMock = vi.mocked(mockDb.db.user.findUnique);
 
@@ -103,7 +103,7 @@ describe("activity event service", () => {
       expect(userFindUniqueMock).not.toHaveBeenCalled();
       // Prisma.DbNull is used for explicit null in JSON columns
       expect(activityEventCreateMock.mock.calls[0][0].data.actorSnapshot).toBe(
-        Prisma.DbNull
+        Prisma.DbNull,
       );
     });
 
@@ -148,7 +148,7 @@ describe("activity event service", () => {
           entityId: "asset-1",
           assetId: "asset-1",
         },
-        tx
+        tx,
       );
 
       expect(txFindUnique).toHaveBeenCalled();
@@ -169,7 +169,7 @@ describe("activity event service", () => {
           entityType: "ASSET",
           entityId: "asset-1",
           assetId: "asset-1",
-        })
+        }),
       ).rejects.toMatchObject({
         label: "Activity",
         message: "Failed to record activity event.",
@@ -271,7 +271,7 @@ describe("activity event service", () => {
       activityEventCreateManyMock.mockRejectedValueOnce(new Error("boom"));
 
       await expect(
-        recordEvents([createActivityEventInput({ assetId: "asset-a" })])
+        recordEvents([createActivityEventInput({ assetId: "asset-a" })]),
       ).rejects.toMatchObject({
         label: "Activity",
         message: "Failed to record activity events.",

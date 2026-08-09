@@ -37,14 +37,14 @@ describe("tab-id.server", () => {
           await Promise.resolve();
           results.push(getTabId());
           resolve();
-        })
+        }),
       ),
       new Promise<void>((resolve) =>
         runWithTabId("tab-B", async () => {
           await Promise.resolve();
           results.push(getTabId());
           resolve();
-        })
+        }),
       ),
     ]);
 

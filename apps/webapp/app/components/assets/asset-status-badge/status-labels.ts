@@ -14,8 +14,8 @@ import {
   ASSET_STATUS_LABELS,
   ASSET_BOOKING_PSEUDO_STATUS_LABELS,
 } from "@shelf/labels";
+import type { ExtendedAssetStatus } from "~/utils/asset-status";
 import { BADGE_COLORS, type BadgeColorScheme } from "~/utils/badge-colors";
-import type { ExtendedAssetStatus } from "~/utils/booking-assets";
 
 /**
  * Maps a status (including the booking-context-only `PARTIALLY_CHECKED_IN`
@@ -63,7 +63,7 @@ export const userFriendlyAssetStatus = (status: ExtendedAssetStatus) => {
  * {@link userFriendlyAssetStatus}.
  */
 export const assetStatusColorMap = (
-  status: ExtendedAssetStatus
+  status: ExtendedAssetStatus,
 ): BadgeColorScheme => {
   switch (status) {
     case AssetStatus.IN_CUSTODY:

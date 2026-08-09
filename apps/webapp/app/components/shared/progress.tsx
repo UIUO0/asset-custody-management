@@ -14,7 +14,7 @@ function Progress({
       data-slot="progress"
       className={tw(
         "relative h-2 w-full overflow-hidden rounded-full bg-gray-200",
-        className
+        className,
       )}
       {...props}
     >
@@ -22,7 +22,7 @@ function Progress({
         data-slot="progress-indicator"
         className={tw(
           "size-full flex-1 transition-all",
-          isComplete ? "bg-green-500" : "bg-gray-400"
+          isComplete ? "bg-green-500" : "bg-gray-400",
         )}
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />

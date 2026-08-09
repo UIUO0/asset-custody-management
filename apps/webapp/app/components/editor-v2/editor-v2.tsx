@@ -59,7 +59,7 @@ export const EditorV2 = forwardRef<HTMLTextAreaElement, EditorV2Props>(
       onChange,
       ...textareaProps
     },
-    ref
+    ref,
   ) {
     const { autoFocus: shouldAutoFocus, ...restTextareaProps } =
       textareaProps as typeof textareaProps & { autoFocus?: boolean };
@@ -103,7 +103,7 @@ export const EditorV2 = forwardRef<HTMLTextAreaElement, EditorV2Props>(
 
     const { runCommand, handleParagraphChange } = useEditorCommands(
       schema,
-      viewRef
+      viewRef,
     );
 
     // Extract onKeyDown from restTextareaProps if it exists
@@ -283,5 +283,5 @@ export const EditorV2 = forwardRef<HTMLTextAreaElement, EditorV2Props>(
         />
       </div>
     );
-  }
+  },
 );

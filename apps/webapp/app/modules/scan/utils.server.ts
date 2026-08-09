@@ -5,7 +5,7 @@ import { resolveUserDisplayName } from "~/utils/user";
 
 function isValidUser(
   userOrganizations: UserOrganization[] | null | undefined,
-  organizationId: string | null | undefined
+  organizationId: string | null | undefined,
 ) {
   if (!userOrganizations || !organizationId) {
     return false;

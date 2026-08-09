@@ -34,6 +34,7 @@ import {
   getActionMethod,
   parseData,
 } from "~/utils/http.server";
+import { getLandingRouteForUser } from "~/utils/landing-route.server";
 import { validEmail } from "~/utils/misc";
 import { validateNonSSOSignup } from "~/utils/sso.server";
 
@@ -58,7 +59,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       });
     }
     if (context.isAuthenticated) {
-      return redirect("/assets");
+      const { userId } = context.getSession();
+      return redirect(await getLandingRouteForUser({ userId, request }));
     }
 
     return data(payload({ title, subHeading }));

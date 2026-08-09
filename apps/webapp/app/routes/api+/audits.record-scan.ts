@@ -40,7 +40,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
     const { auditSessionId, qrId, assetId, isExpected } = parseData(
       await request.formData(),
       RecordScanSchema,
-      { additionalData: { userId } }
+      { additionalData: { userId } },
     );
 
     const result = await recordAuditScan({

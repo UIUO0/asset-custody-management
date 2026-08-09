@@ -56,7 +56,7 @@ export async function loader({ context, params, request }: LoaderFunctionArgs) {
         barcodes: asset.barcodes,
         sequentialId: asset.sequentialId,
         showShelfBranding: currentOrganization.showShelfBranding,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, assetId });

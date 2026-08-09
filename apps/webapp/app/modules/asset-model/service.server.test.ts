@@ -122,7 +122,7 @@ describe("createAssetModel", () => {
         name: "Duplicate Model",
         userId: "user-123",
         organizationId: "org-123",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -159,7 +159,7 @@ describe("getAssetModels", () => {
         include: expect.objectContaining({
           _count: { select: { assets: true } },
         }),
-      })
+      }),
     );
   });
 
@@ -183,7 +183,7 @@ describe("getAssetModels", () => {
             { description: { contains: "latitude", mode: "insensitive" } },
           ],
         },
-      })
+      }),
     );
   });
 
@@ -203,7 +203,7 @@ describe("getAssetModels", () => {
       expect.objectContaining({
         skip: 20,
         take: 10,
-      })
+      }),
     );
   });
 });
@@ -235,11 +235,11 @@ describe("getAssetModel", () => {
   it("throws ShelfError when asset model is not found", async () => {
     // @ts-expect-error mock setup
     db.assetModel.findFirstOrThrow.mockRejectedValue(
-      new Error("Record not found")
+      new Error("Record not found"),
     );
 
     await expect(
-      getAssetModel({ id: "nonexistent", organizationId: "org-123" })
+      getAssetModel({ id: "nonexistent", organizationId: "org-123" }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -338,7 +338,7 @@ describe("deleteAssetModel", () => {
       deleteAssetModel({
         id: "asset-model-123",
         organizationId: "org-123",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -435,7 +435,7 @@ describe("createAssetModelsIfNotExists", () => {
         data: [{ key: "r1", title: "Asset 1", assetModel: "Brand X" }] as any,
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 });

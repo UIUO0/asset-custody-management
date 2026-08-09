@@ -31,29 +31,22 @@ import {
   useReportRowHandlers,
 } from "~/components/reports";
 import {
-  resolveTimeframe,
-  bookingComplianceReport,
-  overdueItemsReport,
+  readAssetActivityFilters,
+  readAssetInventoryFilters,
+  readCustodySnapshotFilters,
+  readIdleAssetsFilters,
+} from "~/modules/reports/filters";
+import {
   idleAssetsReport,
   custodySnapshotReport,
-  topBookedAssetsReport,
-  topBookedKitsReport,
   assetDistributionReport,
   assetInventoryReport,
-  monthlyBookingTrendsReport,
-  assetUtilizationReport,
   assetActivityReport,
-  type BookingComplianceSortColumn,
 } from "~/modules/reports/helpers.server";
 import { getReportById } from "~/modules/reports/registry";
 import type {
-  ChartSeries,
-  ComplianceData,
   DistributionBreakdown,
   ReportPayload,
-  TimeframePreset,
-  TopBookedAssetRow,
-  TopBookedKitRow,
 } from "~/modules/reports/types";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { ShelfError } from "~/utils/error";
@@ -119,147 +112,61 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     action: PermissionAction.read,
   });
 
-  // Parse search params for filters
+  /**
+   * Filters come from `modules/reports/filters.ts` — the same readers the CSV
+   * and PDF exports use. They were inlined here and copied nowhere, which is
+   * how both exports ended up ignoring every filter this screen applies.
+   */
   const url = new URL(request.url);
-  const timeframePreset =
-    (url.searchParams.get("timeframe") as TimeframePreset) || "last_30d";
-  const customFrom = url.searchParams.get("from");
-  const customTo = url.searchParams.get("to");
 
-  const timeframe = resolveTimeframe(
-    timeframePreset,
-    customFrom ? new Date(customFrom) : undefined,
-    customTo ? new Date(customTo) : undefined
-  );
+  // Paging is the screen's own concern; the exports take everything.
+  const paging = {
+    page: parseInt(url.searchParams.get("page") || "1", 10),
+    pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
+  };
 
   // Load report data based on report ID
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let reportData: ReportPayload<any>;
 
   switch (reportId) {
-    case "booking-compliance": {
-      // Parse sort params for server-side sorting
-      const sortBy = (url.searchParams.get("sortBy") ||
-        "scheduledEnd") as BookingComplianceSortColumn;
-      const sortOrder = (url.searchParams.get("sortOrder") || "desc") as
-        | "asc"
-        | "desc";
-      reportData = await bookingComplianceReport({
-        organizationId,
-        timeframe,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
-        sortBy,
-        sortOrder,
-      });
-      break;
-    }
-
-    case "overdue-items":
-      reportData = await overdueItemsReport({
-        organizationId,
-        custodianId: url.searchParams.get("custodian") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
-      });
-      break;
-
     case "idle-assets":
       reportData = await idleAssetsReport({
         organizationId,
-        idleThresholdDays: parseInt(url.searchParams.get("days") || "30", 10),
-        categoryId: url.searchParams.get("category") || undefined,
-        locationId: url.searchParams.get("location") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
+        ...readIdleAssetsFilters(url.searchParams),
+        ...paging,
       });
       break;
 
     case "custody-snapshot":
       reportData = await custodySnapshotReport({
         organizationId,
-        teamMemberId: url.searchParams.get("teamMember") || undefined,
-        locationId: url.searchParams.get("location") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
-      });
-      break;
-
-    case "top-booked-assets":
-      reportData = await topBookedAssetsReport({
-        organizationId,
-        timeframe,
-        categoryId: url.searchParams.get("category") || undefined,
-        locationId: url.searchParams.get("location") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
-      });
-      break;
-
-    case "top-booked-kits":
-      reportData = await topBookedKitsReport({
-        organizationId,
-        timeframe,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
+        ...readCustodySnapshotFilters(url.searchParams),
+        ...paging,
       });
       break;
 
     case "distribution":
+      // Takes no filters — it summarises the whole workspace.
       reportData = await assetDistributionReport({
         organizationId,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
+        ...paging,
       });
       break;
 
     case "asset-inventory":
       reportData = await assetInventoryReport({
         organizationId,
-        categoryIds:
-          url.searchParams.get("categories")?.split(",").filter(Boolean) ||
-          undefined,
-        locationIds:
-          url.searchParams.get("locations")?.split(",").filter(Boolean) ||
-          undefined,
-        statuses:
-          url.searchParams.get("statuses")?.split(",").filter(Boolean) ||
-          undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
-      });
-      break;
-
-    case "monthly-booking-trends":
-      reportData = await monthlyBookingTrendsReport({
-        organizationId,
-        timeframe,
-        categoryId: url.searchParams.get("category") || undefined,
-        locationId: url.searchParams.get("location") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "12", 10),
-      });
-      break;
-
-    case "asset-utilization":
-      reportData = await assetUtilizationReport({
-        organizationId,
-        timeframe,
-        categoryId: url.searchParams.get("category") || undefined,
-        locationId: url.searchParams.get("location") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
+        ...readAssetInventoryFilters(url.searchParams),
+        ...paging,
       });
       break;
 
     case "asset-activity":
       reportData = await assetActivityReport({
         organizationId,
-        timeframe,
-        assetId: url.searchParams.get("asset") || undefined,
-        categoryId: url.searchParams.get("category") || undefined,
-        page: parseInt(url.searchParams.get("page") || "1", 10),
-        pageSize: parseInt(url.searchParams.get("pageSize") || "50", 10),
+        ...readAssetActivityFilters(url.searchParams),
+        ...paging,
       });
       break;
 
@@ -300,22 +207,14 @@ export default function ReportPage() {
     totalRows,
     page,
     pageSize,
-    complianceData,
-    topBookedAsset,
-    topBookedKit,
     distributionBreakdown,
-    chartSeries,
   } = loaderData as typeof loaderData & {
-    complianceData?: ComplianceData;
-    topBookedAsset?: TopBookedAssetRow | null;
-    topBookedKit?: TopBookedKitRow | null;
     distributionBreakdown?: DistributionBreakdown;
-    chartSeries?: ChartSeries[];
   };
 
   const { isExporting, handleExport } = useCsvExport(
     reportId,
-    filters.timeframe.preset
+    filters.timeframe.preset,
   );
 
   const hasData = rows.length > 0;
@@ -346,11 +245,7 @@ export default function ReportPage() {
             kpis={kpis}
             totalRows={totalRows}
             timeframe={filters.timeframe}
-            complianceData={complianceData}
-            topBookedAsset={topBookedAsset}
-            topBookedKit={topBookedKit}
             distributionBreakdown={distributionBreakdown}
-            chartSeries={chartSeries}
             handlers={handlers}
           />
         </div>
@@ -361,10 +256,7 @@ export default function ReportPage() {
             totalRows={totalRows}
             page={page}
             pageSize={pageSize}
-            hideRowCount={
-              reportId === "distribution" ||
-              reportId === "monthly-booking-trends"
-            }
+            hideRowCount={reportId === "distribution"}
           />
         </div>
       </div>

@@ -1,21 +1,19 @@
 import type { ReactNode } from "react";
-import { useMemo } from "react";
 import {
   AlarmClockIcon,
   BellIcon,
   BoxesIcon,
-  CalendarRangeIcon,
   ChartLineIcon,
   ClipboardCheckIcon,
+  ClipboardListIcon,
+  FileTextIcon,
   FileBarChartIcon,
   HandIcon,
   HomeIcon,
-  InboxIcon,
   MapPinIcon,
   MessageCircleIcon,
   Package,
   PackageOpenIcon,
-  PackageSearchIcon,
   ScanBarcodeIcon,
   SettingsIcon,
   SignatureIcon,
@@ -25,8 +23,6 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
-import { UpgradeMessage } from "~/components/marketing/upgrade-message";
-import When from "~/components/when/when";
 import type { loader } from "~/routes/_layout+/_layout";
 import { isPersonalOrg } from "~/utils/organization";
 import {
@@ -78,14 +74,8 @@ export type NavItem =
 
 export function useSidebarNavItems() {
   const { t } = useTranslation();
-  const {
-    isAdmin,
-    canUseBookings,
-    subscription,
-    unreadUpdatesCount,
-    pendingRequestCount,
-    pendingHandoverCount,
-  } = useLoaderData<typeof loader>();
+  const { isAdmin, unreadUpdatesCount, pendingHandoverCount } =
+    useLoaderData<typeof loader>();
   const { roles, isScopedToOwnRecords } = useUserRoleHelper();
   const currentOrganization = useCurrentOrganization();
   const isPersonalOrganization = isPersonalOrg(currentOrganization);
@@ -105,17 +95,17 @@ export function useSidebarNavItems() {
     PermissionEntity.dashboard,
     PermissionAction.read,
   );
+  /**
+   * Intake is المستودعات' instrument, but المالية and المخزون read receipts for
+   * their prices and their monitoring. Asking for `read` rather than naming
+   * roles keeps the nav in step with the permission map.
+   */
+  const canReadReceipts = can(
+    PermissionEntity.goodsReceipt,
+    PermissionAction.read,
+  );
   const canReadTeam = can(PermissionEntity.teamMember, PermissionAction.read);
 
-  /**
-   * The requests queue is for the two roles that act on it: المستودعات decide
-   * requests (`approve`) and المخزون freeze them for review (`hold`). Asking
-   * for either capability — rather than listing the roles — keeps the nav
-   * honest if the permission map changes.
-   */
-  const canSeeRequests =
-    can(PermissionEntity.booking, PermissionAction.approve) ||
-    can(PermissionEntity.booking, PermissionAction.hold);
   const canReadGeneralSettings = can(
     PermissionEntity.generalSettings,
     PermissionAction.read,
@@ -132,25 +122,6 @@ export function useSidebarNavItems() {
 
   const canSeeWorkspaceSettings =
     canReadGeneralSettings || canReadCustomFields || canReadAssetModels;
-
-  const bookingDisabled = useMemo(() => {
-    if (canUseBookings) {
-      return false;
-    }
-
-    return {
-      reason: (
-        <div>
-          <h5>{t("ui.disabled")}</h5>
-          <p>{t("ui.bookingIsAPremiumFeatureOnlyAvailableForTeam")}</p>
-
-          <When truthy={!!subscription} fallback={<UpgradeMessage />}>
-            <p>{t("ui.pleaseSwitchToYourTeamWorkspaceToAccessThisF")}</p>
-          </When>
-        </div>
-      ),
-    };
-  }, [canUseBookings, subscription]);
 
   /**
    * Audits are the one operational surface an ordinary employee legitimately
@@ -172,7 +143,7 @@ export function useSidebarNavItems() {
    * is for*, and each label carries the same visibility as its children so no
    * empty heading is ever left behind:
    *
-   * - **خدماتي** — everyone. What can I request, what am I holding, my bookings.
+   * - **خدماتي** — everyone. What I am holding, and what awaits my signature.
    * - **المخزون** — the catalogue itself. Browsing and editing inventory is an
    *   operational job, so this whole section is hidden from roles scoped to
    *   their own records: `/assets` and `/kits` are inventory tools they cannot
@@ -183,9 +154,9 @@ export function useSidebarNavItems() {
    *   reminders, reports.
    * - **المنظمة** — people and workspace configuration.
    */
-  const showInventorySection = !isScopedToOwnRecords;
+  const showInventorySection = !isScopedToOwnRecords || canReadReceipts;
   const showOperationsSection =
-    canSeeRequests || canReadAudits || canReadReminders || canReadDashboard;
+    canReadAudits || canReadReminders || canReadDashboard;
 
   const topMenuItems: NavItem[] = [
     {
@@ -204,12 +175,6 @@ export function useSidebarNavItems() {
     },
 
     { type: "label", title: t("nav.mySpace") },
-    {
-      type: "child",
-      title: t("nav.availableAssets"),
-      to: "/available-assets",
-      Icon: PackageSearchIcon,
-    },
     {
       /**
        * Holding custody is not a permission, it is a fact about a person: a
@@ -242,26 +207,34 @@ export function useSidebarNavItems() {
         variant: "unread",
       },
     },
-    {
-      type: "parent",
-      title: t("nav.bookings"),
-      Icon: CalendarRangeIcon,
-      disabled: bookingDisabled,
-      children: [
-        {
-          title: t("nav.viewBookings"),
-          to: "/bookings",
-          disabled: bookingDisabled,
-        },
-        {
-          title: t("nav.calendar"),
-          to: "/calendar",
-          disabled: bookingDisabled,
-        },
-      ],
-    },
 
     { type: "label", title: t("nav.inventory"), hidden: !showInventorySection },
+    {
+      /**
+       * Intake sits at the top of the inventory section because it is where
+       * everything in that section comes from: stock now enters only through
+       * مذكرة/محضر استلام.
+       */
+      type: "child",
+      title: t("nav.receipts"),
+      to: "/receipts",
+      Icon: ClipboardListIcon,
+      hidden: !canReadReceipts,
+    },
+    {
+      /**
+       * Sits next to receipts because it is the same data read the other way:
+       * receipts are "what arrived on this document", orders are "what arrived
+       * against this purchase". It is also المالية's queue — the only inventory
+       * entry they act in — so it must be visible to a role that sees little
+       * else in this section.
+       */
+      type: "child",
+      title: t("nav.purchaseOrders"),
+      to: "/purchase-orders",
+      Icon: FileTextIcon,
+      hidden: !canReadReceipts,
+    },
     {
       type: "child",
       title: t("nav.assets"),
@@ -302,18 +275,6 @@ export function useSidebarNavItems() {
       type: "label",
       title: t("nav.operations"),
       hidden: !showOperationsSection,
-    },
-    {
-      type: "child",
-      title: t("nav.requests"),
-      to: "/requests",
-      Icon: InboxIcon,
-      hidden: !canSeeRequests,
-      badge: {
-        show: pendingRequestCount > 0,
-        count: pendingRequestCount,
-        variant: "unread",
-      },
     },
     {
       type: "child",
@@ -374,11 +335,6 @@ export function useSidebarNavItems() {
           title: t("nav.general"),
           to: "/settings/general",
           hidden: !canReadGeneralSettings,
-        },
-        {
-          title: t("nav.bookings"),
-          to: "/settings/bookings",
-          hidden: isPersonalOrganization || !canReadGeneralSettings,
         },
         {
           title: t("nav.customFields"),

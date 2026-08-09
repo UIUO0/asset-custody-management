@@ -83,8 +83,8 @@ describe("note service", () => {
     vi.mocked(db.asset.findMany).mockImplementation(
       (args: any) =>
         Promise.resolve(
-          (args?.where?.id?.in ?? []).map((id: string) => ({ id }))
-        ) as any
+          (args?.where?.id?.in ?? []).map((id: string) => ({ id })),
+        ) as any,
     );
     // Reset note.create to successful state by default
     vi.mocked(db.note.create).mockResolvedValue({
@@ -165,13 +165,13 @@ describe("note service", () => {
           data: expect.objectContaining({
             type: "UPDATE",
           }),
-        })
+        }),
       );
     });
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.note.create).mockRejectedValue(
-        new Error("Database connection failed")
+        new Error("Database connection failed"),
       );
 
       await expect(
@@ -180,7 +180,7 @@ describe("note service", () => {
           userId: "user-1",
           assetId: "asset-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -189,7 +189,7 @@ describe("note service", () => {
           userId: "user-1",
           assetId: "asset-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow("Something went wrong while creating a note");
     });
   });
@@ -269,7 +269,7 @@ describe("note service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.note.createMany).mockRejectedValue(
-        new Error("Database timeout")
+        new Error("Database timeout"),
       );
 
       await expect(
@@ -278,7 +278,7 @@ describe("note service", () => {
           userId: "user-1",
           assetIds: ["asset-1"],
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -287,7 +287,7 @@ describe("note service", () => {
           userId: "user-1",
           assetIds: ["asset-1"],
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow("Something went wrong while creating notes");
     });
   });
@@ -324,21 +324,21 @@ describe("note service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.note.deleteMany).mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       await expect(
         deleteNote({
           id: "note-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
         deleteNote({
           id: "note-1",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow("Something went wrong while deleting the note");
     });
   });
@@ -513,7 +513,7 @@ describe("note service", () => {
     it("creates note when name is changed", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@John");
       vi.mocked(buildNameChangeNote).mockReturnValue(
-        "@John updated the asset name from **Old Name** to **New Name**."
+        "@John updated the asset name from **Old Name** to **New Name**.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -582,7 +582,7 @@ describe("note service", () => {
     it("creates note when description is added", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@Jane");
       vi.mocked(buildDescriptionChangeNote).mockReturnValue(
-        "@Jane added an asset description."
+        "@Jane added an asset description.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -601,7 +601,7 @@ describe("note service", () => {
     it("creates note when description is removed", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@Jane");
       vi.mocked(buildDescriptionChangeNote).mockReturnValue(
-        "@Jane removed the asset description."
+        "@Jane removed the asset description.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -643,7 +643,7 @@ describe("note service", () => {
     it("creates note when category is changed", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@Bob");
       vi.mocked(buildCategoryChangeNote).mockReturnValue(
-        "@Bob changed the asset category from Electronics to Furniture."
+        "@Bob changed the asset category from Electronics to Furniture.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -672,7 +672,7 @@ describe("note service", () => {
     it("creates note when category is added", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@Bob");
       vi.mocked(buildCategoryChangeNote).mockReturnValue(
-        "@Bob set the asset category to Electronics."
+        "@Bob set the asset category to Electronics.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -718,7 +718,7 @@ describe("note service", () => {
     it("creates note when valuation is changed", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@Alice");
       vi.mocked(buildValuationChangeNote).mockReturnValue(
-        "@Alice changed the asset value from $100.00 to $150.00."
+        "@Alice changed the asset value from $100.00 to $150.00.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -747,7 +747,7 @@ describe("note service", () => {
     it("creates note when valuation is set for the first time", async () => {
       vi.mocked(resolveUserLink).mockResolvedValue("@Alice");
       vi.mocked(buildValuationChangeNote).mockReturnValue(
-        "@Alice set the asset value to $200.00."
+        "@Alice set the asset value to $200.00.",
       );
       vi.mocked(db.note.create).mockResolvedValue({} as any);
 
@@ -884,7 +884,7 @@ describe("note service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.user.findUnique).mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       const audit = {
@@ -898,7 +898,7 @@ describe("note service", () => {
           userId: "user-1",
           organizationId: "org-1",
           audit,
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -907,9 +907,9 @@ describe("note service", () => {
           userId: "user-1",
           organizationId: "org-1",
           audit,
-        })
+        }),
       ).rejects.toThrow(
-        "Something went wrong while creating asset notes for audit addition"
+        "Something went wrong while creating asset notes for audit addition",
       );
     });
   });
@@ -1007,7 +1007,7 @@ describe("note service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.user.findUnique).mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       const audit = {
@@ -1021,7 +1021,7 @@ describe("note service", () => {
           userId: "user-1",
           organizationId: "org-1",
           audit,
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -1030,9 +1030,9 @@ describe("note service", () => {
           userId: "user-1",
           organizationId: "org-1",
           audit,
-        })
+        }),
       ).rejects.toThrow(
-        "Something went wrong while creating asset notes for audit removal"
+        "Something went wrong while creating asset notes for audit removal",
       );
     });
   });
@@ -1056,7 +1056,7 @@ describe("note service", () => {
         expect.objectContaining({
           where: { assetId: "asset-1", asset: { organizationId: "org-1" } },
           orderBy: { createdAt: "desc" },
-        })
+        }),
       );
       // count must use the same org-scoped where so totals can't leak cross-tenant
       expect(db.note.count).toHaveBeenCalledWith({
@@ -1066,7 +1066,7 @@ describe("note service", () => {
 
     it("maps the Comments filter to the COMMENT note type", async () => {
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?noteType=Comments"
+        "http://localhost/assets/asset-1/activity?noteType=Comments",
       );
 
       await getPaginatedAndFilterableAssetNotes({
@@ -1078,13 +1078,13 @@ describe("note service", () => {
       expect(db.note.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ type: "COMMENT" }),
-        })
+        }),
       );
     });
 
     it("maps the Updates filter to the UPDATE note type", async () => {
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?noteType=Updates"
+        "http://localhost/assets/asset-1/activity?noteType=Updates",
       );
 
       await getPaginatedAndFilterableAssetNotes({
@@ -1096,13 +1096,13 @@ describe("note service", () => {
       expect(db.note.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ type: "UPDATE" }),
-        })
+        }),
       );
     });
 
     it("does not filter by type for the ALL sentinel", async () => {
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?noteType=ALL"
+        "http://localhost/assets/asset-1/activity?noteType=ALL",
       );
 
       await getPaginatedAndFilterableAssetNotes({
@@ -1118,7 +1118,7 @@ describe("note service", () => {
 
     it("searches note content and author name when `s` is present", async () => {
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?s=lens"
+        "http://localhost/assets/asset-1/activity?s=lens",
       );
 
       await getPaginatedAndFilterableAssetNotes({
@@ -1171,7 +1171,7 @@ describe("note service", () => {
           assetId: "asset-1",
           organizationId: "org-1",
           request,
-        })
+        }),
       ).rejects.toThrow(ShelfError);
     });
 
@@ -1181,7 +1181,7 @@ describe("note service", () => {
       vi.mocked(db.note.count).mockResolvedValue(21);
 
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?page=5"
+        "http://localhost/assets/asset-1/activity?page=5",
       );
 
       const result = await getPaginatedAndFilterableAssetNotes({
@@ -1193,7 +1193,7 @@ describe("note service", () => {
       expect(result.page).toBe(2);
       expect(result.totalPages).toBe(2);
       expect(db.note.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 20, take: 20 })
+        expect.objectContaining({ skip: 20, take: 20 }),
       );
     });
 
@@ -1203,7 +1203,7 @@ describe("note service", () => {
       vi.mocked(db.note.count).mockResolvedValue(0);
 
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?page=3"
+        "http://localhost/assets/asset-1/activity?page=3",
       );
 
       const result = await getPaginatedAndFilterableAssetNotes({
@@ -1225,7 +1225,7 @@ describe("note service", () => {
         .mockResolvedValueOnce(5);
 
       const request = new Request(
-        "http://localhost/assets/asset-1/activity?noteType=Comments"
+        "http://localhost/assets/asset-1/activity?noteType=Comments",
       );
 
       const result = await getPaginatedAndFilterableAssetNotes({

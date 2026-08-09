@@ -3,14 +3,14 @@
  */
 export function isOption<T extends readonly string[]>(
   options: T,
-  value: unknown
+  value: unknown,
 ): value is T[number] {
   return typeof value === "string" && options.includes(value as T[number]);
 }
 
 export function resolveSelectState<T extends readonly string[]>(
   options: T,
-  rawValue: string | null | undefined
+  rawValue: string | null | undefined,
 ): {
   selection: T[number] | "" | "other";
   customValue: string;

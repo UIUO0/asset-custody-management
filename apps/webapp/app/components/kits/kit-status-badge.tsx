@@ -1,7 +1,7 @@
 import { KitStatus } from "@prisma/client";
 import { useTranslation } from "react-i18next";
+import type { ExtendedKitStatus } from "~/utils/asset-status";
 import { BADGE_COLORS, type BadgeColorScheme } from "~/utils/badge-colors";
-import type { ExtendedKitStatus } from "~/utils/booking-assets";
 import { Badge } from "../shared/badge";
 import { UnavailableBadge } from "../shared/unavailable-badge";
 

@@ -61,14 +61,14 @@ describe("parseSortingOptions", () => {
       // Explicit sorts get a stable `"assetId" ASC` tiebreaker so paging is
       // deterministic across rows tied on the sort key.
       expect(orderByClause).toBe(
-        'ORDER BY "assetUpdatedAt" desc, "assetId" ASC'
+        'ORDER BY "assetUpdatedAt" desc, "assetId" ASC',
       );
     });
 
     it("normalizes mixed-case Desc to desc", () => {
       const { orderByClause } = parseSortingOptions(["updatedAt:Desc"]);
       expect(orderByClause).toBe(
-        'ORDER BY "assetUpdatedAt" desc, "assetId" ASC'
+        'ORDER BY "assetUpdatedAt" desc, "assetId" ASC',
       );
     });
 
@@ -78,7 +78,7 @@ describe("parseSortingOptions", () => {
     // sorting ascending.
     it("rejects SQL injection payloads in the direction", () => {
       expect(() =>
-        parseSortingOptions(["updatedAt:asc; DROP TABLE Asset; --"])
+        parseSortingOptions(["updatedAt:asc; DROP TABLE Asset; --"]),
       ).toThrow(ShelfError);
     });
 
@@ -89,13 +89,13 @@ describe("parseSortingOptions", () => {
       expect(() =>
         parseSortingOptions([
           "createdAt:asc,(SELECT CASE WHEN 1=2 THEN 1 ELSE 1/0 END)",
-        ])
+        ]),
       ).toThrow(ShelfError);
     });
 
     it("throws on an unrecognized direction string", () => {
       expect(() => parseSortingOptions(["updatedAt:foobar"])).toThrow(
-        ShelfError
+        ShelfError,
       );
     });
 
@@ -112,14 +112,14 @@ describe("parseSortingOptions", () => {
     it("defaults missing direction to asc", () => {
       const { orderByClause } = parseSortingOptions(["updatedAt"]);
       expect(orderByClause).toBe(
-        'ORDER BY "assetUpdatedAt" asc, "assetId" ASC'
+        'ORDER BY "assetUpdatedAt" asc, "assetId" ASC',
       );
     });
 
     it("defaults empty direction to asc", () => {
       const { orderByClause } = parseSortingOptions(["updatedAt:"]);
       expect(orderByClause).toBe(
-        'ORDER BY "assetUpdatedAt" asc, "assetId" ASC'
+        'ORDER BY "assetUpdatedAt" asc, "assetId" ASC',
       );
     });
   });
@@ -288,13 +288,13 @@ describe("generateCustomFieldSelect", () => {
     expect(() =>
       generateCustomFieldSelect([
         { name: "x", valueKey: "raw", alias: "cf_x; DROP--" },
-      ])
+      ]),
     ).toThrow(ShelfError);
   });
 
   it("throws ShelfError when an alias is empty", () => {
     expect(() =>
-      generateCustomFieldSelect([{ name: "x", valueKey: "raw", alias: "" }])
+      generateCustomFieldSelect([{ name: "x", valueKey: "raw", alias: "" }]),
     ).toThrow(ShelfError);
   });
 });
@@ -311,7 +311,13 @@ describe("generateWhereClause - special filter values", () => {
   const orgId = "test-org-id";
 
   describe("custody filter with special values", () => {
-    it("handles 'in-custody' with is operator (includes active bookings)", () => {
+    /**
+     * Custody is direct only. The booking-derived custody path went with the
+     * booking system (2026-08-06), so each of these also asserts the SQL does
+     * NOT mention `Booking` — the tables are dropped, and a stray join would
+     * fail at runtime where TypeScript cannot see it.
+     */
+    it("handles 'in-custody' with is operator", () => {
       const filter: Filter = {
         name: "custody",
         type: "enum",
@@ -322,15 +328,11 @@ describe("generateWhereClause - special filter values", () => {
       const result = generateWhereClause(orgId, null, [filter]);
       const sql = getSqlString(result);
 
-      // Should check both direct custody AND active bookings
-      // Only counts booking custody when asset is CHECKED_OUT
       expect(sql).toContain("jsonb_array_length(custody_agg.custody) > 0");
-      expect(sql).toContain("a.status = 'CHECKED_OUT' AND EXISTS");
-      expect(sql).toContain("Booking");
-      expect(sql).toContain("ONGOING");
+      expect(sql).not.toContain("Booking");
     });
 
-    it("handles 'in-custody' with isNot operator (excludes both direct and booking custody)", () => {
+    it("handles 'in-custody' with isNot operator", () => {
       const filter: Filter = {
         name: "custody",
         type: "enum",
@@ -341,14 +343,11 @@ describe("generateWhereClause - special filter values", () => {
       const result = generateWhereClause(orgId, null, [filter]);
       const sql = getSqlString(result);
 
-      // Should exclude both direct custody AND active bookings
-      // Only counts booking custody when asset is CHECKED_OUT
       expect(sql).toContain("jsonb_array_length(custody_agg.custody) = 0");
-      expect(sql).toContain("a.status = 'CHECKED_OUT' AND EXISTS");
-      expect(sql).toContain("Booking");
+      expect(sql).not.toContain("Booking");
     });
 
-    it("handles 'without-custody' with is operator (excludes active bookings too)", () => {
+    it("handles 'without-custody' with is operator", () => {
       const filter: Filter = {
         name: "custody",
         type: "enum",
@@ -359,14 +358,11 @@ describe("generateWhereClause - special filter values", () => {
       const result = generateWhereClause(orgId, null, [filter]);
       const sql = getSqlString(result);
 
-      // Should exclude both direct custody AND active bookings
-      // Only counts booking custody when asset is CHECKED_OUT
       expect(sql).toContain("jsonb_array_length(custody_agg.custody) = 0");
-      expect(sql).toContain("a.status = 'CHECKED_OUT' AND EXISTS");
-      expect(sql).toContain("Booking");
+      expect(sql).not.toContain("Booking");
     });
 
-    it("handles containsAny with only 'in-custody' (includes active bookings)", () => {
+    it("handles containsAny with only 'in-custody'", () => {
       const filter: Filter = {
         name: "custody",
         type: "enum",
@@ -377,11 +373,8 @@ describe("generateWhereClause - special filter values", () => {
       const result = generateWhereClause(orgId, null, [filter]);
       const sql = getSqlString(result);
 
-      // Should check both direct custody AND active bookings
-      // Only counts booking custody when asset is CHECKED_OUT
       expect(sql).toContain("jsonb_array_length(custody_agg.custody) > 0");
-      expect(sql).toContain("a.status = 'CHECKED_OUT' AND EXISTS");
-      expect(sql).toContain("Booking");
+      expect(sql).not.toContain("Booking");
     });
 
     it("handles containsAny with 'in-custody' + specific IDs (subsumes to in-custody)", () => {
@@ -395,10 +388,9 @@ describe("generateWhereClause - special filter values", () => {
       const result = generateWhereClause(orgId, null, [filter]);
       const sql = getSqlString(result);
 
-      // "in-custody" subsumes specific IDs - checks for any custody (direct or booking)
+      // "in-custody" subsumes specific IDs - checks for any custody
       expect(sql).toContain("jsonb_array_length(custody_agg.custody) > 0");
-      expect(sql).toContain("a.status = 'CHECKED_OUT' AND EXISTS");
-      expect(sql).toContain("Booking");
+      expect(sql).not.toContain("Booking");
       // Should NOT contain specific ID matching since in-custody covers all
       expect(sql).not.toContain("specific-team-member-id");
     });
@@ -450,7 +442,7 @@ describe("generateWhereClause - special filter values", () => {
 
       // An asset has a location iff at least one AssetLocation pivot row exists.
       expect(sql).toContain(
-        'EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)'
+        'EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)',
       );
     });
 
@@ -466,7 +458,7 @@ describe("generateWhereClause - special filter values", () => {
       const sql = getSqlString(result);
 
       expect(sql).toContain(
-        'NOT EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)'
+        'NOT EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)',
       );
     });
 
@@ -482,7 +474,7 @@ describe("generateWhereClause - special filter values", () => {
       const sql = getSqlString(result);
 
       expect(sql).toContain(
-        'NOT EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)'
+        'NOT EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)',
       );
     });
 
@@ -498,7 +490,7 @@ describe("generateWhereClause - special filter values", () => {
       const sql = getSqlString(result);
 
       expect(sql).toContain(
-        'EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)'
+        'EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)',
       );
     });
 
@@ -531,7 +523,7 @@ describe("generateWhereClause - special filter values", () => {
       // Should include both branches: no AssetLocation row OR a row for the
       // specific location id.
       expect(sql).toContain(
-        'NOT EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)'
+        'NOT EXISTS (SELECT 1 FROM public."AssetLocation" al WHERE al."assetId" = a.id)',
       );
       expect(sql).toContain('"AssetLocation"');
       expect(sql).toContain('al."locationId" = ANY');
@@ -677,7 +669,6 @@ describe("generateWhereClause - special filter values", () => {
       { name: "category" },
       { name: "kit" },
       { name: "custody" },
-      { name: "upcomingBookings" },
     ];
 
     for (const { name } of cases) {
@@ -691,7 +682,7 @@ describe("generateWhereClause - special filter values", () => {
 
         expect(() => generateWhereClause(orgId, null, [filter])).not.toThrow();
         expect(
-          getSqlString(generateWhereClause(orgId, null, [filter]))
+          getSqlString(generateWhereClause(orgId, null, [filter])),
         ).toContain("1=0");
       });
     }
@@ -708,26 +699,28 @@ describe("assetQueryFragment", () => {
   }
 
   describe("custody output", () => {
-    it("only includes booking custody when asset status is CHECKED_OUT", () => {
+    it("projects custody without any booking-derived fallback", () => {
       const fragment = assetQueryFragment();
       const sql = getFragmentSqlString(fragment);
 
-      // The CASE WHEN for booking-based custody must be guarded by CHECKED_OUT
-      expect(sql).toContain(
-        "WHEN b.id IS NOT NULL AND a.status = 'CHECKED_OUT' THEN"
-      );
+      // why: custody used to fall back to an active booking's custodian for
+      // CHECKED_OUT assets. That branch — and the `Booking` lateral feeding
+      // it — went with the booking system. A stray reference here would only
+      // fail once the query hits Postgres, so guard it in the SQL text.
+      expect(sql).not.toContain("Booking");
+      expect(sql).not.toContain("b.id IS NOT NULL");
     });
 
     it("projects direct custody from the lateral aggregation", () => {
       const fragment = assetQueryFragment();
       const sql = getFragmentSqlString(fragment);
 
-      // Direct custody now flows through the per-asset lateral
-      // aggregation (custody_agg.custody) rather than a JOIN-based CASE
-      // — this prevents per-custody-row duplication for qty-tracked
-      // assets with multiple custodians (Issue A).
-      expect(sql).toContain("custody_agg.custody");
-      expect(sql).toContain("jsonb_array_length(custody_agg.custody) > 0");
+      // Custody flows through the per-asset lateral aggregation
+      // (custody_agg.custody) rather than a JOIN-based CASE — this prevents
+      // per-custody-row duplication for qty-tracked assets with multiple
+      // custodians (Issue A). Since the booking fallback was removed the
+      // projection is the aggregate itself, with no CASE wrapping it.
+      expect(sql).toContain("custody_agg.custody AS custody");
     });
 
     it("does not gate the direct custody projection on CHECKED_OUT", () => {
@@ -737,23 +730,8 @@ describe("assetQueryFragment", () => {
       // Regression guard: the direct-custody branch must remain
       // independent of asset status.
       expect(sql).not.toContain(
-        "jsonb_array_length(custody_agg.custody) > 0 AND a.status = 'CHECKED_OUT'"
+        "jsonb_array_length(custody_agg.custody) > 0 AND a.status = 'CHECKED_OUT'",
       );
-    });
-
-    it("falls back to the NRM team-member name for booking custody", () => {
-      // why: when the booking custodian is an NRM (TeamMember with no User),
-      // Postgres CONCAT returns ' ' (a space, non-NULL) for the absent user, so
-      // the old COALESCE(CONCAT(...), btm.name) never reached the NRM name and the
-      // badge rendered blank. The name must be guarded on bu.id with a btm.name
-      // fallback instead.
-      const fragment = assetQueryFragment();
-      const sql = getFragmentSqlString(fragment);
-
-      // The buggy COALESCE(CONCAT(...)) pattern must be gone
-      expect(sql).not.toContain('COALESCE(CONCAT(bu."firstName"');
-      // Booking custody name must fall back to the team-member (NRM) name
-      expect(sql).toContain("ELSE btm.name");
     });
   });
 
@@ -789,26 +767,25 @@ describe("assetQueryFragment", () => {
       // It must now live exclusively inside the lateral subquery — the
       // outer query may no longer reference cu without a `FROM` clause.
       expect(sql).not.toMatch(
-        /LEFT JOIN public\."Custody" cu ON cu\."assetId" = a\.id/
+        /LEFT JOIN public\."Custody" cu ON cu\."assetId" = a\.id/,
       );
     });
 
     it("keeps TeamMember/User joins scoped inside the custody lateral", () => {
       const sql = getJoinsSqlString(assetQueryJoins);
 
-      // The outer query exposes `bu` (booking User) and `btm`
-      // (booking TeamMember). It must NOT carry direct outer joins on
-      // `tm` / `u` that hang off `cu` — those belong in the lateral.
+      // The outer query must NOT carry direct outer joins on `tm` / `u`
+      // that hang off `cu` — those belong in the lateral.
       // Strip the lateral block then assert.
       const outerOnly = sql.replace(
         /LEFT JOIN LATERAL \([\s\S]*?\) custody_agg ON TRUE/,
-        ""
+        "",
       );
       expect(outerOnly).not.toMatch(
-        /LEFT JOIN public\."TeamMember" tm ON cu\."teamMemberId" = tm\.id/
+        /LEFT JOIN public\."TeamMember" tm ON cu\."teamMemberId" = tm\.id/,
       );
       expect(outerOnly).not.toMatch(
-        /LEFT JOIN public\."User" u ON tm\."userId" = u\.id/
+        /LEFT JOIN public\."User" u ON tm\."userId" = u\.id/,
       );
     });
 
@@ -875,46 +852,6 @@ describe("assetQueryFragment", () => {
       expect(sql).not.toContain("cf.options");
       expect(sql).not.toContain("categories");
       expect(sql).not.toContain("_CategoryToCustomField");
-    });
-  });
-
-  describe("withBookings option (availability view)", () => {
-    /**
-     * The availability calendar folds the per-(asset, booking) BookingAsset
-     * pivot rows into one bar and needs each slice's `assetKitId`, booked
-     * `quantity`, and resolved kit name. Typecheck cannot validate the raw SQL
-     * (`Prisma.sql` is just a string to TS), so a wrong-column refactor would
-     * only surface as a 500 — per .claude/rules/raw-sql-respects-prisma-map
-     * item 4, guard the column/join names with a cheap string assertion.
-     * (No @map trap here: BookingAsset.quantity/assetKitId and Kit.name are
-     * unmapped, so the Prisma field names equal the DB column names.)
-     */
-    it("projects per-slice pivot columns and resolves kit name via joins", () => {
-      const fragment = assetQueryFragment({ withBookings: true });
-      const sql = getFragmentSqlString(fragment);
-
-      // Per-slice pivot metadata the fold reads (booked units, kit membership).
-      expect(sql).toContain('atb."assetKitId"');
-      expect(sql).toContain('atb."quantity"');
-      // Kit name resolved through org-scoped AssetKit -> Kit joins, using
-      // aliases (bk_ak/bk_kit) distinct from the outer query's own-kit ak/k.
-      expect(sql).toContain("'kitName', bk_kit.name");
-      expect(sql).toContain('LEFT JOIN public."AssetKit" bk_ak');
-      // Org-scoped so a cross-org assetKitId resolves to NULL, never a leak.
-      expect(sql).toContain('bk_ak."organizationId" = a."organizationId"');
-      expect(sql).toContain(
-        'LEFT JOIN public."Kit" bk_kit ON bk_ak."kitId" = bk_kit.id'
-      );
-    });
-
-    it("omits the bookings subquery entirely when withBookings is false", () => {
-      const fragment = assetQueryFragment();
-      const sql = getFragmentSqlString(fragment);
-
-      // Default (table views) must not pay for the availability-only subquery.
-      expect(sql).not.toContain("AS bookings");
-      expect(sql).not.toContain('atb."assetKitId"');
-      expect(sql).not.toContain("'kitName', bk_kit.name");
     });
   });
 
@@ -1080,7 +1017,6 @@ describe("buildAdvancedAssetsQuery", () => {
       customFieldSortings,
       sortBy,
       parsedFilters,
-      withBookings: overrides?.withBookings ?? false,
       withBarcodes: overrides?.withBarcodes ?? false,
       paginationClause: Prisma.sql`LIMIT ${100} OFFSET ${0}`,
       hasSearch: Boolean(search),
@@ -1104,7 +1040,7 @@ describe("buildAdvancedAssetsQuery", () => {
 
     // Default sort feeds the window; the array is ordered by the frozen rank.
     expect(sql).toContain(
-      'ROW_NUMBER() OVER (ORDER BY "assetCreatedAt" DESC, "assetId" ASC)'
+      'ROW_NUMBER() OVER (ORDER BY "assetCreatedAt" DESC, "assetId" ASC)',
     );
     expect(sql).toContain('AS "__sortRank"');
     expect(sql).toContain('ORDER BY saq."__sortRank"');
@@ -1133,7 +1069,7 @@ describe("buildAdvancedAssetsQuery", () => {
 
     expect(cheap({ sortBy: ["kit:asc"] })).toContain('k.name AS "kitName"');
     expect(cheap({ sortBy: ["location:asc"] })).toContain(
-      'l.name AS "locationName"'
+      'l.name AS "locationName"',
     );
   });
 
@@ -1142,10 +1078,10 @@ describe("buildAdvancedAssetsQuery", () => {
     // must resolve those joins (independent of any sort). `c.name ILIKE` only
     // appears when a search is active, so it is the reliable signal.
     expect(getQuerySqlString(build({ search: "widget" }))).toContain(
-      "c.name ILIKE"
+      "c.name ILIKE",
     );
     expect(getQuerySqlString(build({ sortBy: [] }))).not.toContain(
-      "c.name ILIKE"
+      "c.name ILIKE",
     );
   });
 
@@ -1153,12 +1089,12 @@ describe("buildAdvancedAssetsQuery", () => {
     // withBarcodes:false ⇒ the heavy phase omits barcode scalars, so any
     // `AS barcode_Code128` must come from the cheap phase's sort-key select.
     const withBarcodeSort = getQuerySqlString(
-      build({ sortBy: ["barcode_Code128:asc"], withBarcodes: false })
+      build({ sortBy: ["barcode_Code128:asc"], withBarcodes: false }),
     );
     expect(withBarcodeSort).toContain("AS barcode_Code128");
 
     const withoutBarcodeSort = getQuerySqlString(
-      build({ sortBy: [], withBarcodes: false })
+      build({ sortBy: [], withBarcodes: false }),
     );
     expect(withoutBarcodeSort).not.toContain("AS barcode_Code128");
   });
@@ -1182,5 +1118,58 @@ describe("buildAdvancedAssetsQuery", () => {
     // deterministic ordering (mirrors the heavy phase).
     expect(sql).toContain(") custody_agg ON TRUE");
     expect(sql).toContain('ORDER BY cu."createdAt" ASC, cu.id ASC');
+  });
+});
+
+/**
+ * Every SQL alias the query references must also be joined.
+ *
+ * TypeScript cannot see inside a `Prisma.sql` template, so removing a JOIN and
+ * leaving a reference behind compiles, passes every unit test, and then fails
+ * only when Postgres parses it — as a 500 on the page, for the roles whose
+ * index happens to be in ADVANCED mode.
+ *
+ * That is exactly what happened on 2026-08-06: the booking laterals (`b`,
+ * `bu`, `btm`) were removed but stayed in the `GROUP BY`, and `/assets` broke
+ * for المالية and المخزون while every test stayed green.
+ */
+describe("buildAdvancedAssetsQuery — no orphaned aliases", () => {
+  function fullSql() {
+    const query = buildAdvancedAssetsQuery({
+      whereClause: generateWhereClause("org-1", null, []),
+      ...parseSortingOptions([]),
+      sortBy: [],
+      parsedFilters: [],
+      withBarcodes: false,
+      paginationClause: Prisma.sql`LIMIT 20 OFFSET 0`,
+      hasSearch: false,
+    } as never);
+    return (query as unknown as { strings: string[] }).strings.join("$1");
+  }
+
+  it("never references the removed booking aliases", () => {
+    const sql = fullSql();
+    // `b.` is legitimate inside the Barcode subqueries, so assert on the
+    // booking-only aliases and on the table names themselves.
+    expect(sql).not.toContain('public."Booking"');
+    expect(sql).not.toContain('public."BookingAsset"');
+    expect(sql).not.toMatch(/\bbu\./);
+    expect(sql).not.toMatch(/\bbtm\./);
+  });
+
+  it("groups only by aliases the query actually joins", () => {
+    const sql = fullSql();
+    const groupBy = sql.match(/GROUP BY ([^\n]+)/)?.[1] ?? "";
+    expect(groupBy).toBeTruthy();
+
+    for (const ref of groupBy.split(",").map((part) => part.trim())) {
+      const alias = ref.split(".")[0];
+      // Every alias must be introduced by a FROM/JOIN somewhere above.
+      expect(
+        new RegExp(
+          `(FROM public\\."[A-Za-z]+" ${alias}\\b|\\) ${alias} ON TRUE|JOIN public\\."[A-Za-z]+" ${alias}\\b)`,
+        ).test(sql),
+      ).toBe(true);
+    }
   });
 });

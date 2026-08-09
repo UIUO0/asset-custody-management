@@ -43,7 +43,6 @@ import { listPresetsForUser } from "../asset-filter-presets/service.server";
 import type { Column } from "../asset-index-settings/helpers";
 import { getActiveCustomFields } from "../custom-field/service.server";
 import type { OrganizationFromUser } from "../organization/service.server";
-import { TAG_WITH_COLOR_SELECT } from "../tag/constants";
 import { getTagsForBookingTagsFilter } from "../tag/service.server";
 import {
   getTeamMemberForCustodianFilter,
@@ -76,66 +75,6 @@ Search assets based on asset fields. Separate your keywords by a comma(,) to sea
 - Custom field values
 - Barcodes values
 `;
-
-/** Minimal structural shape of one BookingAsset pivot row returned under the
- * availability `extraInclude`. Only the fields this helper reads/writes. */
-type MutableBookingAssetSlice = {
-  assetKitId: string | null;
-  kitId?: string | null;
-  kitName?: string | null;
-};
-
-/**
- * Attaches the kit name (and kit id) onto every kit-driven BookingAsset slice.
- *
- * `BookingAsset.assetKitId` is a bare FK with no Prisma relation accessor, so
- * the kit name cannot be nested-selected. This resolves all names in ONE
- * org-scoped read and mutates the slices in place. Standalone slices
- * (assetKitId === null) are left untouched. Availability view only.
- *
- * Kit names are supplementary UI data, so the availability loader wraps this
- * call and degrades gracefully (logs + continues) if the read fails — the raw
- * Prisma error propagates here and is handled at the call site rather than
- * being rethrown as a ShelfError.
- *
- * @param args.assets - Loaded assets, each optionally carrying `bookingAssets`.
- * @param args.organizationId - Active org; scopes the AssetKit read (defense in
- *   depth per org-scope-user-supplied-ids).
- */
-export async function attachKitNamesToBookingAssets({
-  assets,
-  organizationId,
-}: {
-  assets: Array<{ bookingAssets?: MutableBookingAssetSlice[] }>;
-  organizationId: string;
-}): Promise<void> {
-  const assetKitIds = Array.from(
-    new Set(
-      assets.flatMap((a) =>
-        (a.bookingAssets ?? [])
-          .map((ba) => ba.assetKitId)
-          .filter((id): id is string => id !== null),
-      ),
-    ),
-  );
-  if (assetKitIds.length === 0) return;
-
-  const assetKits = await db.assetKit.findMany({
-    where: { id: { in: assetKitIds }, organizationId },
-    select: { id: true, kit: { select: { id: true, name: true } } },
-  });
-  const byId = new Map(assetKits.map((ak) => [ak.id, ak.kit]));
-
-  for (const a of assets) {
-    for (const ba of a.bookingAssets ?? []) {
-      if (ba.assetKitId) {
-        const kit = byId.get(ba.assetKitId);
-        ba.kitId = kit?.id ?? null;
-        ba.kitName = kit?.name ?? null;
-      }
-    }
-  }
-}
 
 export async function simpleModeLoader({
   request,
@@ -191,7 +130,6 @@ export async function simpleModeLoader({
 
   const searchParams = getCurrentSearchParams(request);
   const hasActiveFilters = computeHasActiveFilters(searchParams);
-  const view = searchParams.get("view") ?? "table";
 
   /** Query tierLimit, assets, presets, permissions & more — all in parallel */
   let [
@@ -233,42 +171,6 @@ export async function simpleModeLoader({
        * PENDING rows — the intake queue is their work list.
        */
       onlyReadyAssets: isScopedToOwnRecords,
-      extraInclude:
-        view === "availability"
-          ? {
-              bookingAssets: {
-                where: {
-                  booking: {
-                    status: { in: ["RESERVED", "ONGOING", "OVERDUE"] },
-                  },
-                },
-                include: {
-                  booking: {
-                    select: {
-                      id: true,
-                      name: true,
-                      status: true,
-                      from: true,
-                      to: true,
-                      description: true,
-                      custodianTeamMember: true,
-                      custodianUser: true,
-                      tags: TAG_WITH_COLOR_SELECT,
-                      creator: {
-                        select: {
-                          id: true,
-                          firstName: true,
-                          lastName: true,
-                          displayName: true,
-                          profilePicture: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            }
-          : undefined,
       isSelfService,
       userId,
     }),
@@ -326,36 +228,6 @@ export async function simpleModeLoader({
         shouldBeCaptured: true,
       }),
     );
-  }
-
-  // Availability view only: resolve kit names for kit-driven booking slices so
-  // the calendar can show per-slice attribution. `assetKitId`/`quantity` are
-  // already present (BookingAsset scalars via the include). One `as unknown as`
-  // structural cast — `bookingAssets` is an availability-only extraInclude not
-  // in the base asset type (same pattern the availability hook uses).
-  if (view === "availability") {
-    // Kit-name attribution is supplementary UI data — mirror the graceful
-    // degradation of the image-refresh above so a transient AssetKit read
-    // failure logs and continues instead of 500-ing the whole availability
-    // page. The calendar simply falls back to "via a kit" without the name.
-    try {
-      await attachKitNamesToBookingAssets({
-        assets: assets as unknown as Array<{
-          bookingAssets?: MutableBookingAssetSlice[];
-        }>,
-        organizationId,
-      });
-    } catch (cause) {
-      Logger.error(
-        new ShelfError({
-          cause,
-          message: "Failed to attach kit names to booking assets",
-          label: "Assets",
-          additionalData: { organizationId, assetCount: assets.length },
-          shouldBeCaptured: true,
-        }),
-      );
-    }
   }
 
   const userName = resolveUserDisplayName(user);
@@ -469,7 +341,6 @@ export async function advancedModeLoader({
   const allSelectedEntries = searchParams.getAll(
     "getAll",
   ) as AllowedModelNames[];
-  const view = searchParams.get("view") ?? "table";
 
   const paramsValues = getParamsValues(searchParams);
   const { teamMemberIds } = paramsValues;
@@ -549,7 +420,6 @@ export async function advancedModeLoader({
       organizationId,
       filters,
       settings,
-      getBookings: view === "availability",
       canUseBarcodes: currentOrganization.barcodesEnabled ?? false,
       // See the `isSelfService` note above — intentionally SELF_SERVICE-only.
       availableToBookOnly: role === OrganizationRoles.SELF_SERVICE,

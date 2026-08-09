@@ -203,7 +203,7 @@ function Item({
     }
     // Last resort: use nickname from price or generic label
     return item.price?.nickname || t("ui.subscription");
-  }, [subscriptionPrice, item.price]);
+  }, [subscriptionPrice, item.price, t]);
 
   // Look up workspace name for addon subscriptions.
   // Prefer explicit organizations prop (used in admin context for the viewed user's orgs),
@@ -278,6 +278,7 @@ function Item({
     subscription.status,
     isLegacyPricing,
     workspaceName,
+    t,
   ]);
 
   return (

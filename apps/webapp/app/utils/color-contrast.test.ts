@@ -125,7 +125,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `IN_CUSTODY: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -139,7 +139,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `CHECKED_OUT: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -153,7 +153,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `AVAILABLE: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -169,7 +169,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `DRAFT: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -183,7 +183,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `RESERVED: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -197,7 +197,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `ONGOING: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -211,7 +211,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `OVERDUE: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -225,7 +225,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `COMPLETE: ${text} on ${bg} = ${ratio.toFixed(2)}:1 (WCAG AA: ${
             meetsAA ? "✓" : "✗"
-          })`
+          })`,
         );
         expect(ratio).toBeGreaterThanOrEqual(4.5);
         expect(meetsAA).toBe(true);
@@ -245,7 +245,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `ℹ️  Primary-500 on primary-50: ${ratio.toFixed(2)}:1 ${
             ratio >= 4.5 ? "✓" : "✗ - Use primary-700 or primary-800 for text"
-          }`
+          }`,
         );
 
         // This is informational - not all color-500 on color-50 combinations meet WCAG AA
@@ -261,7 +261,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `ℹ️  Success-500 on success-50: ${ratio.toFixed(2)}:1 ${
             ratio >= 4.5 ? "✓" : "✗ - Use success-700 or success-800 for text"
-          }`
+          }`,
         );
 
         expect(ratio).toBeDefined();
@@ -275,7 +275,7 @@ describe("Color Contrast Utilities", () => {
         console.log(
           `ℹ️  Error-500 on error-50: ${ratio.toFixed(2)}:1 ${
             ratio >= 4.5 ? "✓" : "✗ - Use error-700 or error-800 for text"
-          }`
+          }`,
         );
 
         expect(ratio).toBeDefined();

@@ -8,7 +8,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildCsvBackupDataFromAssets,
   buildCsvExportDataFromAssets,
-  buildCsvExportDataFromBookings,
   buildCsvExportDataFromTeamMembers,
   csvDataFromRequest,
   formatValueForCsv,
@@ -69,7 +68,7 @@ describe("csvDataFromRequest", () => {
       "file",
       new File(["name,description\nMacBook Pro 16,Test device"], "assets.csv", {
         type: "text/csv",
-      })
+      }),
     );
     parseFormDataMock.mockResolvedValue(formData);
 
@@ -91,7 +90,7 @@ describe("csvDataFromRequest", () => {
       "file",
       new File(['name\nMacBook "Pro 16"'], "assets.csv", {
         type: "text/csv",
-      })
+      }),
     );
     parseFormDataMock.mockResolvedValue(formData);
 
@@ -129,14 +128,14 @@ describe("csvDataFromRequest", () => {
     expect(thrown).toBeInstanceOf(ShelfError);
     const shelfError = thrown as ShelfError;
     expect(shelfError.message).toBe(
-      "Something went wrong while parsing the CSV file."
+      "Something went wrong while parsing the CSV file.",
     );
     expect(shelfError.shouldBeCaptured).toBe(true);
   });
 
   it("returns a user-friendly error for file size exceeded", async () => {
     parseFormDataMock.mockRejectedValue(
-      new MaxFileSizeExceededError(2 * 1024 * 1024)
+      new MaxFileSizeExceededError(2 * 1024 * 1024),
     );
 
     let thrown: unknown;
@@ -447,133 +446,6 @@ describe("buildCsvExportDataFromAssets", () => {
   });
 });
 
-describe("buildCsvExportDataFromBookings", () => {
-  it("creates a main booking row and additional asset rows", () => {
-    const booking = {
-      id: "booking-1",
-      name: "Shoot",
-      status: "confirmed",
-      from: new Date("2024-01-02T03:04:00Z"),
-      originalFrom: undefined,
-      to: new Date("2024-01-03T03:04:00Z"),
-      originalTo: undefined,
-      custodianTeamMember: { name: "Custodian", user: null },
-      custodianUser: {
-        firstName: "Jane",
-        lastName: "Doe",
-        email: "jane@example.com",
-      },
-      description: "Studio session",
-      tags: [{ name: "commercial" }],
-      bookingAssets: [
-        { asset: { title: "Primary Asset" } },
-        { asset: { title: "Secondary Asset" } },
-      ],
-    };
-
-    const [headers, bookingRow, assetRow] = buildCsvExportDataFromBookings(
-      [booking as any],
-      baseRequest
-    );
-
-    expect(headers).toEqual([
-      "Booking URL",
-      "Booking ID",
-      "Name",
-      "Status",
-      "Actual start date",
-      "Planned start date",
-      "Actual end date",
-      "Planned end date",
-      "Custodian",
-      "Description",
-      "Tags",
-      "Assets",
-      "Item check-in status",
-      "Check-in date",
-      "Checked in",
-      "Total assets",
-    ]);
-
-    expect(bookingRow[0]).toBe('"http://localhost:3000/bookings/booking-1"');
-    expect(bookingRow[3]).toBe('"Confirmed"');
-    expect(bookingRow[5]).toBe(bookingRow[4]);
-    expect(bookingRow[7]).toBe(bookingRow[6]);
-    expect(bookingRow[8]).toBe('"Jane Doe (jane@example.com)"');
-    expect(bookingRow[10]).toBe('"commercial"');
-    expect(bookingRow[11]).toBe('"Primary Asset"');
-
-    assetRow.forEach((value, index) => {
-      if (index === 11) {
-        expect(value).toBe('"Secondary Asset"');
-      } else {
-        expect(value).toBe('""');
-      }
-    });
-  });
-
-  it("marks each asset checked in/out and rolls up the booking count", () => {
-    // why: an OVERDUE booking where one of two assets has been partially
-    // checked in — exercises the per-asset status/date columns and the
-    // booking-level rollup against real partial check-in input.
-    const checkinDate = new Date("2024-01-05T09:30:00Z");
-    const booking = {
-      id: "booking-2",
-      name: "Field shoot",
-      status: "OVERDUE",
-      from: new Date("2024-01-02T03:04:00Z"),
-      originalFrom: undefined,
-      to: new Date("2024-01-03T03:04:00Z"),
-      originalTo: undefined,
-      custodianTeamMember: { name: "Custodian", user: null },
-      custodianUser: null,
-      description: "",
-      tags: [],
-      // why: bookings carry their assets via the `BookingAsset` pivot
-      // (one row per slice, with a per-slice `quantity`) post-3a, so the
-      // CSV builder feeds off `booking.bookingAssets[].asset` not the
-      // legacy direct `assets` relation.
-      bookingAssets: [
-        {
-          quantity: 1,
-          asset: { id: "asset-returned", title: "Returned Camera" },
-        },
-        { quantity: 1, asset: { id: "asset-out", title: "Still-Out Tripod" } },
-      ],
-    };
-
-    const checkinsByBooking = new Map([
-      [
-        "booking-2",
-        {
-          checkedInAssetIds: new Set(["asset-returned"]),
-          checkinDateByAsset: new Map([["asset-returned", checkinDate]]),
-        },
-      ],
-    ]);
-
-    const [, mainRow, assetRow] = buildCsvExportDataFromBookings(
-      [booking as any],
-      baseRequest,
-      checkinsByBooking
-    );
-
-    // Main row carries the first (returned) asset + booking-level rollup.
-    expect(mainRow[11]).toBe('"Returned Camera"');
-    expect(mainRow[12]).toBe('"Checked in"');
-    expect(mainRow[13]).not.toBe('""'); // a formatted check-in date is present
-    expect(mainRow[14]).toBe('"1"'); // checked in
-    expect(mainRow[15]).toBe('"2"'); // total assets
-
-    // Trailing asset row carries the still-out asset; booking-level columns blank.
-    expect(assetRow[11]).toBe('"Still-Out Tripod"');
-    expect(assetRow[12]).toBe('"Checked out"');
-    expect(assetRow[13]).toBe('""'); // no check-in date for an item still out
-    expect(assetRow[14]).toBe('""'); // booking rollup not repeated on asset rows
-    expect(assetRow[15]).toBe('""');
-  });
-});
-
 describe("buildCsvExportDataFromTeamMembers", () => {
   it("returns CSV content with headers and row values", () => {
     const csv = buildCsvExportDataFromTeamMembers({
@@ -585,8 +457,8 @@ describe("buildCsvExportDataFromTeamMembers", () => {
 
     expect(csv).toBe(
       ["Id,Name,Custodies", '"tm-1","Alex","3"', '"tm-2","Riley","0"'].join(
-        "\r\n"
-      )
+        "\r\n",
+      ),
     );
   });
 });

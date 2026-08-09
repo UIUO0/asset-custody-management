@@ -30,7 +30,7 @@ export const usePosition = () => {
           enableHighAccuracy: true,
           timeout: 5000,
           maximumAge: 0,
-        }
+        },
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -45,7 +45,7 @@ export const usePosition = () => {
           longitude: position.longitude.toString(),
           scanId: scanId,
         },
-        { method: "post", action: `/qr/${qrId}` }
+        { method: "post", action: `/qr/${qrId}` },
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

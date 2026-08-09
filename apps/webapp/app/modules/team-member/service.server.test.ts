@@ -52,14 +52,14 @@ describe("getTeamMember", () => {
         getTeamMember({
           id: "nonexistent-id",
           organizationId: "org-789",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
         getTeamMember({
           id: "nonexistent-id",
           organizationId: "org-789",
-        })
+        }),
       ).rejects.toThrow("The selected team member could not be found.");
     });
 
@@ -168,7 +168,7 @@ describe("getTeamMember", () => {
           organizationId: "org-789",
           select: { id: true },
           include: { user: true },
-        } as any) // Type assertion needed since TypeScript prevents this at compile time
+        } as any), // Type assertion needed since TypeScript prevents this at compile time
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -177,9 +177,9 @@ describe("getTeamMember", () => {
           organizationId: "org-789",
           select: { id: true },
           include: { user: true },
-        } as any)
+        } as any),
       ).rejects.toThrow(
-        "Cannot use both select and include when fetching a team member."
+        "Cannot use both select and include when fetching a team member.",
       );
 
       // Should not call database when validation fails
@@ -217,7 +217,7 @@ describe("getTeamMember", () => {
         getTeamMember({
           id: "team-member-123",
           organizationId: "org-789",
-        })
+        }),
       ).rejects.toBe(originalError);
     });
 
@@ -229,7 +229,7 @@ describe("getTeamMember", () => {
         getTeamMember({
           id: "team-member-123",
           organizationId: "org-789",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       try {
@@ -261,7 +261,7 @@ describe("getTeamMember", () => {
         const shelfError = error as ShelfError;
         expect(shelfError.title).toBe("Team member not found");
         expect(shelfError.message).toBe(
-          "The selected team member could not be found."
+          "The selected team member could not be found.",
         );
         expect(shelfError.additionalData).toEqual({
           id: "missing-member",

@@ -28,7 +28,7 @@ export function InnerLabel({
         hideLg && "lg:hidden",
         hideMd && "md:hidden",
         required && "required-input-label",
-        className
+        className,
       )}
     >
       {children}

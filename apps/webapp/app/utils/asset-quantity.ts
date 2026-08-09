@@ -37,7 +37,7 @@ export type AssetForUnitCount = {
  * refinement.
  */
 export function sanitizeUnitOfMeasureLabel(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): string {
   return (value ?? "").replace(/[{%}]/g, "").trim();
 }
@@ -57,7 +57,7 @@ export function sanitizeUnitOfMeasureLabel(
  */
 export function formatUnitCount(
   asset: AssetForUnitCount,
-  quantity: number | null | undefined
+  quantity: number | null | undefined,
 ): string | null {
   if (asset.type !== AssetType.QUANTITY_TRACKED) return null;
   if (quantity == null || quantity <= 0) return null;
@@ -79,7 +79,7 @@ export function formatUnitCount(
  */
 export function assetQtyMeta(
   asset: AssetForUnitCount,
-  quantity: number | null | undefined
+  quantity: number | null | undefined,
 ): { quantity?: number } {
   if (asset.type !== AssetType.QUANTITY_TRACKED) return {};
   if (quantity == null || quantity <= 0) return {};

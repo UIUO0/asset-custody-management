@@ -30,7 +30,7 @@ import type { ActivityEventInput } from "../../app/modules/activity-event/types"
  */
 export async function flushEvents(
   db: ExtendedPrismaClient,
-  events: ActivityEventInput[]
+  events: ActivityEventInput[],
 ): Promise<number> {
   if (events.length === 0) return 0;
 
@@ -52,7 +52,7 @@ export async function flushEvents(
  * minus the snapshot fetch (seeders supply the snapshot via `Actor`).
  */
 function toCreateManyInput(
-  input: ActivityEventInput
+  input: ActivityEventInput,
 ): Prisma.ActivityEventCreateManyInput {
   const field = "field" in input ? input.field : null;
   const fromValue = "fromValue" in input ? input.fromValue : null;

@@ -40,7 +40,7 @@ type BuilderBase = {
  * marker is merged in automatically.
  */
 function buildMeta(
-  extraMeta?: Record<string, Prisma.InputJsonValue>
+  extraMeta?: Record<string, Prisma.InputJsonValue>,
 ): Prisma.InputJsonValue {
   if (!extraMeta || Object.keys(extraMeta).length === 0) {
     return SEED_META;
@@ -64,7 +64,7 @@ function actorFields(actor: Actor): {
  * Entity is the location itself.
  */
 export function locationCreatedEvent(
-  base: BuilderBase & { locationId: string }
+  base: BuilderBase & { locationId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -84,7 +84,7 @@ export function locationCreatedEvent(
  * indirectly by R1/R10 for verification.
  */
 export function assetCreatedEvent(
-  base: BuilderBase & { assetId: string }
+  base: BuilderBase & { assetId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -122,7 +122,7 @@ export function assetFieldChangedEvent(
     field: string;
     fromValue: string | number | null;
     toValue: string | number | null;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -145,7 +145,7 @@ export function assetFieldChangedEvent(
  * asset (see `assetFieldChangedEvent` with action `"ASSET_KIT_CHANGED"`).
  */
 export function kitCreatedEvent(
-  base: BuilderBase & { kitId: string }
+  base: BuilderBase & { kitId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -164,7 +164,7 @@ export function kitCreatedEvent(
  * Entity is the booking itself.
  */
 export function bookingCreatedEvent(
-  base: BuilderBase & { bookingId: string }
+  base: BuilderBase & { bookingId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -183,7 +183,7 @@ export function bookingCreatedEvent(
  * Matches `BookingAssetItemEventInput` in the runtime types.
  */
 export function bookingAssetAddedEvent(
-  base: BuilderBase & { bookingId: string; assetId: string }
+  base: BuilderBase & { bookingId: string; assetId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -208,7 +208,7 @@ export function bookingStatusChangedEvent(
     bookingId: string;
     fromStatus: string;
     toStatus: string;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -231,7 +231,7 @@ export function bookingStatusChangedEvent(
  * asset-level granularity for reports like R3 (Top Booked Assets).
  */
 export function bookingCheckedOutEvent(
-  base: BuilderBase & { bookingId: string; assetId: string }
+  base: BuilderBase & { bookingId: string; assetId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -252,7 +252,7 @@ export function bookingCheckedOutEvent(
  * asset-level granularity rationale as check-out.
  */
 export function bookingCheckedInEvent(
-  base: BuilderBase & { bookingId: string; assetId: string }
+  base: BuilderBase & { bookingId: string; assetId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -272,7 +272,7 @@ export function bookingCheckedInEvent(
  * during an ongoing booking (before the full `COMPLETE` transition).
  */
 export function bookingPartialCheckinEvent(
-  base: BuilderBase & { bookingId: string; assetId: string }
+  base: BuilderBase & { bookingId: string; assetId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -294,7 +294,7 @@ export function bookingPartialCheckinEvent(
  * `CONTEXT-activity-event-architecture.md` §7).
  */
 export function bookingCancelledEvent(
-  base: BuilderBase & { bookingId: string }
+  base: BuilderBase & { bookingId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -310,7 +310,7 @@ export function bookingCancelledEvent(
 
 /** `BOOKING_ARCHIVED` — emitted once per booking that ends archived. */
 export function bookingArchivedEvent(
-  base: BuilderBase & { bookingId: string }
+  base: BuilderBase & { bookingId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -326,7 +326,7 @@ export function bookingArchivedEvent(
 
 /** `AUDIT_CREATED` — emitted at audit-session creation. Entity is the audit. */
 export function auditCreatedEvent(
-  base: BuilderBase & { auditSessionId: string; expectedAssetCount: number }
+  base: BuilderBase & { auditSessionId: string; expectedAssetCount: number },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -342,7 +342,7 @@ export function auditCreatedEvent(
 
 /** `AUDIT_STARTED` — emitted on the first scan (PENDING → ACTIVE transition). */
 export function auditStartedEvent(
-  base: BuilderBase & { auditSessionId: string }
+  base: BuilderBase & { auditSessionId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -362,7 +362,7 @@ export function auditAssetsAddedEvent(
     auditSessionId: string;
     auditAssetId: string;
     assetId: string;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -390,7 +390,7 @@ export function auditAssetScannedEvent(
     auditAssetId: string;
     assetId: string;
     isExpected: boolean;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -417,7 +417,7 @@ export function auditCompletedEvent(
     foundCount: number;
     missingCount: number;
     unexpectedCount: number;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -438,7 +438,7 @@ export function auditCompletedEvent(
 
 /** `AUDIT_CANCELLED` — emitted once per cancelled audit. */
 export function auditCancelledEvent(
-  base: BuilderBase & { auditSessionId: string }
+  base: BuilderBase & { auditSessionId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -454,7 +454,7 @@ export function auditCancelledEvent(
 
 /** `AUDIT_ARCHIVED` — emitted once per archived audit. */
 export function auditArchivedEvent(
-  base: BuilderBase & { auditSessionId: string }
+  base: BuilderBase & { auditSessionId: string },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -478,7 +478,7 @@ export function custodyAssignedEvent(
     assetId: string;
     teamMemberId: string;
     targetUserId?: string;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),
@@ -500,7 +500,7 @@ export function custodyReleasedEvent(
     assetId: string;
     teamMemberId: string;
     targetUserId?: string;
-  }
+  },
 ): ActivityEventInput {
   return {
     ...actorFields(base.actor),

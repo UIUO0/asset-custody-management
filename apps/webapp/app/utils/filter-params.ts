@@ -18,7 +18,7 @@ export const NON_FILTER_PARAMS = new Set([
  * key that is considered a user-applied filter (i.e. not in NON_FILTER_PARAMS).
  */
 export function computeHasActiveFilters(
-  searchParams: URLSearchParams
+  searchParams: URLSearchParams,
 ): boolean {
   for (const key of searchParams.keys()) {
     if (!NON_FILTER_PARAMS.has(key)) {

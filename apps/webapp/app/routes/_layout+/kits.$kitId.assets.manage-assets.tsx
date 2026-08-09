@@ -28,7 +28,6 @@ import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
 import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
 import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
-import { StatusFilter } from "~/components/booking/status-filter";
 import { Form } from "~/components/custom-form";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import { ChevronRight } from "~/components/icons/library";
@@ -48,6 +47,7 @@ import {
   AlertDialogFooter,
   AlertDialogTrigger,
 } from "~/components/shared/modal";
+import { StatusFilter } from "~/components/shared/status-filter";
 import {
   Tooltip,
   TooltipContent,
@@ -550,7 +550,7 @@ export default function ManageAssetsInKit() {
           customEmptyStateContent={{
             title: t("assets.pickerEmptyTitle"),
             text: t("assets.pickerEmptyText"),
-            newButtonRoute: "/assets/new",
+            newButtonRoute: "/receipts/new",
             newButtonContent: t("assets.newAsset"),
           }}
           className="-mx-5 flex h-full flex-col justify-start border-0"

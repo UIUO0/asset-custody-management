@@ -100,13 +100,13 @@ const CUSTOM_FIELDS: ReadonlyArray<{ name: string; type: CustomFieldType }> = [
  */
 export async function runTaxonomyPhase(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   // Spread taxonomy creation across first 30 days of history so every asset
   // / booking created later has a parent row that already exists at that
   // point in the timeline.
   const setupEnd = new Date(
-    ctx.historyStart.getTime() + 30 * 24 * 60 * 60 * 1000
+    ctx.historyStart.getTime() + 30 * 24 * 60 * 60 * 1000,
   );
 
   await insertCategories(ctx, state, setupEnd);
@@ -118,7 +118,7 @@ export async function runTaxonomyPhase(
 async function insertCategories(
   ctx: SeederContext,
   state: SeederState,
-  end: Date
+  end: Date,
 ): Promise<void> {
   for (let i = 0; i < CATEGORY_NAMES.length; i++) {
     const createdAt = randomDateBetween(ctx.historyStart, end, ctx.rng);
@@ -140,7 +140,7 @@ async function insertCategories(
 async function insertLocations(
   ctx: SeederContext,
   state: SeederState,
-  end: Date
+  end: Date,
 ): Promise<void> {
   for (let i = 0; i < LOCATION_NAMES.length; i++) {
     const createdAt = randomDateBetween(ctx.historyStart, end, ctx.rng);
@@ -168,7 +168,7 @@ async function insertLocations(
       occurredAt: randomDateBetween(ctx.historyStart, end, ctx.rng),
       actor: owner,
       locationId,
-    })
+    }),
   );
   const written = await flushEvents(ctx.db, events);
   state.counts.activityEvents += written;
@@ -177,7 +177,7 @@ async function insertLocations(
 async function insertTags(
   ctx: SeederContext,
   state: SeederState,
-  end: Date
+  end: Date,
 ): Promise<void> {
   // The marker tag must exist — the cleanup command uses its name to find
   // seeded assets/bookings. Insert it first and hold onto its id.
@@ -213,7 +213,7 @@ async function insertTags(
 async function insertCustomFields(
   ctx: SeederContext,
   state: SeederState,
-  end: Date
+  end: Date,
 ): Promise<void> {
   for (const cf of CUSTOM_FIELDS) {
     const createdAt = randomDateBetween(ctx.historyStart, end, ctx.rng);

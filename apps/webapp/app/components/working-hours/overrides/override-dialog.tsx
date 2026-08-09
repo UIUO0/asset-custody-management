@@ -13,7 +13,6 @@ import { Spinner } from "~/components/shared/spinner";
 import When from "~/components/when/when";
 import { useDisabled } from "~/hooks/use-disabled";
 import { CreateOverrideFormSchema } from "~/modules/working-hours/zod-utils";
-import type { BookingSettingsActionData } from "~/routes/_layout+/settings.bookings";
 
 export function NewOverrideDialog() {
   const { t } = useTranslation();
@@ -79,7 +78,15 @@ export const WorkingHoursOverrideForm = ({
   onCancel,
 }: WorkingHoursOverrideFormProps) => {
   const { t } = useTranslation();
-  const fetcher = useFetcher<BookingSettingsActionData>({
+  /**
+   * Typed structurally rather than off a route's `action`: this dialog used to
+   * borrow the (now deleted) booking-settings route type, but it only ever
+   * reads `success` and the error payload back.
+   */
+  const fetcher = useFetcher<{
+    success?: boolean;
+    error?: { message: string };
+  }>({
     key: "workingHoursOverride",
   });
   const disabled = useDisabled(fetcher);

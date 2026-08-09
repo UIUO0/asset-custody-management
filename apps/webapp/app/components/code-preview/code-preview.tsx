@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useReactToPrint } from "react-to-print";
 import { BarcodeDisplay } from "~/components/barcode/barcode-display";
 import { Button } from "~/components/shared/button";
+import { config } from "~/config/shelf.config";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { resolveShowShelfBranding } from "~/utils/branding";
@@ -72,6 +73,23 @@ const QR_LABEL_STYLE: CSSProperties = {
 const BARCODE_LABEL_STYLE: CSSProperties = {
   ...LABEL_CONTAINER_STYLE,
   minHeight: "300px",
+};
+
+/**
+ * Authority logo at the foot of a label.
+ *
+ * Sized by width alone (the asset is 766×128, so height follows at ~18px) and
+ * given explicit `auto` height so the aspect ratio survives the html-to-image
+ * capture, which does not inherit every cascade rule.
+ */
+const LABEL_BRANDING_STYLE: CSSProperties = {
+  width: "110px",
+  height: "auto",
+  // `display: block` + auto side margins rather than `text-align` on the
+  // parent: the capture rasterises the element itself, so the centring must
+  // hold on the image and not depend on inherited text alignment.
+  display: "block",
+  margin: "8px auto 0",
 };
 
 /** Title text at the top of a QR/barcode label — truncated, bold, centered. */
@@ -178,7 +196,7 @@ export const CodePreview = ({
     }
 
     return codes;
-  }, [qrObj, barcodes, canUseBarcodes]);
+  }, [qrObj, barcodes, canUseBarcodes, t]);
 
   // Default to selected barcode, then QR code if available, otherwise first barcode
   const [selectedCodeId, setSelectedCodeId] = useState<string>(() => {
@@ -241,7 +259,9 @@ export const CodePreview = ({
 
     const prefix = `${slugify(item.name || item.type)}`;
     if (selectedCode.type === "qr") {
-      return `${prefix}-${selectedCode.qrData?.size}-shelf-qr-code-${selectedCode.id}.png`;
+      // The vendor name must not appear on anything the user sees, and a
+      // download filename is about as visible as it gets.
+      return `${prefix}-${selectedCode.qrData?.size}-qr-code-${selectedCode.id}.png`;
     } else {
       return `${prefix}-${selectedCode.barcodeData?.type}-barcode-${selectedCode.barcodeData?.value}.png`;
     }
@@ -423,6 +443,36 @@ export const CodePreview = ({
   );
 };
 
+/**
+ * Authority logo printed at the foot of a downloadable label.
+ *
+ * Replaces the upstream "Powered by shelf.nu" line, which was stripped for this
+ * deployment — leaving the workspace toggle that controls it switching nothing.
+ * The toggle is a real preference again, and what it now prints is the EPDA
+ * mark rather than a vendor's.
+ *
+ * Rendered as an `<img>` from {@link config.logoPath} so it is same-origin: the
+ * label is captured with `html-to-image`, and a cross-origin asset would taint
+ * the canvas and fail the download. `downloadCode` already awaits
+ * `waitForImagesToLoad`, so the capture waits for this image too.
+ */
+function LabelBranding() {
+  const { logoPath } = config;
+
+  // `logoPath` is optional in the config type. A deployment that has not set
+  // one gets no strip at all rather than a broken-image icon baked into every
+  // printed label.
+  if (!logoPath) return null;
+
+  return (
+    <img
+      src={logoPath.fullLogo}
+      alt={config.appName}
+      style={LABEL_BRANDING_STYLE}
+    />
+  );
+}
+
 // QR Label Component (existing)
 export type QrDef = {
   id?: string;
@@ -451,10 +501,10 @@ export const QrLabel = React.forwardRef<HTMLDivElement, QrLabelProps>(
       <div style={QR_LABEL_STYLE} ref={ref}>
         <div style={LABEL_TITLE_STYLE}>{title}</div>
         <figure className="qr-code flex justify-center">
-          <img
-            src={data?.qr?.src}
-            alt={`${data?.qr?.size}-shelf-qr-code.png`}
-          />
+          {/* Alt text names what the image *is* — the previous value was a
+              filename carrying the vendor name, which is both meaningless to a
+              screen-reader user and a branding leak. */}
+          <img src={data?.qr?.src} alt={`QR code for ${title}`} />
         </figure>
         <div className="w-full text-center text-[12px]">
           <div className="font-semibold">
@@ -462,6 +512,7 @@ export const QrLabel = React.forwardRef<HTMLDivElement, QrLabelProps>(
               ? sequentialId
               : data?.qr?.id}
           </div>
+          {showShelfBranding ? <LabelBranding /> : null}
         </div>
       </div>
     );
@@ -509,6 +560,7 @@ export const BarcodeLabel = React.forwardRef<HTMLDivElement, BarcodeLabelProps>(
               )}
             </div>
           </div>
+          {showShelfBranding ? <LabelBranding /> : null}
         </div>
       </div>
     );

@@ -69,7 +69,7 @@ if (SENTRY_DSN) {
         breadcrumb.message = breadcrumb.message.replace(
           // eslint-disable-next-line no-control-regex -- let me do my thing
           /(\x1B\[32m|\x1B\[0m)/gm,
-          ""
+          "",
         );
       }
 
@@ -240,7 +240,7 @@ function makeSentryContext(exception: unknown) {
         // and the "no secret can reach Sentry (at any depth)" guarantee would
         // not actually hold.
         raw: JSON.stringify(
-          redactValue(exception.cause, new WeakSet<object>())
+          redactValue(exception.cause, new WeakSet<object>()),
         ),
       },
     },

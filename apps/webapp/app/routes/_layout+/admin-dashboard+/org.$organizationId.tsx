@@ -49,7 +49,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
   const { organizationId } = getParams(
     params,
     z.object({ organizationId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -101,7 +101,7 @@ export const action = async ({
   const { organizationId } = getParams(
     params,
     z.object({ organizationId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -117,7 +117,7 @@ export const action = async ({
           "toggleBarcodes",
           "toggleAudits",
         ]),
-      })
+      }),
     );
 
     switch (intent) {
@@ -129,7 +129,7 @@ export const action = async ({
               .string()
               .transform((val) => val === "on")
               .default("false"),
-          })
+          }),
         );
         await toggleOrganizationSso({ organizationId, enabledSso });
 
@@ -143,7 +143,7 @@ export const action = async ({
               .string()
               .transform((val) => val === "on")
               .default("false"),
-          })
+          }),
         );
         // console.log("workspaceDisabled", workspaceDisabled);
         await toggleWorkspaceDisabled({ organizationId, workspaceDisabled });
@@ -160,7 +160,7 @@ export const action = async ({
               .string()
               .transform((val) => val === "on")
               .default("false"),
-          })
+          }),
         );
         await toggleBarcodeEnabled({ organizationId, barcodesEnabled });
 
@@ -176,7 +176,7 @@ export const action = async ({
               .string()
               .transform((val) => val === "on")
               .default("false"),
-          })
+          }),
         );
         await toggleAuditEnabled({ organizationId, auditsEnabled });
 
@@ -207,7 +207,7 @@ export const action = async ({
                   return z.NEVER;
                 }
               }),
-          })
+          }),
         );
 
         await db.organization.update({
@@ -245,7 +245,7 @@ export const action = async ({
 
         const contentData = extractCSVDataFromContentImport(
           csvData,
-          ASSET_CSV_HEADERS
+          ASSET_CSV_HEADERS,
         );
         await createAssetsFromContentImport({
           data: contentData,
@@ -307,7 +307,7 @@ export default function OrgPage() {
             {Object.entries(organization).map(
               ([key, value]) =>
                 !["workingHours", "ssoDetails", "owner", "qrCodes"].includes(
-                  key
+                  key,
                 ) && (
                   <li key={key}>
                     <span className="font-semibold">{key}</span>:{" "}
@@ -315,7 +315,7 @@ export default function OrgPage() {
                     {typeof value === "boolean" ? String(value) : null}
                     {value instanceof Date ? <DateS date={value} /> : null}
                   </li>
-                )
+                ),
             )}
           </ol>
           <hr className="border-1 border-gray-700" />

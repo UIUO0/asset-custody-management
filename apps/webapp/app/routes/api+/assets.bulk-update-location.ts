@@ -38,7 +38,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { assetIds, newLocationId, currentSearchParams } = parseData(
       formData,
-      BulkLocationUpdateSchema.and(CurrentSearchParamsSchema)
+      BulkLocationUpdateSchema.and(CurrentSearchParamsSchema),
     );
 
     await bulkUpdateAssetLocation({

@@ -17,7 +17,7 @@ const Command = forwardRef<
     ref={ref}
     className={tw(
       "flex size-full flex-col overflow-hidden rounded-lg bg-white text-gray-900",
-      className
+      className,
     )}
     {...props}
   />
@@ -35,7 +35,7 @@ const CommandDialog = ({
       <DialogPrimitive.Content
         className={tw(
           "fixed left-1/2 top-1/2 z-50 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl",
-          className
+          className,
         )}
       >
         <Command>{children}</Command>
@@ -53,7 +53,7 @@ const CommandInput = forwardRef<
       ref={ref}
       className={tw(
         "flex h-12 w-full bg-transparent text-base outline-none placeholder:text-gray-400 focus:outline-none",
-        className
+        className,
       )}
       {...props}
     />
@@ -81,7 +81,7 @@ const CommandEmpty = forwardRef<
     ref={ref}
     className={tw(
       "flex flex-col items-center justify-center px-6 py-10 text-center text-sm text-gray-500",
-      className
+      className,
     )}
     {...props}
   />
@@ -96,7 +96,7 @@ const CommandGroup = forwardRef<
     ref={ref}
     className={tw(
       "px-2 py-3 text-sm [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:text-gray-400",
-      className
+      className,
     )}
     {...props}
   />
@@ -123,7 +123,7 @@ const CommandItem = forwardRef<
     ref={ref}
     className={tw(
       "group flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 outline-none aria-selected:bg-primary-50 aria-selected:text-primary-700",
-      className
+      className,
     )}
     {...props}
   />
@@ -137,7 +137,7 @@ const CommandShortcut = ({
   <span
     className={tw(
       "ms-auto inline-flex items-center gap-1 rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-500",
-      className
+      className,
     )}
     {...props}
   />

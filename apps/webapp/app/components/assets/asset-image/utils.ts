@@ -23,7 +23,7 @@ export function hasPreviewData(asset: unknown): asset is AssetForPreview {
 
 // A utility to check if an asset is already of the preview type
 export function isAssetForPreview(
-  asset: AssetForThumbnail | AssetForPreview
+  asset: AssetForThumbnail | AssetForPreview,
 ): asset is AssetForPreview {
   return "mainImage" in asset && "mainImageExpiration" in asset;
 }
@@ -34,7 +34,7 @@ export function isAssetForPreview(
  */
 export function extractStoragePath(
   url: string,
-  bucketName: string
+  bucketName: string,
 ): string | null {
   if (!url) return null;
 
@@ -73,7 +73,7 @@ export function extractStoragePath(
     // Handle authenticated URLs (format: /storage/v1/object/authenticated/bucket/path)
     if (pathname.includes("/object/authenticated/")) {
       const authMatch = pathname.match(
-        `/object/authenticated/${bucketName}/(.+)`
+        `/object/authenticated/${bucketName}/(.+)`,
       );
       if (authMatch && authMatch[1]) {
         return authMatch[1];

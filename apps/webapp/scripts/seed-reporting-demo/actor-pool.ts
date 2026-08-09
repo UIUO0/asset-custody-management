@@ -70,7 +70,7 @@ const FAKE_TEAM_MEMBER_COUNT = 18;
  */
 async function resolveRealUsers(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<
   Array<{
     userId: string;
@@ -130,7 +130,7 @@ async function resolveRealUsers(
 async function resolveTeamMembersForRealUsers(
   db: ExtendedPrismaClient,
   orgId: string,
-  userIds: string[]
+  userIds: string[],
 ): Promise<Map<string, string>> {
   if (userIds.length === 0) return new Map();
 
@@ -157,7 +157,7 @@ async function resolveTeamMembersForRealUsers(
  */
 async function createFakeTeamMembers(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<Actor[]> {
   const rows = Array.from({ length: FAKE_TEAM_MEMBER_COUNT }, () => {
     const firstName = faker.person.firstName();
@@ -172,8 +172,8 @@ async function createFakeTeamMembers(
       db.teamMember.create({
         data: { name: r.name, organizationId: orgId },
         select: { id: true },
-      })
-    )
+      }),
+    ),
   );
 
   return created.map((tm, i) => ({
@@ -205,14 +205,14 @@ async function createFakeTeamMembers(
  */
 export async function buildActorPool(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<ActorPool> {
   const realRows = await resolveRealUsers(db, orgId);
   if (realRows.length === 0) {
     throw new Error(
       `Organization ${orgId} has no users attached via UserOrganization. ` +
         "At least one real user must exist so that source-entity FK columns " +
-        "(Asset.userId, Category.userId, etc.) can be populated."
+        "(Asset.userId, Category.userId, etc.) can be populated.",
     );
   }
 
@@ -220,7 +220,7 @@ export async function buildActorPool(
   const tmByUserId = await resolveTeamMembersForRealUsers(
     db,
     orgId,
-    realUserIds
+    realUserIds,
   );
 
   const real: Actor[] = realRows.map((r) => {
@@ -228,7 +228,7 @@ export async function buildActorPool(
     if (!teamMemberId) {
       throw new Error(
         `Real user ${r.userId} is in org ${orgId} but has no matching ` +
-          "TeamMember row. Shelf normally creates one on join — something is off."
+          "TeamMember row. Shelf normally creates one on join — something is off.",
       );
     }
     return {

@@ -21,11 +21,11 @@ vi.mock("~/utils/markdoc-wrappers", () => ({
       firstName?: string | null;
       lastName?: string | null;
     }) =>
-      `{% link to="/settings/team/users/${user.id}" text="${user.firstName} ${user.lastName}" /%}`
+      `{% link to="/settings/team/users/${user.id}" text="${user.firstName} ${user.lastName}" /%}`,
   ),
   wrapAssetsWithDataForNote: vi.fn(
     (asset: { id: string; title: string }) =>
-      `{% link to="/assets/${asset.id}" text="${asset.title}" /%}`
+      `{% link to="/assets/${asset.id}" text="${asset.title}" /%}`,
   ),
 }));
 
@@ -77,7 +77,7 @@ describe("audit helpers", () => {
           userId: "user-1",
           type: "UPDATE",
           content: expect.stringContaining(
-            "created audit with **1** expected asset."
+            "created audit with **1** expected asset.",
           ),
         },
       });
@@ -103,7 +103,7 @@ describe("audit helpers", () => {
           userId: "user-2",
           type: "UPDATE",
           content: expect.stringContaining(
-            "created audit with **5** expected assets."
+            "created audit with **5** expected assets.",
           ),
         },
       });
@@ -125,7 +125,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% link to="/settings/team/users/user-3"'
+        '{% link to="/settings/team/users/user-3"',
       );
       expect(createCall.data.content).toContain('text="Alice Johnson"');
     });
@@ -426,7 +426,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% link to="/settings/team/users/user-2"'
+        '{% link to="/settings/team/users/user-2"',
       );
       expect(createCall.data.content).toContain('text="Jane Smith"');
     });
@@ -518,7 +518,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        "Found **90/100** expected assets"
+        "Found **90/100** expected assets",
       );
       expect(createCall.data.content).toContain("**90%**");
       expect(createCall.data.content).toContain("**10** missing");
@@ -547,7 +547,7 @@ describe("audit helpers", () => {
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain("**Completion note:**");
       expect(createCall.data.content).toContain(
-        "All critical assets accounted for. Minor items missing."
+        "All critical assets accounted for. Minor items missing.",
       );
     });
 
@@ -577,7 +577,7 @@ describe("audit helpers", () => {
       expect(createCall.data.content).toContain("> ## Summary");
       expect(createCall.data.content).toContain("> - Found most items");
       expect(createCall.data.content).toContain(
-        "> - **2 laptops** still missing"
+        "> - **2 laptops** still missing",
       );
     });
 
@@ -622,7 +622,7 @@ describe("audit helpers", () => {
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain("**0%**");
       expect(createCall.data.content).toContain(
-        "Found **0/0** expected assets"
+        "Found **0/0** expected assets",
       );
     });
 
@@ -722,7 +722,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% audit_images count=3 ids="img-1,img-2,img-3" /%}'
+        '{% audit_images count=3 ids="img-1,img-2,img-3" /%}',
       );
     });
 
@@ -778,7 +778,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% audit_images count=5 ids="abc-123,def-456,ghi-789,jkl-012,mno-345" /%}'
+        '{% audit_images count=5 ids="abc-123,def-456,ghi-789,jkl-012,mno-345" /%}',
       );
     });
   });
@@ -854,7 +854,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% audit_images count=1 ids="img-1" /%}'
+        '{% audit_images count=1 ids="img-1" /%}',
       );
       expect(createCall.data.content).toContain('text="Camera Equipment"');
     });
@@ -894,7 +894,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% audit_images count=3 ids="img-1,img-2,img-3" /%}'
+        '{% audit_images count=3 ids="img-1,img-2,img-3" /%}',
       );
       expect(createCall.data.content).toContain('text="Laptop"');
     });
@@ -1094,7 +1094,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% link to="/settings/team/users/user-4"'
+        '{% link to="/settings/team/users/user-4"',
       );
       expect(createCall.data.content).toContain('text="Alice Johnson"');
     });
@@ -1242,7 +1242,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% link to="/settings/team/users/user-2"'
+        '{% link to="/settings/team/users/user-2"',
       );
       expect(createCall.data.content).toContain('text="Jane Smith"');
     });
@@ -1410,7 +1410,7 @@ describe("audit helpers", () => {
 
       const createCall = mockTx.auditNote.create.mock.calls[0][0];
       expect(createCall.data.content).toContain(
-        '{% link to="/settings/team/users/user-3"'
+        '{% link to="/settings/team/users/user-3"',
       );
       expect(createCall.data.content).toContain('text="Bob Wilson"');
     });
@@ -1525,7 +1525,7 @@ describe("audit helpers", () => {
           userId: "user-1",
           type: "COMMENT",
           content: expect.stringContaining(
-            '{% audit_images count=1 ids="img-1" /%}'
+            '{% audit_images count=1 ids="img-1" /%}',
           ),
         }),
       });
@@ -1548,7 +1548,7 @@ describe("audit helpers", () => {
       const call = tx.auditNote.create.mock.calls[0][0];
       expect(call.data.type).toBe("UPDATE");
       expect(call.data.content).toContain(
-        '{% audit_images count=1 ids="img-1" /%}'
+        '{% audit_images count=1 ids="img-1" /%}',
       );
     });
   });

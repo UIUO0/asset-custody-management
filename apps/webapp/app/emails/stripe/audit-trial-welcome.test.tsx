@@ -86,7 +86,7 @@ describe("sendAuditTrialWelcomeEmail", () => {
       expect.objectContaining({
         to: "alice@example.com",
         subject: "Your 7-day Audits trial is now active!",
-      })
+      }),
     );
     const call = mockSendEmail.mock.calls[0][0];
     expect(call.html).toBeDefined();
@@ -103,7 +103,7 @@ describe("sendAuditTrialWelcomeEmail", () => {
         firstName: "Alice",
         email: "alice@example.com",
         hasPaymentMethod: false,
-      })
+      }),
     ).resolves.toBeUndefined();
   });
 });

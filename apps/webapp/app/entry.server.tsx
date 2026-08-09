@@ -14,7 +14,6 @@ import { createI18nInstance, getLocale } from "./i18n/i18n.server";
 import { registerAddonTrialWorkers } from "./modules/addon-trial/worker.server";
 import { regierAssetWorkers } from "./modules/asset-reminder/worker.server";
 import { registerAuditWorkers } from "./modules/audit/worker.server";
-import { registerBookingWorkers } from "./modules/booking/worker.server";
 import { ShelfError } from "./utils/error";
 import { Logger } from "./utils/logger";
 import * as schedulerService from "./utils/scheduler.server";
@@ -25,18 +24,6 @@ schedulerService
   .init()
   .then(() =>
     Promise.all([
-      registerBookingWorkers()
-        .then(() => console.log("Booking workers registered"))
-        .catch((cause) => {
-          Logger.error(
-            new ShelfError({
-              cause,
-              message:
-                "Something went wrong while registering booking workers.",
-              label: "Scheduler",
-            }),
-          );
-        }),
       regierAssetWorkers()
         .then(() => console.log("Asset workers registered"))
         .catch((cause) => {

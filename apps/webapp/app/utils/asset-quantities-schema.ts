@@ -66,7 +66,7 @@ export const AssetQuantitiesSchema = z
       }
       const result: Record<string, number> = {};
       for (const [assetId, rawValue] of Object.entries(
-        parsed as Record<string, unknown>
+        parsed as Record<string, unknown>,
       )) {
         // Coerce strings through Number() — different form encoders
         // sometimes round-trip integers as strings.

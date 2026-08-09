@@ -99,7 +99,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       await request.formData(),
       z.object({
         batch: z.string(),
-      })
+      }),
     );
 
     /** Update the QR codes from the batch as printed */
@@ -314,7 +314,7 @@ function BatchFilter({
                       {typeof b === "string" ? b : b.name}
                     </span>
                   </SelectItem>
-                )
+                ),
             )}
           </div>
         </SelectContent>

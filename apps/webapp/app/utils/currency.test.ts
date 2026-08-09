@@ -40,10 +40,10 @@ describe("ISO 4217 Currency Codes", () => {
 
     it("should be sorted alphabetically by code", () => {
       const sorted = [...ISO_4217_CURRENCIES].sort((a, b) =>
-        a.code.localeCompare(b.code)
+        a.code.localeCompare(b.code),
       );
       expect(ISO_4217_CURRENCIES.map((c) => c.code)).toEqual(
-        sorted.map((c) => c.code)
+        sorted.map((c) => c.code),
       );
     });
 
@@ -52,7 +52,7 @@ describe("ISO 4217 Currency Codes", () => {
       for (const code of majorCurrencies) {
         expect(
           ISO_4217_CURRENCIES.some((c) => c.code === code),
-          `Expected ${code} to be in the list`
+          `Expected ${code} to be in the list`,
         ).toBe(true);
       }
     });
@@ -69,7 +69,7 @@ describe("ISO 4217 Currency Codes", () => {
       for (const currency of ISO_4217_CURRENCIES) {
         expect(
           prismaCurrencies.includes(currency.code as Currency),
-          `Currency code ${currency.code} from currency.ts is not in Prisma Currency enum`
+          `Currency code ${currency.code} from currency.ts is not in Prisma Currency enum`,
         ).toBe(true);
       }
 
@@ -77,7 +77,7 @@ describe("ISO 4217 Currency Codes", () => {
       for (const prismaCode of prismaCurrencies) {
         expect(
           ISO_4217_CURRENCIES.some((c) => c.code === prismaCode),
-          `Prisma Currency enum value ${prismaCode} is not in currency.ts`
+          `Prisma Currency enum value ${prismaCode} is not in currency.ts`,
         ).toBe(true);
       }
 

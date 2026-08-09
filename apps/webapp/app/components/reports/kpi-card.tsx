@@ -42,7 +42,7 @@ export function KpiCard({ kpi, className, showDelta = true }: KpiCardProps) {
         "transition-all duration-150",
         kpi.href &&
           "cursor-pointer hover:border-primary-200 hover:bg-primary-25",
-        className
+        className,
       )}
     >
       {/* Label */}
@@ -60,7 +60,7 @@ export function KpiCard({ kpi, className, showDelta = true }: KpiCardProps) {
               "font-medium",
               kpi.deltaType === "positive" && "text-success-600",
               kpi.deltaType === "negative" && "text-error-600",
-              kpi.deltaType === "neutral" && "text-gray-500"
+              kpi.deltaType === "neutral" && "text-gray-500",
             )}
           >
             {kpi.delta}

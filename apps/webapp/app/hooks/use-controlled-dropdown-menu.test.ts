@@ -49,7 +49,7 @@ describe("useControlledDropdownMenu", () => {
       mockSearchParams.set("ref", "qr");
 
       const { result } = renderHook(() =>
-        useControlledDropdownMenu({ skipDefault: true })
+        useControlledDropdownMenu({ skipDefault: true }),
       );
 
       // Menu should NOT auto-open when skipDefault is true
@@ -240,7 +240,7 @@ describe("useControlledDropdownMenu", () => {
       mockSearchParams.set("ref", "qr");
 
       const { result, rerender } = renderHook(() =>
-        useControlledDropdownMenu()
+        useControlledDropdownMenu(),
       );
 
       // Wait for auto-open

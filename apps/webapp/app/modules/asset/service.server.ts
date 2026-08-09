@@ -54,6 +54,7 @@ import {
   upsertCustomField,
 } from "~/modules/custom-field/service.server";
 import type { CustomFieldDraftPayload } from "~/modules/custom-field/types";
+import { assertReceiptSignedBeforeApproval } from "~/modules/goods-receipt/receipt-gate.server";
 import { bulkAssignKitCustody } from "~/modules/kit/service.server";
 import {
   createLocationChangeNote,
@@ -628,6 +629,11 @@ export async function getAssets(params: {
    * see an asset before المستودعات release it.
    */
   onlyReadyAssets?: boolean;
+  /**
+   * EPDA: drop assets a confirmed booking is holding at this moment. See the
+   * clause in the body for why drafts and future bookings are excluded.
+   */
+  excludeCurrentlyBooked?: boolean;
 }) {
   let {
     organizationId,
@@ -648,6 +654,7 @@ export async function getAssets(params: {
     extraInclude,
     assetKitFilter,
     availableToBookOnly,
+    excludeCurrentlyBooked = false,
     onlyReadyAssets,
   } = params;
 
@@ -677,6 +684,59 @@ export async function getAssets(params: {
     // in the query (not after) keeps `totalAssets` and paging consistent.
     if (onlyReadyAssets) {
       where.lifecycleStage = AssetLifecycleStage.READY;
+    }
+
+    /**
+     * EPDA: hide anything a confirmed booking is holding right now.
+     *
+     * `Asset.status` only flips to `CHECKED_OUT` at physical checkout, so
+     * between "reserved" and "handed over" an asset stayed `AVAILABLE` and kept
+     * appearing on the employees' «الأصناف المتاحة» list. Two people would
+     * request the same item and the second only found out at reserve time, from
+     * a conflict error — the system knew, it just told them late.
+     *
+     * "Holding it" is two different shapes, and collapsing them into one
+     * window test is wrong:
+     *
+     * - **Reserved** — committed for a window. Only hides the asset while that
+     *   window contains *now*. An asset reserved for next month is genuinely
+     *   free today, and hiding it would empty the list in a workspace that
+     *   plans ahead.
+     * - **Out** (`ONGOING` / `OVERDUE`) — physically gone. The end date is
+     *   irrelevant: an overdue booking is *past* its `to` precisely because
+     *   nobody brought the item back. Testing `to >= now` against it would
+     *   never match, which is the bug this shape replaced.
+     *
+     * `DRAFT` deliberately holds nothing. A draft is unsubmitted; if drafts
+     * hid stock, one employee could quietly empty the catalogue with drafts
+     * they never submit and nothing would ever release it.
+     *
+     * The `ONGOING`/`OVERDUE` branch is belt-and-braces — checkout already
+     * flips `Asset.status` to `CHECKED_OUT`, which the caller's status filter
+     * excludes — but it is cheap and keeps this predicate true on its own
+     * terms rather than resting on a flag set elsewhere.
+     */
+    if (excludeCurrentlyBooked) {
+      const now = new Date();
+
+      where.bookingAssets = {
+        none: {
+          booking: {
+            OR: [
+              {
+                status: BookingStatus.RESERVED,
+                from: { lte: now },
+                to: { gte: now },
+              },
+              {
+                status: {
+                  in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
+                },
+              },
+            ],
+          },
+        },
+      };
     }
 
     if (search) {
@@ -1161,7 +1221,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   filters = "",
   takeAll = false,
   assetIds,
-  getBookings = false,
   canUseBarcodes = false,
   availableToBookOnly = false,
   onlyReadyAssets = false,
@@ -1173,7 +1232,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   filters?: string;
   takeAll?: boolean;
   assetIds?: string[];
-  getBookings?: boolean;
   canUseBarcodes?: boolean;
   availableToBookOnly?: boolean;
   /** Hide assets awaiting warehouse approval — see {@link getAssets} */
@@ -1191,12 +1249,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   const { perPage } = cookie;
 
   const settingColumns = settings?.columns as Column[];
-
-  const isUpcomingBookingsColumnVisible =
-    settings.mode === "ADVANCED" &&
-    settingColumns?.some(
-      (col) => col.name === "upcomingBookings" && col.visible,
-    );
 
   try {
     const skip = page > 1 ? (page - 1) * perPage : 0;
@@ -1234,7 +1286,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
       customFieldSortings,
       sortBy: sortByValues,
       parsedFilters,
-      withBookings: getBookings || isUpcomingBookingsColumnVisible,
       withBarcodes: canUseBarcodes,
       paginationClause,
       // Search reads c.name / l.name, so the slim phase must join Category +
@@ -5234,9 +5285,30 @@ export async function updateAssetLifecycleStage({
       });
     }
 
+    /**
+     * Approving releases the asset AND opens it for booking, in one act.
+     *
+     * The two fields answer different questions — the stage is the intake gate
+     * (visible? holdable? bookable?), `availableToBook` governs bookings alone
+     * and is ignored by custody — but they had no relationship at all, so an
+     * approved asset could sit in circulation with booking silently switched
+     * off. Making approval set the flag is what lets each control read
+     * honestly: "approve" means in circulation and bookable, and the toggle
+     * afterwards is the *exception* (a printer bolted to a desk, a laptop held
+     * as permanent custody), not a second switch you must remember to flip.
+     *
+     * A send-back deliberately leaves the flag alone: the stage already blocks
+     * everything, and clearing it would silently discard a decision the
+     * warehouse made on purpose.
+     */
+    const isApproval = stage === AssetLifecycleStage.READY;
+
     const updatedAsset = await db.asset.update({
       where: { id, organizationId },
-      data: { lifecycleStage: stage },
+      data: {
+        lifecycleStage: stage,
+        ...(isApproval ? { availableToBook: true } : {}),
+      },
     });
 
     const user = await db.user.findUniqueOrThrow({
@@ -5251,9 +5323,12 @@ export async function updateAssetLifecycleStage({
     const actor = wrapUserLinkForNote(user);
 
     await createNote({
+      // The approval note names the booking side-effect explicitly: the flag
+      // changes without anyone touching its toggle, so the asset history has to
+      // say why it moved.
       content: isSendBack
         ? `${actor} sent this asset **back for review**. Reason: ${trimmedReason}`
-        : `${actor} marked this asset as **ready for distribution**.${
+        : `${actor} marked this asset as **ready for distribution** and made it available to book.${
             trimmedReason ? ` Note: ${trimmedReason}` : ""
           }`,
       type: "UPDATE",
@@ -6887,13 +6962,39 @@ export async function bulkApproveAssets({
 
     const pendingIds = pendingAssets.map((asset) => asset.id);
 
+    /**
+     * EPDA: an item admitted by a goods receipt cannot be released into
+     * circulation until all three parties have signed the document that
+     * admitted it.
+     *
+     * Enforced here rather than in the route because this is the single
+     * chokepoint every approval passes through — the index bulk action, the
+     * asset page and any future caller. Items with no receipt line (created
+     * before the receipt flow, or imported) are unaffected: they were never
+     * covered by the rule and applying it retroactively would freeze existing
+     * inventory.
+     *
+     * Throws rather than filtering: an operator who selected twenty assets and
+     * silently got eighteen approved has no way to discover the other two.
+     */
+    await assertReceiptSignedBeforeApproval({
+      assetIds: pendingIds,
+      organizationId,
+    });
+
     await db.asset.updateMany({
       where: {
         id: { in: pendingIds },
         organizationId,
         lifecycleStage: AssetLifecycleStage.PENDING,
       },
-      data: { lifecycleStage: AssetLifecycleStage.READY },
+      // Mirrors the single-asset path in `updateAssetLifecycleStage`: approving
+      // releases the asset and opens it for booking in one act. Approving in
+      // bulk must not produce a different asset than approving one by one.
+      data: {
+        lifecycleStage: AssetLifecycleStage.READY,
+        availableToBook: true,
+      },
     });
 
     const user = await db.user.findUniqueOrThrow({
@@ -6903,7 +7004,7 @@ export async function bulkApproveAssets({
     const actor = wrapUserLinkForNote(user);
 
     await createNotes({
-      content: `${actor} marked this asset as **ready for distribution**.`,
+      content: `${actor} marked this asset as **ready for distribution** and made it available to book.`,
       type: "UPDATE",
       userId,
       assetIds: pendingIds,

@@ -69,7 +69,7 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Category"
           buttonLabel="+ New Category"
           type="category"
-        />
+        />,
       );
 
       const button = screen.getByRole("button", { name: "+ New Category" });
@@ -83,7 +83,7 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Location"
           buttonLabel="+ New Location"
           type="location"
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -106,14 +106,14 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Category"
           buttonLabel="+ New Category"
           type="category"
-        />
+        />,
       );
 
       const user = userEvent.setup();
       // Open dialog
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Category" })
+          screen.getByRole("button", { name: "+ New Category" }),
         );
       });
 
@@ -136,13 +136,13 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Category"
           buttonLabel="+ New Category"
           type="category"
-        />
+        />,
       );
 
       const user = userEvent.setup();
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Category" })
+          screen.getByRole("button", { name: "+ New Category" }),
         );
       });
 
@@ -160,13 +160,13 @@ describe("InlineEntityCreationDialog", () => {
           buttonLabel="+ New Category"
           type="category"
           onCreated={onCreated}
-        />
+        />,
       );
 
       const user = userEvent.setup();
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Category" })
+          screen.getByRole("button", { name: "+ New Category" }),
         );
       });
 
@@ -196,13 +196,13 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Location"
           buttonLabel="+ New Location"
           type="location"
-        />
+        />,
       );
 
       const user = userEvent.setup();
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Location" })
+          screen.getByRole("button", { name: "+ New Location" }),
         );
       });
 
@@ -220,13 +220,13 @@ describe("InlineEntityCreationDialog", () => {
           buttonLabel="+ New Location"
           type="location"
           onCreated={onCreated}
-        />
+        />,
       );
 
       const user = userEvent.setup();
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Location" })
+          screen.getByRole("button", { name: "+ New Location" }),
         );
       });
 
@@ -256,7 +256,7 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Category"
           buttonLabel="+ New Category"
           type="category"
-        />
+        />,
       );
 
       const button = screen.getByRole("button", { name: "+ New Category" });
@@ -269,13 +269,13 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Location"
           buttonLabel="+ New Location"
           type="location"
-        />
+        />,
       );
 
       const user = userEvent.setup();
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Location" })
+          screen.getByRole("button", { name: "+ New Location" }),
         );
       });
 
@@ -291,7 +291,7 @@ describe("InlineEntityCreationDialog", () => {
           title="Create Category"
           buttonLabel="+ New Category"
           type="category"
-        />
+        />,
       );
 
       const user = userEvent.setup();
@@ -299,7 +299,7 @@ describe("InlineEntityCreationDialog", () => {
       // Open the dialog
       await act(async () => {
         await user.click(
-          screen.getByRole("button", { name: "+ New Category" })
+          screen.getByRole("button", { name: "+ New Category" }),
         );
       });
 

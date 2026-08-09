@@ -44,7 +44,7 @@ describe("removeCustomFieldFromAssetIndexSettings", () => {
       removeCustomFieldFromAssetIndexSettings({
         customFieldName: "Condition",
         organizationId: "org-123",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
   });
 });

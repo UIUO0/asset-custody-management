@@ -211,12 +211,12 @@ const { assetIds, kitIds } = useAtomValue(scannedItemIdsAtom);
 
 // For complex business logic - filter full objects when needed
 const availableAssets = assets.filter(
-  (asset) => asset.status === AssetStatus.AVAILABLE
+  (asset) => asset.status === AssetStatus.AVAILABLE,
 );
 
 // For kit asset expansion
 const allAssetIds = Array.from(
-  new Set([...assetIds, ...kits.flatMap((k) => k.assets.map((a) => a.id))])
+  new Set([...assetIds, ...kits.flatMap((k) => k.assets.map((a) => a.id))]),
 );
 ```
 

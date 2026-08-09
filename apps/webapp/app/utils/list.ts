@@ -31,7 +31,7 @@ export const getParamsValues = (searchParams: URLSearchParams) => ({
     // Normalize to valid BookingStatus enum value (handles lowercase URLs)
     return (
       Object.values(BookingStatus).find(
-        (s) => s.toLowerCase() === raw.toLowerCase()
+        (s) => s.toLowerCase() === raw.toLowerCase(),
       ) ?? null
     );
   })(),

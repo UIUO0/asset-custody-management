@@ -9,6 +9,6 @@ import { vi } from "vitest";
  */
 export const locationDescendantsMock = {
   getLocationDescendantIds: vi.fn(
-    async ({ locationId }: { locationId: string }) => [locationId]
+    async ({ locationId }: { locationId: string }) => [locationId],
   ),
 };

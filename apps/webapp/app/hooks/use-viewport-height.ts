@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 
 export const useViewportHeight = () => {
   const [vh, setVh] = useState(
-    typeof window !== "undefined" ? window.innerHeight : 0
+    typeof window !== "undefined" ? window.innerHeight : 0,
   );
   const [isMd, setIsMd] = useState(
-    typeof window !== "undefined" ? window.innerWidth >= 768 : false
+    typeof window !== "undefined" ? window.innerWidth >= 768 : false,
   );
 
   useEffect(() => {

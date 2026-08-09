@@ -2,13 +2,13 @@ import { TierId, OrganizationRoles, OrganizationType } from "@prisma/client";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data, useNavigate, useLoaderData } from "react-router";
 import type Stripe from "stripe";
-import { StatusFilter } from "~/components/booking/status-filter";
 import { ErrorContent } from "~/components/errors";
 import type { HeaderData } from "~/components/layout/header/types";
 import { List } from "~/components/list";
 import { Filters } from "~/components/list/filters";
 import { Pagination } from "~/components/list/pagination";
 import { DateS } from "~/components/shared/date";
+import { StatusFilter } from "~/components/shared/status-filter";
 import { Td, Th } from "~/components/table";
 import { config } from "~/config/shelf.config";
 import { getPaginatedAndFilterableUsers } from "~/modules/user/service.server";
@@ -55,7 +55,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
             } catch {
               return { ...user, subscription: null };
             }
-          })
+          }),
         )
       : users.map((user) => ({ ...user, subscription: null }));
 
@@ -117,7 +117,7 @@ function getAccountStatus(user: UserWithSubscription): string {
     (uo) =>
       uo.organization.type === OrganizationType.TEAM &&
       (uo.roles.includes(OrganizationRoles.OWNER) ||
-        uo.organization.userId === user.id)
+        uo.organization.userId === user.id),
   );
 
   if (teamOrgWhereOwner) {
@@ -128,7 +128,7 @@ function getAccountStatus(user: UserWithSubscription): string {
   const teamOrgWhereMember = user.userOrganizations.find(
     (uo) =>
       uo.organization.type === OrganizationType.TEAM &&
-      !uo.roles.includes(OrganizationRoles.OWNER)
+      !uo.roles.includes(OrganizationRoles.OWNER),
   );
 
   if (teamOrgWhereMember) {

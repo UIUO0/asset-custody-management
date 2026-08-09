@@ -95,11 +95,11 @@ describe("AuditAssetNoteItem", () => {
         <AuditAssetNoteItem
           note={mockCommentNote}
           onAttachImages={onAttachImages}
-        />
+        />,
       );
 
       expect(
-        screen.getByTitle("Attach images to this note")
+        screen.getByTitle("Attach images to this note"),
       ).toBeInTheDocument();
     });
 
@@ -109,11 +109,11 @@ describe("AuditAssetNoteItem", () => {
         <AuditAssetNoteItem
           note={mockUpdateNote}
           onAttachImages={onAttachImages}
-        />
+        />,
       );
 
       expect(
-        screen.queryByTitle("Attach images to this note")
+        screen.queryByTitle("Attach images to this note"),
       ).not.toBeInTheDocument();
     });
 
@@ -123,11 +123,11 @@ describe("AuditAssetNoteItem", () => {
         <AuditAssetNoteItem
           note={mockTempNote}
           onAttachImages={onAttachImages}
-        />
+        />,
       );
 
       expect(
-        screen.queryByTitle("Attach images to this note")
+        screen.queryByTitle("Attach images to this note"),
       ).not.toBeInTheDocument();
     });
 
@@ -135,7 +135,7 @@ describe("AuditAssetNoteItem", () => {
       render(<AuditAssetNoteItem note={mockCommentNote} />);
 
       expect(
-        screen.queryByTitle("Attach images to this note")
+        screen.queryByTitle("Attach images to this note"),
       ).not.toBeInTheDocument();
     });
   });
@@ -149,7 +149,7 @@ describe("AuditAssetNoteItem", () => {
           onAttachImages={onAttachImages}
           currentImageCount={1}
           maxImageCount={3}
-        />
+        />,
       );
 
       const button = screen.getByTitle("Attach images to this note");
@@ -164,7 +164,7 @@ describe("AuditAssetNoteItem", () => {
           onAttachImages={onAttachImages}
           currentImageCount={0}
           maxImageCount={3}
-        />
+        />,
       );
 
       const button = screen.getByTitle("Attach images to this note");
@@ -179,7 +179,7 @@ describe("AuditAssetNoteItem", () => {
           onAttachImages={onAttachImages}
           currentImageCount={3}
           maxImageCount={3}
-        />
+        />,
       );
 
       const button = screen.getByTitle("Maximum 3 images allowed");
@@ -194,7 +194,7 @@ describe("AuditAssetNoteItem", () => {
           onAttachImages={onAttachImages}
           currentImageCount={5}
           maxImageCount={3}
-        />
+        />,
       );
 
       const button = screen.getByTitle("Maximum 3 images allowed");
@@ -208,7 +208,7 @@ describe("AuditAssetNoteItem", () => {
           note={mockCommentNote}
           onAttachImages={onAttachImages}
           // No currentImageCount or maxImageCount provided
-        />
+        />,
       );
 
       // Default is 0 images, max 3, so button should be enabled
@@ -222,7 +222,7 @@ describe("AuditAssetNoteItem", () => {
       render(<AuditAssetNoteItem note={mockCommentNote} />);
 
       expect(screen.getByTestId("markdown-content")).toHaveTextContent(
-        "Test note content"
+        "Test note content",
       );
     });
 

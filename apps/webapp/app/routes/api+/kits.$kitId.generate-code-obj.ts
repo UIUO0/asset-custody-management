@@ -51,7 +51,7 @@ export async function loader({ context, params, request }: LoaderFunctionArgs) {
         qrObj,
         barcodes: kit.barcodes,
         showShelfBranding: currentOrganization.showShelfBranding,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, kitId });

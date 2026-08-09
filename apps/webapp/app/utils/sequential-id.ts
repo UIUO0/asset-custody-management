@@ -23,7 +23,7 @@ export function isSequentialId(value: string): boolean {
  * Parses a value and returns the normalized sequential/SAM ID when valid.
  */
 export function parseSequentialId(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): string | null {
   if (!value) {
     return null;

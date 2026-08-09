@@ -16,7 +16,7 @@ export function useCrisp() {
       Crisp.user.setNickname(
         `${user?.firstName ? user.firstName : ""} ${
           user?.lastName ? user.lastName : ""
-        } (${user.username}) `
+        } (${user.username}) `,
       );
     }
   }, [user]);

@@ -71,7 +71,7 @@ export default function AssetGrowthChart() {
           <DashboardEmptyState
             text={t("assets.empty")}
             subText={t("home.assetGrowthEmpty")}
-            ctaTo="/assets/new"
+            ctaTo="/receipts/new"
             ctaText={t("assets.createAsset")}
           />
         )}

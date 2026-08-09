@@ -12,11 +12,11 @@
  */
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
-import { StatusFilter } from "~/components/booking/status-filter";
 import { ListContentWrapper } from "~/components/list/content-wrapper";
 import { Filters } from "~/components/list/filters";
 import { Pagination } from "~/components/list/pagination";
 import { Button } from "~/components/shared/button";
+import { StatusFilter } from "~/components/shared/status-filter";
 import { useSearchParams } from "~/hooks/search-params";
 import { useUserData } from "~/hooks/use-user-data";
 import { NOTE_TYPE_FILTER_ITEMS } from "~/modules/note/note-filters";

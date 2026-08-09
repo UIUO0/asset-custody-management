@@ -121,7 +121,7 @@ export function useFilterPreview(options?: {
       options.columns,
       "text-sm text-gray-700",
     );
-  }, [options?.query, options?.columns, formatSummaryComponent]);
+  }, [options?.query, options?.columns, formatSummaryComponent, t]);
 
   /**
    * Function to format a filter preview for list items.

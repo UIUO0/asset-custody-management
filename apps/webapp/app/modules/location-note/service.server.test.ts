@@ -184,7 +184,7 @@ describe("location note service", () => {
       locationFindFirstMock.mockResolvedValue(null);
 
       await expect(
-        getLocationNotes({ locationId: "loc-2", organizationId: "org-9" })
+        getLocationNotes({ locationId: "loc-2", organizationId: "org-9" }),
       ).rejects.toThrow("Location not found or access denied");
     });
   });

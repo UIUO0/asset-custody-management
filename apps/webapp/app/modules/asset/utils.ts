@@ -22,7 +22,7 @@ export function isQuantityTracked(
     | { type?: AssetType | string | null; [key: string]: unknown }
     | AssetType
     | string
-    | null
+    | null,
 ): boolean {
   if (!assetOrType) return false;
   const type = typeof assetOrType === "string" ? assetOrType : assetOrType.type;
@@ -41,7 +41,7 @@ export function isQuantityTracked(
  * @returns The first pivot row's kit, or `null` when the asset has no kit
  */
 export function getPrimaryKit<TKit>(
-  asset: { assetKits?: Array<{ kit?: TKit | null }> } | null | undefined
+  asset: { assetKits?: Array<{ kit?: TKit | null }> } | null | undefined,
 ): TKit | null {
   return asset?.assetKits?.[0]?.kit ?? null;
 }
@@ -67,7 +67,7 @@ export function getPrimaryLocation<TLoc>(
   asset:
     | { assetLocations?: Array<{ location?: TLoc | null }> }
     | null
-    | undefined
+    | undefined,
 ): TLoc | null {
   return asset?.assetLocations?.[0]?.location ?? null;
 }

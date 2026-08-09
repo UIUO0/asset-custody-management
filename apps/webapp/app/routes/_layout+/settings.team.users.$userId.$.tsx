@@ -18,7 +18,7 @@ import { getParams, safeRedirect } from "~/utils/http.server";
 export const loader = ({ request, params }: LoaderFunctionArgs) => {
   const { "*": splat } = getParams(
     params,
-    z.object({ userId: z.string(), "*": z.string() })
+    z.object({ userId: z.string(), "*": z.string() }),
   );
   const url = new URL(request.url);
 

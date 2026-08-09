@@ -47,16 +47,16 @@ const KIT_OVERVIEW_BASE_FIELDS = {
  * @param canUseBarcodes - When true, include the kit's barcodes relation
  */
 export function getKitOverviewFields(
-  canUseBarcodes: true
+  canUseBarcodes: true,
 ): typeof KIT_OVERVIEW_BASE_FIELDS & typeof KIT_OVERVIEW_BARCODES_FIELDS;
 export function getKitOverviewFields(
-  canUseBarcodes?: false
+  canUseBarcodes?: false,
 ): typeof KIT_OVERVIEW_BASE_FIELDS;
 // why: runtime `boolean` callers (e.g. when the value comes from a
 // permission flag) get the merged shape with `barcodes` typed as
 // optional — at runtime the field is absent when the flag is false.
 export function getKitOverviewFields(
-  canUseBarcodes: boolean
+  canUseBarcodes: boolean,
 ): typeof KIT_OVERVIEW_BASE_FIELDS &
   Partial<typeof KIT_OVERVIEW_BARCODES_FIELDS>;
 export function getKitOverviewFields(canUseBarcodes: boolean = false) {

@@ -175,7 +175,7 @@ describe("applyBulkUpdatesFromImport — qty-tracked + AssetModel", () => {
       expect.objectContaining({
         id: "uuid-i",
         assetModelId: "model-existing",
-      })
+      }),
     );
   });
 
@@ -189,7 +189,7 @@ describe("applyBulkUpdatesFromImport — qty-tracked + AssetModel", () => {
     ] as unknown as Awaited<ReturnType<typeof db.asset.findMany>>);
     // No existing models → resolver falls into the per-name `create()` branch.
     vi.mocked(db.assetModel.findMany).mockResolvedValueOnce(
-      [] as unknown as Awaited<ReturnType<typeof db.assetModel.findMany>>
+      [] as unknown as Awaited<ReturnType<typeof db.assetModel.findMany>>,
     );
     vi.mocked(db.assetModel.create).mockResolvedValueOnce({
       id: "model-new",
@@ -211,7 +211,7 @@ describe("applyBulkUpdatesFromImport — qty-tracked + AssetModel", () => {
     expect(result.summary.updated).toBe(1);
     expect(db.assetModel.create).toHaveBeenCalledTimes(1);
     expect(updateAsset).toHaveBeenCalledWith(
-      expect.objectContaining({ assetModelId: "model-new" })
+      expect.objectContaining({ assetModelId: "model-new" }),
     );
   });
 
@@ -257,7 +257,7 @@ describe("applyBulkUpdatesFromImport — qty-tracked + AssetModel", () => {
     expect(db.assetModel.create).not.toHaveBeenCalled();
     // Quantity still applies.
     expect(updateAsset).toHaveBeenCalledWith(
-      expect.objectContaining({ quantity: 20 })
+      expect.objectContaining({ quantity: 20 }),
     );
   });
 
@@ -291,7 +291,7 @@ describe("applyBulkUpdatesFromImport — qty-tracked + AssetModel", () => {
     expect(result.warnings).toEqual([]);
     expect(result.summary.updated).toBe(1);
     expect(updateAsset).toHaveBeenCalledWith(
-      expect.objectContaining({ title: "New Name" })
+      expect.objectContaining({ title: "New Name" }),
     );
     // No type was passed through.
     const callArg = vi.mocked(updateAsset).mock
@@ -415,8 +415,8 @@ describe("applyBulkUpdatesFromImport — qty-tracked + AssetModel", () => {
     // diff-layer source-of-truth note above.
     expect(
       result.warnings.find(
-        (w) => w.id === "SAM-Q2" && /asset model/i.test(w.message)
-      )
+        (w) => w.id === "SAM-Q2" && /asset model/i.test(w.message),
+      ),
     ).toBeDefined();
     // SAM-Q3 should be in failed.
     expect(result.failed.find((f) => f.id === "SAM-Q3")).toBeDefined();

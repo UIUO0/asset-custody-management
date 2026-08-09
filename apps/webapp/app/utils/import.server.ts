@@ -21,7 +21,7 @@ export function getUniqueValuesFromArrayOfObjects({
       }
       return acc;
     },
-    {} as Record<string, string>
+    {} as Record<string, string>,
   );
   return items;
 }
@@ -29,7 +29,7 @@ export function getUniqueValuesFromArrayOfObjects({
 /** Takes the CSV data from a `content` import and parses it into an object that we can then use to create the entries */
 export function extractCSVDataFromContentImport(
   data: string[][],
-  csvHeaders: string[]
+  csvHeaders: string[],
 ) {
   /**
    * The first row of the CSV contains the keys for the data
@@ -63,7 +63,7 @@ export function extractCSVDataFromContentImport(
           default:
             return [headers[index], value];
         }
-      })
+      }),
     );
 
     return {
@@ -137,8 +137,8 @@ export function extractCSVDataFromBackupImport(data: string[][]): any[] {
               return [keys[index], value];
           }
         })
-        .filter((entry): entry is [string, any] => entry !== undefined) // Remove undefined entries
-    )
+        .filter((entry): entry is [string, any] => entry !== undefined), // Remove undefined entries
+    ),
   );
 }
 

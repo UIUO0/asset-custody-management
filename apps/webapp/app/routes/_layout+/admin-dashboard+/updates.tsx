@@ -47,7 +47,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
       z.object({
         status: z.nativeEnum(UpdateStatus),
         id: z.string(),
-      })
+      }),
     );
 
     await updateUpdate({

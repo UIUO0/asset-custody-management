@@ -134,7 +134,7 @@ export function UpdateForm({
               type="checkbox"
               name="targetSelfService"
               defaultChecked={targetRoles.includes(
-                OrganizationRoles.SELF_SERVICE
+                OrganizationRoles.SELF_SERVICE,
               )}
               className="rounded"
             />

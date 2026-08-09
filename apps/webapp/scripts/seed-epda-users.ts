@@ -8,9 +8,15 @@
  *   4. Warehouse    : warehouse@epda.local  (WAREHOUSE — المستودعات)
  *   5. Finance      : finance@epda.local    (FINANCE — المالية)
  *   6. Inventory    : inventory@epda.local  (INVENTORY — المخزون)
+ *   7. Facilities   : facilities@epda.local (DEPARTMENT — إدارة المرافق)
  *
- * Accounts 4-6 exist so each operational role can be exercised end to end
+ * Accounts 4-7 exist so each operational role can be exercised end to end
  * without hand-editing `UserOrganization.roles` in the database.
+ *
+ * There is no IT account: تقنية المعلومات are the workspace's system
+ * administrators and run on `admin@epda.local`. Both department *desks*
+ * (إدارة المرافق, إدارة تقنية المعلومات) are seeded as `TeamMember` rows so the
+ * warehouse can hand a purchase order to either.
  *
  * All three share one TEAM workspace: "هيئة تطوير المنطقة الشرقية".
  * Asset index settings are created lazily by the app on first visit, so they
@@ -47,6 +53,20 @@ const db = createDatabaseClient();
 
 const WORKSPACE_NAME = "هيئة تطوير المنطقة الشرقية";
 
+/**
+ * Department desks — `TeamMember` rows that hold custody but are not people.
+ *
+ * The warehouse hands a whole purchase order to one of these in a single
+ * signed محضر; the department then hands single assets on to its own staff.
+ *
+ * Adding a third department is a row here plus a user pointed at it. No enum
+ * value, no migration, no permission-map edit — which is the whole reason
+ * `DEPARTMENT` is generic rather than named `FACILITIES`.
+ */
+const FACILITIES_DEPARTMENT = "إدارة المرافق";
+const IT_DEPARTMENT = "إدارة تقنية المعلومات";
+const DEPARTMENTS = [FACILITIES_DEPARTMENT, IT_DEPARTMENT] as const;
+
 /** Accounts to seed. Change passwords after first login! */
 const ACCOUNTS = [
   {
@@ -56,7 +76,15 @@ const ACCOUNTS = [
     firstName: "مدير",
     lastName: "النظام",
     isSuperAdmin: true,
-    orgRoles: [OrganizationRoles.OWNER],
+    // OWNER for the workspace, DEPARTMENT so the same account can also receive
+    // and sign for إدارة تقنية المعلومات. Owner-only would leave the IT desk
+    // with nobody able to sign its محاضر — the batch would stall forever.
+    //
+    // Holding both does NOT let one person sign both halves: a named
+    // counterparty takes that slot and returns (see `resolveSignableParty`),
+    // so the warehouse half still needs a warehouse officer.
+    orgRoles: [OrganizationRoles.OWNER, OrganizationRoles.DEPARTMENT],
+    department: IT_DEPARTMENT,
   },
   {
     email: "user1@epda.local",
@@ -103,6 +131,21 @@ const ACCOUNTS = [
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.INVENTORY],
   },
+  {
+    email: "facilities@epda.local",
+    password: "Epda@Facilities#2026",
+    username: "epda-facilities",
+    firstName: "موظف",
+    lastName: "المرافق",
+    isSuperAdmin: false,
+    orgRoles: [OrganizationRoles.DEPARTMENT],
+    // Links this user to the إدارة المرافق desk row created below. Without it
+    // the account holds the role but points at no department, and sees nothing.
+    department: FACILITIES_DEPARTMENT,
+  },
+  // No separate IT account: تقنية المعلومات are the workspace's system
+  // administrators, so they run on `admin@epda.local` — which is why that
+  // account carries `DEPARTMENT` and points at the IT desk above.
 ] as const;
 
 /** Creates (or finds) the Supabase auth account and returns its id. */
@@ -202,20 +245,50 @@ async function main() {
     console.log(`+ created workspace "${WORKSPACE_NAME}"`);
   }
 
-  // 4. Attach every account to the workspace (role + team member row)
+  // 4. Department desks. Created before the accounts below because a
+  //    DEPARTMENT user's membership points at one of these rows.
+  const departmentIdByName = new Map<string, string>();
+  for (const name of DEPARTMENTS) {
+    let desk = await db.teamMember.findFirst({
+      where: { name, organizationId: org.id, isDepartment: true },
+      select: { id: true },
+    });
+    if (!desk) {
+      // `userId` stays null: a desk is not a person. `TeamMember.userId` has
+      // always been optional precisely so non-user members can hold custody.
+      desk = await db.teamMember.create({
+        data: { name, organizationId: org.id, isDepartment: true },
+        select: { id: true },
+      });
+      console.log(`+ created department "${name}"`);
+    }
+    departmentIdByName.set(name, desk.id);
+  }
+
+  // 5. Attach every account to the workspace (role + team member row)
   for (const account of ACCOUNTS) {
     const user = created.find((u) => u.email === account.email);
     if (!user) continue;
+
+    const departmentTeamMemberId =
+      "department" in account
+        ? departmentIdByName.get(account.department) ?? null
+        : null;
 
     await db.userOrganization.upsert({
       where: {
         userId_organizationId: { userId: user.id, organizationId: org.id },
       },
-      update: {},
+      // Re-running must repair a membership that predates the department
+      // columns: without the roles here, an admin seeded before IT became a
+      // receiving desk keeps `[OWNER]` and can never sign its محاضر. The seed
+      // declares the intended state, so re-applying it is the point.
+      update: { departmentTeamMemberId, roles: [...account.orgRoles] },
       create: {
         userId: user.id,
         organizationId: org.id,
         roles: [...account.orgRoles],
+        departmentTeamMemberId,
       },
     });
 

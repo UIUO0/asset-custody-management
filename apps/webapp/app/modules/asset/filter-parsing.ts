@@ -28,7 +28,7 @@ const API_TO_DB_FIELD_MAP: Record<string, string> = {
  */
 export function parseFilters(
   filtersString: string,
-  columns: Column[]
+  columns: Column[],
 ): Filter[] {
   const searchParams = new URLSearchParams(filtersString);
   const filters: Filter[] = [];
@@ -53,7 +53,7 @@ export function parseFilters(
           key,
           operator as FilterOperator,
           filterValue,
-          columns
+          columns,
         ),
         fieldType: column.cfType,
       };
@@ -78,7 +78,7 @@ function parseFilterValue(
   field: string,
   operator: FilterOperator,
   value: string,
-  columns: Column[]
+  columns: Column[],
 ): any {
   // Handle custom fields
   if (field.startsWith("cf_")) {

@@ -26,86 +26,6 @@ import type { ReportDefinition } from "./types";
  */
 export const REPORTS: ReportDefinition[] = [
   // -------------------------------------------------------------------------
-  // Booking Reports
-  // -------------------------------------------------------------------------
-  {
-    id: "booking-compliance",
-    title: "Booking Compliance",
-    description:
-      "Track booking lifecycle compliance: on-time checkouts, late returns, and overdue items.",
-    category: "bookings",
-    icon: "ClipboardCheck",
-    enabled: true, // R2 — the first report we're building
-    filters: [
-      { type: "status", label: "Status", multi: true },
-      { type: "team_member", label: "Custodian", multi: false },
-      { type: "location", label: "Location", multi: false },
-    ],
-    hasChart: true,
-    exportable: true,
-  },
-  {
-    id: "top-booked-assets",
-    title: "Top Booked Assets",
-    description:
-      "Identify your most frequently booked assets and their utilization patterns.",
-    category: "bookings",
-    icon: "TrendingUp",
-    enabled: true, // R3
-    filters: [
-      { type: "category", label: "Category", multi: true },
-      { type: "location", label: "Location", multi: false },
-    ],
-    hasChart: true,
-    exportable: true,
-  },
-  {
-    id: "top-booked-kits",
-    title: "Top Booked Kits",
-    description:
-      "Identify your most frequently booked kits and their utilization patterns.",
-    category: "bookings",
-    icon: "Boxes",
-    enabled: true,
-    filters: [
-      { type: "category", label: "Category", multi: true },
-      { type: "location", label: "Location", multi: false },
-    ],
-    hasChart: false,
-    exportable: true,
-  },
-  {
-    id: "monthly-booking-trends",
-    title: "Monthly Booking Trends",
-    description:
-      "Visualize booking volume trends over time with month-over-month comparisons.",
-    category: "bookings",
-    icon: "BarChart3",
-    enabled: true, // R9
-    filters: [
-      { type: "category", label: "Category", multi: true },
-      { type: "location", label: "Location", multi: false },
-    ],
-    hasChart: true,
-    exportable: true, // Monthly breakdown table can be exported
-  },
-  {
-    id: "overdue-items",
-    title: "Overdue Items",
-    description:
-      "Live view of all currently overdue bookings requiring immediate attention.",
-    category: "bookings",
-    icon: "AlertTriangle",
-    enabled: true, // R6
-    filters: [
-      { type: "team_member", label: "Custodian", multi: false },
-      { type: "location", label: "Location", multi: false },
-    ],
-    hasChart: false,
-    exportable: true,
-  },
-
-  // -------------------------------------------------------------------------
   // Asset Reports
   // -------------------------------------------------------------------------
   {
@@ -135,21 +55,6 @@ export const REPORTS: ReportDefinition[] = [
     filters: [
       { type: "asset", label: "Asset", multi: false },
       { type: "category", label: "Category", multi: true },
-    ],
-    hasChart: true,
-    exportable: true,
-  },
-  {
-    id: "asset-utilization",
-    title: "Asset Utilization",
-    description:
-      "Measure how effectively assets are being used based on booking and custody time.",
-    category: "assets",
-    icon: "PieChart",
-    enabled: true, // R8
-    filters: [
-      { type: "category", label: "Category", multi: true },
-      { type: "location", label: "Location", multi: false },
     ],
     hasChart: true,
     exportable: true,
@@ -236,7 +141,7 @@ export function getReportsByCategory(): Record<string, ReportDefinition[]> {
       acc[category].push(report);
       return acc;
     },
-    {} as Record<string, ReportDefinition[]>
+    {} as Record<string, ReportDefinition[]>,
   );
 }
 

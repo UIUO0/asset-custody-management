@@ -38,7 +38,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { assetIds, category, currentSearchParams } = parseData(
       formData,
-      BulkCategoryUpdateSchema.and(CurrentSearchParamsSchema)
+      BulkCategoryUpdateSchema.and(CurrentSearchParamsSchema),
     );
 
     await bulkUpdateAssetCategory({

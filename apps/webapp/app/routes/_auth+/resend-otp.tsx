@@ -28,7 +28,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 message: "Please enter a valid email",
               })),
           }),
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
 
         await sendOTP(email);

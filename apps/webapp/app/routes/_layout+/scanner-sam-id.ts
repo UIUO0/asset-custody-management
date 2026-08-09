@@ -68,7 +68,7 @@ export async function resolveAssetIdFromSamId({
         additionalData: { shouldSendNotification: false },
       },
       { samId, shouldSendNotification: false },
-      false
+      false,
     );
 
     throw reason;

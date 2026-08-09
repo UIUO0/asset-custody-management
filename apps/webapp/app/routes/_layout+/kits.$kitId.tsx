@@ -16,7 +16,6 @@ import { z } from "zod";
 import { CustodyCard } from "~/components/assets/asset-custody-card";
 import { CodePreview } from "~/components/code-preview/code-preview";
 import ActionsDropdown from "~/components/kits/actions-dropdown";
-import BookingActionsDropdown from "~/components/kits/booking-actions-dropdown";
 import KitImage from "~/components/kits/kit-image";
 import { KitStatusBadge } from "~/components/kits/kit-status-badge";
 import Header from "~/components/layout/header";
@@ -35,10 +34,8 @@ import {
 import {
   deleteKit,
   deleteKitImage,
-  emitAssetKitDetachmentNotes,
   fetchAssetKitDetachmentImpact,
   getKit,
-  getKitCurrentBooking,
   mergeStandaloneCollisionsForKitDetachment,
   relinkKitQrCode,
 } from "~/modules/kit/service.server";
@@ -117,33 +114,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
                   // kit-custody assign (Option B handles partial pools).
                   type: true,
                   custody: { select: { id: true } },
-                  bookingAssets: {
-                    where: {
-                      booking: {
-                        status: { in: ["ONGOING", "OVERDUE"] },
-                      },
-                    },
-                    select: {
-                      booking: {
-                        select: {
-                          id: true,
-                          name: true,
-                          from: true,
-                          status: true,
-                          custodianTeamMember: true,
-                          custodianUser: {
-                            select: {
-                              firstName: true,
-                              lastName: true,
-                              displayName: true,
-                              profilePicture: true,
-                              email: true,
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
                   availableToBook: true,
                 },
               },
@@ -180,11 +150,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           userId,
         })
       : null;
-    const currentBooking = getKitCurrentBooking({
-      id: kit.id,
-      assets: kit.assetKits.map((ak) => ak.asset),
-    });
-
     const header: HeaderData = {
       title: kit.name,
     };
@@ -196,7 +161,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     return payload({
       kit,
-      currentBooking,
       header,
       modelName,
       qrObj,
@@ -319,86 +283,76 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
          * `BookingAsset_manual_unique`. Detachment notes get the kit /
          * asset names from a snapshot taken before the merge.
          */
-        const { kit, detachmentImpact, slice } = await db.$transaction(
-          async (tx) => {
-            const assetKitRows = await tx.assetKit.findMany({
-              where: { kitId, assetId },
-              // type + unitOfMeasure label the qty-tracked unit count in
-              // the membership-remove note ("removed 50 units from …");
-              // quantity is the per-row AssetKit.quantity actually being
-              // detached (NOT Asset.quantity). Captured before the
-              // deleteMany below so the note can render after the tx
-              // commits without re-querying.
-              select: {
-                id: true,
-                quantity: true,
-                asset: {
-                  select: { type: true, unitOfMeasure: true },
-                },
+        const { kit, slice } = await db.$transaction(async (tx) => {
+          const assetKitRows = await tx.assetKit.findMany({
+            where: { kitId, assetId },
+            // type + unitOfMeasure label the qty-tracked unit count in
+            // the membership-remove note ("removed 50 units from …");
+            // quantity is the per-row AssetKit.quantity actually being
+            // detached (NOT Asset.quantity). Captured before the
+            // deleteMany below so the note can render after the tx
+            // commits without re-querying.
+            select: {
+              id: true,
+              quantity: true,
+              asset: {
+                select: { type: true, unitOfMeasure: true },
               },
+            },
+          });
+          const assetKitIds = assetKitRows.map((ak: { id: string }) => ak.id);
+          const impact = await fetchAssetKitDetachmentImpact(tx, assetKitIds);
+          await mergeStandaloneCollisionsForKitDetachment(tx, assetKitIds);
+
+          const updatedKit = await tx.kit.update({
+            where: { id: kitId, organizationId },
+            data: {
+              // Remove the pivot row that links this asset to the kit.
+              assetKits: { deleteMany: { assetId } },
+            },
+            select: {
+              name: true,
+              custody: { select: { id: true, custodianId: true } },
+            },
+          });
+
+          /**
+           * If kit was in custody then we have to clean up the kit-
+           * allocated custody row on the asset. Filter the deleteMany by
+           * `kitCustodyId` so operator-assigned custody on the same asset
+           * (e.g. someone holding 10 of 50 batteries directly) is left
+           * untouched.
+           */
+          if (updatedKit.custody?.id) {
+            await tx.custody.deleteMany({
+              where: { assetId, kitCustodyId: updatedKit.custody.id },
             });
-            const assetKitIds = assetKitRows.map((ak: { id: string }) => ak.id);
-            const impact = await fetchAssetKitDetachmentImpact(tx, assetKitIds);
-            await mergeStandaloneCollisionsForKitDetachment(tx, assetKitIds);
 
-            const updatedKit = await tx.kit.update({
-              where: { id: kitId, organizationId },
-              data: {
-                // Remove the pivot row that links this asset to the kit.
-                assetKits: { deleteMany: { assetId } },
-              },
-              select: {
-                name: true,
-                custody: { select: { id: true, custodianId: true } },
-              },
+            // After removing only the kit-allocated rows, check whether
+            // any custody rows remain for this asset. The asset should
+            // only flip back to AVAILABLE if no custody is left.
+            const remainingCustody = await tx.custody.count({
+              where: { assetId },
             });
 
-            /**
-             * If kit was in custody then we have to clean up the kit-
-             * allocated custody row on the asset. Filter the deleteMany by
-             * `kitCustodyId` so operator-assigned custody on the same asset
-             * (e.g. someone holding 10 of 50 batteries directly) is left
-             * untouched.
-             */
-            if (updatedKit.custody?.id) {
-              await tx.custody.deleteMany({
-                where: { assetId, kitCustodyId: updatedKit.custody.id },
+            if (remainingCustody === 0) {
+              await tx.asset.update({
+                where: { id: assetId, organizationId },
+                data: { status: AssetStatus.AVAILABLE },
               });
-
-              // After removing only the kit-allocated rows, check whether
-              // any custody rows remain for this asset. The asset should
-              // only flip back to AVAILABLE if no custody is left.
-              const remainingCustody = await tx.custody.count({
-                where: { assetId },
-              });
-
-              if (remainingCustody === 0) {
-                await tx.asset.update({
-                  where: { id: assetId, organizationId },
-                  data: { status: AssetStatus.AVAILABLE },
-                });
-              }
             }
+          }
 
-            // Snapshot the (single) AssetKit slice being detached for the
-            // post-tx note. `assetKitRows[0]` is the only matching row
-            // (composite unique on AssetKit (assetId, kitId) guarantees ≤ 1).
-            const detachedSlice = assetKitRows[0] ?? null;
+          // Snapshot the (single) AssetKit slice being detached for the
+          // post-tx note. `assetKitRows[0]` is the only matching row
+          // (composite unique on AssetKit (assetId, kitId) guarantees ≤ 1).
+          const detachedSlice = assetKitRows[0] ?? null;
 
-            return {
-              kit: updatedKit,
-              detachmentImpact: impact,
-              slice: detachedSlice,
-            };
-          },
-        );
-
-        await emitAssetKitDetachmentNotes({
-          impact: detachmentImpact,
-          actorUserId: userId,
-          actorFirstName: user.firstName,
-          actorLastName: user.lastName,
-          organizationId,
+          return {
+            kit: updatedKit,
+            detachmentImpact: impact,
+            slice: detachedSlice,
+          };
         });
 
         const actor = wrapUserLinkForNote({
@@ -534,7 +488,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
 export default function KitDetails() {
   usePosition();
-  const { kit, currentBooking, qrObj, lastScan, userId, currentOrganization } =
+  const { kit, qrObj, lastScan, userId, currentOrganization } =
     useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
   const { canUseBarcodes } = useBarcodePermissions();
@@ -546,14 +500,13 @@ export default function KitDetails() {
   const items = [
     { to: "assets", content: "Assets" },
     { to: "overview", content: "Overview" },
-    { to: "bookings", content: "Bookings" },
   ];
 
   const matches = useMatches();
   const currentRoute: RouteHandleWithName = matches[matches.length - 1];
 
   /**When we are on the kit.scan-assets route, we render an outlet on the whole layout.
-   * On the .assets and .bookings routes, we render the outlet only on the left column
+   * On the .assets route, we render the outlet only on the left column
    */
   const shouldRenderFullOutlet =
     currentRoute?.handle?.name === "kit.scan-assets";
@@ -593,7 +546,6 @@ export default function KitDetails() {
         >
           <ActionsDropdown />
         </When>
-        <BookingActionsDropdown />
       </Header>
 
       <HorizontalTabs items={items} />
@@ -607,10 +559,9 @@ export default function KitDetails() {
         {/* Right column */}
         <div className="w-full md:w-[360px] lg:ms-4">
           {/* Kit Custody */}
-          <When truthy={!!kit.custody || !!currentBooking}>
+          <When truthy={!!kit.custody}>
             <CustodyCard
               className="mt-0"
-              booking={currentBooking || undefined}
               hasPermission={userCanViewSpecificCustody({
                 roles,
                 custodianUserId: kit?.custody?.custodian?.user?.id,

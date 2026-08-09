@@ -21,7 +21,7 @@ import { resolveUserDisplayName } from "~/utils/user";
  */
 export function wrapDateForNote(
   date: Date | string,
-  includeTime: boolean = true
+  includeTime: boolean = true,
 ): string {
   const isoString = typeof date === "string" ? date : date.toISOString();
   const includeTimeAttr = includeTime ? "" : " includeTime=false";
@@ -58,7 +58,7 @@ export function extractDateTags(content: string): string[] {
  */
 export function wrapAssetsWithDataForNote(
   assets: Array<{ id: string; title: string }> | { id: string; title: string },
-  action: string = "added"
+  action: string = "added",
 ): string {
   const assetArray = Array.isArray(assets) ? assets : [assets];
   const count = assetArray.length;
@@ -68,14 +68,14 @@ export function wrapAssetsWithDataForNote(
     const asset = assetArray[0];
     return `{% link to="/assets/${asset.id}" text="${asset.title.replace(
       /"/g,
-      "&quot;"
+      "&quot;",
     )}" /%}`;
   } else {
     // For multiple assets, use interactive component
     const idsString = assetArray.map((a) => a.id).join(",");
     return `{% assets_list count=${count} ids="${idsString}" action="${action.replace(
       /"/g,
-      "&quot;"
+      "&quot;",
     )}" /%}`;
   }
 }
@@ -102,7 +102,7 @@ export function wrapAssetWithCountForNote(
     type: AssetType;
     unitOfMeasure?: string | null;
   },
-  quantity: number | null | undefined
+  quantity: number | null | undefined,
 ): string {
   const link = wrapAssetsWithDataForNote(asset);
   const count = formatUnitCount(asset, quantity);
@@ -120,7 +120,7 @@ export function wrapAssetWithCountForNote(
  */
 export function wrapKitsForNote(
   kitIds: string[] | string,
-  action: string = "added"
+  action: string = "added",
 ): string {
   const ids = Array.isArray(kitIds) ? kitIds : [kitIds];
   const count = ids.length;
@@ -128,7 +128,7 @@ export function wrapKitsForNote(
 
   return `{% kits_list count=${count} ids="${idsString}" action="${action.replace(
     /"/g,
-    "&quot;"
+    "&quot;",
   )}" /%}`;
 }
 
@@ -144,7 +144,7 @@ export function wrapKitsForNote(
  */
 export function wrapKitsWithDataForNote(
   kits: Array<{ id: string; name: string }> | { id: string; name: string },
-  action: string = "added"
+  action: string = "added",
 ): string {
   const kitArray = Array.isArray(kits) ? kits : [kits];
   const count = kitArray.length;
@@ -154,14 +154,14 @@ export function wrapKitsWithDataForNote(
     const kit = kitArray[0];
     return `{% link to="/kits/${kit.id}" text="${kit.name.replace(
       /"/g,
-      "&quot;"
+      "&quot;",
     )}" /%}`;
   } else {
     // For multiple kits, use interactive component
     const idsString = kitArray.map((k) => k.id).join(",");
     return `{% kits_list count=${count} ids="${idsString}" action="${action.replace(
       /"/g,
-      "&quot;"
+      "&quot;",
     )}" /%}`;
   }
 }
@@ -184,7 +184,7 @@ export function wrapUserLinkForNote(user: {
   const name = resolveUserDisplayName(user) || "Unknown User";
   return `{% link to="/settings/team/users/${user.id}" text="${name.replace(
     /"/g,
-    "&quot;"
+    "&quot;",
   )}" /%}`;
 }
 
@@ -223,7 +223,7 @@ export function wrapTagForNote(tag: {
  */
 export function wrapBookingStatusForNote(
   status: string,
-  custodianUserId?: string
+  custodianUserId?: string,
 ): string {
   const custodianAttr = custodianUserId
     ? ` custodianUserId="${custodianUserId}"`
@@ -292,7 +292,7 @@ export function wrapCustodianForNote(custodian: {
  * Wrap a category in a Markdoc tag so the renderer can show the badge component
  */
 export function wrapCategoryForNote(
-  category?: Pick<Category, "id" | "name" | "color"> | null
+  category?: Pick<Category, "id" | "name" | "color"> | null,
 ): string {
   if (!category) {
     return '{% category_badge name="Uncategorized" color="#575757" /%}';
@@ -304,7 +304,7 @@ export function wrapCategoryForNote(
   const escape = (value: string) => value.replace(/"/g, "&quot;");
 
   return `{% category_badge name="${escape(name)}" color="${escape(
-    color
+    color,
   )}" /%}`;
 }
 
@@ -323,7 +323,7 @@ export function wrapCategoryForNote(
  */
 export function wrapDescriptionForNote(
   oldText?: string | null,
-  newText?: string | null
+  newText?: string | null,
 ): string {
   const oldAttr = oldText
     ? ` oldText="${oldText.replace(/"/g, "&quot;")}"`

@@ -32,6 +32,7 @@ import {
   parseData,
   safeRedirect,
 } from "~/utils/http.server";
+import { getLandingRouteForUser } from "~/utils/landing-route.server";
 import { validEmail } from "~/utils/misc";
 import { getOtpPageData, type OtpVerifyMode } from "~/utils/otp";
 import { tw } from "~/utils/tw";
@@ -46,7 +47,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const title = t(getOtpPageData(mode).titleKey);
 
   if (context.isAuthenticated) {
-    return redirect("/assets");
+    const { userId } = context.getSession();
+    return redirect(await getLandingRouteForUser({ userId, request }));
   }
 
   return payload({ title });
@@ -113,7 +115,8 @@ export async function action({ context, request }: ActionFunctionArgs) {
           }
         }
 
-        // Setting the auth session and redirecting user to assets page
+        // Set the auth session and send the user to the landing page their
+        // role earns them — see `getLandingRouteForUser`.
         context.setSession(authSession);
 
         const { organizationId } = await getSelectedOrganization({
@@ -121,7 +124,12 @@ export async function action({ context, request }: ActionFunctionArgs) {
           request,
         });
 
-        return redirect(safeRedirect("/assets"), {
+        const landingRoute = await getLandingRouteForUser({
+          userId: authSession.userId,
+          request,
+        });
+
+        return redirect(safeRedirect(landingRoute), {
           headers: [
             setCookie(await setSelectedOrganizationIdCookie(organizationId)),
           ],

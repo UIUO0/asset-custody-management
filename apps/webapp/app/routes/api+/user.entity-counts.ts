@@ -27,7 +27,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     const { userId: targetUserId } = getParams(
       Object.fromEntries(url.searchParams),
       z.object({ userId: z.string() }),
-      { additionalData: { userId, organizationId } }
+      { additionalData: { userId, organizationId } },
     );
 
     const [
@@ -99,7 +99,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
         images,
         bookings,
         total,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

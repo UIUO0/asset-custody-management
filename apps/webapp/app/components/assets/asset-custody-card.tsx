@@ -1,6 +1,5 @@
-import type { Booking, TeamMember, User } from "@prisma/client";
+import type { User } from "@prisma/client";
 import { Trans, useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { getPrimaryCustody } from "~/modules/custody/utils";
 import {
@@ -15,25 +14,17 @@ import { Card } from "../shared/card";
 import { DateS } from "../shared/date";
 
 /**
- * Renders the Asset Custody Card
- * It can be either a card showing custody via a booking or custody via a long term checkout
+ * Renders the Asset Custody Card — who currently holds the asset, and since
+ * when.
+ *
+ * Custody is the only path here: the booking variant of this card was dropped
+ * with the booking system itself (EPDA runs on handover/custody records only).
  */
 export function CustodyCard({
-  booking,
   hasPermission,
   custody,
   className,
 }: {
-  booking:
-    | (Pick<Booking, "id" | "name" | "from"> & {
-        custodianUser: Pick<
-          User,
-          "firstName" | "lastName" | "profilePicture" | "email"
-        > | null;
-        custodianTeamMember: TeamMember | null;
-      })
-    | null
-    | undefined;
   hasPermission: boolean;
   custody:
     | {
@@ -61,8 +52,8 @@ export function CustodyCard({
   /** Extract the primary custody record from the array */
   const primaryCustody = getPrimaryCustody(custody);
 
-  /** We return null if user is selfService or if neither custody nor booking exists */
-  if (!hasPermission || (!primaryCustody && !booking)) {
+  /** We return null if user is selfService or if no custody exists */
+  if (!hasPermission || !primaryCustody) {
     return <div className="my-3" />;
   }
 
@@ -109,58 +100,6 @@ export function CustodyCard({
                 components={{
                   1: <DateS date={primaryCustody.createdAt} includeTime />,
                 }}
-              />
-            </span>
-          </div>
-        </div>
-      </Card>
-    );
-  }
-
-  /** If booking is present, we render the card showing custody via booking */
-  if (booking) {
-    let teamMemberName = "";
-    if (booking.custodianUser) {
-      teamMemberName = resolveTeamMemberName({
-        name: `${booking.custodianUser?.firstName || ""} ${
-          booking.custodianUser?.lastName || ""
-        }`,
-        user: {
-          firstName: booking.custodianUser?.firstName || "",
-          lastName: booking.custodianUser?.lastName || "",
-        },
-      });
-    } else if (booking.custodianTeamMember) {
-      teamMemberName = resolveTeamMemberName({
-        name: booking.custodianTeamMember.name,
-      });
-    }
-
-    return (
-      <Card className={tw("my-3", className)}>
-        <div className="flex items-center gap-3">
-          <img
-            src={
-              booking.custodianUser?.profilePicture ??
-              "/static/images/default_pfp.jpg"
-            }
-            alt={t("ui.custodian")}
-            className="size-10 rounded"
-          />
-          <div>
-            <p className="">
-              {t("ui.inCustodyOf")}{" "}
-              <span className="font-semibold">{teamMemberName} </span>
-              {t("ui.via")}
-            </p>
-            <Link to={`/bookings/${booking.id}`} className="underline">
-              {booking.name}
-            </Link>
-            <span>
-              {" "}
-              <Trans
-                i18nKey="ui.custodySince"
-                components={{ 1: <DateS date={booking.from} includeTime /> }}
               />
             </span>
           </div>

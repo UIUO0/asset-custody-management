@@ -10,7 +10,7 @@ const url = (search = "") =>
 describe("isClientViewOnlyNavigation", () => {
   it("is true when only client view params (search/sort/page) differ", () => {
     expect(
-      isClientViewOnlyNavigation(url("?page=1"), url("?s=cam&page=2"))
+      isClientViewOnlyNavigation(url("?page=1"), url("?s=cam&page=2")),
     ).toBe(true);
   });
 
@@ -26,7 +26,7 @@ describe("isClientViewOnlyNavigation", () => {
 
   it("is false when a non-view param differs (e.g. per_page or orgId)", () => {
     expect(
-      isClientViewOnlyNavigation(url("?page=1"), url("?per_page=50"))
+      isClientViewOnlyNavigation(url("?page=1"), url("?per_page=50")),
     ).toBe(false);
     expect(isClientViewOnlyNavigation(url(""), url("?orgId=x"))).toBe(false);
   });
@@ -34,7 +34,7 @@ describe("isClientViewOnlyNavigation", () => {
 
 describe("skipRevalidationOnClientViewChange", () => {
   const call = (
-    args: Partial<Parameters<typeof skipRevalidationOnClientViewChange>[0]>
+    args: Partial<Parameters<typeof skipRevalidationOnClientViewChange>[0]>,
   ) =>
     skipRevalidationOnClientViewChange({
       currentUrl: url("?page=1"),
@@ -60,7 +60,7 @@ describe("skipRevalidationOnClientViewChange", () => {
       call({
         currentUrl: new URL("https://app.test/bookings/b1/overview"),
         nextUrl: new URL("https://app.test/assets"),
-      })
+      }),
     ).toBe(true);
   });
 });

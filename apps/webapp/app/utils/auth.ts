@@ -4,7 +4,7 @@
 export function createSSOFormData(
   supabaseSession: any,
   refreshToken: string,
-  redirectTo: string
+  redirectTo: string,
 ): FormData {
   const user = supabaseSession?.user;
   const customClaims = user?.user_metadata?.custom_claims || {};
@@ -15,11 +15,11 @@ export function createSSOFormData(
   formData.append("redirectTo", redirectTo);
   formData.append(
     "firstName",
-    customClaims.firstname || customClaims.firstName || ""
+    customClaims.firstname || customClaims.firstName || "",
   );
   formData.append(
     "lastName",
-    customClaims.lastname || customClaims.lastName || ""
+    customClaims.lastname || customClaims.lastName || "",
   );
 
   // Groups

@@ -173,8 +173,8 @@ export function logMissingFormIntent({
 
   const safeHeaders = Object.fromEntries(
     Array.from(request.headers.entries()).filter(
-      ([key]) => !["cookie", "authorization"].includes(key.toLowerCase())
-    )
+      ([key]) => !["cookie", "authorization"].includes(key.toLowerCase()),
+    ),
   );
 
   const formSnapshot: Record<string, unknown> = {};

@@ -44,7 +44,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       AddAssetsToAuditSchema.and(CurrentSearchParamsSchema),
       {
         additionalData: { organizationId, userId },
-      }
+      },
     );
 
     // Determine if we're selecting all items across multiple pages
@@ -95,7 +95,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         addedCount,
         skippedCount,
         auditId,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

@@ -46,7 +46,7 @@ export const LOCALE_LABEL: Record<SupportedLocale, string> = {
  * @returns The matching supported locale, or `null` when unsupported
  */
 export function parseLocale(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): SupportedLocale | null {
   if (!value) return null;
   // Accept region subtags ("ar-SA" → "ar") so Accept-Language still matches.

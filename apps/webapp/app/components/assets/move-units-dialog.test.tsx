@@ -176,11 +176,11 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       expect(
-        screen.getByRole("heading", { name: /Move pcs from Warehouse A/i })
+        screen.getByRole("heading", { name: /Move pcs from Warehouse A/i }),
       ).toBeInTheDocument();
     });
 
@@ -196,11 +196,11 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       expect(
-        screen.getByRole("heading", { name: /Move units from Toolkit Alpha/i })
+        screen.getByRole("heading", { name: /Move units from Toolkit Alpha/i }),
       ).toBeInTheDocument();
     });
 
@@ -216,11 +216,11 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       expect(
-        screen.getByRole("heading", { name: /Place 7 unplaced pcs/i })
+        screen.getByRole("heading", { name: /Place 7 unplaced pcs/i }),
       ).toBeInTheDocument();
     });
   });
@@ -237,7 +237,7 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       const submitButton = screen.getByRole("button", { name: /^Move$/ });
@@ -255,11 +255,11 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       const quantityInput = screen.getByLabelText(
-        /Quantity/i
+        /Quantity/i,
       ) as HTMLInputElement;
       // why: the `Input` wrapper drops the `required` prop, so we can't
       // assert it directly. What we CAN verify is the component's actual
@@ -282,7 +282,7 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       // The popover content renders inline under the test mock, so the
@@ -290,7 +290,7 @@ describe("MoveUnitsDialog", () => {
       fireEvent.click(screen.getByRole("option", { name: "Warehouse B" }));
 
       const quantityInput = screen.getByLabelText(
-        /Quantity/i
+        /Quantity/i,
       ) as HTMLInputElement;
       // why: assert what's actually testable in happy-dom — the input
       // exposes the over-max condition via the constraint-validation
@@ -321,13 +321,13 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={vi.fn()}
-        />
+        />,
       );
 
       fireEvent.click(screen.getByRole("option", { name: "Warehouse B" }));
 
       const quantityInput = screen.getByLabelText(
-        /Quantity/i
+        /Quantity/i,
       ) as HTMLInputElement;
       fireEvent.change(quantityInput, { target: { value: "3" } });
 
@@ -342,7 +342,7 @@ describe("MoveUnitsDialog", () => {
           quantity: "3",
           fromLocationId: "loc-from",
           assetId: "asset-1",
-        })
+        }),
       );
     });
   });
@@ -362,7 +362,7 @@ describe("MoveUnitsDialog", () => {
           actionUrl="/api/move"
           open
           onOpenChange={onOpenChange}
-        />
+        />,
       );
 
       expect(onOpenChange).toHaveBeenCalledWith(false);

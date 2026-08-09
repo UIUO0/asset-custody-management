@@ -35,7 +35,7 @@ async function seed() {
         await prisma.asset.create({
           data: asset,
         });
-      })
+      }),
     );
   } catch (cause) {
     throw new ShelfError({

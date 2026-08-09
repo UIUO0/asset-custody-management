@@ -36,7 +36,7 @@ export const CLIENT_VIEW_PARAM_KEYS = [
  */
 export function isClientViewOnlyNavigation(
   currentUrl: URL,
-  nextUrl: URL
+  nextUrl: URL,
 ): boolean {
   if (currentUrl.pathname !== nextUrl.pathname) {
     return false;

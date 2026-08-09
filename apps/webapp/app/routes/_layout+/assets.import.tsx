@@ -1,122 +1,36 @@
-import type {
-  ActionFunctionArgs,
-  MetaFunction,
-  LoaderFunctionArgs,
-} from "react-router";
-import { data, Link } from "react-router";
-import { z } from "zod";
-import { ImportContent } from "~/components/assets/import-content";
-import Header from "~/components/layout/header";
-import { getFixedT, getLocale } from "~/i18n/i18n.server";
-import { createAssetsFromContentImport } from "~/modules/asset/service.server";
-import { ASSET_CSV_HEADERS } from "~/modules/asset/utils.server";
-import { appendToMetaTitle } from "~/utils/append-to-meta-title";
-import { csvDataFromRequest } from "~/utils/csv.server";
-import { ShelfError, makeShelfError } from "~/utils/error";
-import { payload, error, parseData } from "~/utils/http.server";
-import { extractCSVDataFromContentImport } from "~/utils/import.server";
-import {
-  PermissionAction,
-  PermissionEntity,
-} from "~/utils/permissions/permission.data";
-import { requirePermission } from "~/utils/roles.server";
-import { assertUserCanImportAssets } from "~/utils/subscription.server";
+/**
+ * Legacy CSV asset import — superseded by the goods-receipt forms.
+ *
+ * The mirror of `assets.new.tsx`: EPDA books stock in on مذكرة/محضر استلام, and
+ * a spreadsheet of titles carries none of what those documents exist to
+ * record — supplier, purchase order, inspection reference, unit price, or the
+ * three signatures.
+ *
+ * Closing the single-asset door and leaving the bulk one open would have been
+ * worse than closing neither: an operator blocked from adding one asset would
+ * simply upload a one-row CSV, and the requirement would look like an
+ * inconvenience to route around rather than a control.
+ *
+ * `assets.import-update.tsx` is deliberately **not** closed. It updates
+ * existing rows and creates nothing, which is the round trip المالية need
+ * (export → edit in Excel → import the coding back).
+ *
+ * The previous implementation lives in git history at the commit that
+ * introduced the receipt flow.
+ *
+ * @see {@link file://./receipts.new.tsx} the flow that replaces this
+ * @see {@link file://./../../modules/goods-receipt/intake-guard.server.ts}
+ */
 
-export const action = async ({ context, request }: ActionFunctionArgs) => {
-  const authSession = context.getSession();
-  const { userId } = authSession;
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import { assertIntakeClosed } from "~/modules/goods-receipt/intake-guard.server";
 
-  try {
-    const { organizationId, organizations, canUseBarcodes } =
-      await requirePermission({
-        userId,
-        request,
-        entity: PermissionEntity.asset,
-        action: PermissionAction.import,
-      });
+export function loader(_args: LoaderFunctionArgs): never {
+  assertIntakeClosed();
+}
 
-    await assertUserCanImportAssets({ organizationId, organizations });
-
-    const { intent } = parseData(
-      await request.clone().formData(),
-      z.object({
-        intent: z.enum(["content"]),
-      }),
-    );
-
-    const csvData = await csvDataFromRequest({ request });
-    if (csvData.length < 2) {
-      throw new ShelfError({
-        cause: null,
-        message: "CSV file is empty",
-        additionalData: { intent },
-        label: "Assets",
-        shouldBeCaptured: false,
-      });
-    }
-
-    const contentData = extractCSVDataFromContentImport(
-      csvData,
-      ASSET_CSV_HEADERS,
-    );
-
-    await createAssetsFromContentImport({
-      data: contentData,
-      userId,
-      organizationId,
-      canUseBarcodes,
-    });
-    return payload({ success: true });
-  } catch (cause) {
-    const reason = makeShelfError(cause, { userId });
-    return data(error(reason), { status: reason.status });
-  }
-};
-
-export const loader = async ({ context, request }: LoaderFunctionArgs) => {
-  const authSession = context.getSession();
-  const { userId } = authSession;
-
-  try {
-    // why: loaders run outside React, so `useTranslation` is unavailable —
-    // `getFixedT` gives the same `t` bound to the request's locale.
-    const t = await getFixedT(getLocale(request));
-
-    const { organizationId, organizations } = await requirePermission({
-      userId,
-      request,
-      entity: PermissionEntity.asset,
-      action: PermissionAction.import,
-    });
-
-    await assertUserCanImportAssets({ organizationId, organizations });
-
-    return payload({
-      header: {
-        title: t("assets.importTitle"),
-      },
-    });
-  } catch (cause) {
-    const reason = makeShelfError(cause, { userId });
-    throw data(error(reason), { status: reason.status });
-  }
-};
-
-export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? appendToMetaTitle(data.header.title) : "" },
-];
-
-export const handle = {
-  breadcrumb: () => <Link to="/import">"Import"</Link>,
-};
-
-export default function AssetsImport() {
-  return (
-    <div className="h-full">
-      <Header />
-      <div className="mx-auto h-auto w-full px-4 py-10">
-        <ImportContent />
-      </div>
-    </div>
-  );
+export function action(_args: ActionFunctionArgs): never {
+  // 303 so a replayed upload is re-issued as a GET rather than posting its
+  // multipart body at the receipt form.
+  assertIntakeClosed({ status: 303 });
 }

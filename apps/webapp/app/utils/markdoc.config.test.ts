@@ -39,14 +39,14 @@ describe("markdoc.config", () => {
         expect.objectContaining({
           type: String,
           required: true,
-        })
+        }),
       );
 
       expect(dateAttributes.includeTime).toEqual(
         expect.objectContaining({
           type: Boolean,
           default: true,
-        })
+        }),
       );
     });
   });
@@ -69,21 +69,21 @@ describe("markdoc.config", () => {
         expect.objectContaining({
           type: Number,
           required: true,
-        })
+        }),
       );
 
       expect(assetsListAttributes.ids).toEqual(
         expect.objectContaining({
           type: String,
           required: true,
-        })
+        }),
       );
 
       expect(assetsListAttributes.action).toEqual(
         expect.objectContaining({
           type: String,
           required: true,
-        })
+        }),
       );
     });
   });
@@ -106,21 +106,21 @@ describe("markdoc.config", () => {
         expect.objectContaining({
           type: Number,
           required: true,
-        })
+        }),
       );
 
       expect(kitsListAttributes!.ids).toEqual(
         expect.objectContaining({
           type: String,
           required: true,
-        })
+        }),
       );
 
       expect(kitsListAttributes!.action).toEqual(
         expect.objectContaining({
           type: String,
           required: true,
-        })
+        }),
       );
     });
   });
@@ -143,14 +143,14 @@ describe("markdoc.config", () => {
         expect.objectContaining({
           type: String,
           required: true,
-        })
+        }),
       );
 
       expect(bookingStatusAttributes.custodianUserId).toEqual(
         expect.objectContaining({
           type: String,
           required: false,
-        })
+        }),
       );
     });
   });
@@ -199,49 +199,49 @@ describe("markdoc.config", () => {
     it("should use correct attribute types for all tags", () => {
       // Check that all string attributes use String constructor
       expect((markdocConfig.tags as any).date.attributes.value.type).toBe(
-        String
+        String,
       );
       expect((markdocConfig.tags as any).assets_list.attributes.ids.type).toBe(
-        String
+        String,
       );
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.action.type
+        (markdocConfig.tags as any).assets_list.attributes.action.type,
       ).toBe(String);
       expect((markdocConfig.tags as any).kits_list.attributes.ids.type).toBe(
-        String
+        String,
       );
       expect((markdocConfig.tags as any).kits_list.attributes.action.type).toBe(
-        String
+        String,
       );
       expect((markdocConfig.tags as any).link.attributes.to.type).toBe(String);
       expect((markdocConfig.tags as any).link.attributes.text.type).toBe(
-        String
+        String,
       );
       expect(
-        (markdocConfig.tags as any).booking_status.attributes.status.type
+        (markdocConfig.tags as any).booking_status.attributes.status.type,
       ).toBe(String);
       expect(
         (markdocConfig.tags as any).booking_status.attributes.custodianUserId
-          .type
+          .type,
       ).toBe(String);
       expect(
-        (markdocConfig.tags as any).description.attributes.oldText.type
+        (markdocConfig.tags as any).description.attributes.oldText.type,
       ).toBe(String);
       expect(
-        (markdocConfig.tags as any).description.attributes.newText.type
+        (markdocConfig.tags as any).description.attributes.newText.type,
       ).toBe(String);
 
       // Check that all boolean attributes use Boolean constructor
       expect((markdocConfig.tags as any).date.attributes.includeTime.type).toBe(
-        Boolean
+        Boolean,
       );
 
       // Check that all number attributes use Number constructor
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.count.type
+        (markdocConfig.tags as any).assets_list.attributes.count.type,
       ).toBe(Number);
       expect((markdocConfig.tags as any).kits_list.attributes.count.type).toBe(
-        Number
+        Number,
       );
     });
   });
@@ -250,41 +250,41 @@ describe("markdoc.config", () => {
     it("should mark correct attributes as required", () => {
       // Date tag - value is required, includeTime is optional with default
       expect((markdocConfig.tags as any).date.attributes.value.required).toBe(
-        true
+        true,
       );
       expect(
-        (markdocConfig.tags as any).date.attributes.includeTime.required
+        (markdocConfig.tags as any).date.attributes.includeTime.required,
       ).toBeUndefined();
 
       // Assets list tag - all attributes are required
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.count.required
+        (markdocConfig.tags as any).assets_list.attributes.count.required,
       ).toBe(true);
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.ids.required
+        (markdocConfig.tags as any).assets_list.attributes.ids.required,
       ).toBe(true);
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.action.required
+        (markdocConfig.tags as any).assets_list.attributes.action.required,
       ).toBe(true);
 
       // Kits list tag - all attributes are required
       expect(
-        (markdocConfig.tags as any).kits_list.attributes.count.required
+        (markdocConfig.tags as any).kits_list.attributes.count.required,
       ).toBe(true);
       expect(
-        (markdocConfig.tags as any).kits_list.attributes.ids.required
+        (markdocConfig.tags as any).kits_list.attributes.ids.required,
       ).toBe(true);
       expect(
-        (markdocConfig.tags as any).kits_list.attributes.action.required
+        (markdocConfig.tags as any).kits_list.attributes.action.required,
       ).toBe(true);
 
       // Booking status tag - status is required, custodianUserId is optional
       expect(
-        (markdocConfig.tags as any).booking_status.attributes.status.required
+        (markdocConfig.tags as any).booking_status.attributes.status.required,
       ).toBe(true);
       expect(
         (markdocConfig.tags as any).booking_status.attributes.custodianUserId
-          .required
+          .required,
       ).toBe(false);
     });
   });
@@ -293,30 +293,30 @@ describe("markdoc.config", () => {
     it("should have correct default values", () => {
       // Only includeTime should have a default value
       expect(
-        (markdocConfig.tags as any).date.attributes.includeTime.default
+        (markdocConfig.tags as any).date.attributes.includeTime.default,
       ).toBe(true);
 
       // Other attributes should not have defaults
       expect(
-        (markdocConfig.tags as any).date.attributes.value.default
+        (markdocConfig.tags as any).date.attributes.value.default,
       ).toBeUndefined();
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.count.default
+        (markdocConfig.tags as any).assets_list.attributes.count.default,
       ).toBeUndefined();
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.ids.default
+        (markdocConfig.tags as any).assets_list.attributes.ids.default,
       ).toBeUndefined();
       expect(
-        (markdocConfig.tags as any).assets_list.attributes.action.default
+        (markdocConfig.tags as any).assets_list.attributes.action.default,
       ).toBeUndefined();
       expect(
-        (markdocConfig.tags as any).kits_list.attributes.count.default
+        (markdocConfig.tags as any).kits_list.attributes.count.default,
       ).toBeUndefined();
       expect(
-        (markdocConfig.tags as any).kits_list.attributes.ids.default
+        (markdocConfig.tags as any).kits_list.attributes.ids.default,
       ).toBeUndefined();
       expect(
-        (markdocConfig.tags as any).kits_list.attributes.action.default
+        (markdocConfig.tags as any).kits_list.attributes.action.default,
       ).toBeUndefined();
     });
   });

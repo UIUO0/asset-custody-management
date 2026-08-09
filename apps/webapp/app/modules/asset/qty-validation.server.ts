@@ -135,7 +135,7 @@ export type QtyValidationMode =
 export function validateQtyTrackedFields(
   cells: QtyTrackedCsvCells,
   mode: QtyValidationMode,
-  ctx: QtyTrackedRowContext
+  ctx: QtyTrackedRowContext,
 ): ValidatedQtyTrackedFields {
   const { rowLabel, additionalData } = ctx;
 
@@ -412,7 +412,7 @@ export type ExistingAssetForQtyUpdate = {
 export function parseQtyTrackedUpdateRow(
   cells: QtyTrackedCsvCells & { assetModel?: string },
   existing: ExistingAssetForQtyUpdate,
-  rowIndex: number
+  rowIndex: number,
 ): ParsedQtyTrackedUpdate {
   const warnings: QtyTrackedUpdateWarning[] = [];
   const errors: QtyTrackedUpdateError[] = [];
@@ -439,7 +439,7 @@ export function parseQtyTrackedUpdateRow(
       {
         rowLabel: `row ${rowIndex}`,
         additionalData: { rowIndex },
-      }
+      },
     );
   } catch (cause) {
     // A malformed qty cell (non-integer, negative, bad enum, etc.) —

@@ -36,7 +36,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           .string()
           .optional()
           .transform((val) => (val === "yes" ? true : false)),
-      })
+      }),
     );
 
     const asset = await getAsset({

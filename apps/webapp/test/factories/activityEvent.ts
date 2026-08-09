@@ -8,7 +8,7 @@ import type { ActivityEventInput } from "~/modules/activity-event/types";
  * matter to a given assertion (e.g. `actorUserId`, `assetId`).
  */
 export function createActivityEventInput(
-  overrides: Partial<ActivityEventInput> = {}
+  overrides: Partial<ActivityEventInput> = {},
 ): ActivityEventInput {
   return {
     organizationId: "org-1",

@@ -12,7 +12,7 @@ export interface IconProps {
 }
 const Icon = React.forwardRef<HTMLElement, IconProps>(function Icon(
   { className, icon, disableWrap, size = "sm" }: IconProps,
-  _ref
+  _ref,
 ) {
   return (
     icon &&

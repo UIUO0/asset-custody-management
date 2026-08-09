@@ -30,7 +30,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       z.object({
         kitId: z.string(),
         image: z.string(),
-      })
+      }),
     );
 
     const url = new URL(image);

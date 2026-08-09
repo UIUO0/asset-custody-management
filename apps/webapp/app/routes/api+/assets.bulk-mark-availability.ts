@@ -38,7 +38,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { assetIds, type, currentSearchParams } = parseData(
       formData,
-      BulkMarkAvailabilitySchema.and(CurrentSearchParamsSchema)
+      BulkMarkAvailabilitySchema.and(CurrentSearchParamsSchema),
     );
 
     await bulkMarkAvailability({

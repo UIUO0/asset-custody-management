@@ -8,7 +8,7 @@ import type { SlashCommandItem, SlashState } from "../types";
 
 export function useSlashCommands(
   commands: SlashCommandItem[],
-  viewRef: RefObject<EditorView | null>
+  viewRef: RefObject<EditorView | null>,
 ) {
   const [slashState, setSlashState] = useState<SlashState | null>(null);
   const slashStateRef = useRef<SlashState | null>(null);
@@ -32,7 +32,7 @@ export function useSlashCommands(
       0,
       $from.parentOffset,
       undefined,
-      "\ufffc"
+      "\ufffc",
     );
     const slashIndex = textBefore.lastIndexOf("/");
     let from: number | null = null;
@@ -61,7 +61,7 @@ export function useSlashCommands(
         previous.from,
         previous.from + 1,
         undefined,
-        "\ufffc"
+        "\ufffc",
       );
 
       if (selectionFrom < previous.from || slashChar !== "/") {
@@ -76,7 +76,7 @@ export function useSlashCommands(
         previous.from + 1,
         selectionFrom,
         undefined,
-        "\ufffc"
+        "\ufffc",
       );
 
       if (!/^[\w-]*$/.test(query)) {
@@ -139,7 +139,7 @@ export function useSlashCommands(
           deleteTo,
           deleteTo + 1,
           undefined,
-          "\ufffc"
+          "\ufffc",
         );
         if (/[\w-]/.test(char)) {
           deleteTo++;
@@ -152,7 +152,7 @@ export function useSlashCommands(
         deleteFrom,
         deleteTo,
         undefined,
-        "\ufffc"
+        "\ufffc",
       );
 
       slashStateRef.current = null;
@@ -168,7 +168,7 @@ export function useSlashCommands(
       command.command(view.state, view.dispatch, view);
       view.focus();
     },
-    [viewRef]
+    [viewRef],
   );
 
   const handleSlashKeyDown = useCallback(
@@ -187,7 +187,7 @@ export function useSlashCommands(
       if (event.key === "ArrowUp") {
         event.preventDefault();
         setSlashIndex(
-          (index) => (index - 1 + commandsList.length) % commandsList.length
+          (index) => (index - 1 + commandsList.length) % commandsList.length,
         );
         return true;
       }
@@ -207,12 +207,12 @@ export function useSlashCommands(
       }
       return false;
     },
-    [applySlashCommand]
+    [applySlashCommand],
   );
 
   const filteredCommands = useMemo(
     () => filterSlashCommands(commands, slashState?.query ?? ""),
-    [commands, slashState]
+    [commands, slashState],
   );
 
   useEffect(() => {

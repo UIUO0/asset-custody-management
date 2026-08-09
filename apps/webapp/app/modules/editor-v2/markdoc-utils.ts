@@ -111,7 +111,7 @@ function getSerializer(schema: Schema): MarkdownSerializer {
         state.closeBlock(node);
       },
     },
-    defaultMarkdownSerializer.marks
+    defaultMarkdownSerializer.marks,
   );
 
   serializerCache.set(schema, serializer);
@@ -120,7 +120,7 @@ function getSerializer(schema: Schema): MarkdownSerializer {
 
 function createMarkdownParser(
   schema: Schema,
-  _rawBlocks: RawBlock[]
+  _rawBlocks: RawBlock[],
 ): MarkdownParser {
   const tokenizer = new MarkdownIt("commonmark", {
     html: false,
@@ -235,7 +235,7 @@ function normalizeRawBlocks(markdoc: string): {
 function replaceRawPlaceholders(
   node: ProseMirrorNode,
   schema: Schema,
-  rawBlocks: RawBlock[]
+  rawBlocks: RawBlock[],
 ): ProseMirrorNode {
   let changed = false;
   const children: ProseMirrorNode[] = [];

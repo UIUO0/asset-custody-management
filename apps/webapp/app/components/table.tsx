@@ -20,13 +20,13 @@ export function Table({
       className={tw(
         "relative",
         isOverflowing && "overflowing",
-        modeIsAdvanced && "flex flex-1 flex-col"
+        modeIsAdvanced && "flex flex-1 flex-col",
       )}
     >
       <div
         className={tw(
           "fixed-gradient",
-          "right-0"
+          "right-0",
           // modeIsAdvanced ? "right-0" : "-right-px"
         )}
       ></div>
@@ -36,7 +36,7 @@ export function Table({
           "list-table-wrapper",
           modeIsAdvanced
             ? "overflow-auto"
-            : "scrollbar-top scrollbar-always-visible"
+            : "scrollbar-top scrollbar-always-visible",
         )}
         style={
           modeIsAdvanced
@@ -69,7 +69,7 @@ export function Th({
     <th
       className={tw(
         "p-4 text-start font-normal text-gray-600 md:border-b md:px-6",
-        className
+        className,
       )}
       colSpan={colSpan || undefined}
       {...rest}
@@ -99,7 +99,7 @@ export function Td({ children, className, ...props }: TdProps) {
     <td
       className={tw(
         "max-w-[250px] truncate whitespace-nowrap border-b p-4 md:px-6",
-        className
+        className,
       )}
       {...props}
     >

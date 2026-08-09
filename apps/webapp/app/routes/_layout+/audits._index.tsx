@@ -7,7 +7,6 @@ import { DescriptionColumn } from "~/components/assets/assets-index/advanced-ass
 import AuditIndexBulkActionsDropdown from "~/components/audit/audit-index-bulk-actions-dropdown";
 import { AuditStatusBadgeWithOverdue } from "~/components/audit/audit-status-badge-with-overdue";
 import { NewAuditInfoDialog } from "~/components/audit/new-audit-info-dialog";
-import { StatusFilter } from "~/components/booking/status-filter";
 import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
 import { List } from "~/components/list";
@@ -18,6 +17,7 @@ import { SortBy } from "~/components/list/filters/sort-by";
 import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { EmptyTableValue } from "~/components/shared/empty-table-value";
+import { StatusFilter } from "~/components/shared/status-filter";
 import { UserBadge } from "~/components/shared/user-badge";
 import { Td, Th } from "~/components/table";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";

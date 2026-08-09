@@ -22,7 +22,7 @@ describe("formatAbsoluteDate", () => {
 
   it("throws for invalid Date objects", () => {
     expect(() => formatAbsoluteDate(new Date("invalid"), basicOptions)).toThrow(
-      "Invalid Date object"
+      "Invalid Date object",
     );
   });
 

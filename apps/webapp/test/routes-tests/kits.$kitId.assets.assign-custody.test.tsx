@@ -60,7 +60,7 @@ vi.mock("~/database/db.server", () => ({
           updateMany: dbMocks.asset.updateMany,
         },
         custody: { createMany: dbMocks.custody.createMany },
-      })
+      }),
     ),
   },
 }));
@@ -128,7 +128,7 @@ const mockAssetUpdate = dbMocks.asset.update;
 const mockNoteCreateMany = dbMocks.note.createMany;
 
 function createActionArgs(
-  overrides: Partial<ActionFunctionArgs> = {}
+  overrides: Partial<ActionFunctionArgs> = {},
 ): ActionFunctionArgs {
   return {
     context: {
@@ -138,7 +138,7 @@ function createActionArgs(
       "https://example.com/kits/kit-123/assets/assign-custody",
       {
         method: "POST",
-      }
+      },
     ),
     params: { kitId: "kit-123" },
     ...overrides,
@@ -179,7 +179,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       JSON.stringify({
         id: "foreign-team-member-123",
         name: "Foreign Team Member",
-      })
+      }),
     );
 
     const request = new Request(
@@ -187,7 +187,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     const response = await action(createActionArgs({ request }));
@@ -246,7 +246,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Valid Team Member",
-      })
+      }),
     );
 
     const request = new Request(
@@ -254,7 +254,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     const response = await action(createActionArgs({ request }));
@@ -306,7 +306,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       JSON.stringify({
         id: "team-member-456",
         name: "Other Team Member",
-      })
+      }),
     );
 
     const request = new Request(
@@ -314,7 +314,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     const response = await action(createActionArgs({ request }));
@@ -355,7 +355,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Self User",
-      })
+      }),
     );
 
     const request = new Request(
@@ -363,7 +363,7 @@ describe("kits/$kitId/assets/assign-custody", () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     const response = await action(createActionArgs({ request }));
@@ -430,12 +430,12 @@ describe("kits/$kitId/assets/assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Valid Team Member",
-      })
+      }),
     );
 
     const request = new Request(
       "https://example.com/kits/kit-123/assets/assign-custody",
-      { method: "POST", body: formData }
+      { method: "POST", body: formData },
     );
 
     await action(createActionArgs({ request }));
@@ -516,12 +516,12 @@ describe("kits/$kitId/assets/assign-custody", () => {
       JSON.stringify({
         id: "team-member-nikolay",
         name: "Nikolay",
-      })
+      }),
     );
 
     const request = new Request(
       "https://example.com/kits/kit-123/assets/assign-custody",
-      { method: "POST", body: formData }
+      { method: "POST", body: formData },
     );
 
     await action(createActionArgs({ request }));

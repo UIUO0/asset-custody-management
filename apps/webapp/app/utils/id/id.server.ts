@@ -19,7 +19,7 @@ export function id(length?: number) {
           message: "Id is too short",
           additionalData: { length },
           label: "DB",
-        })
+        }),
       );
     }
     let generatedId = init({

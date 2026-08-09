@@ -56,6 +56,6 @@ export default function LineBreakText({
     },
     // `startIndex` is the line's offset in the source text — stable and unique
     // per rendered span even if the content itself repeats.
-    lines.map((line) => <span key={line.startIndex}>{line.content}</span>)
+    lines.map((line) => <span key={line.startIndex}>{line.content}</span>),
   );
 }

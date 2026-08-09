@@ -13,7 +13,7 @@ import {
 // Mock date-fns to control time in tests
 vitest.mock("~/utils/date-fns", () => ({
   dateForDateTimeInputValue: vitest.fn(
-    (date: Date) => date.toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm format
+    (date: Date) => date.toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm format
   ),
 }));
 
@@ -133,7 +133,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       mockWorkingHours,
-      false // skipClosedDays = false
+      false, // skipClosedDays = false
     );
 
     expect(result).toBe(endDate);
@@ -150,7 +150,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       disabledWorkingHours,
-      true // skipClosedDays = true, but working hours disabled
+      true, // skipClosedDays = true, but working hours disabled
     );
 
     expect(result).toBe(endDate);
@@ -166,7 +166,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       null, // no working hours
-      true
+      true,
     );
 
     expect(result).toBe(endDate);
@@ -182,7 +182,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       mockWorkingHours,
-      true
+      true,
     );
 
     // Should extend by 2 days (Saturday + Sunday)
@@ -217,7 +217,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       workingHoursWithOverride,
-      true
+      true,
     );
 
     // Should extend by 3 days (Saturday + Sunday + Monday holiday)
@@ -252,7 +252,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       workingHoursWithOverride,
-      true
+      true,
     );
 
     // Should extend by 1 day (only Sunday, Saturday is now open)
@@ -270,7 +270,7 @@ describe("calculateEffectiveEndDate", () => {
       startDate,
       endDate,
       mockWorkingHours,
-      true
+      true,
     );
 
     // No closed days in between, should return original
@@ -302,7 +302,7 @@ describe("calculateBusinessHoursDuration", () => {
     const result = calculateBusinessHoursDuration(
       startDate,
       endDate,
-      mockWorkingHours
+      mockWorkingHours,
     );
 
     // Total: 74 hours, Closed: 48 hours (Sat + Sun), Effective: 26 hours
@@ -318,7 +318,7 @@ describe("calculateBusinessHoursDuration", () => {
     const result = calculateBusinessHoursDuration(
       startDate,
       endDate,
-      mockWorkingHours
+      mockWorkingHours,
     );
 
     // 5 hours on an open day
@@ -334,7 +334,7 @@ describe("calculateBusinessHoursDuration", () => {
     const result = calculateBusinessHoursDuration(
       startDate,
       endDate,
-      mockWorkingHours
+      mockWorkingHours,
     );
 
     // Total: 29 hours, All closed: 29 hours, Effective: 0 hours
@@ -350,7 +350,7 @@ describe("calculateBusinessHoursDuration", () => {
     const result = calculateBusinessHoursDuration(
       startDate,
       endDate,
-      mockWorkingHours
+      mockWorkingHours,
     );
 
     // Total: 170 hours, Closed: 48 hours (1 weekend: Sat + Sun), Effective: 122 hours
@@ -383,7 +383,7 @@ describe("calculateBusinessHoursDuration", () => {
     const result = calculateBusinessHoursDuration(
       startDate,
       endDate,
-      workingHoursWithHoliday
+      workingHoursWithHoliday,
     );
 
     // Total: 98 hours, Closed: 72 hours (Sat + Sun + Mon holiday), Effective: 26 hours
@@ -400,7 +400,7 @@ describe("calculateBusinessHoursDuration", () => {
     const result = calculateBusinessHoursDuration(
       startDate,
       endDate,
-      mockWorkingHours
+      mockWorkingHours,
     );
 
     // Total: 71 hours, Closed: 48 hours (full weekend), Effective: 23 hours
@@ -457,7 +457,7 @@ describe("getBookingDefaultStartEndTimes", () => {
     const result = getBookingDefaultStartEndTimes(
       disabledWorkingHours,
       2,
-      false
+      false,
     );
 
     // Should use original logic with 2-hour buffer
@@ -541,7 +541,7 @@ describe("getBookingDefaultStartEndTimes", () => {
     const result = getBookingDefaultStartEndTimes(
       workingHoursWithOverride,
       0,
-      false
+      false,
     );
 
     expect(result.startDate).toBe("2025-07-28T09:00"); // Next Monday 9 AM UTC
@@ -555,7 +555,7 @@ describe("getBookingDefaultStartEndTimes", () => {
     const baseUserResult = getBookingDefaultStartEndTimes(
       mockWorkingHours,
       24,
-      false
+      false,
     );
     expect(baseUserResult.startDate).toBe("2025-07-28T09:00"); // Next working day (buffer pushes to Monday)
 
@@ -563,7 +563,7 @@ describe("getBookingDefaultStartEndTimes", () => {
     const adminUserResult = getBookingDefaultStartEndTimes(
       mockWorkingHours,
       24,
-      true
+      true,
     );
     expect(adminUserResult.startDate).toBe("2025-07-25T14:10"); // Current time + 10 minutes (buffer bypassed)
   });
@@ -577,7 +577,7 @@ describe("getBookingDefaultStartEndTimes", () => {
     const baseUserResult = getBookingDefaultStartEndTimes(
       disabledWorkingHours,
       10,
-      false
+      false,
     );
     expect(baseUserResult.startDate).toBe("2025-07-26T00:00"); // Current + 10 hours = next day midnight
 
@@ -585,7 +585,7 @@ describe("getBookingDefaultStartEndTimes", () => {
     const adminUserResult = getBookingDefaultStartEndTimes(
       disabledWorkingHours,
       10,
-      true
+      true,
     );
     expect(adminUserResult.startDate).toBe("2025-07-25T14:10"); // Current time + 10 minutes (buffer bypassed)
   });
@@ -614,7 +614,7 @@ describe("getOverrideDateKey", () => {
     // Pins down the "read the UTC day, not the local day" semantic. This Date
     // is 4/24 23:30 in CDT, which is 4/25 04:30 UTC — we expect the UTC day.
     expect(getOverrideDateKey(new Date("2026-04-24T23:30:00-05:00"))).toBe(
-      "2026-04-25"
+      "2026-04-25",
     );
   });
 });

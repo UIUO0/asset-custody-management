@@ -69,7 +69,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         location: { id: location.id, name: location.name },
         ancestors,
         descendants,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, locationId });

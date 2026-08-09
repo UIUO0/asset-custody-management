@@ -3,10 +3,10 @@ import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 export function getDifferenceInSeconds(
   dateLeft: Date,
-  dateRight: Date
+  dateRight: Date,
 ): number {
   const millisecondsDifference = Math.abs(
-    dateLeft.getTime() - dateRight.getTime()
+    dateLeft.getTime() - dateRight.getTime(),
   );
   const secondsDifference = millisecondsDifference / 1000;
   return secondsDifference;
@@ -15,14 +15,14 @@ export function getDifferenceInSeconds(
 /** Prepares a date to be passed as default value for input with type `datetime-local` */
 export const dateForDateTimeInputValue = (date: Date) => {
   const localDate = new Date(
-    date.getTime() - date.getTimezoneOffset() * 60 * 1000
+    date.getTime() - date.getTimezoneOffset() * 60 * 1000,
   );
   return localDate.toISOString().slice(0, 19);
 };
 
 export function calcTimeDifference(
   date1: Date,
-  date2: Date
+  date2: Date,
 ): { hours: number; minutes: number } {
   // Calculate the time difference in milliseconds
   const diffInMs = Math.abs(date2.getTime() - date1.getTime());
@@ -167,7 +167,7 @@ export function adjustDateToUTC(dateString: string, timeZone: string): string {
  */
 export function adjustDateToUserTimezone(
   dateString: string,
-  timeZone: string
+  timeZone: string,
 ): string {
   // If the date string is empty or not a valid date format, return empty string
   if (!dateString || !isDateString(dateString)) {
@@ -191,7 +191,7 @@ export function adjustDateToUserTimezone(
  */
 export function toIsoDateTimeToUserTimezone(
   dateInput: string | Date,
-  timeZone: string
+  timeZone: string,
 ): string {
   if (!dateInput) return "";
 
@@ -239,7 +239,7 @@ export function getTodayInUserTimezone(timeZone: string): string {
  */
 export function adjustTimeToUserTimezone(
   utcTimeString: string,
-  timeZone: string
+  timeZone: string,
 ): string {
   if (!utcTimeString || !utcTimeString.includes(":")) {
     return "";
@@ -256,8 +256,8 @@ export function adjustTimeToUserTimezone(
         today.getUTCMonth(),
         today.getUTCDate(),
         hours,
-        minutes
-      )
+        minutes,
+      ),
     );
 
     // Convert to user's timezone

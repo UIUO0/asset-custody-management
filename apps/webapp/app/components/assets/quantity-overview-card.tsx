@@ -3,7 +3,7 @@
  *
  * Displays a summary of quantity-tracking information for QUANTITY_TRACKED assets
  * on the asset detail overview page. Shows total quantity, available units,
- * units in custody, reserved/checked-out booking quantities, unit of measure,
+ * units in custody, unit of measure,
  * optional low-stock alert threshold, and the consumption behavior mode.
  *
  * Availability and in-custody values are computed by the loader from actual
@@ -42,7 +42,7 @@ export interface QuantityOverviewCardProps {
   /** Consumption behavior: ONE_WAY (used up) or TWO_WAY (returnable) */
   consumptionType: ConsumptionType | null;
   /**
-   * Booking-aware availability (total - inCustody - reserved - checkedOut),
+   * Availability (total - inCustody - inKits),
    * shown on the "Available" row. This is what's available to reserve for a
    * future booking.
    */
@@ -74,26 +74,6 @@ export interface QuantityOverviewCardProps {
    * simultaneously without double-counting.
    */
   inLocationsQuantity?: number;
-  /**
-   * Units committed to bookings but NOT yet physically off the shelf.
-   *
-   * Covers two contributors:
-   *  - RESERVED bookings (future bookings — naive `Σ BookingAsset.quantity`)
-   *  - ONGOING/OVERDUE bookings minus the already-checked-out portion
-   *    (i.e. the booked-but-not-yet-scanned-out remainder)
-   *
-   * Surfaced on the "Reserved (bookings)" row so users see every unit
-   * spoken for by a booking that hasn't physically left yet, alongside
-   * the separate "Checked out (bookings)" row for what's actually gone.
-   */
-  reservedQuantity?: number;
-  /**
-   * Units actively off the shelf via ONGOING/OVERDUE bookings — computed
-   * via `computeCheckedOutForAsset` so this stays in lock-step with the
-   * OUT-flow's per-slice math. Disjoint from `reservedQuantity`: every
-   * booked unit appears in exactly one of the two rows.
-   */
-  checkedOutQuantity?: number;
   /** Whether the user has permission to adjust quantity */
   canUpdate?: boolean;
   /** Optional additional CSS class names */
@@ -155,7 +135,7 @@ function OverviewRow({
  * Sidebar card showing quantity-tracking details for a QUANTITY_TRACKED asset.
  *
  * Displays total quantity, availability, custody count, booking reservations
- * (reserved and checked-out), unit of measure, optional low-stock threshold,
+ * unit of measure, optional low-stock threshold,
  * and consumption behavior mode. Shows a "Low Stock" badge when quantity is
  * at or below the configured minimum.
  *
@@ -173,24 +153,19 @@ export function QuantityOverviewCard({
   inCustodyQuantity,
   inKitsQuantity,
   inLocationsQuantity,
-  reservedQuantity,
-  checkedOutQuantity,
   canUpdate = false,
   className,
 }: QuantityOverviewCardProps) {
   const { t } = useTranslation();
   const qty = quantity ?? 0;
   const unit = unitOfMeasure || null;
-  const reserved = reservedQuantity ?? 0;
-  const checkedOut = checkedOutQuantity ?? 0;
   const inKits = inKitsQuantity ?? 0;
   const inLocations = inLocationsQuantity ?? 0;
   const unplaced = Math.max(0, qty - inLocations);
 
   /** Use computed values from the loader, falling back to phase-1 defaults */
   const available =
-    availableQuantity ??
-    qty - inKits - (inCustodyQuantity ?? 0) - reserved - checkedOut;
+    availableQuantity ?? qty - inKits - (inCustodyQuantity ?? 0);
   const inCustody = inCustodyQuantity ?? 0;
 
   /** Low stock when a threshold is set and available quantity is at or below it */
@@ -236,8 +211,6 @@ export function QuantityOverviewCard({
         warning={isLowStock}
       />
       {/* Render the kit allocation total only when the asset is actually
-          in a kit. Mirrors the same conditional pattern used for t("bookings.reserved")
-          / t("assets.checkedOut") below — clutter-free for assets that don't belong
           to any kit. The detailed per-kit breakdown lives in the dedicated
           t("assetOverview.includedInKits") card. */}
       {inKits > 0 ? (
@@ -267,18 +240,6 @@ export function QuantityOverviewCard({
         label={t("quantity.inCustody")}
         value={formatWithUnit(inCustody, unit)}
       />
-      {reserved > 0 ? (
-        <OverviewRow
-          label={t("quantity.reservedBookings")}
-          value={formatWithUnit(reserved, unit)}
-        />
-      ) : null}
-      {checkedOut > 0 ? (
-        <OverviewRow
-          label={t("quantity.checkedOutBookings")}
-          value={formatWithUnit(checkedOut, unit)}
-        />
-      ) : null}
       <OverviewRow
         label={t("quantity.unitOfMeasure")}
         value={unit ?? t("quantity.notApplicable")}

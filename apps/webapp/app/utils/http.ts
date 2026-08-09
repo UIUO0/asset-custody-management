@@ -13,7 +13,7 @@ export function isErrorResponse(response: unknown): response is ErrorResponse {
 }
 
 export function isRouteError(
-  response: unknown
+  response: unknown,
 ): response is { data: ErrorResponse } {
   return isRouteErrorResponse(response) && isErrorResponse(response.data);
 }
@@ -24,7 +24,7 @@ export type ValidationError<Schema extends ZodType<any, any, any>> = Record<
 >;
 
 function hasValidationErrors<Schema extends ZodType<any, any, any>>(
-  additionalData: unknown
+  additionalData: unknown,
 ): additionalData is {
   validationErrors: Partial<ValidationError<Schema>>;
 } {
@@ -42,7 +42,7 @@ function hasValidationErrors<Schema extends ZodType<any, any, any>>(
  *
  */
 export function getValidationErrors<Schema extends ZodType<any, any, any>>(
-  error: DataOrErrorResponse["error"] | null | undefined
+  error: DataOrErrorResponse["error"] | null | undefined,
 ) {
   if (!error || !hasValidationErrors<Schema>(error.additionalData)) {
     return undefined;

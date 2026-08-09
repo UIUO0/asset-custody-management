@@ -85,7 +85,7 @@ const requirePermissionMock = vi.mocked(requirePermission);
 const mockGetTeamMember = teamMemberServiceMocks.getTeamMember;
 
 function createActionArgs(
-  overrides: Partial<ActionFunctionArgs> = {}
+  overrides: Partial<ActionFunctionArgs> = {},
 ): ActionFunctionArgs {
   return {
     context: {
@@ -123,7 +123,7 @@ describe("api/assets/bulk-assign-custody", () => {
       JSON.stringify({
         id: "foreign-team-member-123",
         name: "Foreign Team Member",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
@@ -132,7 +132,7 @@ describe("api/assets/bulk-assign-custody", () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     const response = (await action(createActionArgs({ request }))) as any;
@@ -166,7 +166,7 @@ describe("api/assets/bulk-assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Valid Team Member",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
@@ -175,7 +175,7 @@ describe("api/assets/bulk-assign-custody", () => {
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     const response = (await action(createActionArgs({ request }))) as any;
@@ -217,13 +217,13 @@ describe("api/assets/bulk-assign-custody", () => {
       JSON.stringify({
         id: "team-member-456",
         name: "Other Team Member",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
     const request = new Request(
       "https://example.com/api/assets/bulk-assign-custody",
-      { method: "POST", body: formData }
+      { method: "POST", body: formData },
     );
 
     await action(createActionArgs({ request }));
@@ -236,7 +236,7 @@ describe("api/assets/bulk-assign-custody", () => {
         role: OrganizationRoles.SELF_SERVICE,
         custodianId: "team-member-456",
         userId: "user-123",
-      })
+      }),
     );
   });
 
@@ -259,13 +259,13 @@ describe("api/assets/bulk-assign-custody", () => {
       JSON.stringify({
         id: "team-member-123",
         name: "Self User",
-      })
+      }),
     );
     formData.set("currentSearchParams", "");
 
     const request = new Request(
       "https://example.com/api/assets/bulk-assign-custody",
-      { method: "POST", body: formData }
+      { method: "POST", body: formData },
     );
 
     const response = (await action(createActionArgs({ request }))) as any;
@@ -274,7 +274,7 @@ describe("api/assets/bulk-assign-custody", () => {
     const responseData = await (response as unknown as Response).json();
     expect(responseData).toEqual({ error: null, success: true });
     expect(bulkCheckOutAssets).toHaveBeenCalledWith(
-      expect.objectContaining({ role: OrganizationRoles.ADMIN })
+      expect.objectContaining({ role: OrganizationRoles.ADMIN }),
     );
   });
 });

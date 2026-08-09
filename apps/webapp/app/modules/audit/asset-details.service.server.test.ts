@@ -91,7 +91,7 @@ describe("audit asset details service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.auditNote.create).mockRejectedValue(
-        new Error("Database connection failed")
+        new Error("Database connection failed"),
       );
 
       await expect(
@@ -100,7 +100,7 @@ describe("audit asset details service", () => {
           userId: "user-1",
           auditSessionId: "audit-1",
           auditAssetId: "audit-asset-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -109,7 +109,7 @@ describe("audit asset details service", () => {
           userId: "user-1",
           auditSessionId: "audit-1",
           auditAssetId: "audit-asset-1",
-        })
+        }),
       ).rejects.toThrow("Failed to create asset note");
     });
   });
@@ -184,7 +184,7 @@ describe("audit asset details service", () => {
           noteId: "nonexistent-note",
           content: "Updated content",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       expect(db.auditNote.update).not.toHaveBeenCalled();
@@ -199,7 +199,7 @@ describe("audit asset details service", () => {
           noteId: "note-1",
           content: "Updated content",
           userId: "wrong-user",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       expect(db.auditNote.update).not.toHaveBeenCalled();
@@ -214,7 +214,7 @@ describe("audit asset details service", () => {
           noteId: "note-1",
           content: "Updated content",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow();
 
       expect(db.auditNote.findFirst).toHaveBeenCalledWith(
@@ -222,7 +222,7 @@ describe("audit asset details service", () => {
           where: expect.objectContaining({
             auditAssetId: { not: null },
           }),
-        })
+        }),
       );
     });
   });
@@ -270,7 +270,7 @@ describe("audit asset details service", () => {
         deleteAuditAssetNote({
           noteId: "nonexistent-note",
           userId: "user-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       expect(db.auditNote.delete).not.toHaveBeenCalled();
@@ -283,7 +283,7 @@ describe("audit asset details service", () => {
         deleteAuditAssetNote({
           noteId: "note-1",
           userId: "wrong-user",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       expect(db.auditNote.delete).not.toHaveBeenCalled();
@@ -376,21 +376,21 @@ describe("audit asset details service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.auditNote.findMany).mockRejectedValue(
-        new Error("Database timeout")
+        new Error("Database timeout"),
       );
 
       await expect(
         getAuditAssetNotes({
           auditSessionId: "audit-1",
           auditAssetId: "audit-asset-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
         getAuditAssetNotes({
           auditSessionId: "audit-1",
           auditAssetId: "audit-asset-1",
-        })
+        }),
       ).rejects.toThrow("Failed to fetch asset notes");
     });
   });
@@ -446,13 +446,13 @@ describe("audit asset details service", () => {
         () =>
           new Promise((resolve) => {
             setTimeout(() => resolve(5), 10);
-          })
+          }),
       );
       vi.mocked(db.auditImage.count).mockImplementation(
         () =>
           new Promise((resolve) => {
             setTimeout(() => resolve(3), 10);
-          })
+          }),
       );
 
       const startTime = Date.now();
@@ -470,21 +470,21 @@ describe("audit asset details service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       vi.mocked(db.auditNote.count).mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       await expect(
         getAuditAssetDetailsCounts({
           auditSessionId: "audit-1",
           auditAssetId: "audit-asset-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
         getAuditAssetDetailsCounts({
           auditSessionId: "audit-1",
           auditAssetId: "audit-asset-1",
-        })
+        }),
       ).rejects.toThrow("Failed to fetch asset details counts");
     });
   });

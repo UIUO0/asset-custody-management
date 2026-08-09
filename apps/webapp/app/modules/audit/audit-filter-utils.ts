@@ -60,7 +60,7 @@ const FILTER_METADATA: Record<AuditFilterType, AuditFilterMetadata> = {
  * Falls back to ALL metadata if invalid filter type is provided.
  */
 export function getAuditFilterMetadata(
-  filterType: string | null
+  filterType: string | null,
 ): AuditFilterMetadata {
   // If no filter is provided, default to "ALL" (show all assets)
   const normalizedFilter = (filterType || "ALL") as AuditFilterType;
@@ -82,7 +82,7 @@ export type AuditStatusLabel = "Expected" | "Found" | "Missing" | "Unexpected";
  */
 export function getAuditStatusLabel(
   auditData: { expected: boolean; auditStatus: AuditAssetStatus } | null,
-  isAuditCompleted: boolean = false
+  isAuditCompleted: boolean = false,
 ): AuditStatusLabel {
   if (!auditData) return isAuditCompleted ? "Missing" : "Expected";
 

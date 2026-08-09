@@ -19,7 +19,7 @@
  * @returns The first custody record, or null if none exist
  */
 export function getPrimaryCustody<T extends Record<string, unknown>>(
-  custody: T[] | null | undefined
+  custody: T[] | null | undefined,
 ): T | null {
   if (!custody || custody.length === 0) return null;
   return custody[0] ?? null;
@@ -32,7 +32,7 @@ export function getPrimaryCustody<T extends Record<string, unknown>>(
  * @returns True if at least one custody record exists
  */
 export function hasCustody(
-  custody: Record<string, unknown>[] | null | undefined
+  custody: Record<string, unknown>[] | null | undefined,
 ): boolean {
   return !!custody && custody.length > 0;
 }
@@ -49,7 +49,7 @@ export function hasCustody(
  *   subsequent entry, and `total` is the full count.
  */
 export function formatCustodyList<T extends Record<string, unknown>>(
-  custody: T[] | null | undefined
+  custody: T[] | null | undefined,
 ): { primary: T | null; others: T[]; total: number } {
   // Defensive `Array.isArray` against Sentry-observed crashes
   // (SHELF-WEBAPP-1NX, 1NY): a truthy non-array object with a `.length`

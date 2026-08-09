@@ -16,7 +16,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const { email, mode } = parseData(
           await request.formData(),
           SendOtpSchema,
-          { shouldBeCaptured: false }
+          { shouldBeCaptured: false },
         );
 
         // Only validate SSO for signup attempts

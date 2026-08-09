@@ -94,7 +94,7 @@ describe("completeAuditWithImages", () => {
         uploadedById: "user-1",
         auditAssetId: undefined,
         description: "Completion image",
-      })
+      }),
     );
 
     expect(completeAuditSession).toHaveBeenCalledWith({

@@ -34,7 +34,7 @@ export function protectIndexesInMigration(): void {
     const migrations = fs
       .readdirSync(migrationsDir)
       .filter((file) =>
-        fs.statSync(path.join(migrationsDir, file)).isDirectory()
+        fs.statSync(path.join(migrationsDir, file)).isDirectory(),
       )
       .sort((a, b) => b.localeCompare(a)); // Get latest migration first
 
@@ -47,7 +47,7 @@ export function protectIndexesInMigration(): void {
     const migrationPath = path.join(
       migrationsDir,
       latestMigration,
-      "migration.sql"
+      "migration.sql",
     );
     if (!fs.existsSync(migrationPath)) {
       console.log(`No migration file found in ${latestMigration}`);
@@ -60,7 +60,7 @@ export function protectIndexesInMigration(): void {
     PROTECTED_INDEXES.forEach((index) => {
       const dropIndexPattern = new RegExp(
         `-- DropIndex\\s*DROP INDEX (?:IF EXISTS )?["']?${index}["']?;\\s*`,
-        "gi"
+        "gi",
       );
 
       if (dropIndexPattern.test(content)) {

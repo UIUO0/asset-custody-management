@@ -68,7 +68,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
   const { userId: shelfUserId } = getParams(
     params,
     z.object({ userId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
   const premiumIsEnabled = config.enablePremiumFeatures;
 
@@ -166,7 +166,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
       (uo) =>
         uo.organization.enabledSso &&
         uo.organization.ssoDetails &&
-        uo.roles.some((role) => role === OrganizationRoles.OWNER)
+        uo.roles.some((role) => role === OrganizationRoles.OWNER),
     );
 
     /** Process the data you already have - no second query needed! */
@@ -186,7 +186,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
 
         return acc;
       },
-      {} as Record<string, Set<string>>
+      {} as Record<string, Set<string>>,
     );
 
     /** Convert Sets to counts */
@@ -195,7 +195,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
         acc[domain] = userSet.size;
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, number>,
     );
 
     /** Get the Stripe customer */
@@ -241,7 +241,7 @@ export const action = async ({
   const { userId: shelfUserId } = getParams(
     params,
     z.object({ userId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -258,7 +258,7 @@ export const action = async ({
           "toggleSubscriptionCheck",
           "toggleBooleanField",
         ]),
-      })
+      }),
     );
 
     switch (intent) {
@@ -267,7 +267,7 @@ export const action = async ({
           await request.formData(),
           z.object({
             tierId: z.nativeEnum(TierId),
-          })
+          }),
         );
 
         // Get current tier before updating
@@ -301,7 +301,7 @@ export const action = async ({
               .string()
               .optional()
               .transform((val) => (val === "on" ? true : false)),
-          })
+          }),
         );
 
         await db.customTierLimit.upsert({
@@ -354,7 +354,7 @@ export const action = async ({
           await request.formData(),
           z.object({
             skipSubscriptionCheck: z.coerce.boolean(),
-          })
+          }),
         );
 
         await db.user.update({
@@ -379,7 +379,7 @@ export const action = async ({
           z.object({
             fieldName: z.enum(["hasUnpaidInvoice", "warnForNoPaymentMethod"]),
             fieldValue: z.string().transform((val) => val === "true"),
-          })
+          }),
         );
 
         await db.user.update({
@@ -544,7 +544,7 @@ export default function Area51UserPage() {
                           "qrCodes",
                           "customTierLimit",
                           "businessIntel",
-                        ].includes(k)
+                        ].includes(k),
                     )
                     .map(([key, value]) => (
                       <li key={key}>
@@ -810,7 +810,7 @@ const SsoUsersByDomainTable = ({
 }: SsoUsersByDomainTableProps) => {
   // Convert object to array and sort by domain name for consistent display
   const sortedDomains = Object.entries(ssoUsersByDomain).sort(
-    ([domainA], [domainB]) => domainA.localeCompare(domainB)
+    ([domainA], [domainB]) => domainA.localeCompare(domainB),
   );
 
   if (sortedDomains.length === 0) {

@@ -209,7 +209,7 @@ export function ValueField({
       }
     }
     setLocalError(null);
-  }, [filter.operator, filter.type, localValue]);
+  }, [filter.operator, filter.type, localValue, t]);
 
   // Use a combined error that takes both into account
   const resolveValidationMessage = useValidationMessage();

@@ -9,7 +9,7 @@ import type { ToolbarBlock } from "../types";
 
 export function useEditorCommands(
   schema: Schema,
-  viewRef: RefObject<EditorView | null>
+  viewRef: RefObject<EditorView | null>,
 ) {
   const runCommand = useCallback(
     (command: any) => {
@@ -18,7 +18,7 @@ export function useEditorCommands(
       command(view.state, view.dispatch, view);
       view.focus();
     },
-    [viewRef]
+    [viewRef],
   );
 
   const handleParagraphChange = useCallback(
@@ -38,7 +38,7 @@ export function useEditorCommands(
           setBlockType(schema.nodes.heading, { level })(
             state,
             view.dispatch,
-            view
+            view,
           );
           break;
         }
@@ -61,7 +61,7 @@ export function useEditorCommands(
       schema.nodes.ordered_list,
       schema.nodes.paragraph,
       viewRef,
-    ]
+    ],
   );
 
   return {

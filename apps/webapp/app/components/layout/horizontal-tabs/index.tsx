@@ -12,7 +12,7 @@ export default function HorizontalTabs({
     <div
       className={tw(
         "horizontal-menu -mx-4 mb-5 flex overflow-scroll border-b border-b-gray-200 bg-white ps-4 ",
-        className
+        className,
       )}
     >
       {items.map((item, index) => (

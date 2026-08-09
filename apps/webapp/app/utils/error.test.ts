@@ -122,7 +122,7 @@ describe(makeShelfError.name, () => {
       expect(
         makeShelfError(cause, {
           userId: "user-id",
-        })
+        }),
       ).toEqual(
         new ShelfError({
           cause,
@@ -131,7 +131,7 @@ describe(makeShelfError.name, () => {
           additionalData: {
             userId: "user-id",
           },
-        })
+        }),
       );
     });
 
@@ -143,7 +143,7 @@ describe(makeShelfError.name, () => {
           cause,
           message: "Sorry, something went wrong.",
           label: "Unknown",
-        })
+        }),
       );
     });
 
@@ -155,7 +155,7 @@ describe(makeShelfError.name, () => {
           cause,
           message: "Sorry, something went wrong.",
           label: "Unknown",
-        })
+        }),
       );
     });
   });
@@ -169,8 +169,8 @@ describe(isLikeShelfError.name, () => {
           cause: null,
           label: "Unknown",
           message: "I am an error",
-        })
-      )
+        }),
+      ),
     ).toBeTruthy();
   });
 
@@ -180,7 +180,7 @@ describe(isLikeShelfError.name, () => {
         cause: null,
         label: "Unknown",
         message: "I am an error",
-      })
+      }),
     ).toBeTruthy();
   });
 
@@ -193,7 +193,7 @@ describe(isLikeShelfError.name, () => {
       isLikeShelfError({
         cause: null,
         message: "I am an error",
-      })
+      }),
     ).toBeFalsy();
   });
 });
@@ -405,7 +405,7 @@ describe(isPrismaTransientError.name, () => {
     (code) => {
       const error = Object.assign(new Error("some error"), { code });
       expect(isPrismaTransientError(error)).toBe(true);
-    }
+    },
   );
 
   it("should return false for P2025 (not found)", () => {
@@ -477,8 +477,13 @@ describe(isHandledClientError.name, () => {
     for (const status of [400, 401, 403, 404, 405, 409, 429, 499] as const) {
       expect(
         isHandledClientError(
-          new ShelfError({ cause: null, message: "x", label: "Assets", status })
-        )
+          new ShelfError({
+            cause: null,
+            message: "x",
+            label: "Assets",
+            status,
+          }),
+        ),
       ).toBe(true);
     }
   });
@@ -491,14 +496,14 @@ describe(isHandledClientError.name, () => {
           message: "x",
           label: "Assets",
           status: 500,
-        })
-      )
+        }),
+      ),
     ).toBe(false);
     // No explicit status → ShelfError defaults to 500 → treated as a server error.
     expect(
       isHandledClientError(
-        new ShelfError({ cause: null, message: "x", label: "Assets" })
-      )
+        new ShelfError({ cause: null, message: "x", label: "Assets" }),
+      ),
     ).toBe(false);
   });
 

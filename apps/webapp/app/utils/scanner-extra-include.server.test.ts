@@ -16,13 +16,13 @@ import {
 describe("sanitizeAssetExtraInclude", () => {
   it("keeps the exact shapes the scanner drawers send", () => {
     expect(
-      sanitizeAssetExtraInclude({ kit: { select: { id: true, name: true } } })
+      sanitizeAssetExtraInclude({ kit: { select: { id: true, name: true } } }),
     ).toEqual({ kit: { select: { id: true, name: true } } });
 
     expect(
       sanitizeAssetExtraInclude({
         location: { select: { id: true, name: true } },
-      })
+      }),
     ).toEqual({ location: { select: { id: true, name: true } } });
 
     expect(sanitizeAssetExtraInclude({ category: true })).toEqual({
@@ -37,7 +37,7 @@ describe("sanitizeAssetExtraInclude", () => {
         bookings: { include: { custodianUser: true } },
         notes: true,
         kit: { select: { id: true } },
-      })
+      }),
     ).toEqual({ kit: { select: { id: true } } });
   });
 
@@ -46,7 +46,7 @@ describe("sanitizeAssetExtraInclude", () => {
     expect(
       sanitizeAssetExtraInclude({
         kit: { include: { assets: { include: { bookings: true } } } },
-      })
+      }),
     ).toBeUndefined();
   });
 
@@ -59,18 +59,18 @@ describe("sanitizeAssetExtraInclude", () => {
     expect(
       sanitizeAssetExtraInclude({
         kit: { select: { assets: { select: { bookings: true } } } },
-      })
+      }),
     ).toBeUndefined();
     expect(
       sanitizeAssetExtraInclude({
         kit: { select: { assets: { include: { bookings: true } } } },
-      })
+      }),
     ).toBeUndefined();
     // Mixed: one valid boolean + one nested → reject the whole value
     expect(
       sanitizeAssetExtraInclude({
         kit: { select: { id: true, assets: { select: { id: true } } } },
-      })
+      }),
     ).toBeUndefined();
   });
 
@@ -88,13 +88,13 @@ describe("sanitizeKitExtraInclude", () => {
       sanitizeKitExtraInclude({
         category: true,
         assets: { include: { bookings: true } },
-      })
+      }),
     ).toEqual({ category: true });
   });
 
   it("drops everything when nothing is allowlisted", () => {
     expect(
-      sanitizeKitExtraInclude({ assets: true, organization: true })
+      sanitizeKitExtraInclude({ assets: true, organization: true }),
     ).toBeUndefined();
   });
 });

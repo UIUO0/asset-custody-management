@@ -62,7 +62,7 @@ export default function OnboardingChecklist() {
                     </p>
                   </div>
                   <div className="flex gap-3">
-                    <Button variant="link" to="/assets/new">
+                    <Button variant="link" to="/receipts/new">
                       {t("assets.newAsset")}
                     </Button>
                   </div>

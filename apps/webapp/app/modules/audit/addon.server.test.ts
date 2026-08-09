@@ -105,7 +105,7 @@ describe("createAuditAddonCheckoutSession", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(ShelfError);
       expect((e as ShelfError).message).toContain(
-        "Something went wrong while creating audit add-on checkout session"
+        "Something went wrong while creating audit add-on checkout session",
       );
     }
   });
@@ -329,7 +329,7 @@ describe("linkAuditAddonToOrganization", () => {
           auditsEnabled: true,
           auditsEnabledAt: expect.any(Date),
         }),
-      })
+      }),
     );
   });
 
@@ -349,7 +349,7 @@ describe("linkAuditAddonToOrganization", () => {
         data: expect.objectContaining({
           usedAuditTrial: true,
         }),
-      })
+      }),
     );
   });
 
@@ -396,7 +396,7 @@ describe("linkAuditAddonToOrganization", () => {
       "sub_unlinked",
       expect.objectContaining({
         metadata: expect.objectContaining({ organizationId: "org_456" }),
-      })
+      }),
     );
   });
 
@@ -420,7 +420,7 @@ describe("linkAuditAddonToOrganization", () => {
       "sub_same_org",
       expect.objectContaining({
         metadata: expect.objectContaining({ organizationId: "org_456" }),
-      })
+      }),
     );
     expect(mockOrgUpdate).toHaveBeenCalled();
   });
@@ -434,7 +434,7 @@ describe("linkAuditAddonToOrganization", () => {
     } catch (e) {
       expect(e).toBeInstanceOf(ShelfError);
       expect((e as ShelfError).message).toContain(
-        "Something went wrong while linking audit add-on"
+        "Something went wrong while linking audit add-on",
       );
     }
   });
@@ -517,7 +517,7 @@ describe("getAuditSubscriptionInfo", () => {
 
   it("returns null silently on errors", async () => {
     mockStripe.subscriptions.list.mockRejectedValue(
-      new Error("Stripe API error")
+      new Error("Stripe API error"),
     );
 
     const result = await getAuditSubscriptionInfo({

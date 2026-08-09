@@ -26,7 +26,7 @@ interface Options {
  * @returns {UseControlledDropdownMenuReturn}
  */
 export function useControlledDropdownMenu(
-  options: Options = {}
+  options: Options = {},
 ): UseControlledDropdownMenuReturn {
   const ref = useRef<HTMLDivElement>(null);
   const [searchParams] = useSearchParams();

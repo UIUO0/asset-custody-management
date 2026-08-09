@@ -36,7 +36,7 @@ describe("AssetCodeBadge", () => {
         type="Code128"
         isFallback={false}
         workspacePreference="Code128"
-      />
+      />,
     );
 
     expect(screen.getByText("ABC-123")).toBeInTheDocument();
@@ -53,11 +53,11 @@ describe("AssetCodeBadge", () => {
         type="Code128"
         isFallback={false}
         workspacePreference="Code128"
-      />
+      />,
     );
 
     const badge = screen.getByLabelText(
-      /matches your workspace's preferred display code/i
+      /matches your workspace's preferred display code/i,
     );
     expect(badge).toBeInTheDocument();
     expect(badge.textContent).toContain("ABC-123");
@@ -70,13 +70,13 @@ describe("AssetCodeBadge", () => {
         type="QR_ID"
         isFallback={true}
         workspacePreference="Code128"
-      />
+      />,
     );
 
     expect(
       screen.getByLabelText(
-        /your workspace prefers Code 128 but this item has no Code 128/i
-      )
+        /your workspace prefers Code 128 but this item has no Code 128/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe("AssetCodeBadge", () => {
         isFallback={false}
         workspacePreference="Code128"
         explicit
-      />
+      />,
     );
 
     const badge = screen.getByLabelText("SAM ID: SAM-0001");
@@ -102,7 +102,7 @@ describe("AssetCodeBadge", () => {
         type="QR_ID"
         isFallback={false}
         workspacePreference="QR_ID"
-      />
+      />,
     );
 
     expect(container.firstChild).toBeNull();

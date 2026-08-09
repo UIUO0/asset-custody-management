@@ -80,7 +80,7 @@ export const ListItem = function ListItem({
   const sharedClassName = tw(
     "hover:bg-gray-50",
     navigate ? "cursor-pointer" : "",
-    className
+    className,
   );
 
   // Only use framer-motion when animations are actually needed (e.g. kit expand/collapse).

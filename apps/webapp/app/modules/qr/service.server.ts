@@ -570,7 +570,7 @@ export async function parseQrCodesFromImportData({
     /** Check for any codes that are present more than 1 time in the data */
     const duplicateCodes = qrCodePerAsset.filter(
       (asset, index, self) =>
-        self.findIndex((t) => t?.qrId === asset?.qrId) !== index
+        self.findIndex((t) => t?.qrId === asset?.qrId) !== index,
     );
 
     if (duplicateCodes.length) {
@@ -589,7 +589,7 @@ export async function parseQrCodesFromImportData({
 
     /** Check if any of the codes are non-existent */
     const nonExistentCodes = qrCodePerAsset.filter(
-      (asset) => !codes.find((code) => code.id === asset?.qrId) && asset?.qrId
+      (asset) => !codes.find((code) => code.id === asset?.qrId) && asset?.qrId,
     );
 
     if (nonExistentCodes.length) {
@@ -607,8 +607,8 @@ export async function parseQrCodesFromImportData({
     /** Check for codes already linked to asset or kit. Returns QRCodePerImportedAsset[] */
     const linkedCodes = qrCodePerAsset.filter((asset) =>
       codes.find(
-        (code) => code.id === asset?.qrId && (code.assetId || code.kitId)
-      )
+        (code) => code.id === asset?.qrId && (code.assetId || code.kitId),
+      ),
     );
     if (linkedCodes.length) {
       throw new ShelfError({
@@ -630,8 +630,8 @@ export async function parseQrCodesFromImportData({
         (code) =>
           code.id === asset?.qrId &&
           code.organizationId &&
-          code.organizationId !== organizationId
-      )
+          code.organizationId !== organizationId,
+      ),
     );
     if (connectedToOtherOrgs.length) {
       throw new ShelfError({

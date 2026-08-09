@@ -51,7 +51,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       {
         message: "Invalid tag assignment data provided",
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     await bulkAssignAssetTags({

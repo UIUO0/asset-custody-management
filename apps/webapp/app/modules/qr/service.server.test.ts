@@ -23,7 +23,7 @@ const organizationId = "org-1";
  * the test if it unexpectedly resolves.
  */
 async function captureThrow(
-  data: Parameters<typeof parseQrCodesFromImportData>[0]["data"]
+  data: Parameters<typeof parseQrCodesFromImportData>[0]["data"],
 ) {
   try {
     await parseQrCodesFromImportData({ data, userId, organizationId });

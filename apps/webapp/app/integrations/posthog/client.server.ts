@@ -90,7 +90,7 @@ export function captureServerEvent(
   args: ServerFunnelEvent & {
     distinctId: string;
     groups?: Record<string, string>;
-  }
+  },
 ): void {
   try {
     const posthog = getPostHogClient();
@@ -113,7 +113,7 @@ export function captureServerEvent(
         additionalData: { event: args.event },
         label: "Analytics",
         shouldBeCaptured: false,
-      })
+      }),
     );
   }
 }

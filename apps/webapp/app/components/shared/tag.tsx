@@ -11,7 +11,7 @@ type TagProps = HTMLAttributes<HTMLSpanElement> & {
 
 export const Tag = forwardRef<HTMLSpanElement, TagProps>(function Tag(
   { children, className, color, withDot = false, ...props },
-  ref
+  ref,
 ) {
   const hasColor = Boolean(color);
   const finalTextColor = hasColor && color ? darkenColor(color, 0.5) : null;
@@ -23,7 +23,7 @@ export const Tag = forwardRef<HTMLSpanElement, TagProps>(function Tag(
       className={tw(
         "inline-flex items-center rounded-2xl bg-gray-100 py-0.5 ps-1.5 text-[12px] font-medium text-gray-700",
         withDot ? " gap-1 pe-2" : "px-2",
-        className
+        className,
       )}
       style={
         hasColor

@@ -54,11 +54,16 @@ export function partyFor(
 /**
  * Resolves which party slot — if any — a signed-in user is entitled to sign.
  *
- * This is the whole security model of remote signing. The employee's slot is
- * bound to *their own* team-member row, so an operator cannot open a record
- * naming someone else and then sign both halves of it from their own account.
- * That is the failure mode remote signing invites and the one thing this
- * function exists to prevent.
+ * This is the whole security model of remote signing, and it closes both ways
+ * one account could end up on both halves of a record:
+ *
+ * - The employee's slot is bound to *their own* team-member row, so an operator
+ *   cannot open a record naming someone else and sign the employee's half.
+ * - A viewer who **is** the named counterparty gets that slot and only that
+ *   slot, so an operator cannot name themselves and then also sign as the desk.
+ *
+ * Those are the failure modes remote signing invites and the ones this function
+ * exists to prevent.
  *
  * Returns `null` rather than throwing, so callers can distinguish "may not
  * sign" (hide the pad, still show the record) from "record not found".
@@ -70,12 +75,15 @@ export function partyFor(
  * @param canOperate - Whether the viewer holds `asset.custody` at organization
  *   scope, i.e. may act as the warehouse side
  * @param ownTeamMemberId - The viewer's team-member row in this workspace
+ * @param ownDepartmentTeamMemberId - The department desk this viewer speaks
+ *   for, when they hold `DEPARTMENT`. See the note on desks below.
  * @returns The party they may sign, or `null`
  */
 export function resolveSignableParty({
   handover,
   canOperate,
   ownTeamMemberId,
+  ownDepartmentTeamMemberId = null,
 }: {
   handover: {
     kind: CustodyHandoverKind;
@@ -85,6 +93,11 @@ export function resolveSignableParty({
   };
   canOperate: boolean;
   ownTeamMemberId: string | null;
+  /**
+   * Set only for a `DEPARTMENT` holder, and only from their own membership —
+   * never from anything the client sends. Resolved by `resolveOwnDepartmentId`.
+   */
+  ownDepartmentTeamMemberId?: string | null;
 }): CustodyHandoverParty | null {
   if (handover.state !== CustodyHandoverState.AWAITING_SIGNATURES) return null;
 
@@ -92,15 +105,42 @@ export function resolveSignableParty({
   const counterpartySlot = partyFor(handover.kind, "counterparty");
   const warehouseSlot = partyFor(handover.kind, "warehouse");
 
-  // The employee's own slot comes first: when an operator is *also* the named
-  // counterparty (a warehouse officer taking an asset out for themselves),
-  // they sign as the employee, not as the desk.
-  if (
-    ownTeamMemberId &&
-    ownTeamMemberId === handover.counterpartyTeamMemberId &&
-    !signed.has(counterpartySlot)
-  ) {
-    return counterpartySlot;
+  /**
+   * A counterparty is either the named person, or — when the record names a
+   * **department desk** — someone who speaks for that desk.
+   *
+   * Batch handovers name `إدارة المرافق`, a `TeamMember` row with no user
+   * account, so nobody's *personal* row ever equals it. Without the second
+   * clause the receiving department could never sign, and every batch محضر
+   * would sit unsignable forever.
+   *
+   * This widens **who counts as the counterparty**. It does not widen how many
+   * slots anyone gets: a department officer recognised here takes the
+   * counterparty slot and returns below, exactly like a named individual, so
+   * they still cannot also sign the warehouse half.
+   */
+  const isCounterparty =
+    (Boolean(ownTeamMemberId) &&
+      ownTeamMemberId === handover.counterpartyTeamMemberId) ||
+    (Boolean(ownDepartmentTeamMemberId) &&
+      ownDepartmentTeamMemberId === handover.counterpartyTeamMemberId);
+
+  /**
+   * A named counterparty signs their own slot and **nothing else** — even when
+   * they also hold `asset.custody`.
+   *
+   * A warehouse officer taking an asset out for themselves is the employee on
+   * that record, not the desk. Letting them fall through to the warehouse slot
+   * would mean one person signing both halves, which is exactly the control the
+   * two signatures exist to impose: the second signature is what actually moves
+   * custody, and a signature against oneself witnesses nothing. Someone else
+   * with `asset.custody` countersigns.
+   *
+   * The early return is the whole guard. Returning `null` here (rather than
+   * falling through) is deliberate and load-bearing — see the test that pins it.
+   */
+  if (isCounterparty) {
+    return signed.has(counterpartySlot) ? null : counterpartySlot;
   }
 
   if (canOperate && !signed.has(warehouseSlot)) {

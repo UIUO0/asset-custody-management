@@ -44,8 +44,6 @@ import { UnpaidInvoiceBanner } from "~/components/subscription/unpaid-invoice-ba
 import { config } from "~/config/shelf.config";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
-import { countPendingBookingRequests } from "~/modules/booking/request.server";
-import { getBookingSettingsForOrganization } from "~/modules/booking-settings/service.server";
 import { countHandoversAwaitingMySignature } from "~/modules/custody/handover.server";
 import { CHANGE_CURRENT_ORGANIZATION_ACTION } from "~/modules/organization/constants";
 import {
@@ -81,7 +79,7 @@ import {
   stripe,
   validateSubscriptionIsActive,
 } from "~/utils/stripe.server";
-import { canUseAudits, canUseBookings } from "~/utils/subscription.server";
+import { canUseAudits } from "~/utils/subscription.server";
 import { tw } from "~/utils/tw";
 
 export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
@@ -92,7 +90,7 @@ export type LayoutLoaderResponse = typeof loader;
  * The app-shell loader (user, org, subscription) does not depend on a page's
  * client-side view params (search/sort/page). Skip re-running it for same-path
  * client-view-only navigations so pages that filter client-side (e.g. the
- * booking overview) never trigger a shell refetch. Mutations and real
+ * asset overview) never trigger a shell refetch. Mutations and real
  * navigations still revalidate.
  */
 export const shouldRevalidate = skipRevalidationOnClientViewChange;
@@ -199,69 +197,43 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       });
     }
 
-    // Run booking settings, working hours, and unread count in parallel —
+    // Run working hours and the unread/handover counts in parallel —
     // all only depend on organizationId/userId which are available now.
-    /**
-     * The requests badge is only fetched for the roles that can act on the
-     * queue — nobody else's sidebar shows it, so counting for them would be a
-     * query per page load for a number never rendered.
-     */
-    const canSeeRequests =
-      userHasPermission({
-        roles: currentOrganizationUserRoles ?? [],
-        entity: PermissionEntity.booking,
-        action: PermissionAction.approve,
-      }) ||
-      userHasPermission({
-        roles: currentOrganizationUserRoles ?? [],
-        entity: PermissionEntity.booking,
-        action: PermissionAction.hold,
-      });
 
-    const [
-      bookingSettings,
-      workingHours,
-      unreadUpdatesCount,
-      pendingRequestCount,
-      pendingHandoverCount,
-    ] = await Promise.all([
-      getBookingSettingsForOrganization(currentOrganization.id),
-      getWorkingHoursForOrganization(currentOrganization.id),
-      currentOrganizationUserRoles?.[0]
-        ? getUnreadCountForUser({
-            userId: authSession.userId,
-            userRole: currentOrganizationUserRoles[0],
-          })
-        : Promise.resolve(0),
-      canSeeRequests
-        ? countPendingBookingRequests(currentOrganization.id)
-        : Promise.resolve(0),
-      /**
-       * Counted for everyone, unlike the requests badge: anybody can be named
-       * as the employee on a handover, so there is no role that provably never
-       * has one waiting.
-       *
-       * `canOperate` decides whether desk-side signatures count too. Without
-       * it an employee-initiated return sits signed and unannounced — the
-       * warehouse is the blocking party but nothing tells them so.
-       */
-      countHandoversAwaitingMySignature({
-        userId: authSession.userId,
-        organizationId: currentOrganization.id,
-        canOperate: userHasPermission({
-          roles: currentOrganizationUserRoles ?? [],
-          entity: PermissionEntity.asset,
-          action: PermissionAction.custody,
+    const [workingHours, unreadUpdatesCount, pendingHandoverCount] =
+      await Promise.all([
+        getWorkingHoursForOrganization(currentOrganization.id),
+        currentOrganizationUserRoles?.[0]
+          ? getUnreadCountForUser({
+              userId: authSession.userId,
+              userRole: currentOrganizationUserRoles[0],
+            })
+          : Promise.resolve(0),
+        /**
+         * Counted for everyone, unlike the requests badge: anybody can be named
+         * as the employee on a handover, so there is no role that provably never
+         * has one waiting.
+         *
+         * `canOperate` decides whether desk-side signatures count too. Without
+         * it an employee-initiated return sits signed and unannounced — the
+         * warehouse is the blocking party but nothing tells them so.
+         */
+        countHandoversAwaitingMySignature({
+          userId: authSession.userId,
+          organizationId: currentOrganization.id,
+          canOperate: userHasPermission({
+            roles: currentOrganizationUserRoles ?? [],
+            entity: PermissionEntity.asset,
+            action: PermissionAction.custody,
+          }),
         }),
-      }),
-    ]);
+      ]);
 
     return data(
       payload({
         user,
         organizations,
         currentOrganizationId: organizationId,
-        bookingSettings,
         workingHours,
         currentOrganization,
         currentOrganizationUserRoles,
@@ -271,10 +243,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         minimizedSidebar: userPrefsCookie.minimizedSidebar,
         scannerCameraId: userPrefsCookie.scannerCameraId as string | undefined,
         isAdmin,
-        canUseBookings: canUseBookings(currentOrganization),
         canUseAudits: canUseAudits(currentOrganization),
         unreadUpdatesCount,
-        pendingRequestCount,
         pendingHandoverCount,
         hasUnpaidInvoice: user.hasUnpaidInvoice,
         warnForNoPaymentMethod: user.warnForNoPaymentMethod,

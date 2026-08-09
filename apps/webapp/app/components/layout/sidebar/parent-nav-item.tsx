@@ -40,13 +40,13 @@ export default function ParentNavItem({
   const { state, isMobile } = useSidebar();
   const navigate = useNavigate();
   const isAnyChildActive = useIsAnyRouteActive(
-    route.children.map((child) => child.to)
+    route.children.map((child) => child.to),
   );
 
   const firstChildRoute = route.children[0];
   invariant(
     typeof firstChildRoute !== "undefined",
-    "'parent' nav item should have at leaset one child route"
+    "'parent' nav item should have at leaset one child route",
   );
 
   function handleClick() {
@@ -111,7 +111,7 @@ function NestedRouteRenderer({
           target={nested.target}
           className={tw(
             "font-medium hover:bg-gray-100",
-            isChildActive && "bg-transparent font-bold !text-primary"
+            isChildActive && "bg-transparent font-bold !text-primary",
           )}
         >
           {nested.title}

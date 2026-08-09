@@ -19,7 +19,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     z.object({ locationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {

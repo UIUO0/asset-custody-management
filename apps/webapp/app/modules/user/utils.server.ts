@@ -35,7 +35,7 @@ export async function resolveUserAction(
   request: Request,
   organizationId: string,
   userId: string,
-  callerRole: OrgRolesEnum
+  callerRole: OrgRolesEnum,
 ) {
   const formData = await request.formData();
 
@@ -54,7 +54,7 @@ export async function resolveUserAction(
       additionalData: {
         organizationId,
       },
-    }
+    },
   );
 
   switch (intent) {
@@ -69,7 +69,7 @@ export async function resolveUserAction(
             organizationId,
             intent,
           },
-        }
+        },
       );
 
       await db.teamMember
@@ -105,7 +105,7 @@ export async function resolveUserAction(
             organizationId,
             intent,
           },
-        }
+        },
       );
 
       const user = await revokeAccessToOrganization({
@@ -161,7 +161,7 @@ export async function resolveUserAction(
             organizationId,
             intent,
           },
-        }
+        },
       );
 
       await db.invite
@@ -212,12 +212,12 @@ export async function resolveUserAction(
             organizationId,
             intent,
           },
-        }
+        },
       );
 
       /** Find the Role based on its user friendly name */
       const role = Object.keys(organizationRolesMap).find(
-        (key) => organizationRolesMap[key] === userFriendlyRole
+        (key) => organizationRolesMap[key] === userFriendlyRole,
       ) as OrganizationRoles | undefined;
 
       if (!role) {
@@ -300,7 +300,7 @@ export async function resolveUserAction(
             organizationId,
             intent,
           },
-        }
+        },
       );
 
       if (targetUserId === userId) {
@@ -473,7 +473,7 @@ const MAX_USERNAME_ATTEMPTS = 5;
 export async function generateUniqueUsername(email: string): Promise<string> {
   // Generate all candidate usernames upfront and check in a single query
   const candidates = Array.from({ length: MAX_USERNAME_ATTEMPTS }, () =>
-    randomUsernameFromEmail(email)
+    randomUsernameFromEmail(email),
   );
 
   const existingUsers = await db.user.findMany({

@@ -45,7 +45,7 @@ const createDateOnlyFormatter = (formatter: Intl.DateTimeFormat) => {
 
 const sanitizeMarkdocTags = (
   text: string,
-  formatter: Intl.DateTimeFormat
+  formatter: Intl.DateTimeFormat,
 ): string => {
   const dateOnlyFormatter = createDateOnlyFormatter(formatter);
 
@@ -112,13 +112,13 @@ const sanitizeMarkdocTags = (
           return textAttr ? decodeHtmlEntities(textAttr) : "";
         }
       }
-    }
+    },
   );
 };
 
 export const sanitizeNoteContent = (
   content: string,
-  formatter: Intl.DateTimeFormat
+  formatter: Intl.DateTimeFormat,
 ): string => {
   if (!content) return "";
 

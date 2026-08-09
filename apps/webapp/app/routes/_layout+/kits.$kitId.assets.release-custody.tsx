@@ -118,7 +118,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       }),
       {
         additionalData: { userId, kitId },
-      }
+      },
     );
 
     sendNotification({

@@ -86,7 +86,7 @@ describe("sendBarcodeTrialWelcomeEmail", () => {
       expect.objectContaining({
         to: "alice@example.com",
         subject: "Your 7-day Barcodes trial is now active!",
-      })
+      }),
     );
     const call = mockSendEmail.mock.calls[0][0];
     expect(call.html).toBeDefined();
@@ -103,7 +103,7 @@ describe("sendBarcodeTrialWelcomeEmail", () => {
         firstName: "Alice",
         email: "alice@example.com",
         hasPaymentMethod: false,
-      })
+      }),
     ).resolves.toBeUndefined();
   });
 });

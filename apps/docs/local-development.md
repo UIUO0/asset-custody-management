@@ -183,7 +183,6 @@ pnpm turbo lint        # Run ESLint (all packages)
 pnpm run format        # Format code with Prettier
 pnpm webapp:validate   # Run all checks (lint, typecheck, format, tests)
 pnpm webapp:doctor     # React health scan (react-doctor) — webapp
-pnpm companion:doctor  # React Native health scan (react-doctor) — companion app
 ```
 
 > Both `*:doctor` scans run in CI on every PR (the 🩺 React Doctor action). Warnings
@@ -195,13 +194,12 @@ We use [Lefthook](https://github.com/evilmartians/lefthook) to run automated che
 
 #### Pre-commit hooks (piped, run in order)
 
-| Command            | Priority | Triggers on                              | What it does                                   |
-| ------------------ | -------- | ---------------------------------------- | ---------------------------------------------- |
-| `prisma-generate`  | 1        | `packages/database/prisma/schema.prisma` | Regenerates Prisma client after schema changes |
-| `eslint`           | 2        | `apps/webapp/**/*.{js,jsx,ts,tsx}`       | Lints staged webapp files with `--fix`         |
-| `eslint-companion` | 2        | `apps/companion/**/*.{js,jsx,ts,tsx}`    | Lints companion app via `expo lint`            |
-| `prettier`         | 3        | `**/*.{ts,tsx,js,jsx,json,md,css,yaml}`  | Formats staged files with Prettier             |
-| `typecheck`        | 4        | `apps/webapp/**/*.{ts,tsx}`              | Runs TypeScript type checking on the webapp    |
+| Command           | Priority | Triggers on                              | What it does                                   |
+| ----------------- | -------- | ---------------------------------------- | ---------------------------------------------- |
+| `prisma-generate` | 1        | `packages/database/prisma/schema.prisma` | Regenerates Prisma client after schema changes |
+| `eslint`          | 2        | `apps/webapp/**/*.{js,jsx,ts,tsx}`       | Lints staged webapp files with `--fix`         |
+| `prettier`        | 3        | `**/*.{ts,tsx,js,jsx,json,md,css,yaml}`  | Formats staged files with Prettier             |
+| `typecheck`       | 4        | `apps/webapp/**/*.{ts,tsx}`              | Runs TypeScript type checking on the webapp    |
 
 #### Commit-msg hook
 
@@ -213,7 +211,7 @@ We use [Lefthook](https://github.com/evilmartians/lefthook) to run automated che
 
 - Hooks are **piped** — they run in priority order and stop on first failure.
 - All pre-commit hooks are **skipped during merge and rebase** to avoid blocking conflict resolution.
-- The webapp ESLint runs on **staged files only** (fast). The companion ESLint runs on the full app when companion files are staged (Expo's lint wrapper doesn't support individual file paths).
+- The webapp ESLint runs on **staged files only** (fast).
 - Prettier auto-fixes and re-stages formatted files.
 - To override hooks locally (not recommended), create a `lefthook-local.yml` — it's gitignored.
 

@@ -44,10 +44,10 @@ export const handlers = [
       if (!email || !password || password !== USER_PASSWORD)
         return HttpResponse.json(
           { message: "Wrong email or password" },
-          { status: 401 }
+          { status: 401 },
         );
       return HttpResponse.json(supabaseAuthSession, { status: 200 });
-    }
+    },
   ),
   http.get(`${SUPABASE_URL}${SUPABASE_AUTH_USER_API}`, async ({ request }) => {
     const token = request.headers.get("authorization")?.split("Bearer ")?.[1];
@@ -57,10 +57,10 @@ export const handlers = [
     return HttpResponse.json({ id: USER_ID }, { status: 200 });
   }),
   http.post(`${SUPABASE_URL}${SUPABASE_AUTH_ADMIN_USER_API}`, async () =>
-    HttpResponse.json(authAccount, { status: 200 })
+    HttpResponse.json(authAccount, { status: 200 }),
   ),
   http.delete(
     `${SUPABASE_URL}${SUPABASE_AUTH_ADMIN_USER_API}/:userId`,
-    async () => HttpResponse.json({}, { status: 200 })
+    async () => HttpResponse.json({}, { status: 200 }),
   ),
 ];

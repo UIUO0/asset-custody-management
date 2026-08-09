@@ -43,7 +43,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const users = extractCSVDataFromContentImport(
       csvData,
-      IMPORT_USERS_CSV_HEADERS
+      IMPORT_USERS_CSV_HEADERS,
     );
 
     const response = await bulkInviteUsers({

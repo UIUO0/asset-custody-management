@@ -40,7 +40,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           ...update,
           content: parseMarkdownToReact(update.content),
         })),
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
@@ -107,7 +107,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         }
         // Only increment view count for updates (when popover opens)
         await Promise.all(
-          updateIds.map((updateId) => trackUpdateView({ updateId }))
+          updateIds.map((updateId) => trackUpdateView({ updateId })),
         );
         return data(payload({ success: true }));
       }

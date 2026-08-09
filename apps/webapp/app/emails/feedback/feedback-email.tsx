@@ -71,7 +71,7 @@ export const sendFeedbackEmail = async (props: FeedbackEmailProps) => {
         message: "Something went wrong while sending the feedback email",
         additionalData: { userEmail: props.userEmail, type: props.type },
         label: "Email",
-      })
+      }),
     );
   }
 };
@@ -82,7 +82,7 @@ export const sendFeedbackEmail = async (props: FeedbackEmailProps) => {
  */
 function getTypeLabel(
   type: FeedbackEmailProps["type"],
-  errorContext?: FeedbackErrorContext | null
+  errorContext?: FeedbackErrorContext | null,
 ) {
   if (errorContext) {
     return "Error report";

@@ -26,7 +26,7 @@ export default function FormRow({
         <div
           className={tw(
             "text-text-sm font-medium text-gray-700",
-            required && "required-input-label"
+            required && "required-input-label",
           )}
         >
           {rowLabel}

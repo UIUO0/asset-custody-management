@@ -7,7 +7,7 @@ import { getDateTimeFormatFromHints, useHints } from "~/utils/client-hints";
  */
 export function formatAbsoluteDate(
   date: string | Date,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string {
   // Extract just the date part and create a local date
   let dateOnly: string;
@@ -148,7 +148,7 @@ export const DateS = ({
   }
 
   const formattedDate = getDateTimeFormatFromHints(hints, timeOptions).format(
-    new Date(d)
+    new Date(d),
   );
 
   return <span>{formattedDate}</span>;

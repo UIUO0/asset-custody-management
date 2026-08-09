@@ -36,7 +36,7 @@ import When from "../when/when";
 // react-doctor:no-giant-component — deferred for follow-up refactor
 const ConditionalActionsDropdown = () => {
   const { t } = useTranslation();
-  const { asset } = useLoaderData<typeof loader>();
+  const { asset, isDepartmentTransfer } = useLoaderData<typeof loader>();
   const [isRelinkQrDialogOpen, setIsRelinkQrDialogOpen] = useState(false);
   const [isSetReminderDialogOpen, setIsSetReminderDialogOpen] = useState(false);
   const [isQuantityCustodyDialogOpen, setIsQuantityCustodyDialogOpen] =
@@ -171,7 +171,14 @@ const ConditionalActionsDropdown = () => {
                   className="border-b px-0 py-1 md:p-0"
                   aria-disabled={custodyActionDisabled}
                 >
-                  {isQtyTracked ? (
+                  {isQtyTracked && !assetCanBeReleased ? (
+                    /*
+                     * Quantity-tracked stock still on the shelf goes through
+                     * the quantity dialog. Once ANY of it is in custody the
+                     * signed محضر takes over below — a department passing part
+                     * of its stock on must produce a signed document, and the
+                     * dialog writes custody with no signature at all.
+                     */
                     <Button
                       type="button"
                       role="button"
@@ -199,9 +206,14 @@ const ConditionalActionsDropdown = () => {
                       </span>
                     </Button>
                   ) : assetCanBeReleased ? (
-                    // EPDA: individual custody moves through the signed
-                    // handover flow. The direction is derived server-side, so
-                    // both branches point at the same route.
+                    /*
+                     * EPDA: custody moves through the signed handover flow.
+                     * The direction is derived server-side, so both branches
+                     * point at the same route — but the LABEL must match what
+                     * will actually be filed. A department officer looking at
+                     * their own desk's stock is handing it on, not releasing
+                     * it, and "فك العهدة" would describe the opposite action.
+                     */
                     <Button
                       to="overview/custody-handover"
                       role="link"
@@ -216,8 +228,16 @@ const ConditionalActionsDropdown = () => {
                       }
                     >
                       <span className="flex items-center gap-1">
-                        <Icon icon="release-custody" />{" "}
-                        {t("assetActions.releaseCustody")}
+                        <Icon
+                          icon={
+                            isDepartmentTransfer
+                              ? "assign-custody"
+                              : "release-custody"
+                          }
+                        />{" "}
+                        {isDepartmentTransfer
+                          ? t("assetActions.handOverToEmployee")
+                          : t("assetActions.releaseCustody")}
                       </span>
                     </Button>
                   ) : (

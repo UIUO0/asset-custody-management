@@ -22,7 +22,7 @@ describe("buildSecurityHeaders", () => {
     expect(headers["Referrer-Policy"]).toBe("strict-origin-when-cross-origin");
     expect(headers["Permissions-Policy"]).toBe(PERMISSIONS_POLICY);
     expect(headers["Content-Security-Policy-Report-Only"]).toBe(
-      CONTENT_SECURITY_POLICY_REPORT_ONLY
+      CONTENT_SECURITY_POLICY_REPORT_ONLY,
     );
   });
 
@@ -54,7 +54,7 @@ describe("buildSecurityHeaders", () => {
 
   it("ships CSP as report-only scaffolding, not enforcing", () => {
     expect(CONTENT_SECURITY_POLICY_REPORT_ONLY).toContain(
-      "frame-ancestors 'none'"
+      "frame-ancestors 'none'",
     );
   });
 });
@@ -109,11 +109,11 @@ describe("securityHeaders middleware", () => {
     expect(res.headers.get("X-Frame-Options")).toBe("DENY");
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(res.headers.get("Referrer-Policy")).toBe(
-      "strict-origin-when-cross-origin"
+      "strict-origin-when-cross-origin",
     );
     expect(res.headers.get("Permissions-Policy")).toContain("camera=(self)");
     expect(res.headers.get("Content-Security-Policy-Report-Only")).toContain(
-      "frame-ancestors 'none'"
+      "frame-ancestors 'none'",
     );
   });
 
@@ -130,7 +130,7 @@ describe("securityHeaders middleware", () => {
     });
 
     expect(res.headers.get("Strict-Transport-Security")).toBe(
-      STRICT_TRANSPORT_SECURITY
+      STRICT_TRANSPORT_SECURITY,
     );
   });
 

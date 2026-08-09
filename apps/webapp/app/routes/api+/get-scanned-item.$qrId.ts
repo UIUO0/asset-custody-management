@@ -115,7 +115,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               return z.NEVER;
             }
           }),
-      })
+      }),
     ) as {
       assetExtraInclude: Prisma.AssetInclude | undefined;
       kitExtraInclude: Prisma.KitInclude | undefined;
@@ -217,7 +217,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               pickerMeta,
             },
           },
-        })
+        }),
       );
     }
 
@@ -313,7 +313,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               }
             : undefined,
         },
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

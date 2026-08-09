@@ -39,7 +39,7 @@ describe(getCurrentPath.name, () => {
 describe(makeRedirectToFromHere.name, () => {
   it("should return search params with redirectTo set with current request url path", () => {
     expect(makeRedirectToFromHere(new Request(`${BASE_URL}/profile`))).toEqual(
-      new URLSearchParams([["redirectTo", "/profile"]])
+      new URLSearchParams([["redirectTo", "/profile"]]),
     );
   });
 });
@@ -51,13 +51,13 @@ describe(getRedirectTo.name, () => {
 
   it("should return url redirectTo param value", () => {
     expect(getRedirectTo(new Request(`${BASE_URL}?redirectTo=/profile`))).toBe(
-      "/profile"
+      "/profile",
     );
   });
 
   it("should return root redirectTo param value if invalid param value", () => {
     expect(getRedirectTo(new Request(`${BASE_URL}?redirectTo=//profile`))).toBe(
-      "/"
+      "/",
     );
   });
 });
@@ -80,7 +80,7 @@ describe(getRefererPath.name, () => {
       headers: { referer: `${BASE_URL}/assets?search=test&status=AVAILABLE` },
     });
     expect(getRefererPath(request)).toBe(
-      "/assets?search=test&status=AVAILABLE"
+      "/assets?search=test&status=AVAILABLE",
     );
   });
 
@@ -460,7 +460,7 @@ describe(buildContentDisposition.name, () => {
 
     expect(result).toBe(
       'attachment; filename="My Booking-activity-2024-06-15T1230.csv"; ' +
-        "filename*=UTF-8''My%20Booking-activity-2024-06-15T1230.csv"
+        "filename*=UTF-8''My%20Booking-activity-2024-06-15T1230.csv",
     );
   });
 

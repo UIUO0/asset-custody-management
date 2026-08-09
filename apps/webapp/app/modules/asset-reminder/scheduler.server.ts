@@ -32,7 +32,7 @@ export async function scheduleAssetReminder({
       QueueNames.assetsQueue,
       data,
       {},
-      when
+      when,
     );
 
     await db.assetReminder.update({
@@ -54,7 +54,7 @@ export async function scheduleAssetReminder({
  * This function is used to cancel an asset reminder scheduler.
  */
 export async function cancelAssetReminderScheduler(
-  reminder: Pick<AssetReminder, "alertDateTime" | "activeSchedulerReference">
+  reminder: Pick<AssetReminder, "alertDateTime" | "activeSchedulerReference">,
 ) {
   try {
     /**
@@ -76,7 +76,7 @@ export async function cancelAssetReminderScheduler(
         message: "Failed to cancel asset reminder scheduler",
         additionalData: { ...reminder },
         label: "Asset Scheduler",
-      })
+      }),
     );
   }
 }

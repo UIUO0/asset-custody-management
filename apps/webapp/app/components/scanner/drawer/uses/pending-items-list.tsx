@@ -36,8 +36,8 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { useTranslation } from "react-i18next";
 import type { BookingExpectedAsset } from "~/atoms/qr-scanner";
-import { AvailabilityBadge } from "~/components/booking/availability-label";
 import ImageWithPreview from "~/components/image-with-preview/image-with-preview";
+import { AvailabilityBadge } from "~/components/shared/availability-badge";
 import { Button } from "~/components/shared/button";
 import { tw } from "~/utils/tw";
 

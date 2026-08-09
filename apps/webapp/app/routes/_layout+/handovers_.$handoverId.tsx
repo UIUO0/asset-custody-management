@@ -52,6 +52,7 @@ import { partyFor, resolveSignableParty } from "~/modules/custody/handover";
 import {
   getHandover,
   recordHandoverSignature,
+  resolveOwnDepartmentId,
   signatureImageUrls,
   writeHandoverNote,
 } from "~/modules/custody/handover.server";
@@ -107,19 +108,31 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     const handover = await getHandover({ handoverId, organizationId });
 
-    const ownMember = await db.teamMember.findFirst({
-      where: { organizationId, userId, deletedAt: null },
-      select: { id: true },
-    });
+    const [ownMember, ownDepartmentTeamMemberId] = await Promise.all([
+      db.teamMember.findFirst({
+        where: { organizationId, userId, deletedAt: null },
+        select: { id: true },
+      }),
+      // A batch محضر names the department desk, so a department officer's
+      // *personal* row never matches it. Resolved from their own membership.
+      resolveOwnDepartmentId({ userId, organizationId }),
+    ]);
 
     const scopedToOwnRecords = rolesAreScopedToOwnRecords(role);
+
+    // The rows this viewer can legitimately be named on: their own, and their
+    // department's desk.
+    const ownCounterpartyIds = [
+      ownMember?.id,
+      ownDepartmentTeamMemberId,
+    ].filter((id): id is string => Boolean(id));
 
     // An employee must not be able to read a محضر about somebody else by
     // guessing an id. Operators see the whole workspace because chasing stuck
     // records is their job.
     if (
       scopedToOwnRecords &&
-      ownMember?.id !== handover.counterpartyTeamMemberId
+      !ownCounterpartyIds.includes(handover.counterpartyTeamMemberId)
     ) {
       throw new ShelfError({
         cause: null,
@@ -144,6 +157,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         action: PermissionAction.custody,
       }),
       ownTeamMemberId: ownMember?.id ?? null,
+      ownDepartmentTeamMemberId,
     });
 
     const viewer = await getUserByID(userId, {
@@ -211,10 +225,13 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
     const handover = await getHandover({ handoverId, organizationId });
 
-    const ownMember = await db.teamMember.findFirst({
-      where: { organizationId, userId, deletedAt: null },
-      select: { id: true },
-    });
+    const [ownMember, ownDepartmentTeamMemberId] = await Promise.all([
+      db.teamMember.findFirst({
+        where: { organizationId, userId, deletedAt: null },
+        select: { id: true },
+      }),
+      resolveOwnDepartmentId({ userId, organizationId }),
+    ]);
 
     // The party is derived from the session, never read from the form. A
     // submitted party field would be the caller telling us who they are.
@@ -226,15 +243,24 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         action: PermissionAction.custody,
       }),
       ownTeamMemberId: ownMember?.id ?? null,
+      ownDepartmentTeamMemberId,
     });
 
     // Re-check the read scope on write too. The loader's 404 hides other
     // people's records from the UI; without this an employee could POST
     // against a guessed id and have `resolveSignableParty` be the only thing
     // standing between them and someone else's محضر.
+    //
+    // Both rows count, exactly as in the loader — a department officer is
+    // named through their desk, never their personal row.
+    const ownCounterpartyIds = [
+      ownMember?.id,
+      ownDepartmentTeamMemberId,
+    ].filter((id): id is string => Boolean(id));
+
     if (
       rolesAreScopedToOwnRecords(role) &&
-      ownMember?.id !== handover.counterpartyTeamMemberId
+      !ownCounterpartyIds.includes(handover.counterpartyTeamMemberId)
     ) {
       throw new ShelfError({
         cause: null,
@@ -289,7 +315,13 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
         senderId: userId,
       });
 
-      return redirect(`/assets/${handover.assetId}/overview`);
+      // A batch محضر has no single asset to land on, so send the operator back
+      // to the record they just completed rather than to an arbitrary line.
+      return redirect(
+        handover.assets.length === 1
+          ? `/assets/${handover.assets[0].asset.id}/overview`
+          : `/handovers/${handover.id}`,
+      );
     }
 
     sendNotification({
@@ -339,7 +371,41 @@ export default function SignHandover() {
           <dd className="font-mono">{handover.reference}</dd>
 
           <dt className="text-gray-500">{t("assets.asset")}</dt>
-          <dd>{handover.asset.title}</dd>
+          <dd>
+            {handover.assets.length === 1 ? (
+              <>
+                {handover.assets[0].asset.title}
+                {handover.assets[0].asset.type === "QUANTITY_TRACKED" ? (
+                  <span className="ms-2 font-medium">
+                    ×&nbsp;{handover.assets[0].quantity}
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              // Every line is printed, not a count: this is the document the
+              // signatory is agreeing to, and "12 assets" is not something a
+              // person can sign for.
+              <ul className="list-inside list-disc space-y-0.5">
+                {handover.assets.map((line) => (
+                  <li key={line.asset.id}>
+                    {line.asset.title}
+                    {/* Quantity-tracked lines carry a count; individual ones
+                        are one thing and "× 1" would be noise on every row. */}
+                    {line.asset.type === "QUANTITY_TRACKED" ? (
+                      <span className="ms-2 font-medium">
+                        ×&nbsp;{line.quantity}
+                      </span>
+                    ) : null}
+                    {line.asset.sequentialId ? (
+                      <span className="ms-1 font-mono text-xs text-gray-500">
+                        {line.asset.sequentialId}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </dd>
 
           <dt className="text-gray-500">
             {t("custodySignature.employeeParty")}

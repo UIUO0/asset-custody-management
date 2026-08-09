@@ -106,7 +106,7 @@ export async function createSignedUrl({
               },
               label,
               shouldBeCaptured: false,
-            })
+            }),
           );
           await delay(1000);
           continue;
@@ -149,7 +149,7 @@ export async function createSignedUrl({
               },
               label,
               shouldBeCaptured: false,
-            })
+            }),
           );
           await delay(backoffMs);
           continue;
@@ -190,7 +190,7 @@ export async function createSignedUrl({
               },
               label,
               shouldBeCaptured: false,
-            })
+            }),
           );
           await delay(backoffMs);
           continue;
@@ -270,7 +270,7 @@ export async function uploadFile(
     generateThumbnail?: boolean;
     thumbnailSize?: number;
     upsert?: boolean;
-  }
+  },
 ): Promise<string | { originalPath: string; thumbnailPath: string }> {
   try {
     // Process original image
@@ -311,7 +311,7 @@ export async function uploadFile(
           height: thumbnailSize,
           fit: "cover",
           withoutEnlargement: true,
-        }
+        },
       );
 
       // Upload thumbnail
@@ -429,7 +429,7 @@ export async function parseFileFormData({
     const formData = await parseFormData(
       request,
       { maxFileSize },
-      uploadHandler
+      uploadHandler,
     );
 
     return formData;
@@ -492,7 +492,7 @@ export function findShelfErrorInCause(error: unknown): ShelfError | null {
  * file exceeds the configured size.
  */
 function getMaxFileSizeExceededError(
-  error: unknown
+  error: unknown,
 ): MaxFileSizeExceededError | null {
   if (error instanceof MaxFileSizeExceededError) {
     return error;
@@ -519,7 +519,7 @@ function logUploadError(cause: unknown, additionalData: AdditionalData) {
       message: "Failed to upload image",
       additionalData,
       label,
-    })
+    }),
   );
 }
 
@@ -536,7 +536,7 @@ async function normalizeToAsyncIterable(
     | Blob
     | { stream?: () => any; arrayBuffer?: () => Promise<ArrayBuffer> }
     | null
-    | undefined
+    | undefined,
 ): Promise<AsyncIterable<Uint8Array> | null> {
   if (!file) {
     return null;
@@ -562,7 +562,7 @@ async function normalizeToAsyncIterable(
     const webStream = (file as Blob).stream();
     if (typeof Readable.fromWeb === "function") {
       return Readable.fromWeb(
-        webStream as any
+        webStream as any,
       ) as unknown as AsyncIterable<Uint8Array>;
     }
   }
@@ -585,7 +585,7 @@ async function normalizeToAsyncIterable(
 export async function uploadImageFromUrl(
   imageUrl: string,
   { filename, contentType, bucketName, resizeOptions }: UploadOptions,
-  cache?: LRUCache<string, CachedImage>
+  cache?: LRUCache<string, CachedImage>,
 ): Promise<string | null> {
   try {
     let buffer: Buffer;
@@ -654,7 +654,7 @@ export async function uploadImageFromUrl(
               additionalData: { imageUrl, attempts: attempt },
               label,
               shouldBeCaptured: false,
-            })
+            }),
           );
           return null;
         }
@@ -672,7 +672,7 @@ export async function uploadImageFromUrl(
           additionalData: { imageUrl },
           label,
           shouldBeCaptured: false,
-        })
+        }),
       );
       return null;
     }
@@ -706,7 +706,7 @@ export async function uploadImageFromUrl(
         await Promise.resolve();
         yield new Uint8Array(buffer);
       })(),
-      resizeOptions
+      resizeOptions,
     );
 
     // Upload to Supabase
@@ -752,7 +752,7 @@ export async function uploadImageFromUrl(
         additionalData: { imageUrl, filename, contentType, bucketName },
         label,
         shouldBeCaptured: isShelfError ? cause.shouldBeCaptured : true,
-      })
+      }),
     );
 
     return null; // Return null to indicate failure, allowing import to continue
@@ -769,7 +769,7 @@ export async function deleteProfilePicture({
   try {
     if (
       !url.startsWith(
-        `${SUPABASE_URL}/storage/v1/object/public/profile-pictures/`
+        `${SUPABASE_URL}/storage/v1/object/public/profile-pictures/`,
       ) ||
       url === ""
     ) {
@@ -795,7 +795,7 @@ export async function deleteProfilePicture({
         message: "Fail to delete the profile picture",
         additionalData: { url, bucketName },
         label,
-      })
+      }),
     );
   }
 }
@@ -834,7 +834,7 @@ export async function deleteAssetImage({
         message: "Fail to delete the asset image",
         additionalData: { url, bucketName },
         label,
-      })
+      }),
     );
   }
 }
@@ -861,7 +861,7 @@ export async function removePublicFile({ publicUrl }: { publicUrl: string }) {
   try {
     if (
       !publicUrl.startsWith(
-        `${SUPABASE_URL}/storage/v1/object/public/${PUBLIC_BUCKET}/`
+        `${SUPABASE_URL}/storage/v1/object/public/${PUBLIC_BUCKET}/`,
       )
     ) {
       throw new ShelfError({

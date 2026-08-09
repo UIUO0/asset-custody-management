@@ -246,7 +246,7 @@ export async function deleteWorkingHoursOverride(overrideId: string) {
 }
 
 export async function getWorkingHoursOverridesForOrganization(
-  organizationId: string
+  organizationId: string,
 ) {
   try {
     const workingHours = await db.workingHours.findUnique({

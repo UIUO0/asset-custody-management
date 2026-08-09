@@ -46,7 +46,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           .string()
           .transform((v) => v === "true")
           .optional(),
-      })
+      }),
     );
 
     const { organizationId, currentOrganization } =

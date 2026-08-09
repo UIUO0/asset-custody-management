@@ -52,7 +52,7 @@ export async function completeAuditWithImages({
           uploadedById: userId,
           auditAssetId: undefined, // General audit image
           description: "Completion image",
-        })
+        }),
       );
     }
   }

@@ -68,5 +68,5 @@ describe.each(Object.entries(presets))(
         "lastName",
       ]);
     });
-  }
+  },
 );

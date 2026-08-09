@@ -11,7 +11,7 @@ export function Breadcrumbs() {
 
   // Filter matches to include only those with 'breadcrumb' property
   const breadcrumbs = matches.filter(
-    (match) => (match.handle as HandleWithBreadcrumb)?.breadcrumb !== undefined
+    (match) => (match.handle as HandleWithBreadcrumb)?.breadcrumb !== undefined,
   );
 
   return (

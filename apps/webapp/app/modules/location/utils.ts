@@ -34,7 +34,7 @@ export function formatLocationLink(location: Pick<Location, "id" | "name">) {
 /** Builds a formatted list of assets for activity notes */
 export function buildAssetListMarkup(
   assets: Array<{ id: string; title: string }>,
-  action: "added" | "removed"
+  action: "added" | "removed",
 ) {
   const sanitized = assets.map((a) => ({
     id: a.id,
@@ -46,7 +46,7 @@ export function buildAssetListMarkup(
 /** Builds a formatted list of kits for activity notes */
 export function buildKitListMarkup(
   kits: Array<{ id: string; name: string }>,
-  action: "added" | "removed"
+  action: "added" | "removed",
 ) {
   const sanitized = kits.map((k) => ({
     id: k.id,

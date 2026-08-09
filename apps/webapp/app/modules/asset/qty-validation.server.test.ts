@@ -51,7 +51,7 @@ describe("validateQtyTrackedFields", () => {
           consumptionType: "ONE_WAY",
         },
         createMode,
-        ctx
+        ctx,
       );
 
       expect(result).toEqual({
@@ -67,7 +67,7 @@ describe("validateQtyTrackedFields", () => {
       const result = validateQtyTrackedFields(
         { type: "INDIVIDUAL" },
         createMode,
-        ctx
+        ctx,
       );
 
       expect(result).toEqual({
@@ -93,8 +93,8 @@ describe("validateQtyTrackedFields", () => {
             consumptionType: "ONE_WAY",
           },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(ShelfError);
     });
 
@@ -107,8 +107,8 @@ describe("validateQtyTrackedFields", () => {
             consumptionType: "ONE_WAY",
           },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/non-negative/);
     });
 
@@ -122,8 +122,8 @@ describe("validateQtyTrackedFields", () => {
             consumptionType: "ONE_WAY",
           },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/min/i);
     });
 
@@ -136,8 +136,8 @@ describe("validateQtyTrackedFields", () => {
             consumptionType: "INVALID_TYPE",
           },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/consumptionType/);
     });
 
@@ -146,8 +146,8 @@ describe("validateQtyTrackedFields", () => {
         validateQtyTrackedFields(
           { type: "QUANTITY_TRACKED", quantity: "10" },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/Consumption type is required/);
     });
 
@@ -156,8 +156,8 @@ describe("validateQtyTrackedFields", () => {
         validateQtyTrackedFields(
           { type: "QUANTITY_TRACKED", consumptionType: "ONE_WAY" },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/Quantity is required/);
     });
 
@@ -170,8 +170,8 @@ describe("validateQtyTrackedFields", () => {
             consumptionType: "ONE_WAY",
           },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/Quantity is required/);
     });
 
@@ -184,7 +184,7 @@ describe("validateQtyTrackedFields", () => {
           consumptionType: "TWO_WAY",
         },
         createMode,
-        ctx
+        ctx,
       );
       // sanitizeUnitOfMeasureLabel drops `{`, `%`, `}` and trims.
       expect(result.unitOfMeasure).toBe("boxes");
@@ -195,8 +195,8 @@ describe("validateQtyTrackedFields", () => {
         validateQtyTrackedFields(
           { type: "INDIVIDUAL", quantity: "5" },
           createMode,
-          ctx
-        )
+          ctx,
+        ),
       ).toThrow(/INDIVIDUAL/);
     });
 
@@ -208,14 +208,14 @@ describe("validateQtyTrackedFields", () => {
           consumptionType: "one_way",
         },
         createMode,
-        ctx
+        ctx,
       );
       expect(result.consumptionType).toBe(ConsumptionType.ONE_WAY);
     });
 
     it("throws on an unrecognised type value", () => {
       expect(() =>
-        validateQtyTrackedFields({ type: "BUNDLE" }, createMode, ctx)
+        validateQtyTrackedFields({ type: "BUNDLE" }, createMode, ctx),
       ).toThrow(/Invalid type/);
     });
   });
@@ -226,7 +226,7 @@ describe("validateQtyTrackedFields", () => {
         // QUANTITY_TRACKED cell on an existing INDIVIDUAL asset — no error
         { type: "QUANTITY_TRACKED" },
         updateIndividualMode,
-        ctx
+        ctx,
       );
       expect(result.type).toBeUndefined();
     });
@@ -239,7 +239,7 @@ describe("validateQtyTrackedFields", () => {
 
     it("rejects 0 quantity for QUANTITY_TRACKED on update", () => {
       expect(() =>
-        validateQtyTrackedFields({ quantity: "0" }, updateQtyMode, ctx)
+        validateQtyTrackedFields({ quantity: "0" }, updateQtyMode, ctx),
       ).toThrow(/Quantity is required/);
     });
 
@@ -248,14 +248,14 @@ describe("validateQtyTrackedFields", () => {
       const result = validateQtyTrackedFields(
         { quantity: "10" },
         updateQtyMode,
-        ctx
+        ctx,
       );
       expect(result.consumptionType).toBeUndefined();
     });
 
     it("still validates malformed minQuantity on update", () => {
       expect(() =>
-        validateQtyTrackedFields({ minQuantity: "-3" }, updateQtyMode, ctx)
+        validateQtyTrackedFields({ minQuantity: "-3" }, updateQtyMode, ctx),
       ).toThrow(/min/i);
     });
   });
@@ -275,7 +275,7 @@ describe("parseQtyTrackedUpdateRow", () => {
         consumptionType: "TWO_WAY",
       },
       { type: AssetType.QUANTITY_TRACKED },
-      7
+      7,
     );
 
     expect(result.errors).toEqual([]);
@@ -295,7 +295,7 @@ describe("parseQtyTrackedUpdateRow", () => {
       // no warning. Type cell is dropped entirely.
       { type: "QUANTITY_TRACKED" },
       { type: AssetType.INDIVIDUAL },
-      3
+      3,
     );
 
     expect(result.errors).toEqual([]);
@@ -313,7 +313,7 @@ describe("parseQtyTrackedUpdateRow", () => {
         consumptionType: "ONE_WAY",
       },
       { type: AssetType.INDIVIDUAL },
-      5
+      5,
     );
 
     expect(result.errors).toEqual([]);
@@ -335,7 +335,7 @@ describe("parseQtyTrackedUpdateRow", () => {
     const result = parseQtyTrackedUpdateRow(
       { assetModel: "Dell Latitude" },
       { type: AssetType.QUANTITY_TRACKED },
-      14
+      14,
     );
 
     expect(result.errors).toEqual([]);
@@ -347,7 +347,7 @@ describe("parseQtyTrackedUpdateRow", () => {
     const result = parseQtyTrackedUpdateRow(
       { assetModel: "  Dell Latitude  " },
       { type: AssetType.INDIVIDUAL },
-      2
+      2,
     );
 
     expect(result.errors).toEqual([]);
@@ -360,7 +360,7 @@ describe("parseQtyTrackedUpdateRow", () => {
     const result = parseQtyTrackedUpdateRow(
       { quantity: "not-a-number" },
       { type: AssetType.QUANTITY_TRACKED },
-      9
+      9,
     );
 
     expect(result.errors).toHaveLength(1);
@@ -374,7 +374,7 @@ describe("parseQtyTrackedUpdateRow", () => {
     const result = parseQtyTrackedUpdateRow(
       { consumptionType: "THREE_WAY" },
       { type: AssetType.QUANTITY_TRACKED },
-      11
+      11,
     );
 
     expect(result.errors).toHaveLength(1);
@@ -385,7 +385,7 @@ describe("parseQtyTrackedUpdateRow", () => {
     const result = parseQtyTrackedUpdateRow(
       { assetModel: "   " },
       { type: AssetType.QUANTITY_TRACKED },
-      4
+      4,
     );
 
     expect(result.warnings).toEqual([]);

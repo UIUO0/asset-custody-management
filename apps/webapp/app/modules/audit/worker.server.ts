@@ -192,7 +192,7 @@ const overdueNotice = async ({ data }: PgBoss.Job<AuditSchedulerData>) => {
 
     // Remove duplicates (in case creator is also an assignee)
     const uniqueRecipients = Array.from(
-      new Map(recipients.map((r) => [r.email, r])).values()
+      new Map(recipients.map((r) => [r.email, r])).values(),
     );
 
     sendAuditOverdueEmail({
@@ -232,7 +232,7 @@ export const registerAuditWorkers = async () => {
             message: "Wrong event type received for the scheduled worker",
             additionalData: { job },
             label: "Audit",
-          })
+          }),
         );
         return;
       }
@@ -245,9 +245,9 @@ export const registerAuditWorkers = async () => {
             message: "Something went wrong while executing scheduled work.",
             additionalData: { data: job.data, work: job.data.eventType },
             label: "Audit",
-          })
+          }),
         );
       }
-    }
+    },
   );
 };

@@ -65,7 +65,7 @@ const EMPTY_COMPONENTS: Record<string, ComponentType> = {};
  * Hoisted out of MarkdownViewer to avoid `no-nested-component-definition`.
  */
 const AuditImagesComponentNoPortal = (
-  props: ComponentProps<typeof AuditImagesComponent>
+  props: ComponentProps<typeof AuditImagesComponent>,
 ) => <AuditImagesComponent {...props} disablePortal={true} />;
 AuditImagesComponentNoPortal.displayName = "AuditImagesComponentNoPortal";
 
@@ -90,7 +90,7 @@ export const MarkdownViewer = ({
       ...components,
       AuditImagesComponent: WrappedAuditImages,
     }),
-    [components, WrappedAuditImages]
+    [components, WrappedAuditImages],
   );
 
   // Parse content if it's a string, otherwise use as-is

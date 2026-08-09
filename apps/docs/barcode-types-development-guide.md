@@ -101,7 +101,7 @@ const validateYourNewType = (value: string) => {
 ```typescript
 export function validateBarcodeValue(
   type: BarcodeType,
-  value: string
+  value: string,
 ): string | null {
   switch (type) {
     case BarcodeType.Code128:
@@ -131,7 +131,7 @@ export function validateBarcodeValue(
  */
 export function normalizeBarcodeValue(
   type: BarcodeType,
-  value: string
+  value: string,
 ): string {
   switch (type) {
     case BarcodeType.ExternalQR:
@@ -153,7 +153,7 @@ export function normalizeBarcodeValue(
 // Before storing in database
 const normalizedValue = normalizeBarcodeValue(
   BarcodeType.YourNewType,
-  userInput
+  userInput,
 );
 
 // Before validation

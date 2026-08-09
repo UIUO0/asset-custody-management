@@ -37,7 +37,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest("?location=loc-uuid"),
       ORG_ID,
-      settings
+      settings,
     );
 
     expect(result.filters).toBe("location=is%3Aloc-uuid");
@@ -49,7 +49,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest("?location=loc-1&category=cat-1&status=AVAILABLE"),
       ORG_ID,
-      settings
+      settings,
     );
 
     const params = new URLSearchParams(result.filters);
@@ -63,7 +63,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest("?status=is%3AAVAILABLE"),
       ORG_ID,
-      settings
+      settings,
     );
 
     expect(result.filters).toBe("status=is%3AAVAILABLE");
@@ -74,7 +74,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest("?page=2&s=keyboard&location=loc-uuid"),
       ORG_ID,
-      settings
+      settings,
     );
 
     const params = new URLSearchParams(result.filters);
@@ -87,7 +87,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest("?location="),
       ORG_ID,
-      settings
+      settings,
     );
 
     // The empty value is not echoed back as `is:` and not retained. The
@@ -105,7 +105,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest("?status=foo:AVAILABLE"),
       ORG_ID,
-      settings
+      settings,
     );
 
     expect(result.filters).toBe("");
@@ -116,7 +116,7 @@ describe("getAdvancedFiltersFromRequest", () => {
     const result = await getAdvancedFiltersFromRequest(
       makeRequest(""),
       ORG_ID,
-      settings
+      settings,
     );
 
     expect(result.filters).toBe("");

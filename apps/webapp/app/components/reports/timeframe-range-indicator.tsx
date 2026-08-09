@@ -41,12 +41,12 @@ export function TimeframeRangeIndicator({ timeframe }: Props) {
   const fromMidnight = new Date(
     from.getFullYear(),
     from.getMonth(),
-    from.getDate()
+    from.getDate(),
   );
   const toMidnight = new Date(to.getFullYear(), to.getMonth(), to.getDate());
   const dayCount =
     Math.round(
-      (toMidnight.getTime() - fromMidnight.getTime()) / (1000 * 60 * 60 * 24)
+      (toMidnight.getTime() - fromMidnight.getTime()) / (1000 * 60 * 60 * 24),
     ) + 1;
 
   // Decide whether to show the year on each endpoint. Mirrors the previous

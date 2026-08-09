@@ -20,7 +20,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
   const { organizationId } = getParams(
     params,
     z.object({ organizationId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -69,7 +69,9 @@ export default function AdminOrgQrCodes() {
       <Table className="mt-5">
         <thead className="bg-gray-100">
           <tr className="font-semibold">
-            <th className="border-b p-4 text-start text-gray-600 md:px-6">ID</th>
+            <th className="border-b p-4 text-start text-gray-600 md:px-6">
+              ID
+            </th>
             <th className="border-b p-4 text-start text-gray-600 md:px-6">
               Name
             </th>

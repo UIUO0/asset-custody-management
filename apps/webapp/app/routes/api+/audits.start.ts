@@ -90,7 +90,7 @@ export const StartAuditSchema = BaseAuditSchema.extend({
   {
     message:
       "Provide assetIds, context parameters (contextType + contextId), a location selection (contextType=location + locationIds), or a kit selection (contextType=kit + kitIds).",
-  }
+  },
 );
 
 export async function action({ request, context }: ActionFunctionArgs) {
@@ -248,7 +248,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
       if (auditForEmail) {
         const assigneeUser = auditForEmail.assignments.find(
-          (a: { userId: string }) => a.userId === assignee
+          (a: { userId: string }) => a.userId === assignee,
         );
 
         if (assigneeUser?.user.email) {
@@ -328,7 +328,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       payload({
         success: true,
         redirectTo: `/audits/${session.id}/${redirectPath}`,
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

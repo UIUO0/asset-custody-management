@@ -46,7 +46,7 @@ vi.mock("~/database/db.server", () => ({
           count: dbMocks.custody.count,
         },
         assetKit: { findMany: dbMocks.assetKit.findMany },
-      })
+      }),
     ),
   },
 }));
@@ -160,7 +160,7 @@ const getUserByIDMock = vi.mocked(getUserByID);
 
 function createActionArgs(
   request: Request,
-  overrides: Partial<ActionFunctionArgs> = {}
+  overrides: Partial<ActionFunctionArgs> = {},
 ): ActionFunctionArgs {
   return {
     context: {

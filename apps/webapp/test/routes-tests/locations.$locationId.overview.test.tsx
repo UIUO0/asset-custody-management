@@ -53,7 +53,7 @@ const getClientHintMock = vi.mocked(getClientHint);
 const useLoaderDataMock = vi.mocked(useLoaderData);
 
 function createLoaderArgs(
-  overrides: Partial<LoaderFunctionArgs> = {}
+  overrides: Partial<LoaderFunctionArgs> = {},
 ): LoaderFunctionArgs {
   return {
     context: {
@@ -132,7 +132,7 @@ describe("locations.$locationId.overview loader", () => {
         totalValue: 9876.54,
         locale: "en-GB",
         currentOrganization: expect.objectContaining({ currency: "USD" }),
-      })
+      }),
     );
   });
 });

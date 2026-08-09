@@ -92,7 +92,7 @@ function printUsage(): void {
       `Optional:\n` +
       `  --force        Skip the 95%-marked sanity check. Use with care —\n` +
       `                 only appropriate for an org that you know holds\n` +
-      `                 nothing but seed data.\n`
+      `                 nothing but seed data.\n`,
   );
 }
 
@@ -103,7 +103,7 @@ async function main(): Promise<void> {
     options = parseArgs(process.argv.slice(2));
   } catch (err) {
     console.error(
-      `\nError: ${err instanceof Error ? err.message : String(err)}\n`
+      `\nError: ${err instanceof Error ? err.message : String(err)}\n`,
     );
     printUsage();
     process.exit(1);
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
 
     console.log(
       `\n=== Reporting-demo cleanup (${SEED_RUN_ID}) ===\n` +
-        `Target workspace:  ${org.name} (${org.id})\n`
+        `Target workspace:  ${org.name} (${org.id})\n`,
     );
 
     const ratios = await collectMarkedRatios(db, options.orgId);
@@ -163,7 +163,7 @@ type MarkedRatios = {
  */
 async function collectMarkedRatios(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<MarkedRatios> {
   const [
     totalAssets,
@@ -222,13 +222,13 @@ function printRatios(ratios: MarkedRatios): void {
       `  Assets          ${fmt(ratios.assets.marked, ratios.assets.total)}\n` +
       `  Bookings        ${fmt(
         ratios.bookings.marked,
-        ratios.bookings.total
+        ratios.bookings.total,
       )}\n` +
       `  Audits          ${fmt(ratios.audits.marked, ratios.audits.total)}\n` +
       `  Activity events ${fmt(
         ratios.activityEvents.marked,
-        ratios.activityEvents.total
-      )}\n`
+        ratios.activityEvents.total,
+      )}\n`,
   );
 }
 
@@ -246,7 +246,7 @@ function assertSafeToClean(ratios: MarkedRatios): void {
       offenders.push(
         `${name}: only ${(ratio * 100).toFixed(1)}% marked (${r.marked}/${
           r.total
-        })`
+        })`,
       );
     }
   };
@@ -259,7 +259,7 @@ function assertSafeToClean(ratios: MarkedRatios): void {
     throw new Error(
       "Refusing to clean: target workspace holds non-seeded rows.\n" +
         offenders.map((s) => `  - ${s}`).join("\n") +
-        "\n\nIf this org is truly a pure seed workspace, re-run with `--force`."
+        "\n\nIf this org is truly a pure seed workspace, re-run with `--force`.",
     );
   }
 }
@@ -292,7 +292,7 @@ type DeleteCounts = {
  */
 async function deleteAll(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<DeleteCounts> {
   return db.$transaction(async (tx) => {
     const counts: DeleteCounts = {
@@ -459,7 +459,7 @@ main().catch((err) => {
   console.error(
     "\nCleanup failed:\n",
     err instanceof Error ? err.stack ?? err.message : err,
-    "\n"
+    "\n",
   );
   process.exit(1);
 });

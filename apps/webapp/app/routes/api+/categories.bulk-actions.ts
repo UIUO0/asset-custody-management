@@ -23,7 +23,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     const { intent } = parseData(
       formData,
-      z.object({ intent: z.enum(["bulk-delete"]) })
+      z.object({ intent: z.enum(["bulk-delete"]) }),
     );
 
     const intentToActionMap: Record<typeof intent, PermissionAction> = {

@@ -103,7 +103,7 @@ export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(
     extraItemComponentProps,
     disableSelectAllItems,
   }: ListProps,
-  ref
+  ref,
 ) {
   const { items } = useLoaderData<IndexResponse>();
   const totalIncomingItems = items?.length;
@@ -119,7 +119,7 @@ export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(
       className={tw(
         "-mx-4 border border-gray-200 bg-white md:mx-0 md:rounded",
         modeIsAdvanced ? "flex h-full flex-col" : "overflow-auto",
-        className
+        className,
       )}
     >
       {!hasItems ? (
@@ -133,7 +133,7 @@ export const List = React.forwardRef<HTMLDivElement, ListProps>(function List(
           <div
             className={tw(
               modeIsAdvanced ? "p-3 pb-[5px]" : "flex-col p-4 pb-2 md:flex-row",
-              "flex justify-between border-b md:items-center "
+              "flex justify-between border-b md:items-center ",
             )}
           >
             <div>

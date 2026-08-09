@@ -97,7 +97,7 @@ describe("isPrivateOrReservedIp", () => {
  * offline, without any network query) and resolves with the outcome.
  */
 function runGuardedLookup(
-  host: string
+  host: string,
 ): Promise<{ err: Error | null; address?: string }> {
   return new Promise((resolve) => {
     ssrfGuardedLookup(host, { all: false }, (err, address) => {
@@ -124,7 +124,7 @@ describe("ssrfGuardedLookup", () => {
       const { err, address } = await runGuardedLookup(host);
       expect(err).toBeNull();
       expect(address).toBe(host);
-    }
+    },
   );
 });
 
@@ -148,7 +148,7 @@ describe("assertSafeUrl", () => {
     "rejects non-http(s) protocol %s",
     (url) => {
       expect(() => assertSafeUrl(url)).toThrow(/http and https/i);
-    }
+    },
   );
 
   it("rejects malformed URLs", () => {
@@ -157,7 +157,7 @@ describe("assertSafeUrl", () => {
 
   it("allows http(s) URLs with public hosts", () => {
     expect(assertSafeUrl("https://images.example.com/a.jpg").hostname).toBe(
-      "images.example.com"
+      "images.example.com",
     );
     expect(assertSafeUrl("http://1.1.1.1/a.png").hostname).toBe("1.1.1.1");
   });
@@ -166,13 +166,13 @@ describe("assertSafeUrl", () => {
 describe("safeFetch input validation", () => {
   it("rejects non-http(s) protocols", async () => {
     await expect(safeFetch("file:///etc/passwd")).rejects.toThrow(
-      /http and https/i
+      /http and https/i,
     );
     await expect(safeFetch("ftp://example.com/x")).rejects.toThrow(
-      /http and https/i
+      /http and https/i,
     );
     await expect(safeFetch("gopher://example.com/x")).rejects.toThrow(
-      /http and https/i
+      /http and https/i,
     );
   });
 
@@ -231,7 +231,7 @@ describe("readBodyWithLimit", () => {
   it("aborts once the cumulative size exceeds the limit", async () => {
     const res = streamingResponse(1000, 100); // would be 100_000 bytes
     await expect(readBodyWithLimit(res, 5000, "http://x/test")).rejects.toThrow(
-      /maximum allowed size/i
+      /maximum allowed size/i,
     );
   });
 
@@ -242,7 +242,7 @@ describe("readBodyWithLimit", () => {
     const controller = new AbortController();
     controller.abort();
     await expect(
-      readBodyWithLimit(res, 8000, "http://x/test", controller.signal)
+      readBodyWithLimit(res, 8000, "http://x/test", controller.signal),
     ).rejects.toThrow(/timed out/i);
   });
 });

@@ -37,7 +37,7 @@ export const showNotificationAtom = atom(
     set(notificationAtom, () => ({
       ...notification,
       open: true,
-    }))
+    })),
 );
 
 /** Opens the Toast and shows the notification */
@@ -47,5 +47,5 @@ export const clearNotificationAtom = atom(
     set(notificationAtom, (prev) => ({
       ...prev,
       open: false,
-    }))
+    })),
 );

@@ -41,9 +41,9 @@ describe("releaseCustody SELF_SERVICE self-restriction", () => {
         organizationId: "org-1",
         userId: "me",
         role: OrganizationRoles.SELF_SERVICE,
-      })
+      }),
     ).rejects.toThrow(
-      "Self service user can only release custody of assets assigned to their user"
+      "Self service user can only release custody of assets assigned to their user",
     );
 
     // The custody must never be released.

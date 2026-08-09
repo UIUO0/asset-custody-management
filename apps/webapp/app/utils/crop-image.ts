@@ -4,7 +4,7 @@ import { detectImageFormat } from "./image-format.server";
 
 export const cropImage = async (
   data: AsyncIterable<Uint8Array>,
-  options?: ResizeOptions
+  options?: ResizeOptions,
 ) => {
   try {
     const chunks = [];
@@ -37,7 +37,7 @@ export const cropImage = async (
           width: 150,
           fit: sharp.fit.cover,
           withoutEnlargement: true,
-        }
+        },
       )
       .webp({ quality: 80 })
       .toBuffer();

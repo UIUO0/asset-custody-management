@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { RenderableTreeNode } from "@markdoc/markdoc";
 import {
   AssetLifecycleStage,
-  AssetStatus,
   CustomFieldType,
   OrganizationRoles,
 } from "@prisma/client";
@@ -78,7 +77,6 @@ import {
   isQuantityTracked,
 } from "~/modules/asset/utils";
 import { getRemindersForOverviewPage } from "~/modules/asset-reminder/service.server";
-import { computeCheckedOutForAsset } from "~/modules/booking/service.server";
 import { getPrimaryCustody } from "~/modules/custody/utils";
 import { getActiveCustomFields } from "~/modules/custom-field/service.server";
 import { moveAssetKitUnits } from "~/modules/kit/service.server";
@@ -210,18 +208,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     });
     /**
      * Compute quantity availability for QUANTITY_TRACKED assets.
-     * Sums custody records AND booking reservations to determine how many
-     * units are currently available. Booking reservations split into two
-     * disjoint buckets so the sidebar surfaces both at a glance:
      *
-     *   - `reserved` — units committed to bookings but NOT yet physically
-     *     gone. Combines RESERVED-booking quantities (future bookings)
-     *     with the ONGOING/OVERDUE "booked but not yet checked out"
-     *     remainder. Subtracts from `available` (booking-aware) but not
-     *     from `custodyAvailable` (physical-only).
-     *   - `checkedOut` — units actively off the shelf via an ONGOING /
-     *     OVERDUE booking, computed via the shared OUT-flow primitive.
-     *     Subtracts from both `available` and `custodyAvailable`.
+     * Custody and kit allocation are the only consumers of the pool: EPDA
+     * hands assets over on custody records, so a unit is either free, held
+     * by a custodian, or earmarked for a kit.
      */
     let quantityData: {
       total: number;
@@ -244,98 +234,26 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
        * Sum of `AssetLocation.quantity` across every location this
        * asset is placed at. Surfaced on the sidebar Quantity Overview
        * so users see the placed / unplaced split at a glance. Does NOT
-       * subtract from `available` — placements are orthogonal to
-       * custody / bookings (per the PRD design principle and the
-       * orthogonal-MAX formula in `getLocationPickerMeta`).
+       * subtract from `available` — placements are orthogonal to custody
+       * (per the PRD design principle and the orthogonal-MAX formula in
+       * `getLocationPickerMeta`).
        */
       inLocations: number;
       /**
-       * Units committed to bookings but NOT yet physically off the shelf.
-       * Covers RESERVED bookings (future) + the ONGOING/OVERDUE
-       * booked-but-not-yet-checked-out remainder. Disjoint from
-       * `checkedOut` — every booked unit appears in exactly one bucket.
-       */
-      reserved: number;
-      /**
-       * Units actively off the shelf via ONGOING/OVERDUE bookings,
-       * computed via the shared OUT-flow primitive
-       * (`computeCheckedOutForAsset`).
-       */
-      checkedOut: number;
-      /**
-       * Booking-aware availability: how many units can be reserved for a
-       * *future* booking. Subtracts everything that's already spoken for —
-       * kits + operator custody + reserved in other bookings + checked-out.
+       * How many units are free to hand out — the pool minus everything
+       * already spoken for (kits + operator custody).
        */
       available: number;
       /**
        * Physical availability: how many units are *actually* on the shelf
-       * right now — not in a kit, not held by a custodian, and not
-       * currently checked out on an active booking. Used to cap custody
-       * assignment and total-quantity adjustments. Reservations (future
-       * bookings) do NOT subtract from this because the units are still
-       * physically present until that booking is checked out.
+       * right now — not in a kit and not held by a custodian. Used to cap
+       * custody assignment and total-quantity adjustments.
        */
       custodyAvailable: number;
     } | null = null;
 
     if (isQuantityTracked(asset)) {
-      // "Reserved (bookings)" on the overview card surfaces every unit
-      // that is committed to a booking but NOT yet physically off the
-      // shelf — so users instantly see the chunk that's neither truly
-      // free nor already gone. That single bucket has two contributors:
-      //
-      //   1. RESERVED bookings — no progressive-checkout component, the
-      //      naive `Σ BookingAsset.quantity` is the whole earmarked count.
-      //   2. ONGOING / OVERDUE bookings — the booked total MINUS what's
-      //      already been scanned out via PartialBookingCheckout. The
-      //      OUT-side primitive (`computeCheckedOutForAsset`) gives us
-      //      the truly-out count; subtracting it from the active-booking
-      //      booked total yields the booked-but-not-yet-out remainder.
-      //
-      // "Checked out (bookings)" is computed via the shared helper so
-      // the overview sidebar stays in lock-step with the OUT-flow's
-      // per-slice math.
-      const [reservedSum, ongoingBookedSum, checkedOut] = await Promise.all([
-        db.bookingAsset.aggregate({
-          where: {
-            assetId: asset.id,
-            booking: { status: "RESERVED", organizationId },
-          },
-          _sum: { quantity: true },
-        }),
-        // Active-booking booked total — sum of every `BookingAsset.quantity`
-        // slice on an ONGOING/OVERDUE booking. The not-yet-out remainder
-        // is this minus `checkedOut`.
-        db.bookingAsset.aggregate({
-          where: {
-            assetId: asset.id,
-            booking: {
-              status: { in: ["ONGOING", "OVERDUE"] },
-              organizationId,
-            },
-          },
-          _sum: { quantity: true },
-        }),
-        // Org-scope: pass the caller's organizationId so the helper can
-        // never accidentally surface checked-out counts from another
-        // workspace if a cross-org asset id were ever supplied.
-        computeCheckedOutForAsset(db, asset.id, organizationId),
-      ]);
-
       const total = asset.quantity ?? 0;
-      // Floor at 0 defensively — pathological data (PartialBookingCheckout
-      // claims exceeding the booked total) could otherwise produce a
-      // negative remainder.
-      const ongoingBookedNotYetOut = Math.max(
-        0,
-        (ongoingBookedSum._sum?.quantity ?? 0) - checkedOut,
-      );
-      // Combine RESERVED bookings + the ONGOING-not-yet-out remainder
-      // so the "Reserved (bookings)" row reflects every unit committed
-      // to a booking but still physically present.
-      const reserved =
-        (reservedSum._sum?.quantity ?? 0) + ongoingBookedNotYetOut;
       // Sum each kit's slice — the asset's pool earmarked for kit use.
       const inKits = (asset.assetKits ?? []).reduce(
         (sum: number, ak) => sum + (ak.quantity ?? 0),
@@ -361,15 +279,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         inCustody: operatorCustody,
         inKits,
         inLocations,
-        reserved,
-        checkedOut,
-        // Strict-available pool: kits + operator + reserved + checked-out
-        // are all separate consumers; what's left is truly free.
-        available: total - inKits - operatorCustody - reserved - checkedOut,
-        // Adjust-cap: reservations don't subtract here (units are still
-        // physically present), but kits do because dropping below
-        // `inKits` would violate the sum-within-total DB trigger.
-        custodyAvailable: total - inKits - operatorCustody - checkedOut,
+        // Kits and operator custody are separate consumers of the same
+        // pool; what's left is truly free. `custodyAvailable` matches
+        // because `inKits` must still subtract — dropping below it would
+        // violate the sum-within-total DB trigger.
+        available: total - inKits - operatorCustody,
+        custodyAvailable: total - inKits - operatorCustody,
       };
     }
 
@@ -386,13 +301,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         })
       : { teamMembers: [], totalTeamMembers: 0 };
 
-    const bookingAsset =
-      asset.bookingAssets.length > 0 ? asset.bookingAssets[0] : undefined;
-    const currentBooking: any = null;
-
-    if (bookingAsset && bookingAsset.booking.from) {
-      asset.bookingAssets = [currentBooking];
-    }
     /** We only need customField with same category of asset or without any category */
     const customFields = asset.categoryId
       ? asset.customFields.filter(
@@ -953,11 +861,6 @@ export default function AssetOverview() {
   /** Route URL used by all three `MoveUnitsDialog` form submissions. */
   const moveUnitsActionUrl = `/assets/${asset.id}/overview`;
 
-  const booking =
-    asset.status === AssetStatus.CHECKED_OUT && asset?.bookingAssets?.length
-      ? asset?.bookingAssets[0]?.booking
-      : undefined;
-
   /**
    * Build ONE unified list of ALL custom fields, sorted alphabetically.
    * Each entry pairs the field definition with its stored value (or null
@@ -1000,6 +903,21 @@ export default function AssetOverview() {
     organization: currentOrganization,
   });
   const canEditAsset = canUpdateAvailability;
+
+  /**
+   * The booking toggle is meaningless while the asset is still in intake: the
+   * lifecycle stage blocks bookings outright, so the switch would sit there
+   * claiming to control something it cannot. Worse, it read as a second,
+   * contradictory copy of the approval panel directly above it.
+   *
+   * Approval now turns booking on as part of releasing the asset (see
+   * `updateAssetLifecycleStage`), so the toggle only appears once it is the
+   * genuine remaining lever — for the exceptions that are in circulation but
+   * must not be time-booked.
+   */
+  const showBookingAvailabilityToggle =
+    canUpdateAvailability &&
+    asset?.lifecycleStage === AssetLifecycleStage.READY;
 
   /**
    * Moving an asset in or out of circulation is its own capability. المالية
@@ -1280,6 +1198,42 @@ export default function AssetOverview() {
                   )}
                 </div>
               </li>
+
+              {/*
+               * EPDA: the finance coding number.
+               *
+               * Read-only here on purpose — coding happens on
+               * `/purchase-orders/:orderNumber`, where المالية already reads the
+               * order and can work through a whole delivery at once. Showing it
+               * here is about the item not lying: an asset that has been coded
+               * used to read as uncoded on its own page, because the only
+               * «ترميز» on screen was an unrelated custom field.
+               *
+               * Shown for أصول, and for anything that already carries a code.
+               * The second half matters: items migrated off the old
+               * «ترميز الاصل» custom field have a code but predate
+               * classification, and gating purely on `itemClass` would hide the
+               * very value the migration went to the trouble of preserving.
+               *
+               * A مادة with no code renders nothing — it is expensed and never
+               * coded, so an empty coding row would invite someone to fill it.
+               */}
+              {asset.itemClass === "ASSET" || asset.financeCode ? (
+                <li className="flex flex-col items-start justify-between border-b p-4 md:flex-row md:items-center">
+                  <span className="text-[14px] font-medium text-gray-900">
+                    الترميز المالي
+                  </span>
+                  <div className="mt-1 text-gray-600 md:mt-0 md:w-3/5">
+                    {asset.financeCode ? (
+                      <span dir="ltr">{asset.financeCode}</span>
+                    ) : (
+                      <span className="rounded border border-warning-300 bg-warning-50 px-2 py-0.5 text-xs text-warning-700">
+                        بانتظار الترميز
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ) : null}
 
               <InlineEditableField
                 fieldName="valuation"
@@ -1615,7 +1569,7 @@ export default function AssetOverview() {
         </div>
 
         <div className="w-full md:w-[360px] lg:ms-4">
-          <When truthy={canUpdateAvailability}>
+          <When truthy={showBookingAvailabilityToggle}>
             <Card className="my-3">
               <fetcher.Form
                 ref={zo.ref}
@@ -1921,7 +1875,6 @@ export default function AssetOverview() {
 
           {!isQuantityTracked(asset) ? (
             <CustodyCard
-              booking={booking}
               custody={asset?.custody || null}
               hasPermission={userCanViewSpecificCustody({
                 roles,
@@ -1945,8 +1898,6 @@ export default function AssetOverview() {
               inCustodyQuantity={quantityData?.inCustody}
               inKitsQuantity={quantityData?.inKits}
               inLocationsQuantity={quantityData?.inLocations}
-              reservedQuantity={quantityData?.reserved}
-              checkedOutQuantity={quantityData?.checkedOut}
               canUpdate={canUpdateAvailability}
             />
           ) : null}

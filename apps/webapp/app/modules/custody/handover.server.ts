@@ -30,13 +30,13 @@
 
 import type {
   Asset,
-  Prisma,
   TeamMember,
   User,
   CustodyHandoverParty,
 } from "@prisma/client";
 import {
   AssetStatus,
+  AssetType,
   CustodyHandoverKind,
   CustodyHandoverState,
 } from "@prisma/client";
@@ -46,13 +46,14 @@ import { recordEvent } from "~/modules/activity-event/service.server";
 // `partyFor` lives in a neutral module because route *components* render from
 // it — importing it from here would drag this whole server module into the
 // client bundle. See the docblock in `./handover.ts`.
-import { partyFor, resolveSignableParty } from "~/modules/custody/handover";
+import { resolveSignableParty } from "~/modules/custody/handover";
 import { createNote } from "~/modules/note/service.server";
 import { ShelfError } from "~/utils/error";
 import {
   wrapCustodianForNote,
   wrapUserLinkForNote,
 } from "~/utils/markdoc-wrappers";
+import { resolveDepartmentDeskId } from "~/utils/permissions/role-scope";
 
 const label = "Custody" as const;
 
@@ -120,114 +121,349 @@ async function nextReference(
 }
 
 /**
- * Opens a handover record and puts it in `AWAITING_SIGNATURES`.
+ * Opens a handover record covering one or more assets, in `AWAITING_SIGNATURES`.
  *
- * Validates that the asset is actually in a state where the requested direction
+ * Validates that **every** asset is in a state where the requested direction
  * makes sense — you cannot open a تسليم for an asset already in someone's
  * custody, nor an استرجاع for one nobody holds. Any earlier record still
- * awaiting signatures for the same asset is voided, so an abandoned attempt
- * cannot be completed later by whoever still has the tab open.
+ * awaiting signatures for any of the same assets is voided, so an abandoned
+ * attempt cannot be completed later by whoever still has the tab open.
  *
- * @param assetId - Asset changing hands
+ * ## Why a list
+ *
+ * The warehouse hands a whole purchase order to a department in one go, and the
+ * paper that gets signed is ONE document listing every line. A single-asset
+ * handover is just a one-element list — there is no separate code path, so the
+ * batch case cannot drift from the single case.
+ *
+ * ## All-or-nothing
+ *
+ * One bad asset rejects the whole batch rather than silently handing over the
+ * rest. A محضر that lists fewer assets than the operator selected is a document
+ * that disagrees with what physically moved, and nobody would notice until an
+ * audit. The error names the offending asset so the operator can fix it.
+ *
+ * @param assets - Lines changing hands, `{ id, quantity? }`. Must be non-empty.
+ *   `quantity` defaults to 1 and is validated against the units actually
+ *   available (or, on a transfer, the units the releasing side holds).
  * @param organizationId - Caller's workspace
  * @param kind - `HANDOVER` (تسليم) or `RETURN` (استرجاع)
- * @param counterpartyTeamMemberId - The employee side of the transaction
+ * @param counterpartyTeamMemberId - The employee or department side of the
+ *   transaction
  * @param operatorUserId - Warehouse operator opening the record, or `null` when
  *   the custodian opened it themselves (see {@link openReturnRequest})
  * @param conditionNotes - Optional condition baseline printed on the محضر
- * @returns The created record, with its `reference`
- * @throws {ShelfError} 404 when the asset is not in the workspace; 409 when the
- *   asset's current custody state contradicts the requested direction
+ * @returns The created record, with its `reference` and asset lines
+ * @throws {ShelfError} 400 on an empty list; 404 when an asset is not in the
+ *   workspace; 409 when an asset's custody state contradicts the direction
  */
 export async function openHandover({
-  assetId,
+  assets: requestedLines,
   organizationId,
   kind,
   counterpartyTeamMemberId,
+  releasingTeamMemberId = null,
   operatorUserId,
   conditionNotes,
 }: {
-  assetId: Asset["id"];
+  /**
+   * The lines this محضر covers. `quantity` defaults to 1 and is only
+   * meaningful for `QUANTITY_TRACKED` assets — see
+   * `CustodyHandoverAsset.quantity`.
+   */
+  assets: Array<{ id: Asset["id"]; quantity?: number }>;
   organizationId: string;
   kind: CustodyHandoverKind;
   counterpartyTeamMemberId: TeamMember["id"];
+  /**
+   * Who is giving the asset up on a `HANDOVER`.
+   *
+   * `null` (the default) means the warehouse shelf — the asset must be held by
+   * nobody. Set it to a team member to record a **transfer**: إدارة المرافق
+   * passing a laptop it received in a batch on to one of its own staff.
+   *
+   * Without this, a department could only move stock by returning it to the
+   * warehouse first, producing two محاضر for one physical movement and an
+   * audit trail that says the asset went back to the shelf when it never left
+   * the building.
+   *
+   * It is a *tightening*, not a loosening: when set, every asset must be held
+   * by exactly this member, so a caller cannot use it to hand over stock that
+   * somebody else is holding.
+   */
+  releasingTeamMemberId?: TeamMember["id"] | null;
   operatorUserId: User["id"] | null;
   conditionNotes?: string | null;
 }) {
+  /**
+   * De-duplicate up front: the same asset twice would trip the pivot's unique
+   * index mid-transaction with a Prisma error nobody can act on. Repeated ids
+   * SUM rather than overwrite — two lines of 10 pens is a request for 20, and
+   * silently keeping the last one would hand over half of what was asked.
+   */
+  const quantityByAssetId = new Map<string, number>();
+  for (const line of requestedLines) {
+    quantityByAssetId.set(
+      line.id,
+      (quantityByAssetId.get(line.id) ?? 0) + Math.trunc(line.quantity ?? 1),
+    );
+  }
+  const uniqueAssetIds = [...quantityByAssetId.keys()];
+
+  if (uniqueAssetIds.length === 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "No assets selected",
+      message: "A handover record must cover at least one asset.",
+      additionalData: { organizationId, kind },
+      label,
+      status: 400,
+      shouldBeCaptured: false,
+    });
+  }
+
   try {
     return await db.$transaction(async (tx) => {
-      const asset = await tx.asset.findFirst({
-        where: { id: assetId, organizationId },
+      const assets = await tx.asset.findMany({
+        where: { id: { in: uniqueAssetIds }, organizationId },
         select: {
           id: true,
           title: true,
-          custody: { select: { id: true, teamMemberId: true } },
+          type: true,
+          quantity: true,
+          custody: { select: { id: true, teamMemberId: true, quantity: true } },
         },
       });
 
-      if (!asset) {
+      if (assets.length !== uniqueAssetIds.length) {
+        const found = new Set(assets.map((a) => a.id));
+        const missing = uniqueAssetIds.filter((id) => !found.has(id));
         throw new ShelfError({
           cause: null,
           title: "Asset not found",
-          message: "This asset does not exist in your workspace.",
-          additionalData: { assetId, organizationId },
+          message:
+            missing.length === uniqueAssetIds.length
+              ? "This asset does not exist in your workspace."
+              : `${missing.length} of the selected assets do not exist in your workspace.`,
+          additionalData: { missing, organizationId },
           label,
           status: 404,
           shouldBeCaptured: false,
         });
       }
 
-      const heldBy = asset.custody[0]?.teamMemberId ?? null;
+      for (const asset of assets) {
+        const heldBy = asset.custody[0]?.teamMemberId ?? null;
+        const isQtyTracked = asset.type === AssetType.QUANTITY_TRACKED;
+        const requested = quantityByAssetId.get(asset.id) ?? 1;
 
-      if (kind === CustodyHandoverKind.HANDOVER && heldBy) {
-        throw new ShelfError({
-          cause: null,
-          title: "Asset already in custody",
-          message:
-            "This asset is already in someone's custody. It has to be returned before it can be handed over again.",
-          additionalData: { assetId, heldBy },
-          label,
-          status: 409,
-          shouldBeCaptured: false,
-        });
-      }
-
-      if (kind === CustodyHandoverKind.RETURN) {
-        if (!heldBy) {
+        if (requested < 1) {
           throw new ShelfError({
             cause: null,
-            title: "Asset is not in custody",
-            message:
-              "Nobody currently holds this asset, so there is nothing to return.",
-            additionalData: { assetId },
+            title: "Invalid quantity",
+            message: `The quantity for "${asset.title}" must be at least 1.`,
+            additionalData: { assetId: asset.id, requested },
             label,
-            status: 409,
+            status: 400,
             shouldBeCaptured: false,
           });
         }
 
-        if (heldBy !== counterpartyTeamMemberId) {
+        /**
+         * An individually-tracked asset is one physical thing. Accepting a
+         * larger number would print a محضر claiming three of a laptop that
+         * exists once.
+         */
+        if (!isQtyTracked && requested !== 1) {
           throw new ShelfError({
             cause: null,
-            title: "Wrong custodian",
-            message:
-              "The asset is in a different team member's custody. Return records must name the person actually holding it.",
-            additionalData: { assetId, heldBy, counterpartyTeamMemberId },
+            title: "Invalid quantity",
+            message: `"${asset.title}" is tracked individually, so only one unit can change hands.`,
+            additionalData: { assetId: asset.id, requested },
             label,
-            status: 409,
+            status: 400,
             shouldBeCaptured: false,
           });
         }
+
+        /** Units this asset already has out, across every custodian. */
+        const heldTotal = asset.custody.reduce(
+          (sum, row) => sum + (row.quantity ?? 0),
+          0,
+        );
+
+        if (kind === CustodyHandoverKind.HANDOVER) {
+          if (releasingTeamMemberId) {
+            // Transfer: the named holder must actually be holding it. Both
+            // failures below are the same class of mistake — a محضر that says
+            // someone released an asset they never had.
+            if (!heldBy) {
+              throw new ShelfError({
+                cause: null,
+                title: "Asset is not in custody",
+                message: `"${asset.title}" is not in anyone's custody, so it cannot be transferred.`,
+                additionalData: { assetId: asset.id, releasingTeamMemberId },
+                label,
+                status: 409,
+                shouldBeCaptured: false,
+              });
+            }
+
+            if (heldBy !== releasingTeamMemberId) {
+              throw new ShelfError({
+                cause: null,
+                title: "Wrong custodian",
+                message: `"${asset.title}" is in a different custodian's hands, so it is not yours to pass on.`,
+                additionalData: {
+                  assetId: asset.id,
+                  heldBy,
+                  releasingTeamMemberId,
+                },
+                label,
+                status: 409,
+                shouldBeCaptured: false,
+              });
+            }
+
+            // Nobody hands an asset to its current holder: the محضر would
+            // record a movement that did not happen, and both signature slots
+            // would belong to the same side.
+            if (releasingTeamMemberId === counterpartyTeamMemberId) {
+              throw new ShelfError({
+                cause: null,
+                title: "Same custodian",
+                message:
+                  "The receiving side must be different from the side giving the asset up.",
+                additionalData: { releasingTeamMemberId },
+                label,
+                status: 400,
+                shouldBeCaptured: false,
+              });
+            }
+
+            // A transfer can only pass on what the releasing side actually
+            // holds — إدارة المرافق with 30 pens cannot hand an employee 40.
+            const releasable =
+              asset.custody.find(
+                (row) => row.teamMemberId === releasingTeamMemberId,
+              )?.quantity ?? 0;
+
+            if (requested > releasable) {
+              throw new ShelfError({
+                cause: null,
+                title: "Not enough units",
+                message: `Cannot hand over ${requested} of "${
+                  asset.title
+                }" — only ${releasable} ${
+                  releasable === 1 ? "unit is" : "units are"
+                } in your custody.`,
+                additionalData: { assetId: asset.id, requested, releasable },
+                label,
+                status: 409,
+                shouldBeCaptured: false,
+              });
+            }
+          } else if (isQtyTracked) {
+            /**
+             * Quantity-tracked stock hands out in parts, so "already in
+             * custody" is not a yes/no question — it is arithmetic. An asset
+             * with 30 pens and 10 already out still has 20 on the shelf.
+             */
+            const available = (asset.quantity ?? 0) - heldTotal;
+
+            if (requested > available) {
+              throw new ShelfError({
+                cause: null,
+                title: "Not enough units",
+                message: `Cannot hand over ${requested} of "${
+                  asset.title
+                }" — only ${available} of ${asset.quantity ?? 0} ${
+                  available === 1 ? "unit is" : "units are"
+                } available (${heldTotal} already in custody).`,
+                additionalData: {
+                  assetId: asset.id,
+                  requested,
+                  available,
+                  heldTotal,
+                },
+                label,
+                status: 409,
+                shouldBeCaptured: false,
+              });
+            }
+          } else if (heldBy) {
+            throw new ShelfError({
+              cause: null,
+              title: "Asset already in custody",
+              message: `"${asset.title}" is already in someone's custody. It has to be returned before it can be handed over again.`,
+              additionalData: { assetId: asset.id, heldBy },
+              label,
+              status: 409,
+              shouldBeCaptured: false,
+            });
+          }
+        }
+
+        if (kind === CustodyHandoverKind.RETURN) {
+          if (!heldBy) {
+            throw new ShelfError({
+              cause: null,
+              title: "Asset is not in custody",
+              message: `Nobody currently holds "${asset.title}", so there is nothing to return.`,
+              additionalData: { assetId: asset.id },
+              label,
+              status: 409,
+              shouldBeCaptured: false,
+            });
+          }
+
+          const held =
+            asset.custody.find(
+              (row) => row.teamMemberId === counterpartyTeamMemberId,
+            )?.quantity ?? 0;
+
+          if (held > 0 && requested > held) {
+            throw new ShelfError({
+              cause: null,
+              title: "Not enough units",
+              message: `Cannot return ${requested} of "${
+                asset.title
+              }" — only ${held} ${
+                held === 1 ? "unit is" : "units are"
+              } in that custody.`,
+              additionalData: { assetId: asset.id, requested, held },
+              label,
+              status: 409,
+              shouldBeCaptured: false,
+            });
+          }
+
+          if (heldBy !== counterpartyTeamMemberId) {
+            throw new ShelfError({
+              cause: null,
+              title: "Wrong custodian",
+              message: `"${asset.title}" is in a different team member's custody. Return records must name the person actually holding it.`,
+              additionalData: {
+                assetId: asset.id,
+                heldBy,
+                counterpartyTeamMemberId,
+              },
+              label,
+              status: 409,
+              shouldBeCaptured: false,
+            });
+          }
+        }
       }
 
-      // Abandon any earlier open attempt for this asset. Without this, an
-      // operator who closed the modal halfway leaves a signable record behind
-      // that could later complete against a different physical handover.
+      // Abandon any earlier open attempt touching any of these assets. Without
+      // this, an operator who closed the modal halfway leaves a signable record
+      // behind that could later complete against a different physical handover.
       await tx.custodyHandover.updateMany({
         where: {
-          assetId,
           organizationId,
           state: CustodyHandoverState.AWAITING_SIGNATURES,
+          assets: { some: { assetId: { in: uniqueAssetIds } } },
         },
         data: {
           state: CustodyHandoverState.VOIDED,
@@ -246,13 +482,19 @@ export async function openHandover({
             data: {
               reference,
               kind,
-              assetId,
               organizationId,
               counterpartyTeamMemberId,
+              releasingTeamMemberId,
               operatorUserId,
               conditionNotes: conditionNotes?.trim() || null,
+              assets: {
+                create: uniqueAssetIds.map((assetId) => ({
+                  assetId,
+                  quantity: quantityByAssetId.get(assetId) ?? 1,
+                })),
+              },
             },
-            include: { signatures: true },
+            include: { signatures: true, assets: true },
           });
         } catch (cause) {
           const isUniqueViolation =
@@ -267,7 +509,7 @@ export async function openHandover({
       throw new ShelfError({
         cause: null,
         message: "Could not allocate a handover reference. Please try again.",
-        additionalData: { assetId, organizationId },
+        additionalData: { assetIds: uniqueAssetIds, organizationId },
         label,
       });
     });
@@ -277,7 +519,7 @@ export async function openHandover({
       cause,
       message:
         "Something went wrong while opening the handover record. Please try again or contact support.",
-      additionalData: { assetId, organizationId, kind },
+      additionalData: { assetIds: uniqueAssetIds, organizationId, kind },
       label,
     });
   }
@@ -380,18 +622,18 @@ export async function openReturnRequest({
 
   const alreadyOpen = await db.custodyHandover.findFirst({
     where: {
-      assetId,
       organizationId,
       kind: CustodyHandoverKind.RETURN,
       state: CustodyHandoverState.AWAITING_SIGNATURES,
+      assets: { some: { assetId } },
     },
-    include: { signatures: true },
+    include: { signatures: true, assets: true },
   });
 
   if (alreadyOpen) return alreadyOpen;
 
   const opened = await openHandover({
-    assetId,
+    assets: [{ id: assetId }],
     organizationId,
     kind: CustodyHandoverKind.RETURN,
     counterpartyTeamMemberId: member!.id,
@@ -609,7 +851,13 @@ export async function recordHandoverSignature({
           state: CustodyHandoverState.COMPLETED,
           completedAt: new Date(),
         },
-        include: { signatures: true },
+        // `assets` carries the per-line quantities the effect moves, and
+        // `releasingTeamMemberId` tells it whether to decrement a custodian or
+        // take the units off the shelf. A batch محضر applies in full or not at all.
+        include: {
+          signatures: true,
+          assets: { select: { assetId: true, quantity: true } },
+        },
       });
 
       await applyHandoverEffect(completed, tx);
@@ -654,42 +902,20 @@ export async function applyHandoverEffect(
   handover: {
     id: string;
     kind: CustodyHandoverKind;
-    assetId: string;
+    assets: { assetId: string; quantity?: number }[];
     organizationId: string;
     counterpartyTeamMemberId: string;
+    /**
+     * Who gave the units up on a transfer, so their custody can be decremented
+     * rather than wiped. `null`/absent means they came off the warehouse shelf.
+     */
+    releasingTeamMemberId?: string | null;
     operatorUserId: string | null;
   },
   tx: HandoverTxClient,
 ) {
   const isHandover = handover.kind === CustodyHandoverKind.HANDOVER;
-
-  // Every `where` below carries `organizationId` alongside the id. The record
-  // was org-checked before it reached here, but a write that trusts an id it
-  // did not re-scope is one refactor away from being an IDOR.
-  if (isHandover) {
-    // deleteMany, not delete: clears any stale row so the partial unique index
-    // cannot reject the insert below. Mirrors the pre-EPDA assign path.
-    await tx.custody.deleteMany({ where: { assetId: handover.assetId } });
-    await tx.asset.update({
-      where: { id: handover.assetId, organizationId: handover.organizationId },
-      data: {
-        status: AssetStatus.IN_CUSTODY,
-        custody: {
-          create: {
-            custodian: { connect: { id: handover.counterpartyTeamMemberId } },
-          },
-        },
-      },
-    });
-  } else {
-    await tx.asset.update({
-      where: { id: handover.assetId, organizationId: handover.organizationId },
-      data: {
-        status: AssetStatus.AVAILABLE,
-        custody: { deleteMany: {} },
-      },
-    });
-  }
+  const releasingTeamMemberId = handover.releasingTeamMemberId ?? null;
 
   const counterparty = await tx.teamMember.findFirst({
     where: {
@@ -699,19 +925,138 @@ export async function applyHandoverEffect(
     select: { id: true, name: true, user: { select: { id: true } } },
   });
 
-  await recordEvent(
-    {
-      organizationId: handover.organizationId,
-      actorUserId: handover.operatorUserId ?? undefined,
-      action: isHandover ? "CUSTODY_ASSIGNED" : "CUSTODY_RELEASED",
-      entityType: "ASSET",
-      entityId: handover.assetId,
-      assetId: handover.assetId,
-      teamMemberId: handover.counterpartyTeamMemberId,
-      targetUserId: counterparty?.user?.id ?? undefined,
-    },
-    tx,
-  );
+  // Sequential, not `Promise.all`: these are writes inside one transaction, and
+  // a batch of a hundred lines fired at once exhausts the connection's
+  // statement pipeline before it exhausts the transaction.
+  for (const { assetId, quantity } of handover.assets) {
+    /**
+     * Units this line moves. Individually-tracked assets are one physical
+     * thing, so their lines are always 1 (enforced in {@link openHandover});
+     * quantity-tracked lines carry the count the two parties signed for.
+     */
+    const moved = Math.max(1, quantity ?? 1);
+
+    // Every `where` below carries `organizationId` alongside the id. The record
+    // was org-checked before it reached here, but a write that trusts an id it
+    // did not re-scope is one refactor away from being an IDOR.
+    if (isHandover) {
+      /**
+       * Decrement the releasing side rather than wiping every custody row.
+       *
+       * A department passing 10 of its 30 pens to an employee must keep 20 —
+       * `deleteMany` here would silently return the other 20 to the shelf, and
+       * the only trace would be a stock count that stopped adding up.
+       *
+       * Absent `releasingTeamMemberId` the units come off the shelf, so there
+       * is nothing to decrement.
+       */
+      if (releasingTeamMemberId) {
+        const releasing = await tx.custody.findFirst({
+          where: { assetId, teamMemberId: releasingTeamMemberId },
+          select: { id: true, quantity: true },
+        });
+
+        if (releasing) {
+          const left = (releasing.quantity ?? 0) - moved;
+          if (left > 0) {
+            await tx.custody.update({
+              where: { id: releasing.id },
+              data: { quantity: left },
+            });
+          } else {
+            // Handed on everything they held — the row itself goes.
+            await tx.custody.delete({ where: { id: releasing.id } });
+          }
+        }
+      }
+
+      /**
+       * Add to the receiving side, or create their row.
+       *
+       * `increment` rather than replace: an employee who already holds 5 pens
+       * and signs for 10 more holds 15, not 10. The partial unique index makes
+       * the find + create/update sequence safe inside this transaction —
+       * mirrors `assignQuantityCustody`.
+       */
+      const receiving = await tx.custody.findFirst({
+        where: {
+          assetId,
+          teamMemberId: handover.counterpartyTeamMemberId,
+          kitCustodyId: null,
+        },
+        select: { id: true },
+      });
+
+      if (receiving) {
+        await tx.custody.update({
+          where: { id: receiving.id },
+          data: { quantity: { increment: moved } },
+        });
+      } else {
+        await tx.custody.create({
+          data: {
+            assetId,
+            teamMemberId: handover.counterpartyTeamMemberId,
+            quantity: moved,
+          },
+        });
+      }
+
+      await tx.asset.update({
+        where: { id: assetId, organizationId: handover.organizationId },
+        data: { status: AssetStatus.IN_CUSTODY },
+      });
+    } else {
+      /**
+       * A return takes back only what the محضر lists. The custodian may still
+       * hold the rest, and the asset only becomes `AVAILABLE` once nobody
+       * holds any of it — a status flip while units are still out is exactly
+       * what lets a second handover over-allocate the stock.
+       */
+      const held = await tx.custody.findFirst({
+        where: { assetId, teamMemberId: handover.counterpartyTeamMemberId },
+        select: { id: true, quantity: true },
+      });
+
+      if (held) {
+        const left = (held.quantity ?? 0) - moved;
+        if (left > 0) {
+          await tx.custody.update({
+            where: { id: held.id },
+            data: { quantity: left },
+          });
+        } else {
+          await tx.custody.delete({ where: { id: held.id } });
+        }
+      }
+
+      const stillOut = await tx.custody.count({ where: { assetId } });
+
+      await tx.asset.update({
+        where: { id: assetId, organizationId: handover.organizationId },
+        data: {
+          status: stillOut > 0 ? AssetStatus.IN_CUSTODY : AssetStatus.AVAILABLE,
+        },
+      });
+    }
+
+    // One event per asset, not one per محضر: the asset's own activity timeline
+    // is where people look, and a batch event filed against the first line
+    // would leave the other ninety-nine looking like they moved by themselves.
+    await recordEvent(
+      {
+        organizationId: handover.organizationId,
+        actorUserId: handover.operatorUserId ?? undefined,
+        action: isHandover ? "CUSTODY_ASSIGNED" : "CUSTODY_RELEASED",
+        entityType: "ASSET",
+        entityId: assetId,
+        assetId,
+        teamMemberId: handover.counterpartyTeamMemberId,
+        targetUserId: counterparty?.user?.id ?? undefined,
+      },
+      tx,
+    );
+  }
 }
 
 /**
@@ -746,6 +1091,7 @@ export async function writeHandoverNote({
       },
       operator: { select: { id: true, firstName: true, lastName: true } },
       signatures: { select: { party: true, declaredName: true } },
+      assets: { select: { assetId: true } },
     },
   });
 
@@ -777,13 +1123,23 @@ export async function writeHandoverNote({
       ? `handed the asset over to ${custodian}`
       : `took the asset back from ${custodian}`;
 
-  await createNote({
-    content: `${actor} ${verb}. Both parties signed handover record **${handover.reference}**.`,
-    type: "UPDATE",
-    userId: actorUserId,
-    assetId: handover.assetId,
-    organizationId,
-  });
+  // One note per asset. A batch محضر moved every line, and a note written only
+  // against the first would leave the rest of the assets with an unexplained
+  // custody change in their history — which is the one place anyone looks when
+  // asking "how did this end up with them?".
+  //
+  // Sequential rather than `Promise.all`: `createNote` runs its own
+  // org-membership assertion per call, and firing a hundred of those at once
+  // is a self-inflicted connection storm for something nobody is waiting on.
+  for (const { assetId } of handover.assets) {
+    await createNote({
+      content: `${actor} ${verb}. Both parties signed handover record **${handover.reference}**.`,
+      type: "UPDATE",
+      userId: actorUserId,
+      assetId,
+      organizationId,
+    });
+  }
 }
 
 /**
@@ -915,20 +1271,31 @@ export async function countHandoversAwaitingMySignature({
   organizationId: string;
   canOperate: boolean;
 }): Promise<number> {
-  const member = await db.teamMember.findFirst({
-    where: { organizationId, userId, deletedAt: null },
-    select: { id: true },
-  });
+  const [member, ownDepartmentTeamMemberId] = await Promise.all([
+    db.teamMember.findFirst({
+      where: { organizationId, userId, deletedAt: null },
+      select: { id: true },
+    }),
+    // A batch محضر names the department desk, not the person signing for it.
+    resolveOwnDepartmentId({ userId, organizationId }),
+  ]);
 
   // Nothing to count for a user who is neither a possible counterparty nor an
   // operator — and no query worth running for them either.
-  if (!member && !canOperate) return 0;
+  if (!member && !ownDepartmentTeamMemberId && !canOperate) return 0;
+
+  // Both rows they could be named as: their own, and their department's.
+  const ownCounterpartyIds = [member?.id, ownDepartmentTeamMemberId].filter(
+    (id): id is string => Boolean(id),
+  );
 
   const open = await db.custodyHandover.findMany({
     where: {
       organizationId,
       state: CustodyHandoverState.AWAITING_SIGNATURES,
-      ...(canOperate ? {} : { counterpartyTeamMemberId: member!.id }),
+      ...(canOperate
+        ? {}
+        : { counterpartyTeamMemberId: { in: ownCounterpartyIds } }),
     },
     select: {
       kind: true,
@@ -948,6 +1315,7 @@ export async function countHandoversAwaitingMySignature({
         },
         canOperate,
         ownTeamMemberId: member?.id ?? null,
+        ownDepartmentTeamMemberId,
       }),
     ),
   ).length;
@@ -979,24 +1347,39 @@ export async function listOpenHandovers({
   organizationId: string;
   scopedToOwnRecords: boolean;
 }) {
-  const member = await db.teamMember.findFirst({
-    where: { organizationId, userId, deletedAt: null },
-    select: { id: true },
-  });
+  const [member, ownDepartmentTeamMemberId] = await Promise.all([
+    db.teamMember.findFirst({
+      where: { organizationId, userId, deletedAt: null },
+      select: { id: true },
+    }),
+    // A department officer is named on batch محاضر through their desk's row,
+    // never their personal one — see `resolveOwnDepartmentId`.
+    resolveOwnDepartmentId({ userId, organizationId }),
+  ]);
 
-  // An employee with no team-member row cannot be named on any record, so the
-  // answer is empty rather than "everything".
-  if (scopedToOwnRecords && !member) return [];
+  const ownCounterpartyIds = [member?.id, ownDepartmentTeamMemberId].filter(
+    (id): id is string => Boolean(id),
+  );
+
+  // Somebody who can be named on no record at all sees nothing, rather than
+  // everything — `[]` here must never collapse into an unfiltered query.
+  if (scopedToOwnRecords && ownCounterpartyIds.length === 0) return [];
 
   return db.custodyHandover.findMany({
     where: {
       organizationId,
       state: CustodyHandoverState.AWAITING_SIGNATURES,
-      ...(scopedToOwnRecords ? { counterpartyTeamMemberId: member!.id } : {}),
+      ...(scopedToOwnRecords
+        ? { counterpartyTeamMemberId: { in: ownCounterpartyIds } }
+        : {}),
     },
     orderBy: { createdAt: "asc" },
     include: {
-      asset: { select: { id: true, title: true, sequentialId: true } },
+      assets: {
+        select: {
+          asset: { select: { id: true, title: true, sequentialId: true } },
+        },
+      },
       counterparty: { select: { id: true, name: true } },
       operator: { select: { id: true, firstName: true, lastName: true } },
       signatures: {
@@ -1024,8 +1407,20 @@ export async function getHandover({
   const handover = await db.custodyHandover.findFirst({
     where: { id: handoverId, organizationId },
     include: {
-      asset: {
-        select: { id: true, title: true, sequentialId: true, mainImage: true },
+      assets: {
+        select: {
+          quantity: true,
+          asset: {
+            select: {
+              id: true,
+              title: true,
+              sequentialId: true,
+              mainImage: true,
+              type: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
       },
       counterparty: {
         select: {
@@ -1056,4 +1451,42 @@ export async function getHandover({
   }
 
   return handover;
+}
+
+/**
+ * The department desk this user speaks for, or `null`.
+ *
+ * Read from the user's own membership rather than from anything the client
+ * sends: this is what proves an operator is acting *for* إدارة المرافق rather
+ * than merely claiming to be. It is the single input that turns a return into
+ * a department-to-employee transfer, so it must never be forgeable.
+ *
+ * Returns `null` for everyone who is not a department user, which is exactly
+ * what the caller wants — no department, no transfer, ordinary rules apply.
+ *
+ * @param userId - The signed-in user
+ * @param organizationId - Caller's workspace
+ * @returns The department's `TeamMember` id, or `null`
+ */
+export async function resolveOwnDepartmentId({
+  userId,
+  organizationId,
+}: {
+  userId: User["id"];
+  organizationId: string;
+}): Promise<string | null> {
+  const membership = await db.userOrganization.findFirst({
+    where: { userId, organizationId },
+    select: { roles: true, departmentTeamMemberId: true },
+  });
+
+  if (!membership) return null;
+
+  // The rule itself lives in `role-scope.ts`; this function only supplies the
+  // membership it needs. Two copies of "role AND pointer" would eventually
+  // disagree.
+  return resolveDepartmentDeskId({
+    roles: membership.roles,
+    departmentTeamMemberId: membership.departmentTeamMemberId,
+  });
 }

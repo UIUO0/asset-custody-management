@@ -36,7 +36,7 @@ const ALLOWED_KIT_EXTRA_INCLUDE = new Set(["category", "location"]);
  * else — so relation traversal / deep nesting cannot be injected.
  */
 function sanitizeValue(
-  value: unknown
+  value: unknown,
 ): true | { select: Record<string, boolean> } | undefined {
   if (value === true) return true;
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -55,7 +55,7 @@ function sanitizeValue(
       // exists to prevent.
       const selectObj = select as Record<string, unknown>;
       const isFlat = Object.values(selectObj).every(
-        (v) => typeof v === "boolean"
+        (v) => typeof v === "boolean",
       );
       if (!isFlat) return undefined;
       return { select: selectObj as Record<string, boolean> };
@@ -82,7 +82,7 @@ function sanitize(input: unknown, allowed: Set<string>) {
  * subset before it is merged into a Prisma asset `include`.
  */
 export function sanitizeAssetExtraInclude(
-  input: unknown
+  input: unknown,
 ): Prisma.AssetInclude | undefined {
   return sanitize(input, ALLOWED_ASSET_EXTRA_INCLUDE) as
     | Prisma.AssetInclude
@@ -94,7 +94,7 @@ export function sanitizeAssetExtraInclude(
  * subset before it is merged into a Prisma kit `include`.
  */
 export function sanitizeKitExtraInclude(
-  input: unknown
+  input: unknown,
 ): Prisma.KitInclude | undefined {
   return sanitize(input, ALLOWED_KIT_EXTRA_INCLUDE) as
     | Prisma.KitInclude

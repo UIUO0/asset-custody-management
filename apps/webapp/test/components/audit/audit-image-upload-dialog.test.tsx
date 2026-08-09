@@ -81,17 +81,17 @@ describe("AuditImageUploadDialog", () => {
       render(<AuditImageUploadDialog {...defaultProps} />);
 
       expect(
-        screen.getByRole("heading", { name: "Upload Images" })
+        screen.getByRole("heading", { name: "Upload Images" }),
       ).toBeInTheDocument();
     });
 
     it("shows 'Attach Images to Note' title when attaching to existing note", () => {
       render(
-        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />
+        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />,
       );
 
       expect(
-        screen.getByRole("heading", { name: "Attach Images to Note" })
+        screen.getByRole("heading", { name: "Attach Images to Note" }),
       ).toBeInTheDocument();
     });
 
@@ -99,27 +99,27 @@ describe("AuditImageUploadDialog", () => {
       render(<AuditImageUploadDialog {...defaultProps} />);
 
       expect(
-        screen.getByPlaceholderText("Add a note about these images...")
+        screen.getByPlaceholderText("Add a note about these images..."),
       ).toBeInTheDocument();
     });
 
     it("hides textarea when attaching to existing note", () => {
       render(
-        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />
+        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />,
       );
 
       expect(
-        screen.queryByPlaceholderText("Add a note about these images...")
+        screen.queryByPlaceholderText("Add a note about these images..."),
       ).not.toBeInTheDocument();
     });
 
     it("shows helper text when attaching to existing note", () => {
       render(
-        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />
+        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />,
       );
 
       expect(
-        screen.getByText("Images will be added to the existing note.")
+        screen.getByText("Images will be added to the existing note."),
       ).toBeInTheDocument();
     });
   });
@@ -138,7 +138,7 @@ describe("AuditImageUploadDialog", () => {
         <AuditImageUploadDialog
           {...defaultProps}
           selectedImages={[mockImage1, mockImage2]}
-        />
+        />,
       );
 
       const previews = screen.getAllByRole("img");
@@ -152,7 +152,7 @@ describe("AuditImageUploadDialog", () => {
         <AuditImageUploadDialog
           {...defaultProps}
           selectedImages={[mockImage1, mockImage2]}
-        />
+        />,
       );
 
       const removeButtons = screen.getAllByRole("button", { name: "" });
@@ -170,7 +170,7 @@ describe("AuditImageUploadDialog", () => {
         <AuditImageUploadDialog
           {...defaultProps}
           onRemoveImage={onRemoveImage}
-        />
+        />,
       );
 
       const removeButtons = screen.getAllByRole("button", { name: "" });
@@ -189,7 +189,7 @@ describe("AuditImageUploadDialog", () => {
           selectedImages={[mockImage1]}
           existingImagesCount={0}
           maxCount={3}
-        />
+        />,
       );
 
       const addMoreButton = screen.getByText("Add more");
@@ -203,7 +203,7 @@ describe("AuditImageUploadDialog", () => {
           selectedImages={[mockImage1, mockImage2]}
           existingImagesCount={1}
           maxCount={3}
-        />
+        />,
       );
 
       // Find the actual button element, not the text inside it
@@ -219,7 +219,7 @@ describe("AuditImageUploadDialog", () => {
         <AuditImageUploadDialog
           {...defaultProps}
           onChangeImages={onChangeImages}
-        />
+        />,
       );
 
       const addMoreButton = screen.getByText("Add more");
@@ -240,7 +240,7 @@ describe("AuditImageUploadDialog", () => {
 
     it("includes add-images-to-note intent when attaching", () => {
       render(
-        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />
+        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-1" />,
       );
 
       const intentInput = screen.getByDisplayValue("add-images-to-note");
@@ -249,7 +249,7 @@ describe("AuditImageUploadDialog", () => {
 
     it("includes noteId when attaching to existing note", () => {
       render(
-        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-123" />
+        <AuditImageUploadDialog {...defaultProps} existingNoteId="note-123" />,
       );
 
       const noteIdInput = screen.getByDisplayValue("note-123");
@@ -284,7 +284,10 @@ describe("AuditImageUploadDialog", () => {
       };
 
       render(
-        <AuditImageUploadDialog {...defaultProps} fetcher={submittingFetcher} />
+        <AuditImageUploadDialog
+          {...defaultProps}
+          fetcher={submittingFetcher}
+        />,
       );
 
       // Loading state shows on the Upload button
@@ -299,7 +302,10 @@ describe("AuditImageUploadDialog", () => {
       };
 
       render(
-        <AuditImageUploadDialog {...defaultProps} fetcher={submittingFetcher} />
+        <AuditImageUploadDialog
+          {...defaultProps}
+          fetcher={submittingFetcher}
+        />,
       );
 
       const uploadButton = screen.getByRole("button", { name: "Uploading..." });
@@ -319,7 +325,7 @@ describe("AuditImageUploadDialog", () => {
           {...defaultProps}
           onClose={onClose}
           fetcher={{ ...mockFetcher, state: "submitting" as const }}
-        />
+        />,
       );
 
       // Simulate transition from submitting to idle
@@ -328,7 +334,7 @@ describe("AuditImageUploadDialog", () => {
           {...defaultProps}
           onClose={onClose}
           fetcher={{ ...mockFetcher, state: "idle" as const }}
-        />
+        />,
       );
 
       await waitFor(() => {
@@ -344,7 +350,7 @@ describe("AuditImageUploadDialog", () => {
           {...defaultProps}
           onClose={onClose}
           fetcher={{ ...mockFetcher, state: "idle" as const }}
-        />
+        />,
       );
 
       expect(onClose).not.toHaveBeenCalled();

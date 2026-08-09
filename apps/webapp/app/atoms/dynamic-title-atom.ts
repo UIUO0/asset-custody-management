@@ -8,5 +8,5 @@ dynamicTitleAtom.onMount = (setAtom) => {
 export const updateDynamicTitleAtom = atom(
   null,
   (_get, set, event: ChangeEvent<HTMLInputElement>) =>
-    set(dynamicTitleAtom, event.target.value)
+    set(dynamicTitleAtom, event.target.value),
 );

@@ -96,13 +96,13 @@ export function ExportAssetsButton() {
   if (allSelected) {
     exportSearchParams.set(
       "assetIndexCurrentSearchParams",
-      searchParams.toString()
+      searchParams.toString(),
     );
   }
 
   const handleExport = async () => {
     const response = await fetch(
-      `/assets/export/filename.csv?${exportSearchParams.toString()}`
+      `/assets/export/filename.csv?${exportSearchParams.toString()}`,
     );
     // ... handle download
   };
@@ -144,7 +144,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
   const { assetIds, type, currentSearchParams } = parseData(
     await request.formData(),
-    BulkMarkAvailabilitySchema.and(CurrentSearchParamsSchema)
+    BulkMarkAvailabilitySchema.and(CurrentSearchParamsSchema),
   );
 
   await bulkMarkAvailability({

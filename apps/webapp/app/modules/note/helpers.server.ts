@@ -99,7 +99,7 @@ export function buildNameChangeNote({
   };
 
   return `${userLink} updated the asset name from ${formatName(
-    normalizedPrevious
+    normalizedPrevious,
   )} to ${formatName(normalizedNext)}.`;
 }
 

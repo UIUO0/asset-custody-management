@@ -40,7 +40,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     const { assetIds, currentSearchParams } = parseData(
       formData,
-      BulkReleaseCustodySchema.and(CurrentSearchParamsSchema)
+      BulkReleaseCustodySchema.and(CurrentSearchParamsSchema),
     );
 
     /**

@@ -16,7 +16,7 @@ import {
 
 /** Build an asset shape with sensible defaults; spread overrides last. */
 function asset(
-  partial: Partial<AssetForCodeResolution> = {}
+  partial: Partial<AssetForCodeResolution> = {},
 ): AssetForCodeResolution {
   return {
     sequentialId: null,
@@ -29,7 +29,7 @@ function asset(
 
 /** Build an organization shape with sensible defaults. */
 function org(
-  partial: Partial<OrganizationForCodeResolution> = {}
+  partial: Partial<OrganizationForCodeResolution> = {},
 ): OrganizationForCodeResolution {
   return {
     qrIdDisplayPreference: "QR_ID",

@@ -18,7 +18,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const { organizationId: paramOrgId } = getParams(
       params,
       z.object({ organizationId: z.string() }),
-      { additionalData: { userId } }
+      { additionalData: { userId } },
     );
 
     // Verify user has permission to read working hours for this organization
@@ -52,7 +52,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
             date: override.date.toISOString().slice(0, 10),
           })),
         },
-      })
+      }),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

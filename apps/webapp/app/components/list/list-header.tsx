@@ -77,7 +77,7 @@ export const ListHeader = ({
         {children}
       </tr>
     ),
-    [bulkActions, children, hideFirstColumn, modeIsAdvanced, freezeColumn],
+    [bulkActions, children, hideFirstColumn, modeIsAdvanced, freezeColumn, t],
   );
 
   return (

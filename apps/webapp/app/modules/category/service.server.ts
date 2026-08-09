@@ -134,7 +134,7 @@ export async function createCategoriesIfNotExists({
     const categories = new Map(
       data
         .filter((asset) => asset.category)
-        .map((asset) => [asset.category, ""])
+        .map((asset) => [asset.category, ""]),
     );
 
     // now we loop through the categories and check if they exist

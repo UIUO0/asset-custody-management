@@ -13,7 +13,7 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
     z.object({ organizationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {

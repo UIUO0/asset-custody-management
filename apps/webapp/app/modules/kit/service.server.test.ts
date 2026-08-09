@@ -247,13 +247,13 @@ describe("createKit", () => {
     // no id is supplied, preserving the not-found behavior).
     //@ts-expect-error missing vitest type
     db.category.findFirst.mockImplementation(({ where }) =>
-      where?.id ? Promise.resolve({ id: where.id }) : Promise.resolve(null)
+      where?.id ? Promise.resolve({ id: where.id }) : Promise.resolve(null),
     );
     //@ts-expect-error missing vitest type
     db.location.findFirst.mockImplementation(({ where }) =>
       where?.id
         ? Promise.resolve({ id: where.id, name: where.id })
-        : Promise.resolve(null)
+        : Promise.resolve(null),
     );
   });
 
@@ -439,7 +439,7 @@ describe("createKit", () => {
         ...mockCreateParams,
         barcodes,
         locationId: null,
-      })
+      }),
     ).rejects.toThrow();
   });
 });
@@ -452,13 +452,13 @@ describe("updateKit", () => {
     // passes (returns null when no id is supplied, e.g. uncategorized).
     //@ts-expect-error missing vitest type
     db.category.findFirst.mockImplementation(({ where }) =>
-      where?.id ? Promise.resolve({ id: where.id }) : Promise.resolve(null)
+      where?.id ? Promise.resolve({ id: where.id }) : Promise.resolve(null),
     );
     //@ts-expect-error missing vitest type
     db.location.findFirst.mockImplementation(({ where }) =>
       where?.id
         ? Promise.resolve({ id: where.id, name: where.id })
-        : Promise.resolve(null)
+        : Promise.resolve(null),
     );
   });
 
@@ -636,7 +636,7 @@ describe("getKit", () => {
         id: "kit-1",
         organizationId: "org-1",
         userOrganizations,
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -649,7 +649,7 @@ describe("getKit", () => {
       getKit({
         id: "nonexistent-kit",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -773,7 +773,7 @@ describe("deleteKit", () => {
           fromValue: "kit-1",
           toValue: null,
         }),
-      ])
+      ]),
     );
 
     expect(db.kit.deleteMany).toHaveBeenCalled();
@@ -810,7 +810,7 @@ describe("deleteKit", () => {
         id: "kit-1",
         organizationId: "org-1",
         actorUserId: "user-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 });
@@ -929,7 +929,7 @@ describe("bulkDeleteKits", () => {
           kitId: "kit-B",
           targetUserId: "user-carol",
         }),
-      ])
+      ]),
     );
 
     // Both assets flipped to AVAILABLE (no remaining custody).
@@ -948,14 +948,14 @@ describe("bulkDeleteKits", () => {
     const bulkNotesArg = (db.note.createMany as ReturnType<typeof vitest.fn>)
       .mock.calls[0][0];
     expect(
-      bulkNotesArg.data.map((n: { assetId: string }) => n.assetId)
+      bulkNotesArg.data.map((n: { assetId: string }) => n.assetId),
     ).toEqual(["drill-1", "pen-1"]);
     // Each note attributes the correct custodian to its kit.
     const drillNote = bulkNotesArg.data.find(
-      (n: { assetId: string }) => n.assetId === "drill-1"
+      (n: { assetId: string }) => n.assetId === "drill-1",
     );
     const penNote = bulkNotesArg.data.find(
-      (n: { assetId: string }) => n.assetId === "pen-1"
+      (n: { assetId: string }) => n.assetId === "pen-1",
     );
     expect(drillNote.content).toContain("Camera Kit");
     expect(penNote.content).toContain("Drone Kit");
@@ -1020,10 +1020,10 @@ describe("bulkDeleteKits", () => {
           toValue: null,
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
     expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0]
+      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
     ).toHaveLength(3);
   });
 
@@ -1105,10 +1105,10 @@ describe("bulkRemoveAssetsFromKits", () => {
           toValue: null,
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
     expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0]
+      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
     ).toHaveLength(2);
   });
 
@@ -1170,7 +1170,7 @@ describe("bulkRemoveAssetsFromKits", () => {
           meta: { viaKit: true },
         }),
       ],
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -1210,7 +1210,7 @@ describe("bulkAssignKitCustody", () => {
     //@ts-expect-error missing vitest type
     db.$transaction.mockImplementation((callback) =>
       // Execute the callback with a mock transaction object
-      callback(db)
+      callback(db),
     );
 
     await bulkAssignKitCustody({
@@ -1248,7 +1248,7 @@ describe("bulkAssignKitCustody", () => {
         custodianId: "custodian-1",
         custodianName: "John Doe",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow("There are some unavailable kits");
   });
 });
@@ -1283,7 +1283,7 @@ describe("bulkReleaseKitCustody", () => {
     //@ts-expect-error missing vitest type
     db.$transaction.mockImplementation((callback) =>
       // Execute the callback with a mock transaction object
-      callback(db)
+      callback(db),
     );
 
     await bulkReleaseKitCustody({
@@ -1314,7 +1314,7 @@ describe("bulkReleaseKitCustody", () => {
         kitIds: ["kit-1"],
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow("There are some kits which are not in custody");
   });
 });
@@ -1485,7 +1485,7 @@ describe("relinkKitQrCode", () => {
         kitId: "kit-1",
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
   });
 });
@@ -1515,7 +1515,7 @@ describe("getAvailableKitAssetForBooking", () => {
 
     const result = await getAvailableKitAssetForBooking(
       ["kit-1", "kit-2"],
-      "org-1"
+      "org-1",
     );
 
     expect(db.kit.findMany).toHaveBeenCalledWith({
@@ -1602,7 +1602,7 @@ describe("updateKitsWithBookingCustodians", () => {
             some: { booking: { status: { in: ["ONGOING", "OVERDUE"] } } },
           },
         }),
-      })
+      }),
     );
   });
 
@@ -1869,7 +1869,7 @@ describe("updateKitAssets - kit-allocated custody threading", () => {
           meta: expect.objectContaining({ viaKit: true, quantity: 50 }),
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -1954,7 +1954,7 @@ describe("updateKitAssets - kit-allocated custody threading", () => {
           meta: expect.objectContaining({ viaKit: true }),
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -2076,7 +2076,7 @@ describe("bulkAssignKitCustody - kit-allocated custody threading", () => {
           meta: expect.objectContaining({ viaKit: true, quantity: 50 }),
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 
@@ -2342,7 +2342,7 @@ describe("bulkReleaseKitCustody - emit-before-cascade", () => {
 
     // Event emission happens before the cascade fires.
     expect(callOrder.indexOf("recordEvents")).toBeLessThan(
-      callOrder.indexOf("kitCustody.deleteMany")
+      callOrder.indexOf("kitCustody.deleteMany"),
     );
 
     // The explicit per-asset `custody.deleteMany({ where: { assetId: { in: ... } } })`
@@ -2372,7 +2372,7 @@ describe("bulkReleaseKitCustody - emit-before-cascade", () => {
           meta: expect.objectContaining({ viaKit: true }),
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
   });
 });
@@ -2439,7 +2439,7 @@ describe("releaseCustody (single kit) - emit-before-cascade", () => {
           meta: expect.objectContaining({ viaKit: true }),
         }),
       ]),
-      expect.anything()
+      expect.anything(),
     );
 
     // No broad `tx.custody.deleteMany({ where: { assetId: { in: [...] } } })` —
@@ -2702,7 +2702,7 @@ describe("updateKitAssets - check-in floor guard (Polish-7b)", () => {
         userId: "user-1",
         organizationId: "org-1",
         request: new Request("http://test.com"),
-      })
+      }),
     ).rejects.toThrow(/already checked in/i);
 
     // The live-link qty sync must NOT run when the guard trips.
@@ -2774,7 +2774,7 @@ describe("updateKitAssets - server-side strict-available validation", () => {
         userId: "user-1",
         organizationId: "org-1",
         request: new Request("http://test.com"),
-      })
+      }),
     ).rejects.toMatchObject({
       title: "Quantity exceeds available pool",
       status: 400,
@@ -2895,7 +2895,7 @@ describe("updateKitAssets - server-side strict-available validation", () => {
         userId: "user-1",
         organizationId: "org-1",
         request: new Request("http://test.com"),
-      })
+      }),
     ).resolves.not.toThrow();
   });
 });
@@ -2949,13 +2949,13 @@ describe("moveAssetKitUnits", () => {
     // the guard passes by default.
     mockAssetFindMany.mockImplementation(
       ({ where }: { where: { id: { in: string[] } } }) =>
-        Promise.resolve(where.id.in.map((id) => ({ id })))
+        Promise.resolve(where.id.in.map((id) => ({ id }))),
     );
     // Default: both source + destination kits resolve in the org with
     // a synthetic name based on the id.
     mockKitFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
-        Promise.resolve({ id: where.id, name: where.id })
+        Promise.resolve({ id: where.id, name: where.id }),
     );
     // Default: source AssetKit has 50 units allocated; tests override
     // when they need a different starting state.
@@ -2978,7 +2978,7 @@ describe("moveAssetKitUnits", () => {
     expect(result.toQuantity).toBe(10);
     expect(result.sourceRowDeleted).toBe(false);
     expect(result.moveCorrelationId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     );
 
     // Source decremented (not deleted) — 50 - 10 = 40.
@@ -2993,7 +2993,7 @@ describe("moveAssetKitUnits", () => {
         where: { assetId_kitId: { assetId: "asset-1", kitId: "kit-to" } },
         create: expect.objectContaining({ quantity: 10 }),
         update: { quantity: { increment: 10 } },
-      })
+      }),
     );
   });
 
@@ -3056,7 +3056,7 @@ describe("moveAssetKitUnits", () => {
     expect(events[0].meta.side).toBe("from");
     expect(events[1].meta.side).toBe("to");
     expect(events[0].meta.moveCorrelationId).toBe(
-      events[1].meta.moveCorrelationId
+      events[1].meta.moveCorrelationId,
     );
   });
 
@@ -3181,8 +3181,8 @@ describe("moveAssetKitUnits", () => {
     mockKitFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
         Promise.resolve(
-          where.id === "kit-from" ? null : { id: where.id, name: where.id }
-        )
+          where.id === "kit-from" ? null : { id: where.id, name: where.id },
+        ),
     );
 
     const err = await moveAssetKitUnits(baseArgs).catch((e) => e);
@@ -3196,8 +3196,8 @@ describe("moveAssetKitUnits", () => {
     mockKitFindFirst.mockImplementation(
       ({ where }: { where: { id: string } }) =>
         Promise.resolve(
-          where.id === "kit-to" ? null : { id: where.id, name: where.id }
-        )
+          where.id === "kit-to" ? null : { id: where.id, name: where.id },
+        ),
     );
 
     const err = await moveAssetKitUnits(baseArgs).catch((e) => e);
@@ -3242,7 +3242,7 @@ describe("updateKitLocation - manual placement guard", () => {
     db.location.findFirst.mockImplementation(({ where }) =>
       where?.id
         ? Promise.resolve({ id: where.id, name: where.id })
-        : Promise.resolve(null)
+        : Promise.resolve(null),
     );
   });
 
@@ -3536,7 +3536,7 @@ describe("updateKitLocation - manual placement guard", () => {
     // Note fires for the cascaded QT asset only.
     const noteCalls = (createNote as ReturnType<typeof vitest.fn>).mock.calls;
     const noteAssetIds = noteCalls.map(
-      (c) => (c[0] as { assetId: string }).assetId
+      (c) => (c[0] as { assetId: string }).assetId,
     );
     expect(noteAssetIds).toEqual(["asset-qty"]);
     expect(noteAssetIds).not.toContain("asset-ind-manual");
@@ -3553,7 +3553,7 @@ describe("bulkUpdateKitLocation - manual placement guard", () => {
     db.location.findFirst.mockImplementation(({ where }) =>
       where?.id
         ? Promise.resolve({ id: where.id, name: where.id })
-        : Promise.resolve(null)
+        : Promise.resolve(null),
     );
   });
 

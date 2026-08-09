@@ -26,7 +26,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       url.searchParams,
       z.object({
         assetId: z.string(),
-      })
+      }),
     );
 
     // Validate user has permission to access assets in their organization
@@ -57,14 +57,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
           additionalData: { assetId, userId },
           label: "Assets",
           shouldBeCaptured: false,
-        })
+        }),
       );
 
       return data(
         payload({
           asset: null,
           error: "Asset not found",
-        })
+        }),
       );
     }
 
@@ -102,7 +102,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
               message: `Failed to refresh thumbnail URL for asset ${assetId}`,
               additionalData: { assetId, thumbnailPath, userId },
               label: "Assets",
-            })
+            }),
           );
 
           // Return the existing thumbnail rather than failing
@@ -112,7 +112,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
                 id: asset.id,
                 thumbnailImage: asset.thumbnailImage,
               },
-            })
+            }),
           );
         }
       }
@@ -126,7 +126,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
             id: asset.id,
             thumbnailImage: asset.thumbnailImage, // Will be null
           },
-        })
+        }),
       );
     }
 
@@ -141,7 +141,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
             id: asset.id,
             thumbnailImage: asset.thumbnailImage,
           },
-        })
+        }),
       );
     }
 
@@ -157,7 +157,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
             id: asset.id,
             thumbnailImage: asset.thumbnailImage,
           },
-        })
+        }),
       );
     }
 
@@ -219,14 +219,14 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
           message: `Asset was deleted during thumbnail generation: ${assetId}`,
           additionalData: { assetId, userId },
           label: "Assets",
-        })
+        }),
       );
 
       return data(
         payload({
           asset: null,
           error: "Asset was deleted during processing",
-        })
+        }),
       );
     }
 
@@ -284,7 +284,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       payload({
         asset: null,
         error: reason.message,
-      })
+      }),
     );
   }
 }

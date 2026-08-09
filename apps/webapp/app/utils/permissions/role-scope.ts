@@ -135,3 +135,79 @@ export function hasWorkspaceAdminRole(
 
   return roleList.some((role) => ROLES_WITH_WORKSPACE_ADMIN.includes(role));
 }
+
+/**
+ * The department desk this user speaks for, or `null`.
+ *
+ * **Both** halves are required: the pointer says where somebody works, the role
+ * is what grants them the desk's authority. An employee who merely belongs to a
+ * department must not inherit its stock.
+ *
+ * Deliberately independent of {@link rolesAreScopedToOwnRecords}. "Which rows
+ * may I see?" and "which desk do I act for?" are different questions, and
+ * conflating them hid the IT desk from `admin@epda.local`: they hold `OWNER`
+ * (org-wide, so nothing is filtered) *and* speak for تقنية المعلومات, and a
+ * visibility-derived answer returned "no desk" for exactly that combination.
+ *
+ * @param roles - The user's roles in the current organization
+ * @param departmentTeamMemberId - The desk recorded on their membership
+ * @returns The desk's team-member id, or `null`
+ */
+export function resolveDepartmentDeskId({
+  roles,
+  departmentTeamMemberId,
+}: {
+  roles: OrganizationRoles | OrganizationRoles[] | undefined | null;
+  departmentTeamMemberId?: string | null;
+}): string | null {
+  if (!departmentTeamMemberId) return null;
+
+  const roleList = roles ? (Array.isArray(roles) ? roles : [roles]) : [];
+
+  return roleList.includes(OrganizationRoles.DEPARTMENT)
+    ? departmentTeamMemberId
+    : null;
+}
+
+/**
+ * The team-member rows whose custody this user is allowed to see.
+ *
+ * A third scope, between "everything" and "my own records". `DEPARTMENT` is
+ * deliberately absent from {@link ROLES_WITH_ORG_WIDE_VISIBILITY}, so
+ * {@link rolesAreScopedToOwnRecords} returns `true` for it — correct as a
+ * fail-closed default, but on its own it would show a department user *nothing*:
+ * batch stock is held by the department's own `TeamMember` row, which is not the
+ * user's personal one.
+ *
+ * Returning ids (rather than a boolean) keeps the widening explicit and
+ * auditable at the call site: a query filters `custodianId IN (...)`, and the
+ * set is only ever as wide as the caller's membership makes it.
+ *
+ * @param roles - The user's roles in the current organization
+ * @param ownTeamMemberId - The user's personal team-member row, if any
+ * @param departmentTeamMemberId - The department they belong to, if any
+ * @returns Team-member ids to filter custody by, or `null` for org-wide roles
+ *   (meaning "do not filter"). An empty array means "show nothing" — never
+ *   treat it as "show everything".
+ */
+export function visibleCustodianIds({
+  roles,
+  ownTeamMemberId,
+  departmentTeamMemberId,
+}: {
+  roles: OrganizationRoles | OrganizationRoles[] | undefined | null;
+  ownTeamMemberId: string | null | undefined;
+  departmentTeamMemberId?: string | null;
+}): string[] | null {
+  if (!rolesAreScopedToOwnRecords(roles)) return null;
+
+  const ids = new Set<string>();
+
+  if (ownTeamMemberId) ids.add(ownTeamMemberId);
+
+  // One rule, one place — see `resolveDepartmentDeskId`.
+  const deskId = resolveDepartmentDeskId({ roles, departmentTeamMemberId });
+  if (deskId) ids.add(deskId);
+
+  return [...ids];
+}

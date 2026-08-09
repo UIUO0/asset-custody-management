@@ -64,7 +64,7 @@ describe("seasonalMultiplier", () => {
 
   test("average across 12 months is close to 1.0", () => {
     const total = Array.from({ length: 12 }, (_, m) =>
-      seasonalMultiplier(m)
+      seasonalMultiplier(m),
     ).reduce((a, b) => a + b, 0);
     const avg = total / 12;
     expect(avg).toBeGreaterThan(0.9);

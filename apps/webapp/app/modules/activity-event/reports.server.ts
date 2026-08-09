@@ -150,7 +150,7 @@ export async function auditCompletionStats({
     });
     return rows
       .filter((r): r is typeof r & { auditSessionId: string } =>
-        Boolean(r.auditSessionId)
+        Boolean(r.auditSessionId),
       )
       .map((r) => ({
         auditSessionId: r.auditSessionId,
@@ -289,7 +289,7 @@ function toReportEvent(row: PrismaReportRow): ReportEvent {
 function wrap(
   cause: unknown,
   helper: string,
-  additionalData: Record<string, unknown>
+  additionalData: Record<string, unknown>,
 ): ShelfError {
   return new ShelfError({
     cause,

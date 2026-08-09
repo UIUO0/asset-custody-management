@@ -12,7 +12,7 @@ export type CleanMarkdownFormattingOptions = {
 
 export const cleanMarkdownFormatting = (
   text: string,
-  options: CleanMarkdownFormattingOptions = {}
+  options: CleanMarkdownFormattingOptions = {},
 ): string => {
   const { preserveLineBreaks = false } = options;
 

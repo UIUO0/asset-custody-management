@@ -16,7 +16,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     z.object({ organizationId: z.string() }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {

@@ -14,7 +14,7 @@ describe("getUIFieldType", () => {
 
     expect(getUIFieldType({ column: updatedColumn })).toBe("date");
     expect(getUIFieldType({ column: updatedColumn, friendlyName: true })).toBe(
-      "Date"
+      "Date",
     );
   });
 });

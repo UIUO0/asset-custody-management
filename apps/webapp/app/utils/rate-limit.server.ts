@@ -38,7 +38,7 @@ const counters = new Map<string, Counter>();
 function check(
   key: string,
   config: BucketConfig,
-  now: number
+  now: number,
 ): { allowed: boolean; retryAfterSec: number } {
   const existing = counters.get(key);
   if (!existing || existing.resetAt <= now) {
@@ -61,7 +61,7 @@ function check(
 // eslint-disable-next-line @typescript-eslint/require-await
 export async function enforceUserRateLimit(
   userId: string,
-  bucket: Bucket
+  bucket: Bucket,
 ): Promise<void> {
   const now = Date.now();
   const configs = buckets[bucket];

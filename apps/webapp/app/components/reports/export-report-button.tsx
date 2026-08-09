@@ -87,7 +87,7 @@ export function ExportReportButton({
     } finally {
       setExporting(false);
     }
-  }, [disabled, exporting, reportId, reportTitle, searchParams]);
+  }, [disabled, exporting, reportId, reportTitle, searchParams, t]);
 
   return (
     <Button

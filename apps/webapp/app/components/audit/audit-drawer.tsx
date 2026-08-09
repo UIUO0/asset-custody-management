@@ -24,7 +24,6 @@ import {
 } from "~/atoms/qr-scanner";
 import { AuditAssetActions } from "~/components/audit/audit-asset-actions";
 import CompleteAuditDialog from "~/components/audit/complete-audit-dialog";
-import { AvailabilityBadge } from "~/components/booking/availability-label";
 import ImageWithPreview from "~/components/image-with-preview/image-with-preview";
 import { createAvailabilityLabels } from "~/components/scanner/drawer/availability-label-factory";
 import {
@@ -37,6 +36,7 @@ import {
   GenericItemRow,
   Tr,
 } from "~/components/scanner/drawer/generic-item-row";
+import { AvailabilityBadge } from "~/components/shared/availability-badge";
 import { Button } from "~/components/shared/button";
 import { Progress } from "~/components/shared/progress";
 import { Spinner } from "~/components/shared/spinner";

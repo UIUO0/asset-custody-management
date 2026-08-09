@@ -8,19 +8,17 @@
  *
  * Two lists, deliberately not merged:
  *
- * - **عهدة** — handed over with no end date.
- * - **مصروف بحجز** — out on a booking, due back on a date, can run overdue.
+ * - **عهدتي** — what this person holds personally.
+ * - **عهدة إدارتي** — what their department's desk holds, shown only to a
+ *   `DEPARTMENT` officer. It is the stock they hand on to their own staff, and
+ *   merging it would read as personal accountability for the whole batch.
  *
  * @see {@link file://./../../modules/custody/my-custody.server.ts}
  */
 
 import type { ReactNode } from "react";
 import { useState } from "react";
-import {
-  BookingStatus,
-  CustodyHandoverKind,
-  CustodyHandoverState,
-} from "@prisma/client";
+import { CustodyHandoverKind, CustodyHandoverState } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import { data } from "react-router";
@@ -39,10 +37,7 @@ import { db } from "~/database/db.server";
 import { useDisabled } from "~/hooks/use-disabled";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
-import type {
-  MyCheckedOutItem,
-  MyCustodyItem,
-} from "~/modules/custody/my-custody.server";
+import type { MyCustodyItem } from "~/modules/custody/my-custody.server";
 import { getMyCustodyAndCheckouts } from "~/modules/custody/my-custody.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError } from "~/utils/error";
@@ -69,9 +64,25 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       action: PermissionAction.read,
     });
 
-    const { custodies, checkedOut } = await getMyCustodyAndCheckouts({
+    /**
+     * Which desk (if any) this viewer works for. Read from their membership,
+     * never from the request — see `resolveDepartmentDeskId`.
+     *
+     * `roles` is selected here rather than reusing `requirePermission`'s
+     * `role`: that helper collapses the membership to `roles[0]`, so an account
+     * holding `[OWNER, DEPARTMENT]` — which is how the authority runs IT —
+     * would report only `OWNER` and lose its desk.
+     */
+    const membership = await db.userOrganization.findFirst({
+      where: { userId, organizationId },
+      select: { roles: true, departmentTeamMemberId: true },
+    });
+
+    const { custodies, departmentCustodies } = await getMyCustodyAndCheckouts({
       organizationId,
       userId,
+      roles: membership?.roles ?? [],
+      departmentTeamMemberId: membership?.departmentTeamMemberId ?? null,
     });
 
     /**
@@ -87,18 +98,24 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         organizationId,
         kind: CustodyHandoverKind.RETURN,
         state: CustodyHandoverState.AWAITING_SIGNATURES,
-        assetId: { in: custodies.map((custody) => custody.asset.id) },
+        assets: {
+          some: { assetId: { in: custodies.map((c) => c.asset.id) } },
+        },
       },
-      select: { id: true, assetId: true },
+      select: { id: true, assets: { select: { assetId: true } } },
     });
 
     return payload({
       // `<Header/>` reads this off loader data rather than taking it as a prop.
       header: { title: "My custody" },
       custodies,
-      checkedOut,
+      departmentCustodies,
+      // Flattened from the pivot: a محضر may cover several assets, and each of
+      // this employee's rows needs to find the record covering *its* asset.
       openReturnByAssetId: Object.fromEntries(
-        openReturns.map((record) => [record.assetId, record.id]),
+        openReturns.flatMap((record) =>
+          record.assets.map((line) => [line.assetId, record.id]),
+        ),
       ) as Record<string, string>,
     });
   } catch (cause) {
@@ -120,10 +137,11 @@ export const ErrorBoundary = () => <ErrorContent />;
 
 export default function MyCustodyPage() {
   const { t } = useTranslation();
-  const { custodies, checkedOut, openReturnByAssetId } =
+  const { custodies, departmentCustodies, openReturnByAssetId } =
     useLoaderData<typeof loader>();
 
-  const holdsNothing = custodies.length === 0 && checkedOut.length === 0;
+  const holdsNothing =
+    custodies.length === 0 && departmentCustodies.length === 0;
 
   return (
     <>
@@ -169,10 +187,10 @@ export default function MyCustodyPage() {
         </Section>
       ) : null}
 
-      {checkedOut.length > 0 ? (
+      {departmentCustodies.length > 0 ? (
         <Section
-          heading={t("myCustody.checkedOutHeading")}
-          description={t("myCustody.checkedOutDescription")}
+          heading={t("myCustody.departmentHeading")}
+          description={t("myCustody.departmentDescription")}
         >
           <Table>
             <thead>
@@ -180,13 +198,17 @@ export default function MyCustodyPage() {
                 <Th>{t("myCustody.asset")}</Th>
                 <Th>{t("assets.category")}</Th>
                 <Th className="text-end">{t("myCustody.quantity")}</Th>
-                <Th>{t("myCustody.booking")}</Th>
-                <Th>{t("myCustody.dueBack")}</Th>
+                <Th>{t("myCustody.since")}</Th>
+                <Th> </Th>
               </tr>
             </thead>
             <tbody>
-              {checkedOut.map((row) => (
-                <CheckedOutRow key={row.id} row={row} />
+              {departmentCustodies.map((custody) => (
+                <CustodyRow
+                  key={custody.id}
+                  custody={custody}
+                  openHandoverId={openReturnByAssetId[custody.asset.id]}
+                />
               ))}
             </tbody>
           </Table>
@@ -448,39 +470,6 @@ function CustodyRow({
       </Td>
 
       <RequestReturnCell assetId={asset.id} openHandoverId={openHandoverId} />
-    </Tr>
-  );
-}
-
-/** One asset checked out to the user on an active booking. */
-function CheckedOutRow({ row }: { row: MyCheckedOutItem }) {
-  const { asset, booking } = row;
-  const isOverdue = booking.status === BookingStatus.OVERDUE;
-
-  return (
-    <Tr>
-      <AssetCell asset={asset} />
-      <CategoryCell category={asset.category} />
-      <QuantityCell
-        quantity={row.quantity}
-        unitOfMeasure={asset.unitOfMeasure}
-      />
-
-      <Td>
-        <Button
-          to={`/bookings/${booking.id}/overview`}
-          variant="link"
-          className="text-start font-normal text-gray-600"
-        >
-          {booking.name}
-        </Button>
-      </Td>
-
-      <Td className="whitespace-nowrap">
-        <span className={isOverdue ? "font-medium text-error-600" : undefined}>
-          <DateS date={booking.to} options={{ dateStyle: "medium" }} />
-        </span>
-      </Td>
     </Tr>
   );
 }

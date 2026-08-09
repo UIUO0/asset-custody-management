@@ -55,7 +55,7 @@ vi.mock("~/modules/asset/service.server", () => ({
           barcodes: [],
         },
       ],
-    })
+    }),
   ),
 }));
 
@@ -63,7 +63,7 @@ vi.mock("~/modules/asset/service.server", () => ({
 // the test can assert it is surfaced as an importer-native `cf:` header.
 vi.mock("~/modules/custom-field/service.server", () => ({
   getActiveCustomFields: vi.fn(() =>
-    Promise.resolve([{ name: "Brand", type: "OPTION" }])
+    Promise.resolve([{ name: "Brand", type: "OPTION" }]),
   ),
 }));
 

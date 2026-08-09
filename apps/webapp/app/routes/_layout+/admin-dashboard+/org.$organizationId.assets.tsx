@@ -32,7 +32,7 @@ export const loader = async ({
   const { organizationId } = getParams(
     params,
     z.object({ organizationId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -104,7 +104,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { intent } = parseData(
       formData,
-      z.object({ intent: z.enum(["bulk-delete"]) })
+      z.object({ intent: z.enum(["bulk-delete"]) }),
     );
 
     const intent2ActionMap: { [K in typeof intent]: PermissionAction } = {
@@ -132,7 +132,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           formData,
           z
             .object({ assetIds: z.array(z.string()).min(1) })
-            .and(CurrentSearchParamsSchema)
+            .and(CurrentSearchParamsSchema),
         );
 
         await bulkDeleteAssets({

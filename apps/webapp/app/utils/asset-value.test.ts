@@ -28,7 +28,7 @@ describe("getAssetTotalValue", () => {
         type: AssetType.INDIVIDUAL,
         valuation: 2000,
         quantity: 1,
-      })
+      }),
     ).toBe(2000);
   });
 
@@ -38,7 +38,7 @@ describe("getAssetTotalValue", () => {
         type: AssetType.QUANTITY_TRACKED,
         valuation: 1,
         quantity: 100,
-      })
+      }),
     ).toBe(100);
   });
 
@@ -48,7 +48,7 @@ describe("getAssetTotalValue", () => {
         type: AssetType.QUANTITY_TRACKED,
         valuation: null,
         quantity: 100,
-      })
+      }),
     ).toBe(0);
   });
 
@@ -58,13 +58,13 @@ describe("getAssetTotalValue", () => {
         type: AssetType.INDIVIDUAL,
         valuation: 50,
         quantity: null,
-      })
+      }),
     ).toBe(50);
     expect(
       getAssetTotalValue({
         type: AssetType.INDIVIDUAL,
         valuation: 50,
-      })
+      }),
     ).toBe(50);
   });
 
@@ -74,7 +74,7 @@ describe("getAssetTotalValue", () => {
         type: AssetType.QUANTITY_TRACKED,
         valuation: 0,
         quantity: 100,
-      })
+      }),
     ).toBe(0);
   });
 });
@@ -87,7 +87,7 @@ describe("formatAssetValueWithBreakdown", () => {
         valuation: 2000,
         quantity: 1,
       },
-      usd
+      usd,
     );
     expect(result.total).toBe("$2,000.00");
     expect(result.unit).toBeNull();
@@ -102,7 +102,7 @@ describe("formatAssetValueWithBreakdown", () => {
         quantity: 100,
         unitOfMeasure: "boxes",
       },
-      usd
+      usd,
     );
     expect(result.total).toBe("$100.00");
     expect(result.unit).toBe("$1.00");
@@ -117,7 +117,7 @@ describe("formatAssetValueWithBreakdown", () => {
         quantity: 20,
         unitOfMeasure: null,
       },
-      usd
+      usd,
     );
     expect(result.total).toBe("$100.00");
     expect(result.unit).toBe("$5.00");
@@ -132,7 +132,7 @@ describe("formatAssetValueWithBreakdown", () => {
         quantity: 1,
         unitOfMeasure: "boxes",
       },
-      usd
+      usd,
     );
     expect(result.total).toBe("$50.00");
     expect(result.unit).toBeNull();
@@ -147,7 +147,7 @@ describe("formatAssetValueWithBreakdown", () => {
         quantity: 100,
         unitOfMeasure: "boxes",
       },
-      usd
+      usd,
     );
     expect(result.total).toBe("$0.00");
     expect(result.unit).toBeNull();
@@ -162,7 +162,7 @@ describe("formatAssetValueWithBreakdown", () => {
         quantity: 10,
         unitOfMeasure: "kg",
       },
-      { currency: "EUR" as Currency, locale: "de-DE" }
+      { currency: "EUR" as Currency, locale: "de-DE" },
     );
     // German locale uses comma as decimal separator.
     expect(result.total).toContain("15,00");

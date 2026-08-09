@@ -15,7 +15,7 @@ describe("resolveAssetIdFromSamId", () => {
     } as unknown as Response);
 
     await expect(
-      resolveAssetIdFromSamId({ samId: "SAM-0001", fetcher })
+      resolveAssetIdFromSamId({ samId: "SAM-0001", fetcher }),
     ).resolves.toBe("asset-123");
 
     expect(fetcher).toHaveBeenCalledWith("/api/get-scanned-item/SAM-0001");
@@ -40,7 +40,7 @@ describe("resolveAssetIdFromSamId", () => {
     } as unknown as Response);
 
     await expect(
-      resolveAssetIdFromSamId({ samId: "SAM-0002", fetcher })
+      resolveAssetIdFromSamId({ samId: "SAM-0002", fetcher }),
     ).rejects.toMatchObject({
       message: "Custom error",
       title: "SAM ID invalid",
@@ -55,7 +55,7 @@ describe("resolveAssetIdFromSamId", () => {
     } as unknown as Response);
 
     await expect(
-      resolveAssetIdFromSamId({ samId: "SAM-0003", fetcher })
+      resolveAssetIdFromSamId({ samId: "SAM-0003", fetcher }),
     ).rejects.toMatchObject({
       message:
         "This SAM ID doesn't exist or it doesn't belong to your current organization.",
@@ -67,7 +67,7 @@ describe("resolveAssetIdFromSamId", () => {
     const fetcher = vi.fn().mockRejectedValue(new Error("network"));
 
     await expect(
-      resolveAssetIdFromSamId({ samId: "SAM-0004", fetcher })
+      resolveAssetIdFromSamId({ samId: "SAM-0004", fetcher }),
     ).rejects.toMatchObject({
       message:
         "We couldn't reach the server to look up that SAM ID. Check your connection and try again.",

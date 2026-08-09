@@ -442,7 +442,7 @@ export const ISO_4217_CURRENCIES: readonly CurrencyDefinition[] = [
  * Array of ISO 4217 currency codes only (for validation, dropdowns, etc.)
  */
 export const ISO_4217_CURRENCY_CODES = ISO_4217_CURRENCIES.map(
-  (c) => c.code
+  (c) => c.code,
 ) as readonly string[];
 
 /**
@@ -454,14 +454,14 @@ export type Iso4217CurrencyCode = (typeof ISO_4217_CURRENCIES)[number]["code"];
  * Map of currency code to currency definition for quick lookup
  */
 export const CURRENCY_MAP = new Map<string, CurrencyDefinition>(
-  ISO_4217_CURRENCIES.map((c) => [c.code, c])
+  ISO_4217_CURRENCIES.map((c) => [c.code, c]),
 );
 
 /**
  * Get the full currency definition by code
  */
 export function getCurrencyDefinition(
-  code: string
+  code: string,
 ): CurrencyDefinition | undefined {
   return CURRENCY_MAP.get(code);
 }

@@ -42,7 +42,7 @@ describe("batchResolveAssetModelNames", () => {
     const result = await batchResolveAssetModelNames(
       [],
       userId,
-      organizationId
+      organizationId,
     );
     expect(result.size).toBe(0);
     expect(db.assetModel.findMany).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe("batchResolveAssetModelNames", () => {
     const result = await batchResolveAssetModelNames(
       ["dell latitude"],
       userId,
-      organizationId
+      organizationId,
     );
 
     expect(result.get("dell latitude")).toBe("model-1");
@@ -72,7 +72,7 @@ describe("batchResolveAssetModelNames", () => {
     // one row per missing name with `createdBy` + `organization` nested
     // connects (not flat FK fields).
     vi.mocked(db.assetModel.findMany).mockResolvedValueOnce(
-      [] as Awaited<ReturnType<typeof db.assetModel.findMany>>
+      [] as Awaited<ReturnType<typeof db.assetModel.findMany>>,
     );
     vi.mocked(db.assetModel.create).mockResolvedValueOnce({
       id: "model-new",
@@ -82,7 +82,7 @@ describe("batchResolveAssetModelNames", () => {
     const result = await batchResolveAssetModelNames(
       ["Brand New Model"],
       userId,
-      organizationId
+      organizationId,
     );
 
     expect(result.get("Brand New Model")).toBe("model-new");
@@ -101,7 +101,7 @@ describe("batchResolveAssetModelNames", () => {
     // Three spellings of the same model. The resolver should de-dupe to
     // one unique name in the findMany call and one create call.
     vi.mocked(db.assetModel.findMany).mockResolvedValueOnce(
-      [] as Awaited<ReturnType<typeof db.assetModel.findMany>>
+      [] as Awaited<ReturnType<typeof db.assetModel.findMany>>,
     );
     vi.mocked(db.assetModel.create).mockResolvedValueOnce({
       id: "model-x",
@@ -111,7 +111,7 @@ describe("batchResolveAssetModelNames", () => {
     const result = await batchResolveAssetModelNames(
       ["MacBook Pro", "macbook pro", "MACBOOK PRO"],
       userId,
-      organizationId
+      organizationId,
     );
 
     // findMany received unique deduped list — first spelling wins
@@ -148,7 +148,7 @@ describe("batchResolveAssetModelNames", () => {
     const result = await batchResolveAssetModelNames(
       ["DELL LATITUDE", "ThinkPad X1"],
       userId,
-      organizationId
+      organizationId,
     );
 
     expect(result.get("DELL LATITUDE")).toBe("existing-1");
@@ -157,13 +157,13 @@ describe("batchResolveAssetModelNames", () => {
 
   it("ignores blank / whitespace-only names", async () => {
     vi.mocked(db.assetModel.findMany).mockResolvedValueOnce(
-      [] as Awaited<ReturnType<typeof db.assetModel.findMany>>
+      [] as Awaited<ReturnType<typeof db.assetModel.findMany>>,
     );
 
     const result = await batchResolveAssetModelNames(
       ["   ", ""],
       userId,
-      organizationId
+      organizationId,
     );
 
     expect(result.size).toBe(0);

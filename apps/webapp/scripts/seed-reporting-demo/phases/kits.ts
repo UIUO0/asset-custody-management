@@ -46,11 +46,11 @@ const KIT_CREATE_END_OFFSET_MS = 90 * 24 * 60 * 60 * 1000;
  */
 export async function runKitsPhase(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   if (state.assetIds.length === 0) {
     throw new Error(
-      "runKitsPhase: state.assetIds is empty — Phase 3 must run first."
+      "runKitsPhase: state.assetIds is empty — Phase 3 must run first.",
     );
   }
 
@@ -70,14 +70,14 @@ export async function runKitsPhase(
   for (let i = 0; i < TARGET_KITS; i++) {
     const memberCount = Math.min(
       randomIntInRange(KIT_MEMBERS_MIN, KIT_MEMBERS_MAX, ctx.rng),
-      assetPool.length
+      assetPool.length,
     );
     if (memberCount === 0) break;
 
     const createdAt = randomDateBetween(
       createWindow.start,
       createWindow.end,
-      ctx.rng
+      ctx.rng,
     );
     const creator = ctx.actors.pick(ctx.rng);
     // Kit.createdById requires a real user id. Fall back to the org owner
@@ -115,7 +115,7 @@ export async function runKitsPhase(
         occurredAt: createdAt,
         actor: creator,
         kitId: kit.id,
-      })
+      }),
     );
 
     // ASSET_KIT_CHANGED — one event per asset added. Emitted at the same
@@ -131,7 +131,7 @@ export async function runKitsPhase(
           field: "kit",
           fromValue: null,
           toValue: kit.id,
-        })
+        }),
       );
     }
   }

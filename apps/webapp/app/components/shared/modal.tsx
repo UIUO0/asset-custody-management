@@ -31,7 +31,7 @@ const AlertDialogOverlay = React.forwardRef<
     <AlertDialogPrimitive.Overlay
       className={tw(
         "fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in",
-        className
+        className,
       )}
       {...props}
       ref={ref}
@@ -56,7 +56,7 @@ const AlertDialogContent = React.forwardRef<
         ref={ref}
         className={tw(
           "fixed z-[100] flex max-h-[90vh] w-full max-w-md scale-100 flex-col gap-4 rounded bg-white p-6 opacity-100 animate-in fade-in-90 slide-in-from-bottom-10 sm:zoom-in-90 sm:slide-in-from-bottom-0 md:w-full",
-          className
+          className,
         )}
         {...props}
       />
@@ -71,7 +71,7 @@ const AlertDialogHeader = ({
   <div
     className={tw(
       "flex flex-col space-y-2 text-center sm:text-start",
-      className
+      className,
     )}
     {...props}
   />
@@ -85,7 +85,7 @@ const AlertDialogFooter = ({
   <div
     className={tw(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
+      className,
     )}
     {...props}
   />

@@ -18,11 +18,7 @@ import {
   refreshSession,
   urlShortener,
 } from "./middleware";
-import {
-  appLoaderRateLimit,
-  calendarFeedRateLimit,
-  mobileIpRateLimit,
-} from "./rate-limit";
+import { appLoaderRateLimit } from "./rate-limit";
 import { runWithRequestCache } from "./request-cache.server";
 import { securityHeaders } from "./security-headers";
 import { authSessionKey, createSessionStorage } from "./session";
@@ -131,21 +127,6 @@ export default createHonoServer<ServerEnv>({
     server.use("*", logger());
 
     /**
-     * Mobile API rate limit. Path-scoped so webapp routes are unaffected.
-     * Runs after logger() so 429s appear in logs, and before session() since
-     * the mobile prefix is in publicPaths anyway — short-circuit early.
-     */
-    server.use("/api/mobile/*", mobileIpRateLimit());
-
-    /**
-     * Calendar iCal feed rate limit. Scoped to the feed route; the feed is
-     * public (secret-token auth, in publicPaths) and runs an unpaginated
-     * windowed query, so cap each feed (keyed by its token path) before the
-     * handler runs.
-     */
-    server.use("/api/calendar/feed/*", calendarFeedRateLimit());
-
-    /**
      * Add session middleware
      */
     server.use(
@@ -219,20 +200,12 @@ export default createHonoServer<ServerEnv>({
           "/login",
           "/sso-login",
           "/oauth/callback",
-          "/oauth/callback/mobile", // Native-app SSO callback (web-delegated)
           "/logout",
           "/otp",
           "/resend-otp",
           "/reset-password",
           "/send-otp",
           "/healthcheck",
-          // Native-app deep-link association files (iOS Universal Links /
-          // Android App Links). Must be publicly reachable — the OS fetches
-          // them unauthenticated to verify the Companion app's domain claim.
-          "/.well-known/apple-app-site-association",
-          "/.well-known/assetlinks.json",
-          "/api/public-stats",
-          "/api/oss-friends",
           "/api/stripe-webhook",
           // why: appearance preferences (locale/theme cookie) are deliberately
           // unauthenticated — the switchers must work on the login screen
@@ -243,12 +216,6 @@ export default createHonoServer<ServerEnv>({
           "/qr/:qrId",
           "/qr/:qrId/not-logged-in",
           "/qr/:qrId/contact-owner",
-          "/api/mobile/*path", // Mobile companion app API (JWT auth, not cookie)
-          // why: auth-bypassed. The iCal feed authenticates via a secret URL
-          // token (calendar clients can't send cookies). Scoped to the feed
-          // route only — cookie-authed routes like /api/calendar-subscription
-          // stay OUT of this prefix.
-          "/api/calendar/feed/*path",
         ],
       }),
     );

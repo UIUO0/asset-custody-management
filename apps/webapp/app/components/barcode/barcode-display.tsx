@@ -90,7 +90,7 @@ export function BarcodeDisplay({
         }
       }
     },
-    [type, value, scale, height, displayValue, fontSize],
+    [type, value, scale, height, displayValue, fontSize, t],
   );
 
   useEffect(() => {

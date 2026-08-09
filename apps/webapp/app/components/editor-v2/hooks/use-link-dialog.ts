@@ -8,7 +8,7 @@ import type { LinkDialogState } from "../types";
 
 export function useLinkDialog(
   schema: Schema,
-  viewRef: RefObject<EditorView | null>
+  viewRef: RefObject<EditorView | null>,
 ) {
   const [linkDialog, setLinkDialog] = useState<LinkDialogState>({
     open: false,

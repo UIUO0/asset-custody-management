@@ -40,6 +40,13 @@ const items = [
         pathname.includes("qr-codes")),
   },
   { to: "qrs", content: "QR codes" },
+  // Instance-wide configuration and the external API. Both live here rather
+  // than under workspace settings because they are not workspace-scoped: the
+  // auth settings are read before any workspace context exists, and an API key
+  // acts without a session. `requireAdmin` on this layout's loader is what
+  // keeps both out of everyone else's hands.
+  { to: "settings", content: "Settings" },
+  { to: "integrations", content: "Integration" },
   { to: "announcements", content: "Announcements" },
   { to: "updates", content: "Updates" },
   { to: "move-location-images", content: "Move location images" },

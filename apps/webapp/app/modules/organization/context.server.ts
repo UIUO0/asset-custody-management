@@ -41,7 +41,7 @@ type SelectedOrganizationCache = Map<string, Promise<SelectedOrganization>>;
 async function getSelectedOrganizationIdCookie(request: Request) {
   return parseCookie<SelectedOrganizationId>(
     selectedOrganizationIdCookie,
-    request
+    request,
   );
 }
 
@@ -139,7 +139,7 @@ async function getSelectedOrganizationUncached({
   }
 
   const currentOrganization = organizations.find(
-    (org) => org.id === organizationId
+    (org) => org.id === organizationId,
   );
 
   // (should not happen but just in case)
@@ -183,7 +183,7 @@ export async function getSelectedOrganization({
 }) {
   // Create a per-request cache bucket keyed by userId.
   const requestCache = getRequestCache(
-    "selected-organization"
+    "selected-organization",
   ) as SelectedOrganizationCache | null;
   if (!requestCache) {
     return getSelectedOrganizationUncached({ userId, request });

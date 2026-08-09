@@ -72,7 +72,7 @@ export default function AssetsByStatusChart() {
           <DashboardEmptyState
             text={t("assets.empty")}
             subText={t("dashboard.addAssetsForStatus")}
-            ctaTo="/assets/new"
+            ctaTo="/receipts/new"
             ctaText={t("assets.createAsset")}
           />
         )}

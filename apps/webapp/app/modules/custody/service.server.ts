@@ -103,7 +103,7 @@ export async function releaseCustody({
             teamMemberId: activityEvent.teamMemberId,
             targetUserId: activityEvent.targetUserId,
           },
-          tx
+          tx,
         );
       }
 

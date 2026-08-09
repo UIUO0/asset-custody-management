@@ -30,26 +30,26 @@ describe("buildCustomFieldValue — DATE", () => {
   it("rejects dash-separated non-ISO input instead of silently storing a wrong year", () => {
     // why: the original bug — "03-04-2026" → [3,4,2026] → Date.UTC(3,3,2026) ≈ 1908.
     expect(() =>
-      buildCustomFieldValue({ raw: "03-04-2026" }, dateField)
+      buildCustomFieldValue({ raw: "03-04-2026" }, dateField),
     ).toThrowError(/YYYY-MM-DD/);
   });
 
   it("rejects slash-separated input", () => {
     expect(() =>
-      buildCustomFieldValue({ raw: "03/04/2026" }, dateField)
+      buildCustomFieldValue({ raw: "03/04/2026" }, dateField),
     ).toThrowError(/YYYY-MM-DD/);
   });
 
   it("rejects an impossible calendar date that JS Date would otherwise roll over", () => {
     // 2026-02-31 would normalize to 2026-03-03 without the round-trip check.
     expect(() =>
-      buildCustomFieldValue({ raw: "2026-02-31" }, dateField)
+      buildCustomFieldValue({ raw: "2026-02-31" }, dateField),
     ).toThrowError(/real calendar date/);
   });
 
   it("rejects a 13th month", () => {
     expect(() =>
-      buildCustomFieldValue({ raw: "2026-13-01" }, dateField)
+      buildCustomFieldValue({ raw: "2026-13-01" }, dateField),
     ).toThrowError();
   });
 

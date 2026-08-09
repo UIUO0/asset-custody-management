@@ -36,7 +36,7 @@ const { ShelfError } = await import("~/utils/error");
 const teamMemberNoteCreateMock = vi.mocked(mockDb.db.teamMemberNote.create);
 const teamMemberNoteFindManyMock = vi.mocked(mockDb.db.teamMemberNote.findMany);
 const teamMemberNoteDeleteManyMock = vi.mocked(
-  mockDb.db.teamMemberNote.deleteMany
+  mockDb.db.teamMemberNote.deleteMany,
 );
 const teamMemberFindFirstMock = vi.mocked(mockDb.db.teamMember.findFirst);
 
@@ -105,7 +105,7 @@ describe("team member note service", () => {
           data: expect.objectContaining({
             type: "UPDATE",
           }),
-        })
+        }),
       );
     });
 
@@ -144,7 +144,7 @@ describe("team member note service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       teamMemberNoteCreateMock.mockRejectedValue(
-        new Error("Database connection failed")
+        new Error("Database connection failed"),
       );
 
       await expect(
@@ -153,7 +153,7 @@ describe("team member note service", () => {
           teamMemberId: "tm-1",
           organizationId: "org-1",
           userId: "admin-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -162,9 +162,9 @@ describe("team member note service", () => {
           teamMemberId: "tm-1",
           organizationId: "org-1",
           userId: "admin-1",
-        })
+        }),
       ).rejects.toThrow(
-        "Something went wrong while creating the team member note."
+        "Something went wrong while creating the team member note.",
       );
     });
   });
@@ -235,7 +235,7 @@ describe("team member note service", () => {
         getTeamMemberNotes({
           teamMemberId: "tm-999",
           organizationId: "org-other",
-        })
+        }),
       ).rejects.toThrow("Team member not found in this workspace");
 
       /* Should never attempt to fetch notes if the team member check fails */
@@ -249,7 +249,7 @@ describe("team member note service", () => {
         getTeamMemberNotes({
           teamMemberId: "tm-999",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toMatchObject({
         status: 404,
         message: "Team member not found in this workspace",
@@ -259,23 +259,23 @@ describe("team member note service", () => {
     it("throws ShelfError when database query fails", async () => {
       teamMemberFindFirstMock.mockResolvedValue({ id: "tm-1" } as any);
       teamMemberNoteFindManyMock.mockRejectedValue(
-        new Error("Database timeout")
+        new Error("Database timeout"),
       );
 
       await expect(
         getTeamMemberNotes({
           teamMemberId: "tm-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
         getTeamMemberNotes({
           teamMemberId: "tm-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(
-        "Something went wrong while fetching the team member notes."
+        "Something went wrong while fetching the team member notes.",
       );
     });
   });
@@ -305,9 +305,9 @@ describe("team member note service", () => {
           id: "nonexistent-note",
           userId: "admin-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(
-        "Note not found or you don't have permission to delete it."
+        "Note not found or you don't have permission to delete it.",
       );
     });
 
@@ -320,7 +320,7 @@ describe("team member note service", () => {
           id: "tmnote-1",
           userId: "admin-1",
           organizationId: "org-other",
-        })
+        }),
       ).rejects.toMatchObject({
         status: 403,
         message: "Note not found or you don't have permission to delete it.",
@@ -329,7 +329,7 @@ describe("team member note service", () => {
 
     it("throws ShelfError when database operation fails", async () => {
       teamMemberNoteDeleteManyMock.mockRejectedValue(
-        new Error("Database error")
+        new Error("Database error"),
       );
 
       await expect(
@@ -337,7 +337,7 @@ describe("team member note service", () => {
           id: "tmnote-1",
           userId: "admin-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(ShelfError);
 
       await expect(
@@ -345,9 +345,9 @@ describe("team member note service", () => {
           id: "tmnote-1",
           userId: "admin-1",
           organizationId: "org-1",
-        })
+        }),
       ).rejects.toThrow(
-        "Something went wrong while deleting the team member note."
+        "Something went wrong while deleting the team member note.",
       );
     });
   });

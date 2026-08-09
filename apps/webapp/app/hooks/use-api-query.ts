@@ -35,7 +35,7 @@ export default function useApiQuery<TData>({
 
   const apiUrl = useMemo(
     () => (searchParams ? `${api}?${searchParams.toString()}` : api),
-    [api, searchParams]
+    [api, searchParams],
   );
 
   const refetch = () => {
@@ -62,7 +62,7 @@ export default function useApiQuery<TData>({
           });
       }
     },
-    [apiUrl, enabled, refetchTrigger, onSuccess, onError]
+    [apiUrl, enabled, refetchTrigger, onSuccess, onError],
   );
 
   return {

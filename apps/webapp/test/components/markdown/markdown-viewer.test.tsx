@@ -58,7 +58,7 @@ describe("MarkdownViewer", () => {
     expect(getComputedStyle(rawBlock).marginTop).toBe("0px");
 
     const paragraphAfterRaw = wrapper.querySelector(
-      ".raw-block + p"
+      ".raw-block + p",
     ) as HTMLElement;
     expect(paragraphAfterRaw).not.toBeNull();
     expect(getComputedStyle(paragraphAfterRaw).marginTop).toBe("20px");

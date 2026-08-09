@@ -135,7 +135,7 @@ vi.mock("~/utils/error", () => {
     maybeUniqueConstraintViolation: (
       _cause: unknown,
       _label: string,
-      _meta?: any
+      _meta?: any,
     ) => {
       throw _cause;
     },
@@ -181,10 +181,10 @@ describe("location service activity logging", () => {
     // why: assertion helpers count submitted IDs; default to "all authorized"
     // so happy-path tests don't have to wire it up explicitly
     dbMocks.asset.count.mockImplementation(({ where }: any) =>
-      Promise.resolve(where?.id?.in?.length ?? 0)
+      Promise.resolve(where?.id?.in?.length ?? 0),
     );
     dbMocks.kit.count.mockImplementation(({ where }: any) =>
-      Promise.resolve(where?.id?.in?.length ?? 0)
+      Promise.resolve(where?.id?.in?.length ?? 0),
     );
     locationNoteMocks.createSystemLocationNote.mockResolvedValue(undefined);
     locationNoteMocks.createLocationNote.mockResolvedValue(undefined);
@@ -217,7 +217,7 @@ describe("location service activity logging", () => {
         expect.objectContaining({
           locationId: "loc-1",
           content: expect.stringContaining("New Name"),
-        })
+        }),
       );
     });
   });
@@ -240,7 +240,7 @@ describe("location service activity logging", () => {
           assetId: "asset-1",
           type: "UPDATE",
           organizationId: "org-1",
-        })
+        }),
       );
     });
   });
@@ -273,7 +273,7 @@ describe("location service activity logging", () => {
         expect.objectContaining({
           locationId: "loc-1",
           content: expect.stringContaining("Camera"),
-        })
+        }),
       );
     });
   });
@@ -291,7 +291,7 @@ describe("location service activity logging", () => {
           userId: "user-1",
           request: new Request("https://example.com"),
           removedAssetIds: [],
-        })
+        }),
       ).rejects.toMatchObject({ status: 403 });
 
       expect(dbMocks.location.update).not.toHaveBeenCalled();
@@ -308,7 +308,7 @@ describe("location service activity logging", () => {
           userId: "user-1",
           request: new Request("https://example.com"),
           removedAssetIds: ["asset-foreign"],
-        })
+        }),
       ).rejects.toMatchObject({ status: 403 });
 
       expect(dbMocks.location.update).not.toHaveBeenCalled();
@@ -329,7 +329,7 @@ describe("location service activity logging", () => {
           userId: "user-1",
           request: new Request("https://example.com"),
           removedAssetIds: ["asset-foreign"],
-        })
+        }),
       ).rejects.toMatchObject({ status: 403 });
 
       expect(dbMocks.location.update).not.toHaveBeenCalled();
@@ -397,7 +397,7 @@ describe("location service activity logging", () => {
       expect(dbMocks.assetLocation.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: [expect.objectContaining({ assetId: "pens", quantity: 80 })],
-        })
+        }),
       );
     });
 
@@ -423,7 +423,7 @@ describe("location service activity logging", () => {
       expect(dbMocks.assetLocation.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: [expect.objectContaining({ assetId: "pens", quantity: 30 })],
-        })
+        }),
       );
     });
 
@@ -450,7 +450,7 @@ describe("location service activity logging", () => {
       expect(dbMocks.assetLocation.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
           data: [expect.objectContaining({ assetId: "camera", quantity: 1 })],
-        })
+        }),
       );
     });
 
@@ -482,7 +482,7 @@ describe("location service activity logging", () => {
           request: new Request("https://example.com"),
           removedAssetIds: [],
           assetQuantities: { pens: 60 },
-        })
+        }),
       ).rejects.toMatchObject({
         status: 400,
         title: "Quantity exceeds available pool",
@@ -639,7 +639,7 @@ describe("location service activity logging", () => {
         expect.objectContaining({
           locationId: "loc-1",
           content: expect.stringContaining("Shoot Kit"),
-        })
+        }),
       );
     });
   });
@@ -656,7 +656,7 @@ describe("location service activity logging", () => {
           organizationId: "org-1",
           userId: "user-1",
           request: new Request("https://example.com"),
-        })
+        }),
       ).rejects.toMatchObject({ status: 403 });
 
       expect(dbMocks.location.update).not.toHaveBeenCalled();
@@ -673,7 +673,7 @@ describe("location service activity logging", () => {
           organizationId: "org-1",
           userId: "user-1",
           request: new Request("https://example.com"),
-        })
+        }),
       ).rejects.toMatchObject({ status: 403 });
 
       expect(dbMocks.location.update).not.toHaveBeenCalled();

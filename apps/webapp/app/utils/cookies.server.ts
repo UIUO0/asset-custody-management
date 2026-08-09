@@ -32,7 +32,7 @@ export function getCookie(name: string, headers: Headers) {
  */
 export async function parseCookie<T>(
   cookie: Cookie,
-  request: Request
+  request: Request,
 ): Promise<T | null> {
   const cookieHeader = request.headers.get("Cookie");
   const result = await cookie.parse(cookieHeader).catch(() => null);
@@ -108,7 +108,7 @@ export function expireHostOnlyUserPrefsCookie(): [string, string] {
 
 export async function updateCookieWithPerPage(
   request: Request,
-  perPageParam: number
+  perPageParam: number,
 ) {
   /* Get the cookie header */
   const cookieHeader = request.headers.get("Cookie");
@@ -187,7 +187,7 @@ type FilterCookieConfig = {
 export async function getFiltersFromRequest(
   request: Request,
   organizationId: string,
-  cookie: FilterCookieConfig
+  cookie: FilterCookieConfig,
 ) {
   // Get filters from URL query parameters (e.g., "status=AVAILABLE&search=laptop")
   let filters = getCurrentSearchParams(request).toString();
@@ -263,7 +263,7 @@ export const createAdvancedAssetFilterCookie = (orgId: string) =>
  */
 function normalizeAdvancedFilterParams(
   filters: string,
-  columnNames: string[]
+  columnNames: string[],
 ): URLSearchParams {
   const normalized = new URLSearchParams();
   new URLSearchParams(filters).forEach((value, key) => {
@@ -296,7 +296,7 @@ function normalizeAdvancedFilterParams(
 export async function getAdvancedFiltersFromRequest(
   request: Request,
   organizationId: string,
-  settings: AssetIndexSettings
+  settings: AssetIndexSettings,
 ): Promise<{
   filters: string | undefined;
   serializedCookie: string | undefined;
@@ -335,7 +335,7 @@ export async function getAdvancedFiltersFromRequest(
     if (filters) {
       const validatedParams = normalizeAdvancedFilterParams(
         filters,
-        columnNames
+        columnNames,
       );
       const validatedParamsString = validatedParams.toString();
       const cleanedFilters = cleanParamsForCookie(validatedParamsString);

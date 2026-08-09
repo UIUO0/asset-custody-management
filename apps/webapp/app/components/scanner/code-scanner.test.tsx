@@ -28,7 +28,7 @@ vi.mock("react-webcam", () => {
         webcamMockProps.current = props;
       }
       return null;
-    }
+    },
   );
   MockWebcam.displayName = "MockWebcam";
 
@@ -157,7 +157,7 @@ describe("CodeScanner", () => {
         errorTitle="SAM ID not found"
         forceMode="scanner"
         allowNonShelfCodes
-      />
+      />,
     );
 
     expect(screen.getByText("SAM ID not found")).toBeInTheDocument();
@@ -199,7 +199,7 @@ describe("CodeScanner", () => {
         errorMessage=""
         forceMode="camera"
         allowNonShelfCodes
-      />
+      />,
     );
 
     await waitFor(() => {
@@ -217,7 +217,7 @@ describe("CodeScanner", () => {
 
     await act(async () => {
       await Promise.resolve(
-        webcamMockProps.current?.onUserMediaError?.(initialError)
+        webcamMockProps.current?.onUserMediaError?.(initialError),
       );
     });
 

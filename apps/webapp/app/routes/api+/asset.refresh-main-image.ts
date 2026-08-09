@@ -42,7 +42,7 @@ async function generateThumbnailIfMissing(asset: {
           message: `Could not extract image path for asset ${asset.id}`,
           additionalData: { assetId: asset.id, imagePath: asset.mainImage },
           label: "Assets",
-        })
+        }),
       );
       return null;
     }
@@ -58,7 +58,7 @@ async function generateThumbnailIfMissing(asset: {
           message: `Error downloading image for asset ${asset.id}: ${downloadError.message}`,
           additionalData: { assetId: asset.id, originalPath },
           label: "Assets",
-        })
+        }),
       );
 
       return null;
@@ -113,7 +113,7 @@ async function generateThumbnailIfMissing(asset: {
         // File already exists in storage, so we can just create a signed URL for it
         Logger.info(
           `Thumbnail already exists for asset ${asset.id}, creating signed URL for existing file`,
-          { assetId: asset.id, thumbnailPath }
+          { assetId: asset.id, thumbnailPath },
         );
 
         // Create signed URL for the existing thumbnail
@@ -146,7 +146,7 @@ async function generateThumbnailIfMissing(asset: {
         message: `Error generating thumbnail for asset ${asset.id}`,
         additionalData: { assetId: asset.id, userId: asset.userId },
         label: "Assets",
-      })
+      }),
     );
     return null;
   }
@@ -163,7 +163,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       z.object({
         assetId: z.string(),
         mainImage: z.string(),
-      })
+      }),
     );
 
     // Validate user has permission to access assets in their organization
@@ -208,7 +208,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
           // File is gone from storage — not a bug, just log quietly
           // Keep the existing URL; cleanup is a deliberate user action
           Logger.info(
-            `Main image file not found in storage for asset ${assetId}, keeping existing URL`
+            `Main image file not found in storage for asset ${assetId}, keeping existing URL`,
           );
         } else {
           // Preserve shouldBeCaptured flag if it's already a ShelfError
@@ -227,7 +227,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
               additionalData: { assetId, mainImagePath, userId },
               label: "Assets",
               shouldBeCaptured: shouldCapture,
-            })
+            }),
           );
         }
       }
@@ -249,7 +249,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
           if (isStorageObjectNotFound(error)) {
             // Thumbnail file gone from storage — keep existing URL
             Logger.info(
-              `Thumbnail file not found in storage for asset ${assetId}, keeping existing URL`
+              `Thumbnail file not found in storage for asset ${assetId}, keeping existing URL`,
             );
           } else {
             // Preserve shouldBeCaptured flag if it's already a ShelfError
@@ -268,7 +268,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
                 additionalData: { assetId, thumbnailPath, userId },
                 label: "Assets",
                 shouldBeCaptured: shouldCapture,
-              })
+              }),
             );
           }
         }
@@ -323,7 +323,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
           assetId: url.searchParams.get("assetId"),
           mainImage: url.searchParams.get("mainImage"),
         },
-      })
+      }),
     );
 
     // Return a successful response with error flag
@@ -331,7 +331,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       payload({
         asset: null,
         error: "Error refreshing image.",
-      })
+      }),
     );
   }
 }

@@ -58,7 +58,7 @@ describe("assertAssetsBelongToOrg", () => {
   it("is a no-op for an empty list (no query issued)", async () => {
     const tx = txWith({});
     await expect(
-      assertAssetsBelongToOrg({ assetIds: [], organizationId: ORG }, tx)
+      assertAssetsBelongToOrg({ assetIds: [], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
     expect(tx.asset.findMany).not.toHaveBeenCalled();
   });
@@ -73,8 +73,8 @@ describe("assertAssetsBelongToOrg", () => {
     await expect(
       assertAssetsBelongToOrg(
         { assetIds: ["a1", "a2"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.asset.findMany).toHaveBeenCalledWith({
@@ -93,8 +93,8 @@ describe("assertAssetsBelongToOrg", () => {
     await expect(
       assertAssetsBelongToOrg(
         { assetIds: ["a1", "a1"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.asset.findMany).toHaveBeenCalledWith({
@@ -111,7 +111,7 @@ describe("assertAssetsBelongToOrg", () => {
 
     const err = await assertAssetsBelongToOrg(
       { assetIds: ["a1", "a2"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -124,7 +124,7 @@ describe("assertAssetKitsBelongToOrg", () => {
   it("is a no-op for an empty list (no query issued)", async () => {
     const tx = txWith({});
     await expect(
-      assertAssetKitsBelongToOrg({ assetKitIds: [], organizationId: ORG }, tx)
+      assertAssetKitsBelongToOrg({ assetKitIds: [], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
     expect(tx.assetKit.findMany).not.toHaveBeenCalled();
   });
@@ -139,8 +139,8 @@ describe("assertAssetKitsBelongToOrg", () => {
     await expect(
       assertAssetKitsBelongToOrg(
         { assetKitIds: ["ak1", "ak2"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.assetKit.findMany).toHaveBeenCalledWith({
@@ -157,8 +157,8 @@ describe("assertAssetKitsBelongToOrg", () => {
     await expect(
       assertAssetKitsBelongToOrg(
         { assetKitIds: ["ak1", "ak1"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.assetKit.findMany).toHaveBeenCalledWith({
@@ -175,7 +175,7 @@ describe("assertAssetKitsBelongToOrg", () => {
 
     const err = await assertAssetKitsBelongToOrg(
       { assetKitIds: ["ak1", "ak2"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -187,7 +187,7 @@ describe("assertKitsBelongToOrg", () => {
   it("is a no-op for an empty list (no query issued)", async () => {
     const tx = txWith({});
     await expect(
-      assertKitsBelongToOrg({ kitIds: [], organizationId: ORG }, tx)
+      assertKitsBelongToOrg({ kitIds: [], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
     expect(tx.kit.findMany).not.toHaveBeenCalled();
   });
@@ -200,7 +200,7 @@ describe("assertKitsBelongToOrg", () => {
     });
 
     await expect(
-      assertKitsBelongToOrg({ kitIds: ["k1", "k2"], organizationId: ORG }, tx)
+      assertKitsBelongToOrg({ kitIds: ["k1", "k2"], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
 
     expect(tx.kit.findMany).toHaveBeenCalledWith({
@@ -215,7 +215,7 @@ describe("assertKitsBelongToOrg", () => {
     });
 
     await expect(
-      assertKitsBelongToOrg({ kitIds: ["k1", "k1"], organizationId: ORG }, tx)
+      assertKitsBelongToOrg({ kitIds: ["k1", "k1"], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
 
     expect(tx.kit.findMany).toHaveBeenCalledWith({
@@ -232,7 +232,7 @@ describe("assertKitsBelongToOrg", () => {
 
     const err = await assertKitsBelongToOrg(
       { kitIds: ["k1", "k2"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -245,7 +245,7 @@ describe("assertLocationsBelongToOrg", () => {
   it("is a no-op for an empty list (no query issued)", async () => {
     const tx = txWith({});
     await expect(
-      assertLocationsBelongToOrg({ locationIds: [], organizationId: ORG }, tx)
+      assertLocationsBelongToOrg({ locationIds: [], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
     expect(tx.location.findMany).not.toHaveBeenCalled();
   });
@@ -260,8 +260,8 @@ describe("assertLocationsBelongToOrg", () => {
     await expect(
       assertLocationsBelongToOrg(
         { locationIds: ["l1", "l2"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.location.findMany).toHaveBeenCalledWith({
@@ -278,8 +278,8 @@ describe("assertLocationsBelongToOrg", () => {
     await expect(
       assertLocationsBelongToOrg(
         { locationIds: ["l1", "l1"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.location.findMany).toHaveBeenCalledWith({
@@ -296,7 +296,7 @@ describe("assertLocationsBelongToOrg", () => {
 
     const err = await assertLocationsBelongToOrg(
       { locationIds: ["l1", "l2"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -309,7 +309,7 @@ describe("assertTagsBelongToOrg", () => {
   it("is a no-op for an empty list", async () => {
     const tx = txWith({});
     await expect(
-      assertTagsBelongToOrg({ tagIds: [], organizationId: ORG }, tx)
+      assertTagsBelongToOrg({ tagIds: [], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
     expect(tx.tag.findMany).not.toHaveBeenCalled();
   });
@@ -321,7 +321,7 @@ describe("assertTagsBelongToOrg", () => {
 
     const err = await assertTagsBelongToOrg(
       { tagIds: ["t1"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -334,7 +334,7 @@ describe("assertTagsAssignableToAssets", () => {
   it("is a no-op for an empty list", async () => {
     const tx = txWith({});
     await expect(
-      assertTagsAssignableToAssets({ tagIds: [], organizationId: ORG }, tx)
+      assertTagsAssignableToAssets({ tagIds: [], organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
     expect(tx.tag.findMany).not.toHaveBeenCalled();
   });
@@ -346,7 +346,7 @@ describe("assertTagsAssignableToAssets", () => {
 
     await assertTagsAssignableToAssets(
       { tagIds: ["t1"], organizationId: ORG },
-      tx
+      tx,
     );
 
     // The where clause must constrain BOTH org and the asset-assignable predicate
@@ -358,7 +358,7 @@ describe("assertTagsAssignableToAssets", () => {
           organizationId: ORG,
           OR: [{ useFor: { isEmpty: true } }, { useFor: { has: "ASSET" } }],
         }),
-      })
+      }),
     );
   });
 
@@ -371,7 +371,7 @@ describe("assertTagsAssignableToAssets", () => {
 
     const err = await assertTagsAssignableToAssets(
       { tagIds: ["booking-only"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -386,8 +386,8 @@ describe("assertCustomFieldsBelongToOrg", () => {
     await expect(
       assertCustomFieldsBelongToOrg(
         { customFieldIds: [], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
     expect(tx.customField.findMany).not.toHaveBeenCalled();
   });
@@ -404,8 +404,8 @@ describe("assertCustomFieldsBelongToOrg", () => {
     await expect(
       assertCustomFieldsBelongToOrg(
         { customFieldIds: ["cf1", "cf2"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.customField.findMany).toHaveBeenCalledWith({
@@ -427,8 +427,8 @@ describe("assertCustomFieldsBelongToOrg", () => {
     await expect(
       assertCustomFieldsBelongToOrg(
         { customFieldIds: ["cf1", "cf1"], organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
 
     expect(tx.customField.findMany).toHaveBeenCalledWith({
@@ -448,7 +448,7 @@ describe("assertCustomFieldsBelongToOrg", () => {
 
     const err = await assertCustomFieldsBelongToOrg(
       { customFieldIds: ["cf1", "cf2"], organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -467,7 +467,7 @@ describe("single-entity guards reject foreign/missing with 400", () => {
     });
     const err = await assertTeamMemberBelongsToOrg(
       { teamMemberId: "tm-foreign", organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -485,8 +485,8 @@ describe("single-entity guards reject foreign/missing with 400", () => {
     await expect(
       assertTeamMemberBelongsToOrg(
         { teamMemberId: "tm-1", organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
   });
 
@@ -496,7 +496,7 @@ describe("single-entity guards reject foreign/missing with 400", () => {
     });
     const err = await assertCategoryBelongsToOrg(
       { categoryId: "c-foreign", organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
     expect(err).toBeInstanceOf(ShelfError);
     expect(err.status).toBe(400);
@@ -508,7 +508,7 @@ describe("single-entity guards reject foreign/missing with 400", () => {
     });
     const err = await assertLocationBelongsToOrg(
       { locationId: "l-foreign", organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
     expect(err).toBeInstanceOf(ShelfError);
     expect(err.status).toBe(400);
@@ -520,7 +520,10 @@ describe("single-entity guards reject foreign/missing with 400", () => {
       location: { findFirst: vitest.fn().mockResolvedValue({ id: "l-1" }) },
     });
     await expect(
-      assertLocationBelongsToOrg({ locationId: "l-1", organizationId: ORG }, tx)
+      assertLocationBelongsToOrg(
+        { locationId: "l-1", organizationId: ORG },
+        tx,
+      ),
     ).resolves.toBeUndefined();
   });
 
@@ -530,7 +533,7 @@ describe("single-entity guards reject foreign/missing with 400", () => {
     });
     const err = await assertAssetModelBelongsToOrg(
       { assetModelId: "am-foreign", organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -551,8 +554,8 @@ describe("single-entity guards reject foreign/missing with 400", () => {
     await expect(
       assertAssetModelBelongsToOrg(
         { assetModelId: "am-1", organizationId: ORG },
-        tx
-      )
+        tx,
+      ),
     ).resolves.toBeUndefined();
   });
 });
@@ -564,7 +567,7 @@ describe("assertUserBelongsToOrg", () => {
     });
     const err = await assertUserBelongsToOrg(
       { userId: "u-foreign", organizationId: ORG },
-      tx
+      tx,
     ).catch((e) => e);
 
     expect(err).toBeInstanceOf(ShelfError);
@@ -582,7 +585,7 @@ describe("assertUserBelongsToOrg", () => {
       },
     });
     await expect(
-      assertUserBelongsToOrg({ userId: "u-1", organizationId: ORG }, tx)
+      assertUserBelongsToOrg({ userId: "u-1", organizationId: ORG }, tx),
     ).resolves.toBeUndefined();
   });
 });

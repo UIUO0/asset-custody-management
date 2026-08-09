@@ -34,7 +34,7 @@ export const DEFAULT_THEME_PREFERENCE: ThemePreference = "system";
  * @returns The matching preference, or `null` when unrecognised
  */
 export function parseThemePreference(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): ThemePreference | null {
   if (!value) return null;
   return (THEME_PREFERENCES as readonly string[]).includes(value)
@@ -49,7 +49,7 @@ export function parseThemePreference(
  * @returns The stored preference, or the default when absent/invalid
  */
 export function getThemePreference(
-  cookieHeader: string | null
+  cookieHeader: string | null,
 ): ThemePreference {
   if (!cookieHeader) return DEFAULT_THEME_PREFERENCE;
 

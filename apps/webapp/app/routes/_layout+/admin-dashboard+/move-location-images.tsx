@@ -62,7 +62,7 @@ export async function loader({ context }: LoaderFunctionArgs) {
 // Enhanced validation function that can suggest fixes
 function validateImageFormat(
   blob: any,
-  contentType: string
+  contentType: string,
 ): {
   isValid: boolean;
   reason?: string;
@@ -214,7 +214,7 @@ function validateImageFormat(
     return {
       isValid: false,
       reason: `File too large (${Math.round(
-        blob.length / 1024 / 1024
+        blob.length / 1024 / 1024,
       )}MB), might cause memory issues`,
       canFix: false,
     };
@@ -225,7 +225,7 @@ function validateImageFormat(
 
 // WebP to JPEG conversion function using Sharp
 async function convertWebPToJPEG(
-  webpBlob: any
+  webpBlob: any,
 ): Promise<{ success: boolean; jpegBlob?: any; error?: string }> {
   try {
     const sharp = (await import("sharp")).default;
@@ -239,7 +239,7 @@ async function convertWebPToJPEG(
 // Function to fix image format issues
 async function fixImageFormat(
   blob: any,
-  validation: any
+  validation: any,
 ): Promise<{
   success: boolean;
   fixedBlob?: any;
@@ -307,7 +307,7 @@ function organizeResultsByType(errors: string[]) {
 
   // Only return categories that have items
   return Object.fromEntries(
-    Object.entries(categories).filter(([_, items]) => items.length > 0)
+    Object.entries(categories).filter(([_, items]) => items.length > 0),
   );
 }
 
@@ -359,7 +359,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       // Validate image format
       const validation = validateImageFormat(
         location.image.blob,
-        location.image.contentType
+        location.image.contentType,
       );
 
       let processedBlob = location.image.blob;
@@ -370,12 +370,12 @@ export async function action({ context, request }: ActionFunctionArgs) {
         if (shouldFix && validation.canFix) {
           // Try to fix the image
           console.log(
-            `Attempting to fix location ${location.id}: ${validation.reason}`
+            `Attempting to fix location ${location.id}: ${validation.reason}`,
           );
 
           const fixResult = await fixImageFormat(
             location.image.blob,
-            validation
+            validation,
           );
 
           if (fixResult.success) {
@@ -415,7 +415,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         console.log(
           `Uploading image for location ${location.id}, size: ${
             processedBlob.length
-          } bytes${wasFixed ? " (fixed)" : ""}`
+          } bytes${wasFixed ? " (fixed)" : ""}`,
         );
 
         const { data, error } = await supabase.storage
@@ -428,7 +428,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         if (error) {
           console.error(
             `Failed to upload image for location ${location.id}:`,
-            error
+            error,
           );
           errorLog.push(`Upload failed for ${location.id}: ${error.message}`);
           skippedLocationIds.push(location.id);
@@ -451,7 +451,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
             height: 108,
             fit: "cover",
             withoutEnlargement: true,
-          }
+          },
         );
 
         const { data: thumbnailData, error: thumbnailError } =
@@ -465,10 +465,10 @@ export async function action({ context, request }: ActionFunctionArgs) {
         if (thumbnailError) {
           console.error(
             `Failed to upload thumbnail for location ${location.id}:`,
-            thumbnailError
+            thumbnailError,
           );
           errorLog.push(
-            `Thumbnail upload failed for ${location.id}: ${thumbnailError.message}`
+            `Thumbnail upload failed for ${location.id}: ${thumbnailError.message}`,
           );
           skippedLocationIds.push(location.id);
           continue;
@@ -494,7 +494,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         console.log(
           `Successfully processed location ${location.id}${
             wasFixed ? " (fixed)" : ""
-          }`
+          }`,
         );
       } catch (err) {
         const errorMsg = `Error processing location ${location.id}: ${err}`;
@@ -512,8 +512,8 @@ export async function action({ context, request }: ActionFunctionArgs) {
             // eslint-disable-next-line local-rules/require-org-scope-on-id-queries -- idor-safe: Shelf super-admin cross-org image-migration tool; gated by requireAdmin(userId), ids collected from the cross-org locationWithImages loop above
             where: { id },
             data: { image: { disconnect: true } },
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -629,7 +629,7 @@ ${
             `${type}:
 ${(items as string[])
   .map((item, index) => `  ${index + 1}. ${item}`)
-  .join("\n")}`
+  .join("\n")}`,
         )
         .join("\n\n")
     : "No detailed breakdown available."

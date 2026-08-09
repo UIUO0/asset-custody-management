@@ -60,7 +60,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
       z.object({
         published: z.coerce.boolean(),
         id: z.string(),
-      })
+      }),
     );
 
     await db.announcement

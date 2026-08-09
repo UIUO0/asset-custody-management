@@ -116,7 +116,7 @@ describe("transferEntitiesToNewOwner", () => {
       });
 
       const creatorCalls = tx.booking.updateMany.mock.calls.filter((call) =>
-        Object.prototype.hasOwnProperty.call(call[0].data, "creatorId")
+        Object.prototype.hasOwnProperty.call(call[0].data, "creatorId"),
       );
 
       // Exactly one creatorId transfer, and it is scoped to created-for-others.

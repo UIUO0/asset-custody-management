@@ -8,7 +8,7 @@ export type ExtendedPrismaClient = ReturnType<typeof createDatabaseClient>;
  */
 export function createDatabaseClient(url?: string) {
   const client = new PrismaClient(
-    url ? { datasourceUrl: url } : undefined
+    url ? { datasourceUrl: url } : undefined,
   ).$extends({
     model: {
       $allModels: {

@@ -8,7 +8,7 @@ import { customerHasPaymentMethod, stripe } from "~/utils/stripe.server";
 import type { AddonTrialSchedulerData } from "./scheduler.server";
 
 async function handleAddonTrialJob(
-  job: PgBoss.Job<AddonTrialSchedulerData>
+  job: PgBoss.Job<AddonTrialSchedulerData>,
 ): Promise<void> {
   const {
     addonType,
@@ -27,7 +27,7 @@ async function handleAddonTrialJob(
   const hasPaymentMethod = await customerHasPaymentMethod(customerId);
   if (!hasPaymentMethod) {
     Logger.info(
-      `Skipping trial ends tomorrow email for user ${userId} - no payment method found`
+      `Skipping trial ends tomorrow email for user ${userId} - no payment method found`,
     );
     return;
   }
@@ -39,7 +39,7 @@ async function handleAddonTrialJob(
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   if (subscription.status !== "trialing" || subscription.cancel_at_period_end) {
     Logger.info(
-      `Skipping trial ends tomorrow email for user ${userId} - subscription ${subscriptionId} status is "${subscription.status}", cancel_at_period_end: ${subscription.cancel_at_period_end}`
+      `Skipping trial ends tomorrow email for user ${userId} - subscription ${subscriptionId} status is "${subscription.status}", cancel_at_period_end: ${subscription.cancel_at_period_end}`,
     );
     return;
   }
@@ -85,9 +85,9 @@ export async function registerAddonTrialWorkers() {
               addonType: job.data.addonType,
             },
             label: "Stripe",
-          })
+          }),
         );
       }
-    }
+    },
   );
 }

@@ -35,7 +35,7 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
   const { userId } = context.getSession();
   const { organizationId } = getParams(
     params,
-    z.object({ organizationId: z.string() })
+    z.object({ organizationId: z.string() }),
   );
 
   try {
@@ -95,7 +95,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   const { userId } = context.getSession();
   const { organizationId } = getParams(
     params,
-    z.object({ organizationId: z.string() })
+    z.object({ organizationId: z.string() }),
   );
 
   try {

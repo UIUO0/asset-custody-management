@@ -37,7 +37,7 @@ export const KITS_INCLUDE_FIELDS = {
 
 export const getAssetOverviewFields = (
   assetId: string,
-  canUseBarcodes: boolean = false
+  canUseBarcodes: boolean = false,
 ) => {
   const baseFields = {
     category: true,

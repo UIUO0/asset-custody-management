@@ -97,6 +97,16 @@ model User {
   bookingApprovals   Booking[]          @relation("bookingApprovalDecider")
   /// EPDA: booking requests this user put on review hold (المخزون)
   bookingReviewHolds Booking[]          @relation("bookingReviewHolder")
+  /// EPDA: instance settings this user last wrote (app-wide admins only)
+  appSettingUpdates  AppSetting[]       @relation("appSettingUpdatedBy")
+  /// EPDA: external-integration API keys this user issued
+  issuedApiKeys      ApiKey[]           @relation("apiKeyCreatedBy")
+  /// EPDA: goods receipts this user filled in (مذكرة/محضر استلام)
+  goodsReceipts      GoodsReceipt[]     @relation("goodsReceiptCreatedBy")
+  /// EPDA: receipt signatures this user gave
+  goodsReceiptSignatures GoodsReceiptSignature[] @relation("goodsReceiptSignatory")
+  /// EPDA: assets this user (المالية) entered a finance code for
+  assetsFinanceCoded     Asset[]                 @relation("assetFinanceCodedBy")
   createdKits        Kit[]
   tierId             TierId             @default(free)
   tier               Tier               @relation(fields: [tierId], references: [id])
@@ -248,9 +258,9 @@ model Asset {
   // `enforce_individual_asset_single_location` trigger.
 
   custody      Custody[]
-  /// EPDA: signed تسليم/استرجاع records. Survive custody being released — the
-  /// audit trail is the point.
-  custodyHandovers CustodyHandover[]
+  /// EPDA: lines on signed تسليم/استرجاع records. Survive custody being
+  /// released — the audit trail is the point.
+  custodyHandovers CustodyHandoverAsset[]
   notes        Note[]
   qrCodes      Qr[]
   barcodes     Barcode[]              @relation("AssetBarcodes")
@@ -264,6 +274,44 @@ model Asset {
   auditScans      AuditScan[]
   assetKits      AssetKit[]
   assetLocations AssetLocation[]
+
+  /// EPDA: the receipt line that admitted this item, if any.
+  ///
+  /// Nullable and `SetNull` on delete: items created before the receipt flow
+  /// existed have no line, and voiding a receipt must not delete stock that
+  /// physically sits on a shelf. The link is what lets an auditor go from an
+  /// item back to the signed document — and the supplier, purchase order and
+  /// price that came with it.
+  receiptLine   GoodsReceiptLine? @relation(fields: [receiptLineId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  receiptLineId String?
+
+  /// EPDA: أصل / مادة. Null until the classification rules land — see
+  /// `enum ItemClass`. Mirrored from the receipt line at creation so the
+  /// classification survives the line being edited.
+  itemClass ItemClass?
+
+  /// EPDA: نوع الصنف, mirrored from the receipt line for the same reason as
+  /// `itemClass` — the classification must stay readable on the item even if
+  /// the line is later corrected.
+  itemCategory ItemCategory?
+
+  /// EPDA: رقم الترميز — the finance coding number.
+  ///
+  /// Entered by المالية after the item is classified as a أصل; مواد are
+  /// expensed and never coded. Free text with no uniqueness constraint: the
+  /// approved decision (2026-07-27) is that the coding format is entirely the
+  /// finance department's, with no validation and no system-wide uniqueness.
+  ///
+  /// Nullable and stays null for every مادة — "not yet coded" and "never needs
+  /// a code" are told apart by `itemClass`, not by this column.
+  financeCode String?
+
+  /// When the code was entered, and by whom. Kept because coding is the one
+  /// finance action on an item and an auditor will ask who performed it.
+  financeCodedAt DateTime? @db.Timestamptz(3)
+
+  financeCodedBy   User?   @relation("assetFinanceCodedBy", fields: [financeCodedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  financeCodedById String?
 
   // Per-asset override: when an org has multiple linked Barcodes (only possible
   // with the barcode add-on), this picks the specific Barcode to display in
@@ -299,6 +347,13 @@ model Asset {
   @@index([categoryId, organizationId], name: "Asset_categoryId_organizationId_idx")
   @@index([assetModelId, organizationId], name: "Asset_assetModelId_organizationId_idx")
   @@index([sequentialId], name: "Asset_sequentialId_idx")
+  // Declared here rather than only in the migration that created them. An index
+  // that exists in the database but not in this schema reads to Prisma as drift,
+  // and it emits a `DROP INDEX` for it into the NEXT migration on any table —
+  // silently, in a diff about something else entirely. Both of these were about
+  // to be dropped that way on 2026-08-06.
+  @@index([receiptLineId], name: "Asset_receiptLineId_idx")
+  @@index([financeCodedById], name: "Asset_financeCodedById_idx")
   // Index for foreign key
   @@index([userId])
 }
@@ -836,6 +891,10 @@ model Location {
   @@index([organizationId, parentId])
   // Trigram index for substring search from the asset-list search bar
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, name: "Location_name_trgm_idx")
+  // Same reason as the two on `Asset`: created by a hand-written migration and
+  // never declared, so every later migration wanted to drop them.
+  @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, name: "Location_description_trgm_idx")
+  @@index([address(ops: raw("gin_trgm_ops"))], type: Gin, name: "Location_address_trgm_idx")
 }
 
 // Master data for roles
@@ -863,6 +922,20 @@ model TeamMember {
   custodies       Custody[]
   /// EPDA: handover records where this member is the employee side.
   custodyHandovers CustodyHandover[]
+
+  /// EPDA: marks this row as an administrative department (إدارة المرافق,
+  /// إدارة تقنية المعلومات) rather than an individual person.
+  ///
+  /// Departments hold custody exactly the way people do — that is why they are
+  /// `TeamMember` rows and not a separate table: the warehouse hands a batch to
+  /// a department, and the department hands single assets to its staff, both
+  /// through the same `CustodyHandover` path. The flag exists only so the UI can
+  /// tell "a desk" from "a person" when listing custodians.
+  isDepartment Boolean @default(false)
+
+  /// EPDA: workspace memberships whose holder belongs to this department.
+  departmentMembers UserOrganization[] @relation("UserOrganizationDepartment")
+
   receivedInvites Invite[]
   user            User?        @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: SetNull)
   userId          String?
@@ -989,8 +1062,14 @@ model CustodyHandover {
   kind  CustodyHandoverKind
   state CustodyHandoverState @default(AWAITING_SIGNATURES)
 
-  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  assetId String
+  /// Assets on this محضر, through the `CustodyHandoverAsset` pivot.
+  ///
+  /// A pivot rather than a single `assetId` because the warehouse hands a whole
+  /// purchase order to a department in one batch, and the paper that gets signed
+  /// is ONE document listing every line. A single-asset handover is simply a
+  /// pivot with one row — there is no second code path, and no second place to
+  /// look for "which assets does this محضر cover".
+  assets CustodyHandoverAsset[]
 
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   organizationId String
@@ -1005,6 +1084,17 @@ model CustodyHandover {
   /// محضر must outlive the staff account that produced it.
   operator   User?   @relation("CustodyHandoverOperator", fields: [operatorUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   operatorUserId String?
+
+  /// Who gave the units up, when this محضر is a **transfer** rather than an
+  /// issue from the shelf: إدارة المرافق passing 10 of its pens to an employee.
+  ///
+  /// Stored rather than derived because the custody change happens at signature
+  /// time — possibly days later — and by then the releasing side's stock has
+  /// already moved. It is also what the printed محضر needs to say who handed
+  /// over. `null` means the units came off the warehouse shelf.
+  releasingTeamMemberId String?
+
+  @@index([releasingTeamMemberId])
 
   /// Free-text condition note captured at handover time ("خدش في الغطاء
   /// الخلفي"). Printed on the محضر so a later dispute has a baseline.
@@ -1033,12 +1123,49 @@ model CustodyHandover {
   updatedAt DateTime @updatedAt
 
   @@unique([organizationId, reference], name: "custody_handover_org_reference_unique")
-  // Serves the "is there a completed record I can consume for this asset?"
-  // gate, which is on the hot path of every custody change.
-  @@index([assetId, kind, state], name: "CustodyHandover_asset_kind_state_idx")
   @@index([organizationId, createdAt(sort: Desc)], name: "CustodyHandover_org_createdAt_idx")
   @@index([counterpartyTeamMemberId])
   @@index([operatorUserId])
+}
+
+/// One asset line on a محضر.
+///
+/// Carries no state of its own — the signatures, the state machine and the
+/// reference all live on `CustodyHandover`, and one signature authorises every
+/// line at once. Splitting state per line would mean a محضر could be half
+/// applied, which is exactly what a single signed document must not be.
+model CustodyHandoverAsset {
+  id String @id @default(cuid())
+
+  handover   CustodyHandover @relation(fields: [handoverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  handoverId String
+
+  asset   Asset  @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  assetId String
+
+  /// Units this line moves.
+  ///
+  /// Always 1 for `INDIVIDUAL` assets — one physical thing. For
+  /// `QUANTITY_TRACKED` it is the count actually handed over, which is the
+  /// whole point: a receipt line of 30 pens is ONE asset with `quantity = 30`,
+  /// and the department passes 10 to one employee and 20 to another. Without a
+  /// per-line count the محضر could only ever move the entire stock.
+  ///
+  /// Defaults to 1 so existing rows (all of them single-asset محاضر written
+  /// before quantities existed) stay correct without a backfill.
+  quantity Int @default(1)
+
+  createdAt DateTime @default(now())
+
+  /// The same asset must not appear twice on one محضر — a duplicated line would
+  /// print twice and apply its custody effect twice.
+  @@unique([handoverId, assetId], name: "custody_handover_asset_unique")
+  // Serves the "is there a completed record I can consume for this asset?"
+  // gate, which is on the hot path of every custody change. Replaces the
+  // `[assetId, kind, state]` index that lived on `CustodyHandover` while the
+  // asset was a column there; `kind` and `state` now come from the join.
+  @@index([assetId], name: "CustodyHandoverAsset_asset_idx")
+  @@index([handoverId])
 }
 
 /// EPDA: one party's signature on a handover record.
@@ -1152,6 +1279,10 @@ model Organization {
   auditImages        AuditImage[]
 
   usersWithLastSelected User[] @relation("lastSelectedOrg")
+  /// EPDA: API keys scoped to this workspace (see `model ApiKey`)
+  apiKeys             ApiKey[]
+  /// EPDA: goods receipts booked into this workspace (مذكرة/محضر استلام)
+  goodsReceipts       GoodsReceipt[]
   roleChangeLogs      RoleChangeLog[]
   teamMemberNotes     TeamMemberNote[]
   activityEvents      ActivityEvent[]
@@ -1191,9 +1322,22 @@ model UserOrganization {
   /// `@unique` doubles as the lookup index for the public feed route.
   calendarTokenId String? @unique
 
+  /// EPDA: the department this member works for, when they hold `DEPARTMENT`.
+  ///
+  /// This — not the role — is what scopes a department user's inventory: they
+  /// see the assets whose custody sits with this `TeamMember`. The role only
+  /// says "may act as a department"; the pointer says "which one". Keeping them
+  /// separate is what lets a third department exist without touching code.
+  ///
+  /// `SetNull` on delete so removing a department row does not delete the
+  /// people who worked in it.
+  department   TeamMember? @relation("UserOrganizationDepartment", fields: [departmentTeamMemberId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  departmentTeamMemberId String?
+
   @@unique([userId, organizationId])
   // Index for foreign key
   @@index([organizationId])
+  @@index([departmentTeamMemberId])
 }
 
 enum OrganizationType {
@@ -1235,6 +1379,14 @@ enum OrganizationRoles {
   WAREHOUSE
   FINANCE
   INVENTORY
+  /// EPDA: an administrative department that receives stock from the warehouse
+  /// in bulk and hands it on to its own staff (المرافق today; IT runs on OWNER
+  /// because they are the workspace's system administrators).
+  ///
+  /// Deliberately generic rather than `FACILITIES`: which departments exist is
+  /// data (`TeamMember.isDepartment`), so a third one is a row plus a user
+  /// assignment — no enum value, no migration, no permission-map edit.
+  DEPARTMENT
 }
 
 model SsoDetails {
@@ -1581,6 +1733,432 @@ model Announcement {
   // Datetime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// EPDA: which official intake form a receipt is.
+///
+/// The authority uses two paper forms and warehouse staff pick per delivery.
+/// They are not versions of one another — they carry different reference
+/// fields, different totals, and different signatories — so the type is stored
+/// and drives which fields the form collects and validates.
+enum GoodsReceiptType {
+  /// مذكرة استلام (نموذج رقم 2) — four document references (أمر الشراء،
+  /// وثيقة الشحن، المعاينة، إشعار استلام مؤقت) and a three-line total that
+  /// separates VAT.
+  MEMO
+  /// محضر استلام (نموذج رقم 3) — two references (طلب الشراء/التعميد، مستند)
+  /// and a single VAT-inclusive total.
+  RECORD
+}
+
+/// EPDA: where a receipt sits between being filled in and being fully signed.
+///
+/// Items are created at `SAVED`, **not** at `SIGNED`: the warehouse needs the
+/// stock visible the moment it is booked in, and the created items land at
+/// `AssetLifecycleStage.PENDING` where they are invisible to employees anyway.
+/// The signatures gate the *approval* to `READY`, not the data entry — see
+/// `assertReceiptSignedBeforeApproval`.
+enum GoodsReceiptState {
+  /// Being filled in. No items exist yet.
+  DRAFT
+  /// Submitted — items created at PENDING. Awaiting the three signatures.
+  SAVED
+  /// All three parties signed. Its items may now be approved to READY.
+  SIGNED
+  /// Cancelled. Kept, not deleted, so a voided receipt stays in the record.
+  VOIDED
+}
+
+/// EPDA: the three signatory roles on each form.
+///
+/// Both forms take exactly three signatures but name them differently, so the
+/// enum carries all six rather than three generic slots. Naming them by their
+/// actual job title is what makes a printed محضر match the paper one, and what
+/// lets the UI label each box correctly without a lookup table keyed on type.
+enum GoodsReceiptParty {
+  // ── نموذج رقم 2 (مذكرة استلام) ──
+  /// مأمور عهدة ساحة الاستلام (المسلم)
+  YARD_CUSTODIAN
+  /// أمين المستودع / مأمور العهدة (المستلم)
+  WAREHOUSE_KEEPER
+  /// رئيس قسم المستودعات
+  WAREHOUSE_HEAD
+
+  // ── نموذج رقم 3 (محضر استلام) ──
+  /// المستلم
+  RECEIVER
+  /// العضو الفني
+  TECHNICAL_MEMBER
+  /// الرئيس المسؤول
+  RESPONSIBLE_HEAD
+}
+
+/// EPDA: whether a receipt line becomes individually tracked items or one
+/// quantity-tracked row.
+///
+/// Chosen per line by the warehouse operator. Ten laptops need ten rows, each
+/// with its own QR and serial; five hundred pens need one row with a quantity.
+/// Forcing either rule on every line would make one of those two cases
+/// unusable.
+enum GoodsReceiptLineTracking {
+  /// One record per unit — `quantity` rows of `AssetType.INDIVIDUAL`.
+  INDIVIDUAL
+  /// One record holding the whole quantity — `AssetType.QUANTITY_TRACKED`.
+  BULK
+}
+
+/// EPDA: أصل (durable asset) vs مادة (consumable material).
+///
+/// **Not yet derived from anything.** The authority's classification rules are
+/// still being written; until they arrive the column stays null and
+/// `classifyReceiptLine` returns null. It exists now so the receipt flow writes
+/// the field from day one and no backfill is needed later.
+///
+/// Deliberately separate from `AssetType`, which answers a different question:
+/// `AssetType` is *how we track it* (one row or a counted pool), `ItemClass` is
+/// *what it is* for accounting. A أصل can be quantity-tracked and a مادة can be
+/// individually tracked; collapsing them would make one of those unrepresentable.
+enum ItemClass {
+  /// أصل — durable, capitalised, depreciated.
+  ASSET
+  /// مادة — consumable, expensed on issue.
+  MATERIAL
+}
+
+/// EPDA: the kind of thing being received, which decides its capitalisation
+/// threshold.
+///
+/// The authority sets a different threshold per category — a vehicle is
+/// capitalised above 10,000 SAR, a desk above 1,000 — so this is *not* cosmetic
+/// grouping: it is the input that decides whether an item becomes a أصل or a
+/// مادة. The warehouse operator picks it per line when booking a delivery in.
+///
+/// Deliberately a fixed enum rather than the existing free-form `Category`
+/// table: `Category` is workspace-editable labelling, and letting an operator
+/// invent a category would mean inventing a threshold with it — silently
+/// deciding an accounting rule. The thresholds live in
+/// `app/modules/goods-receipt/capitalization.ts`.
+enum ItemCategory {
+  /// أثاث ومفروشات
+  FURNITURE
+  /// مركبات
+  VEHICLES
+  /// أجهزة مكتبية
+  OFFICE_EQUIPMENT
+  /// أجهزة تقنية
+  IT_EQUIPMENT
+  /// أجهزة وتقنيات أخرى
+  OTHER_EQUIPMENT
+}
+
+/// EPDA: an official goods-receipt document (مذكرة/محضر استلام).
+///
+/// This is now the **only** way stock enters the system. `/assets/new` and the
+/// CSV importer are closed behind `asset.import`, because an item with no
+/// supplier, no purchase-order reference and no value is exactly the record the
+/// paper forms exist to prevent.
+///
+/// One receipt carries many lines; each line becomes one or more `Asset` rows
+/// when the receipt is saved. The link is kept (`GoodsReceiptLine.assets`) so
+/// any item can be traced back to the document that admitted it.
+///
+/// @see {@link file://./../../../apps/webapp/app/modules/goods-receipt/service.server.ts}
+model GoodsReceipt {
+  id String @id @default(cuid())
+
+  type  GoodsReceiptType
+  state GoodsReceiptState @default(DRAFT)
+
+  /// رقم التسلسل — workspace-scoped running number (e.g. "EPDA-RCV-2026-0042").
+  /// Stored rather than derived so a reprint always carries the number that was
+  /// signed on paper.
+  reference String
+
+  /// السنة المالية. Free text, not a date: the authority writes it as "1447"
+  /// or "2026" depending on the calendar in use, and normalising it would be
+  /// this system deciding something it has no business deciding.
+  fiscalYear String?
+
+  // ── ترويسة النموذج ──
+  /// الجهة
+  entityName String?
+  /// رقم الجهة
+  entityNumber String?
+  /// مستودع
+  warehouseName String?
+  /// عدد الصفحات
+  pageCount Int?
+  /// تاريخ الاستلام (نموذج 2) / التاريخ (نموذج 3)
+  receiptDate DateTime? @db.Timestamptz(3)
+
+  /// المورد — free text. Suppliers are not an entity in this system yet, and
+  /// inventing one to satisfy a text box on a form would be the tail wagging
+  /// the dog.
+  supplier String?
+
+  // ── مراجع نموذج 2 (مذكرة استلام) ──
+  /// أمر الشراء
+  purchaseOrderNumber String?
+  purchaseOrderDate   DateTime? @db.Timestamptz(3)
+  /// وثيقة الشحن
+  shippingDocNumber String?
+  shippingDocDate   DateTime? @db.Timestamptz(3)
+  /// المعاينة — رقم المحضر
+  inspectionRecordNumber String?
+  inspectionRecordDate   DateTime? @db.Timestamptz(3)
+  /// إشعار استلام مؤقت
+  provisionalNoticeNumber String?
+  provisionalNoticeDate   DateTime? @db.Timestamptz(3)
+
+  // ── مراجع نموذج 3 (محضر استلام) ──
+  /// رقم طلب الشراء / التعميد
+  purchaseRequestNumber String?
+  /// مستند — its name, number and date
+  supportingDocName   String?
+  supportingDocNumber String?
+  supportingDocDate   DateTime? @db.Timestamptz(3)
+
+  // ── المجاميع ──
+  //
+  // Stored as integer halalas, never as a float. A receipt is an accounting
+  // document; `0.1 + 0.2` must not be able to make its total disagree with the
+  // paper it was copied from. The ريال/هللة columns on the form are two views
+  // of one integer (see `utils/money.ts`).
+  //
+  // Recomputed from the lines on every save rather than trusted from the
+  // client — the totals row is the part of the form most worth tampering with.
+  /// القيمة الاجمالية (نموذج 2) — subtotal before VAT.
+  subtotalHalalas Int @default(0)
+  /// مجموع ضريبة القيمة المضافة (نموذج 2 only; 0 on نموذج 3).
+  vatHalalas Int @default(0)
+  /// اجمالي المبلغ (نموذج 2) / القيمة الاجمالية شامل الضريبة (نموذج 3).
+  totalHalalas Int @default(0)
+
+  lines      GoodsReceiptLine[]
+  signatures GoodsReceiptSignature[]
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String
+
+  /// The warehouse operator who filled the form in. `SetNull` — the document
+  /// must outlive the staff account that produced it.
+  createdBy   User?   @relation("goodsReceiptCreatedBy", fields: [createdById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdById String?
+
+  /// When the form was submitted and its items created. Null while `DRAFT`.
+  savedAt DateTime? @db.Timestamptz(3)
+  /// When the third signature landed. Null until `SIGNED`.
+  signedAt DateTime? @db.Timestamptz(3)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// The running number is unique per workspace, not globally — two authorities
+  /// on one instance each start at 1.
+  @@unique([organizationId, reference], name: "goods_receipt_reference_unique")
+  @@index([organizationId, state])
+  @@index([createdById])
+}
+
+/// EPDA: one row of a receipt's item table.
+///
+/// Holds what the operator typed. The `Asset` rows it produces are derived from
+/// it, which is why both survive independently: correcting a typo on an asset
+/// must not silently rewrite the signed document, and vice versa.
+model GoodsReceiptLine {
+  id String @id @default(cuid())
+
+  receipt   GoodsReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  receiptId String
+
+  /// الرقم — position in the printed table, 1-based.
+  lineNumber Int
+
+  /// رقم الصنف التسلسلي (نموذج 2) / رقم التصنيف التسلسلي (نموذج 3).
+  /// The supplier's or the authority's own coding, as written on the form —
+  /// distinct from `Asset.sequentialId`, which this system generates itself.
+  itemCode String?
+
+  /// اسم الصنف
+  name String
+  /// ووصفه — نموذج 2 prints name and description in one column; نموذج 3 has no
+  /// description field at all. Nullable so نموذج 3 simply leaves it unset.
+  description String?
+
+  /// الوحدة — e.g. "حبة", "علبة", "متر".
+  unit String?
+  /// الكمية
+  quantity Int
+
+  /// سعر الوحدة, in halalas. See the totals note on `GoodsReceipt`.
+  unitPriceHalalas Int @default(0)
+  /// مجموع القيمة = quantity × unitPriceHalalas, recomputed server-side.
+  lineTotalHalalas Int @default(0)
+
+  /// ملاحظات
+  notes String?
+
+  /// Whether this line becomes N individual records or one counted row.
+  tracking GoodsReceiptLineTracking @default(INDIVIDUAL)
+
+  /// أصل / مادة. Null until the authority's rules are implemented — see
+  /// `enum ItemClass`.
+  itemClass ItemClass?
+
+  /// نوع الصنف — chosen by the operator, and the input that decides
+  /// `itemClass` via the category's capitalisation threshold.
+  ///
+  /// Nullable because lines booked in before categories existed have none, and
+  /// backfilling them would mean guessing an accounting classification. Those
+  /// lines keep `itemClass = null` and can be classified once someone says what
+  /// they were.
+  itemCategory ItemCategory?
+
+  /// The items this line produced. Cascade is deliberately NOT set: deleting a
+  /// receipt line must not delete stock that physically exists.
+  assets Asset[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([receiptId, lineNumber], name: "goods_receipt_line_number_unique")
+  @@index([receiptId])
+}
+
+/// EPDA: one of the three signatures on a receipt.
+///
+/// Mirrors `CustodyHandoverSignature` deliberately — same snapshotting of the
+/// declared name, same private-bucket image path, same evidentiary IP/UA. Two
+/// different signature models in one system would drift; this one stays a
+/// recognisable twin so a reader who understands one understands both.
+model GoodsReceiptSignature {
+  id String @id @default(cuid())
+
+  receipt   GoodsReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  receiptId String
+
+  party GoodsReceiptParty
+
+  /// Signing user, when the party has an account. `SetNull` — the signature
+  /// outlives the account.
+  signedByUser   User?   @relation("goodsReceiptSignatory", fields: [signedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  signedByUserId String?
+
+  /// Name as typed at signing time. Snapshotted: the document must keep reading
+  /// the name that was agreed to even after the person renames or leaves.
+  declaredName String
+
+  /// Path of the PNG inside the private `goods-receipt-signatures` bucket.
+  /// Never a public URL — signature images are personal data.
+  signatureImagePath String
+
+  ipAddress String?
+  userAgent String?
+
+  signedAt DateTime @default(now())
+
+  /// One signature per party per receipt — re-signing replaces, never appends.
+  @@unique([receiptId, party], name: "goods_receipt_signature_party_unique")
+  @@index([signedByUserId])
+}
+
+/// EPDA: instance-wide configuration, stored as key → value.
+///
+/// Deliberately NOT organization-scoped. The settings kept here — which
+/// authentication method is live, the SAML/OIDC/LDAP connection details — are
+/// resolved on the login screen, *before* any organization context exists.
+/// Scoping them per workspace would make them unreadable at the moment they
+/// are needed.
+///
+/// Rows are created lazily: a key that has never been written simply does not
+/// exist, and the reader falls back to the registry default in
+/// `app/modules/app-settings/registry.ts`. That registry — not this table — is
+/// the list of settings the system knows about; an unrecognised row is ignored
+/// rather than trusted.
+///
+/// Only app-wide admins (`Roles.ADMIN`, تقنية المعلومات) may read or write
+/// this table through the application.
+model AppSetting {
+  /// Registry key, e.g. `auth.method` or `auth.saml.certificate`.
+  key String @id
+
+  /// Plaintext for ordinary settings; an AES-256-GCM envelope produced by
+  /// `encryptSecret()` when `isSecret` is true. Null means "explicitly cleared"
+  /// and still falls back to the registry default.
+  value String? @db.Text
+
+  /// Whether `value` holds ciphertext. Stored rather than derived from the
+  /// registry so a key that changes classification later can still be decrypted
+  /// (or read) according to how it was actually written.
+  isSecret Boolean @default(false)
+
+  /// Registry category (`auth`, `saml`, `oidc`, `ldap`, `general`). Duplicated
+  /// from the registry so the settings API can group rows without loading it.
+  category String
+
+  /// Who last wrote this key. Kept as SetNull so deleting an admin account
+  /// never destroys the settings they touched.
+  updatedBy   User?   @relation("appSettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  updatedById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([updatedById])
+}
+
+/// EPDA: a credential issued to an external system so it can call `/api/v1/*`.
+///
+/// The token itself is never stored. `hashedKey` holds its SHA-256 digest and
+/// `prefix` holds the first characters, which is what the UI shows so an admin
+/// can recognise a key in the list after the one-time reveal at creation.
+///
+/// Keys are organization-scoped: every service function behind the external API
+/// takes an `organizationId`, so binding the credential to one workspace is what
+/// makes the API safe to expose at all. Issuing and revoking, however, is
+/// restricted to app-wide admins.
+model ApiKey {
+  id String @id @default(cuid())
+
+  /// Human label chosen by the admin, e.g. "ERP nightly sync".
+  name String
+
+  /// Leading segment of the token (`epda_` + 8 chars). Unique so it can be used
+  /// as a stable display handle; it is NOT sufficient to authenticate.
+  prefix String @unique
+
+  /// SHA-256 hex digest of the full token. Looked up directly on every request,
+  /// which is why it is unique and indexed.
+  hashedKey String @unique
+
+  /// Capability list checked by `requireApiKey`. Values come from
+  /// `API_KEY_SCOPES` — an unknown scope grants nothing.
+  scopes String[]
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  organizationId String
+
+  /// The admin who issued the key. Cascade-safe: keys outlive nothing.
+  createdBy   User   @relation("apiKeyCreatedBy", fields: [createdById], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdById String
+
+  /// Best-effort usage stamp, written at most once a minute (see
+  /// `touchApiKeyUsage`) so a busy integration does not write on every call.
+  lastUsedAt DateTime? @db.Timestamptz(3)
+
+  /// Optional hard expiry. A key past this instant fails authentication.
+  expiresAt DateTime? @db.Timestamptz(3)
+
+  /// Revocation is a soft delete: the row stays so the audit trail — who issued
+  /// what, when it was last used — survives the revocation.
+  revokedAt DateTime? @db.Timestamptz(3)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([createdById])
 }
 
 /// EPDA: where a booking sits in the المستودعات approval queue.

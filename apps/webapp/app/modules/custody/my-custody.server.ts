@@ -18,9 +18,10 @@
  * @see {@link file://./../../routes/_layout+/my-custody.tsx}
  */
 
-import { BookingStatus } from "@prisma/client";
+import type { OrganizationRoles } from "@prisma/client";
 import { db } from "~/database/db.server";
 import { ShelfError } from "~/utils/error";
+import { resolveDepartmentDeskId } from "~/utils/permissions/role-scope";
 
 const label = "Assets" as const;
 
@@ -43,11 +44,6 @@ export type MyCustodyItem = Awaited<
   ReturnType<typeof getMyCustodyAndCheckouts>
 >["custodies"][number];
 
-/** One row of the "checked out to me" list. */
-export type MyCheckedOutItem = Awaited<
-  ReturnType<typeof getMyCustodyAndCheckouts>
->["checkedOut"][number];
-
 /**
  * Loads everything the signed-in user is currently holding.
  *
@@ -61,20 +57,46 @@ export type MyCheckedOutItem = Awaited<
  * physically handed to someone is the opposite situation — hiding it would
  * leave them accountable for something they cannot see.
  *
+ * ## Two lists, deliberately separate
+ *
+ * A `DEPARTMENT` officer holds nothing personally — the batch they signed for
+ * sits on their department's desk row, which has no user account. Merging the
+ * two would make it read as "you are personally accountable for 80 laptops".
+ * They are listed apart so the page can say which is which, and so the desk's
+ * stock is what the officer hands on to their staff.
+ *
  * @param organizationId - Workspace to read within
  * @param userId - The signed-in user
- * @returns Assets held on custody, and assets checked out on an active booking
+ * @param roles - The user's roles, used to decide whether the department's
+ *   desk is visible to them at all
+ * @param departmentTeamMemberId - The desk they work for, if any
+ * @returns Assets held personally, and assets held by their department
  * @throws {ShelfError} If either query fails
  */
 export async function getMyCustodyAndCheckouts({
   organizationId,
   userId,
+  roles,
+  departmentTeamMemberId,
 }: {
   organizationId: string;
   userId: string;
+  roles?: OrganizationRoles[];
+  departmentTeamMemberId?: string | null;
 }) {
   try {
-    const [custodies, bookingAssets] = await Promise.all([
+    /**
+     * The desk this viewer speaks for, or `null`.
+     *
+     * `resolveDepartmentDeskId` is the single place that decides — it refuses
+     * to hand the desk to someone who merely *belongs* to a department without
+     * holding the role. Deliberately NOT derived from visibility: `OWNER` sees
+     * everything and so is never "filtered", which would have hidden the IT
+     * desk from the very account that speaks for it.
+     */
+    const deskId = resolveDepartmentDeskId({ roles, departmentTeamMemberId });
+
+    const [custodies, departmentCustodies] = await Promise.all([
       db.custody.findMany({
         where: {
           custodian: { userId, organizationId },
@@ -97,36 +119,29 @@ export async function getMyCustodyAndCheckouts({
         orderBy: { createdAt: "desc" },
       }),
 
-      db.bookingAsset.findMany({
-        where: {
-          asset: { organizationId },
-          booking: {
-            organizationId,
-            // Only what is physically out: RESERVED has not been handed over
-            // yet, COMPLETE has come back.
-            status: { in: [BookingStatus.ONGOING, BookingStatus.OVERDUE] },
-            custodianUser: { id: userId },
-          },
-        },
-        select: {
-          id: true,
-          quantity: true,
-          asset: { select: MY_CUSTODY_ASSET_SELECT },
-          booking: {
+      // Skipped entirely for everyone who is not a department officer — an
+      // empty `where` here would return the whole workspace's custody.
+      deskId
+        ? db.custody.findMany({
+            where: {
+              teamMemberId: deskId,
+              asset: { organizationId },
+            },
             select: {
               id: true,
-              name: true,
-              from: true,
-              to: true,
-              status: true,
+              quantity: true,
+              createdAt: true,
+              kitCustody: {
+                select: { id: true, kit: { select: { id: true, name: true } } },
+              },
+              asset: { select: MY_CUSTODY_ASSET_SELECT },
             },
-          },
-        },
-        orderBy: { booking: { to: "asc" } },
-      }),
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
     ]);
 
-    return { custodies, checkedOut: bookingAssets };
+    return { custodies, departmentCustodies };
   } catch (cause) {
     throw new ShelfError({
       cause,

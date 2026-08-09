@@ -12,7 +12,7 @@ import { ShelfError } from "~/utils/error";
 const label: ErrorLabel = "Tier";
 
 export async function getUserTierLimit(
-  id: User["id"]
+  id: User["id"],
 ): Promise<TierLimit | CustomTierLimit> {
   try {
     const { tier } = await db.user
@@ -117,7 +117,7 @@ export async function getOrganizationTierLimit({
   try {
     /** Find the current organization as we need the owner */
     const currentOrganization = organizations.find(
-      (org) => org.id === organizationId
+      (org) => org.id === organizationId,
     );
     /** We get the owner ID so we can check if the organization has permissions for importing */
     const ownerId = currentOrganization?.userId as string;

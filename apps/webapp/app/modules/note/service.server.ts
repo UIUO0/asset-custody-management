@@ -142,7 +142,7 @@ export async function createNotes(
     assetIds: Asset["id"][];
     organizationId: string;
   },
-  tx?: NotesTxClient
+  tx?: NotesTxClient,
 ) {
   try {
     const client = tx ?? db;
@@ -472,11 +472,11 @@ export async function createKitChangeNote({
     if (currentKit && newKit && currentKit.id !== newKit.id) {
       const currentKitLink = wrapKitsWithDataForNote(
         { id: currentKit.id, name: currentKit.name.trim() },
-        "updated"
+        "updated",
       );
       const newKitLink = wrapKitsWithDataForNote(
         { id: newKit.id, name: newKit.name.trim() },
-        "updated"
+        "updated",
       );
       message = `${userLink} changed kit  from ${currentKitLink} to ${newKitLink}.`;
     }
@@ -485,7 +485,7 @@ export async function createKitChangeNote({
     if (newKit && !currentKit) {
       const newKitLink = wrapKitsWithDataForNote(
         { id: newKit.id, name: newKit.name.trim() },
-        "added"
+        "added",
       );
       // Qty-tracked: name the units added ("added 50 units to Camera Kit");
       // INDIVIDUAL keeps the original "added asset to ..." wording.
@@ -499,7 +499,7 @@ export async function createKitChangeNote({
       if (currentKit) {
         const currentKitLink = wrapKitsWithDataForNote(
           { id: currentKit.id, name: currentKit.name.trim() },
-          "removed"
+          "removed",
         );
         // Qty-tracked: name the units removed ("removed 50 units from
         // Camera Kit"); INDIVIDUAL keeps "removed asset from ...".
@@ -595,11 +595,11 @@ export async function createKitMoveNote({
 
     const fromKitLink = wrapKitsWithDataForNote(
       { id: fromKit.id, name: fromKit.name.trim() },
-      "updated"
+      "updated",
     );
     const toKitLink = wrapKitsWithDataForNote(
       { id: toKit.id, name: toKit.name.trim() },
-      "updated"
+      "updated",
     );
 
     // Qty-tracked: "moved 50 units from kit A to kit B"; INDIVIDUAL falls
@@ -671,7 +671,7 @@ export async function createTagChangeNoteIfNeeded({
         wrapTagForNote({
           id: tag.id,
           name: (tag.name ?? "Unnamed tag").trim(),
-        })
+        }),
       )
       .join(tagList.length > 1 ? ", " : "");
 
@@ -679,15 +679,17 @@ export async function createTagChangeNoteIfNeeded({
 
   if (addedTags.length > 0) {
     actions.push(
-      `added tag${addedTags.length > 1 ? "s" : ""} ${formatTagNames(addedTags)}`
+      `added tag${addedTags.length > 1 ? "s" : ""} ${formatTagNames(
+        addedTags,
+      )}`,
     );
   }
 
   if (removedTags.length > 0) {
     actions.push(
       `removed tag${removedTags.length > 1 ? "s" : ""} ${formatTagNames(
-        removedTags
-      )}`
+        removedTags,
+      )}`,
     );
   }
 
@@ -899,7 +901,7 @@ export async function createAssetNotesForAuditAddition({
 
     const auditLink = wrapLinkForNote(
       `/audits/${audit.id}/overview`,
-      audit.name
+      audit.name,
     );
 
     const content = `${userLink} added asset to audit ${auditLink}.`;
@@ -953,7 +955,7 @@ export async function createAssetNotesForAuditRemoval({
 
     const auditLink = wrapLinkForNote(
       `/audits/${audit.id}/overview`,
-      audit.name
+      audit.name,
     );
 
     const content = `${userLink} removed asset from audit ${auditLink}.`;
@@ -978,7 +980,7 @@ export async function createAssetNotesForAuditRemoval({
 
 /** Human-readable label for ConsumptionType values */
 function consumptionTypeLabel(
-  type: ConsumptionType | null | undefined
+  type: ConsumptionType | null | undefined,
 ): string {
   if (type === "ONE_WAY") return "Used up (one-way)";
   if (type === "TWO_WAY") return "Returnable (two-way)";
@@ -1028,7 +1030,7 @@ export async function createAssetQuantityChangeNote({
     changes.push(
       `total quantity from **${previousQuantity ?? "—"}** to **${
         newQuantity ?? "—"
-      }**`
+      }**`,
     );
   }
 
@@ -1039,7 +1041,7 @@ export async function createAssetQuantityChangeNote({
     changes.push(
       `low-stock threshold from **${previousMinQuantity ?? "—"}** to **${
         newMinQuantity ?? "—"
-      }**`
+      }**`,
     );
   }
 
@@ -1049,8 +1051,8 @@ export async function createAssetQuantityChangeNote({
   ) {
     changes.push(
       `behavior from **${consumptionTypeLabel(
-        previousConsumptionType
-      )}** to **${consumptionTypeLabel(newConsumptionType)}**`
+        previousConsumptionType,
+      )}** to **${consumptionTypeLabel(newConsumptionType)}**`,
     );
   }
 

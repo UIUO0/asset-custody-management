@@ -69,7 +69,7 @@ export function isHigherTier(newTier: TierId, currentTier: TierId): boolean {
 /** Returns true if `newTier` is higher than or equal to `currentTier` */
 export function isHigherOrEqualTier(
   newTier: TierId,
-  currentTier: TierId
+  currentTier: TierId,
 ): boolean {
   return (
     subscriptionTiersPriority[newTier] >= subscriptionTiersPriority[currentTier]
@@ -160,7 +160,7 @@ export async function constructVerifiedWebhookEvent(request: Request): Promise<{
     event = await stripe.webhooks.constructEventAsync(
       payload,
       sig,
-      STRIPE_WEBHOOK_ENDPOINT_SECRET
+      STRIPE_WEBHOOK_ENDPOINT_SECRET,
     );
   } catch (cause) {
     throw new ShelfError({

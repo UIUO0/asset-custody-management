@@ -246,7 +246,7 @@ export async function createAssetModelsIfNotExists({
     const models = new Map<string, string>(
       data
         .filter((asset) => asset.assetModel)
-        .map((asset) => [asset.assetModel as string, ""])
+        .map((asset) => [asset.assetModel as string, ""]),
     );
 
     for (const [rawName] of models) {

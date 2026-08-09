@@ -30,7 +30,7 @@ if (window.env?.SENTRY_DSN) {
       // Suppress N+1 for asset image refresh — server-side batch handles this;
       // client-side individual calls are an intentional safety net
       const imageRefreshSpans = spans.filter(
-        (s) => s.description?.includes("/api/asset/refresh-main-image")
+        (s) => s.description?.includes("/api/asset/refresh-main-image"),
       );
       if (imageRefreshSpans.length > 3) {
         return null;
@@ -38,7 +38,7 @@ if (window.env?.SENTRY_DSN) {
 
       // Suppress React Router internal manifest fetching — framework behavior
       const manifestSpans = spans.filter(
-        (s) => s.description?.includes("/__manifest")
+        (s) => s.description?.includes("/__manifest"),
       );
       if (manifestSpans.length > 3) {
         return null;
@@ -52,7 +52,7 @@ if (window.env?.SENTRY_DSN) {
       // (`> 1` matching spans) was too narrow and let most events through.
       if (event.transaction === "/assets/new") {
         const hasAssetNewDataSpan = spans.some(
-          (s) => s.description?.includes("/assets/new.data")
+          (s) => s.description?.includes("/assets/new.data"),
         );
         if (hasAssetNewDataSpan) {
           return null;
@@ -89,7 +89,7 @@ if (window.env?.SENTRY_DSN) {
           (v) =>
             v.type === "NotFoundError" &&
             (v.value?.includes("removeChild") ||
-              v.value?.includes("insertBefore"))
+              v.value?.includes("insertBefore")),
         )
       ) {
         return null;
@@ -204,7 +204,7 @@ async function hydrate() {
             });
           }
         },
-      }
+      },
     );
   });
 }

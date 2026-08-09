@@ -37,7 +37,7 @@ export function getOverrideDateKey(date: string | Date): string {
  * Handles the conversion from FormData entries to properly typed schedule object
  */
 export function parseWeeklyScheduleFromFormData(
-  formData: FormData
+  formData: FormData,
 ): WeeklyScheduleJson {
   const scheduleEntries = Array.from(formData.entries());
   const weeklyScheduleData: Record<string, Partial<DaySchedule>> = {};
@@ -80,7 +80,7 @@ export function parseWeeklyScheduleFromFormData(
  * @returns Properly typed WorkingHoursData or undefined if transformation fails
  */
 export function normalizeWorkingHoursForValidation(
-  rawWorkingHours: any
+  rawWorkingHours: any,
 ): WorkingHoursData | undefined {
   if (!rawWorkingHours) {
     return undefined;
@@ -132,7 +132,7 @@ interface NextWorkingDayResult {
 function findNextWorkingDay(
   currentDate: Date,
   workingHours: WorkingHoursData,
-  bufferStartTime: number
+  bufferStartTime: number,
 ): NextWorkingDayResult {
   // Calculate buffer expiry time (current time + buffer hours)
   const bufferExpiryTime =
@@ -154,7 +154,7 @@ function findNextWorkingDay(
 
     // Check for date-specific override first
     const override = workingHours.overrides.find(
-      (override) => getOverrideDateKey(override.date) === dateString
+      (override) => getOverrideDateKey(override.date) === dateString,
     );
 
     let daySchedule: DaySchedule | null = null;
@@ -198,7 +198,7 @@ function findNextWorkingDay(
 
         // Check for override on start date
         const startDayOverride = workingHours.overrides.find(
-          (override) => getOverrideDateKey(override.date) === startDateString
+          (override) => getOverrideDateKey(override.date) === startDateString,
         );
 
         let startDaySchedule: DaySchedule | null = null;
@@ -273,7 +273,7 @@ interface DefaultTimesResult {
 export function getBookingDefaultStartEndTimes(
   workingHoursData: WorkingHoursData | null | undefined,
   bufferStartTime: number,
-  isAdminOrOwner: boolean
+  isAdminOrOwner: boolean,
 ): DefaultTimesResult {
   const now = new Date();
 
@@ -292,7 +292,7 @@ export function getBookingDefaultStartEndTimes(
 
   // Check for date-specific override first
   const todayOverride = workingHoursData.overrides.find(
-    (override) => getOverrideDateKey(override.date) === todayDateString
+    (override) => getOverrideDateKey(override.date) === todayDateString,
   );
 
   let todaySchedule: DaySchedule | null = null;
@@ -350,7 +350,7 @@ export function getBookingDefaultStartEndTimes(
       const nextWorkingDay = findNextWorkingDay(
         earliestStartTime,
         workingHoursData,
-        0
+        0,
       );
       return {
         startDate: dateForDateTimeInputValue(nextWorkingDay.startTime),
@@ -367,7 +367,7 @@ export function getBookingDefaultStartEndTimes(
     const nextWorkingDay = findNextWorkingDay(
       now,
       workingHoursData,
-      effectiveBufferStartTime
+      effectiveBufferStartTime,
     );
 
     return {
@@ -379,7 +379,7 @@ export function getBookingDefaultStartEndTimes(
 
 function getOriginalDefaultTimes(
   now: Date,
-  bufferStartTime: number
+  bufferStartTime: number,
 ): DefaultTimesResult {
   // Original logic for backward compatibility with buffer support
   let startDateTime: Date;
@@ -436,7 +436,7 @@ export function calculateEffectiveEndDate(
   startDate: Date,
   endDate: Date,
   workingHoursData: WorkingHoursData | null | undefined,
-  skipClosedDays: boolean
+  skipClosedDays: boolean,
 ): Date {
   // If not skipping closed days or no working hours data, use original endDate
   if (!skipClosedDays || !workingHoursData?.enabled) {
@@ -454,7 +454,7 @@ export function calculateEffectiveEndDate(
 
     // Check for date-specific override first
     const override = workingHoursData.overrides.find(
-      (override) => getOverrideDateKey(override.date) === dateString
+      (override) => getOverrideDateKey(override.date) === dateString,
     );
 
     let isOpen: boolean;
@@ -495,7 +495,7 @@ export function calculateEffectiveEndDate(
 export function calculateBusinessHoursDuration(
   startDate: Date,
   endDate: Date,
-  workingHoursData: WorkingHoursData
+  workingHoursData: WorkingHoursData,
 ): number {
   // Start with total calendar hours
   const totalCalendarHours = differenceInHours(endDate, startDate);
@@ -518,7 +518,7 @@ export function calculateBusinessHoursDuration(
 
     // Check for date-specific override first
     const override = workingHoursData.overrides.find(
-      (override) => getOverrideDateKey(override.date) === dateString
+      (override) => getOverrideDateKey(override.date) === dateString,
     );
 
     let isOpen: boolean;

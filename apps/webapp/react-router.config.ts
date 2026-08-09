@@ -44,7 +44,7 @@ export default {
           Buffer.concat([
             Buffer.from(`import "./${sentryInstrument}.js"\n`),
             Buffer.from(fs.readFileSync(serverBuildPath)),
-          ])
+          ]),
         );
       })
       .catch((error: unknown) => {

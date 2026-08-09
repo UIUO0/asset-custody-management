@@ -25,7 +25,7 @@ describe("Button", () => {
     render(
       <Button variant="link" target="_blank" to="https://example.com">
         External link
-      </Button>
+      </Button>,
     );
 
     const link = screen.getByRole("link", { name: "External link" });

@@ -19,7 +19,7 @@ import type { ListItemData } from "~/components/list/list-item";
 export function bulkSelectionKey(
   item: { id: string } & {
     bookingAssetId?: string | null;
-  }
+  },
 ): string {
   return item.bookingAssetId ?? item.id;
 }
@@ -71,7 +71,7 @@ export const setSelectedBulkItemAtom = atom<null, ListItemData[], unknown>(
       }
       return [...prev, update];
     });
-  }
+  },
 );
 
 /**
@@ -87,19 +87,19 @@ export const setSelectedBulkItemsAtom = atom<null, ListItemData[][], void>(
     // `bulkSelectionKey` so multi-slice rows are evaluated per-row.
     const disabledKeys = new Set(disabledItems.map(bulkSelectionKey));
     const filteredUpdate = update.filter(
-      (item) => !disabledKeys.has(bulkSelectionKey(item))
+      (item) => !disabledKeys.has(bulkSelectionKey(item)),
     );
 
     // Dedup-merge prev + filteredUpdate keyed by `bulkSelectionKey`.
     const prevItemsMap = new Map(
-      prevItems.map((item) => [bulkSelectionKey(item), item])
+      prevItems.map((item) => [bulkSelectionKey(item), item]),
     );
     filteredUpdate.forEach((item) => {
       prevItemsMap.set(bulkSelectionKey(item), item);
     });
 
     set(selectedBulkItemsAtom, Array.from(prevItemsMap.values()));
-  }
+  },
 );
 
 /**
@@ -110,7 +110,7 @@ export const setDisabledBulkItemsAtom = atom<null, ListItemData[][], void>(
   null,
   (_, set, update) => {
     set(disabledBulkItemsAtom, update);
-  }
+  },
 );
 
 /**
@@ -124,9 +124,9 @@ export const removeSelectedBulkItemsAtom = atom<null, ListItemData[][], void>(
     // out of the selection (multi-slice).
     const updateKeys = new Set(update.map(bulkSelectionKey));
     set(selectedBulkItemsAtom, (prev) =>
-      prev.filter((prevItem) => !updateKeys.has(bulkSelectionKey(prevItem)))
+      prev.filter((prevItem) => !updateKeys.has(bulkSelectionKey(prevItem))),
     );
-  }
+  },
 );
 
 /**
@@ -136,5 +136,5 @@ export const clearSelectedBulkItemsAtom = atom<null, [], void>(
   null,
   (_, set) => {
     set(selectedBulkItemsAtom, []);
-  }
+  },
 );

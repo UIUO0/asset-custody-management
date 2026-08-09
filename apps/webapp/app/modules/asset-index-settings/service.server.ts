@@ -22,7 +22,7 @@ import { getOrganizationById } from "../organization/service.server";
  * BASE and SELF_SERVICE should remain in simple mode; elevated roles default to advanced.
  */
 function getDefaultModeForRole(
-  role?: OrganizationRoles | null
+  role?: OrganizationRoles | null,
 ): AssetIndexMode {
   if (
     !role ||
@@ -276,7 +276,7 @@ export async function updateAssetIndexSettingsAfterCfUpdate({
     const updates = settings.map((entry) => {
       const columns = Array.from(entry.columns as Prisma.JsonArray) as Column[];
       const cfIndex = columns.findIndex(
-        (col) => col?.name === `cf_${oldField.name}`
+        (col) => col?.name === `cf_${oldField.name}`,
       );
 
       if (newField.active) {
@@ -284,7 +284,7 @@ export async function updateAssetIndexSettingsAfterCfUpdate({
         if (cfIndex === -1) {
           const prevHighestPosition = columns.reduce(
             (acc, col) => (col.position > acc ? col.position : acc),
-            0
+            0,
           );
           columns.push({
             name: `cf_${newField.name}`,
@@ -404,7 +404,7 @@ export async function updateAssetIndexSettingsWithNewCustomFields({
       // Filter out any existing columns for these custom fields
       const existingColumns = columns.filter(
         (col) =>
-          !newCustomFields.some((field) => `cf_${field.name}` === col.name)
+          !newCustomFields.some((field) => `cf_${field.name}` === col.name),
       );
 
       return db.assetIndexSettings.update({
@@ -455,13 +455,13 @@ async function validateColumns({
 
     // Detect missing default fields
     const missingDefaultFields: ColumnLabelKey[] = defaultFieldsNames.filter(
-      (name) => !existingDefaultFields.includes(name)
+      (name) => !existingDefaultFields.includes(name),
     );
 
     // If default fields are missing, add them from our static defaults
     if (missingDefaultFields.length > 0) {
       const fieldsToAdd = defaultFields.filter((field) =>
-        missingDefaultFields.includes(field.name)
+        missingDefaultFields.includes(field.name),
       );
       updatedColumns = [...updatedColumns, ...fieldsToAdd];
       needsUpdate = true;
@@ -469,13 +469,13 @@ async function validateColumns({
 
     // 2. Handle barcode columns based on permissions
     const existingBarcodeColumns = updatedColumns.filter((col) =>
-      barcodeFields.includes(col.name as any)
+      barcodeFields.includes(col.name as any),
     );
 
     if (canUseBarcodes) {
       // Add missing barcode columns if barcodes are enabled
       const missingBarcodeFields = barcodeFields.filter(
-        (field) => !existingBarcodeColumns.some((col) => col.name === field)
+        (field) => !existingBarcodeColumns.some((col) => col.name === field),
       );
 
       if (missingBarcodeFields.length > 0) {
@@ -510,7 +510,7 @@ async function validateColumns({
       // Remove barcode columns if barcodes are disabled
       if (existingBarcodeColumns.length > 0) {
         updatedColumns = updatedColumns.filter(
-          (col) => !barcodeFields.includes(col.name as any)
+          (col) => !barcodeFields.includes(col.name as any),
         );
         needsUpdate = true;
       }
@@ -518,14 +518,14 @@ async function validateColumns({
 
     // 3. Validate custom field columns structure
     const customFieldColumns = updatedColumns.filter((col) =>
-      col.name.startsWith("cf_")
+      col.name.startsWith("cf_"),
     );
 
     const hasInvalidCustomFields = customFieldColumns.some(
       (col) =>
         !col.cfType ||
         typeof col.visible !== "boolean" ||
-        typeof col.position !== "number"
+        typeof col.position !== "number",
     );
 
     // Only query DB if we found invalid custom fields
@@ -544,12 +544,12 @@ async function validateColumns({
       });
 
       const customFieldsMap = new Map(
-        customFields.map((cf) => [cf.name, cf.type])
+        customFields.map((cf) => [cf.name, cf.type]),
       );
 
       // Filter out non-custom field columns
       const regularColumns = updatedColumns.filter(
-        (col) => !col.name.startsWith("cf_")
+        (col) => !col.name.startsWith("cf_"),
       );
 
       // Rebuild custom field columns with correct structure

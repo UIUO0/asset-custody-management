@@ -88,7 +88,7 @@ test("should allow you to assign custody of an asset", async ({
   await asset.click();
 
   await expect(
-    page.getByRole("heading", { name: testAsset.title })
+    page.getByRole("heading", { name: testAsset.title }),
   ).toBeVisible();
 
   await page.locator('[data-test-id="assetActionsButton"]').click();
@@ -105,22 +105,22 @@ test("should allow you to assign custody of an asset", async ({
 
   /** Make sure the status of the asset is changed */
   await expect(
-    page.locator("span").filter({ hasText: "In custody" }).first()
+    page.locator("span").filter({ hasText: "In custody" }).first(),
   ).toBeVisible();
 
   /** Make sure note is created */
   await expect(
     page.getByText(
-      `${account.firstName} ${account.lastName} has given ${teamMemberName} custody over ${testAsset.title}`
-    )
+      `${account.firstName} ${account.lastName} has given ${teamMemberName} custody over ${testAsset.title}`,
+    ),
   ).toBeVisible();
 
   /** Make sure toast is showing with the correct message */
   await expect(
     page.getByText(
       `‘${testAsset.title}’ is now in custody of ${teamMemberName}`,
-      { exact: true }
-    )
+      { exact: true },
+    ),
   ).toBeVisible();
   await page.click('[data-test-id="closeToast"]');
 });
@@ -134,7 +134,7 @@ test("should allow you to release custody of an asset", async ({
   await asset.click();
 
   await expect(
-    page.getByRole("heading", { name: testAsset.title })
+    page.getByRole("heading", { name: testAsset.title }),
   ).toBeVisible();
 
   await page.locator('[data-test-id="assetActionsButton"]').click();
@@ -144,22 +144,22 @@ test("should allow you to release custody of an asset", async ({
 
   /** Make sure the status of the asset is changed */
   await expect(
-    page.locator("span").filter({ hasText: "Available" }).first()
+    page.locator("span").filter({ hasText: "Available" }).first(),
   ).toBeVisible();
 
   /** Make sure note is created */
   await expect(
     page.getByText(
-      `${account.firstName} ${account.lastName} has released ${teamMemberName}'s custody over ${testAsset.title}`
-    )
+      `${account.firstName} ${account.lastName} has released ${teamMemberName}'s custody over ${testAsset.title}`,
+    ),
   ).toBeVisible();
 
   /** Make sure toast is showing with the correct message */
   await expect(
     page.getByText(
       `‘${testAsset.title}’ is no longer in custody of ‘${teamMemberName}’`,
-      { exact: true }
-    )
+      { exact: true },
+    ),
   ).toBeVisible();
 
   await page.click('[data-test-id="closeToast"]');

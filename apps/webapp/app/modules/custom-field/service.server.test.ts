@@ -109,7 +109,7 @@ describe("softDeleteCustomField", () => {
       softDeleteCustomField({
         id: "non-existent",
         organizationId: "org-123",
-      })
+      }),
     ).rejects.toMatchObject({
       message: "The custom field you are trying to delete does not exist.",
       status: 404,
@@ -131,7 +131,7 @@ describe("softDeleteCustomField", () => {
       softDeleteCustomField({
         id: "cf-123",
         organizationId: "org-123", // Requesting org
-      })
+      }),
     ).rejects.toMatchObject({
       message: "The custom field you are trying to delete does not exist.",
       status: 404,
@@ -189,14 +189,14 @@ describe("softDeleteCustomField", () => {
 
   it("wraps database errors in ShelfError", async () => {
     dbTransactionMock.mockRejectedValueOnce(
-      new Error("Database connection failed")
+      new Error("Database connection failed"),
     );
 
     await expect(
       softDeleteCustomField({
         id: "cf-123",
         organizationId: "org-123",
-      })
+      }),
     ).rejects.toBeInstanceOf(ShelfError);
   });
 

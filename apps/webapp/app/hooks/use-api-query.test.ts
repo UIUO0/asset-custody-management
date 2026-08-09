@@ -30,7 +30,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: false,
-      })
+      }),
     );
 
     expect(result.current.isLoading).toBe(false);
@@ -44,7 +44,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: false,
-      })
+      }),
     );
 
     expect(mockFetch).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: true,
-      })
+      }),
     );
 
     expect(result.current.isLoading).toBe(true);
@@ -89,7 +89,7 @@ describe("useApiQuery", () => {
         api: "/api/assets",
         searchParams,
         enabled: true,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -105,7 +105,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: true,
-      })
+      }),
     );
 
     expect(result.current.isLoading).toBe(true);
@@ -125,7 +125,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: true,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -152,7 +152,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: true,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -187,7 +187,7 @@ describe("useApiQuery", () => {
         }),
       {
         initialProps: { api: "/api/test1" },
-      }
+      },
     );
 
     await waitForAsyncUpdate(() => {
@@ -225,7 +225,7 @@ describe("useApiQuery", () => {
         }),
       {
         initialProps: { searchParams: searchParams1 },
-      }
+      },
     );
 
     await waitForAsyncUpdate(() => {
@@ -256,7 +256,7 @@ describe("useApiQuery", () => {
         }),
       {
         initialProps: { enabled: false },
-      }
+      },
     );
 
     // Should not make request when disabled
@@ -282,7 +282,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/health",
         enabled: true,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -305,7 +305,7 @@ describe("useApiQuery", () => {
       useApiQuery<TestData>({
         api: "/api/test",
         enabled: true,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -328,7 +328,7 @@ describe("useApiQuery", () => {
       useApiQuery({
         api: "/api/test",
         enabled: true,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -352,7 +352,7 @@ describe("useApiQuery", () => {
         api: "/api/test",
         enabled: true,
         onSuccess: onSuccessMock,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -373,7 +373,7 @@ describe("useApiQuery", () => {
         api: "/api/test",
         enabled: true,
         onError: onErrorMock,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -401,7 +401,7 @@ describe("useApiQuery", () => {
         api: "/api/test",
         enabled: true,
         onSuccess: onSuccessMock,
-      })
+      }),
     );
 
     await waitForAsyncUpdate(() => {
@@ -430,7 +430,7 @@ describe("useApiQuery", () => {
         enabled: false,
         onSuccess: onSuccessMock,
         onError: onErrorMock,
-      })
+      }),
     );
 
     expect(mockFetch).not.toHaveBeenCalled();

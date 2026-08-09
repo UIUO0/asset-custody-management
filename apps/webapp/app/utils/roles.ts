@@ -29,6 +29,11 @@ const ROLE_RANK: Record<OrganizationRoles, number> = {
   [OrganizationRoles.INVENTORY]: 2,
   [OrganizationRoles.SELF_SERVICE]: 1,
   [OrganizationRoles.BASE]: 1,
+  // Rank 1, not 2: a department sees the stock delivered to *its* department,
+  // not the whole workspace. By the rule this map encodes — breadth of data
+  // visibility — ADMIN → DEPARTMENT narrows what the user can see, so it is a
+  // demotion and what they owned must be transferred.
+  [OrganizationRoles.DEPARTMENT]: 1,
 };
 
 /**
@@ -58,7 +63,8 @@ export type UserFriendlyRoles =
   | "Self service"
   | "Warehouse"
   | "Finance"
-  | "Inventory";
+  | "Inventory"
+  | "Department";
 
 /**
  * Single source of truth for role → canonical English name.
@@ -76,6 +82,7 @@ export const organizationRolesMap: Record<string, UserFriendlyRoles> = {
   [OrganizationRoles.WAREHOUSE]: "Warehouse",
   [OrganizationRoles.FINANCE]: "Finance",
   [OrganizationRoles.INVENTORY]: "Inventory",
+  [OrganizationRoles.DEPARTMENT]: "Department",
 };
 
 /**
@@ -94,6 +101,7 @@ export const ORGANIZATION_ROLE_LABEL_KEYS: Record<OrganizationRoles, string> = {
   [OrganizationRoles.WAREHOUSE]: "team.roles.warehouse",
   [OrganizationRoles.FINANCE]: "team.roles.finance",
   [OrganizationRoles.INVENTORY]: "team.roles.inventory",
+  [OrganizationRoles.DEPARTMENT]: "team.roles.department",
 };
 
 /** Role → i18n key for the one-line description under the label. */
@@ -108,6 +116,7 @@ export const ORGANIZATION_ROLE_DESCRIPTION_KEYS: Record<
   [OrganizationRoles.WAREHOUSE]: "team.roleDescriptions.warehouse",
   [OrganizationRoles.FINANCE]: "team.roleDescriptions.finance",
   [OrganizationRoles.INVENTORY]: "team.roleDescriptions.inventory",
+  [OrganizationRoles.DEPARTMENT]: "team.roleDescriptions.department",
 };
 
 /**

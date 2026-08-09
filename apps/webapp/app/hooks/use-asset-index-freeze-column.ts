@@ -16,7 +16,7 @@ export function useAssetIndexFreezeColumn() {
   const fetchers = useFetchers();
   /** Find the fetcher used for toggling between asset index modes */
   const freezeFetcher = fetchers.find(
-    (fetcher) => fetcher.key === "asset-index-settings-freeze-column"
+    (fetcher) => fetcher.key === "asset-index-settings-freeze-column",
   );
 
   if (freezeFetcher?.formData) {

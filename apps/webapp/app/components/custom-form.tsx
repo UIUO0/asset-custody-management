@@ -17,7 +17,7 @@ export const Form = React.forwardRef<HTMLFormElement, RemixFormProps>(
         props?.onSubmit?.(event);
       }}
     />
-  )
+  ),
 );
 
 Form.displayName = "Form";

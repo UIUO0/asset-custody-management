@@ -49,7 +49,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           "changeFreeze",
           "changeShowImage",
         ]),
-      })
+      }),
     );
 
     switch (intent) {
@@ -77,7 +77,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           includeAllCategories: true,
         });
         const customFieldsNames = customFields.map(
-          (field) => `cf_${field.name}`
+          (field) => `cf_${field.name}`,
         );
 
         const columnsSchema = generateColumnsSchema(customFieldsNames);
@@ -118,7 +118,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           formData,
           z.object({
             freezeColumn: z.string().transform((value) => value === "yes"),
-          })
+          }),
         );
 
         await db.assetIndexSettings.update({
@@ -134,7 +134,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
           formData,
           z.object({
             showAssetImage: z.string().transform((value) => value === "yes"),
-          })
+          }),
         );
 
         await db.assetIndexSettings.update({

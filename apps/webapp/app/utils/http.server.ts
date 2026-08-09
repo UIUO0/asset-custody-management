@@ -126,7 +126,7 @@ export async function readFormData(request: Request): Promise<FormData> {
 export function parseData<Schema extends ZodType<any, any, any>>(
   data: FormData | URLSearchParams | Params,
   schema: Schema,
-  options?: Options
+  options?: Options,
 ) {
   if (data instanceof FormData) {
     try {
@@ -156,7 +156,7 @@ export function parseData<Schema extends ZodType<any, any, any>>(
         validationErrors[key as keyof Schema["_output"]] = {
           message: values?.[0],
         };
-      }
+      },
     );
 
     // Use the first validation error message as the main error message for better UX
@@ -182,6 +182,88 @@ export function parseData<Schema extends ZodType<any, any, any>>(
 }
 
 /**
+ * Read and validate a JSON request body with a zod schema.
+ *
+ * `parseData` only accepts `FormData` / `URLSearchParams` / route params, all of
+ * which are flat string maps. JSON APIs send nested values — arrays of scopes,
+ * batches of settings — so they need their own entry point rather than a cast.
+ *
+ * A body that is not valid JSON produces the same 400 shape as a body that
+ * fails the schema, so callers get one error contract either way.
+ *
+ * @param request - The incoming request; its body is consumed
+ * @param schema - Schema the parsed body must satisfy
+ * @param options - Same overrides `parseData` accepts (message, capture flag)
+ * @returns The parsed, typed body
+ * @throws {ShelfError} 400 for malformed JSON or a schema violation
+ */
+export async function parseJsonBody<Schema extends ZodType<any, any, any>>(
+  request: Request,
+  schema: Schema,
+  options?: Options,
+): Promise<Schema["_output"]> {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch (cause) {
+    throw new ShelfError({
+      cause,
+      message: "Request body must be valid JSON.",
+      label: "Request validation",
+      shouldBeCaptured: false,
+      status: 400,
+    });
+  }
+
+  return parseObject(body, schema, options);
+}
+
+/**
+ * Validate an already-parsed value with a zod schema.
+ *
+ * The counterpart to `parseData` for anything that is not a flat string map:
+ * a JSON body, or a form body a route has reassembled into nested shape (the
+ * goods-receipt item table posts as `lines[0].name`, `lines[1].name`, … and is
+ * rebuilt into an array before validation).
+ *
+ * The error message names the offending path — `lines.0.quantity: …` — because
+ * "the request is invalid" is useless when the request has forty fields.
+ *
+ * @param value - The parsed value to validate
+ * @param schema - Schema it must satisfy
+ * @param options - Same overrides `parseData` accepts (message, capture flag)
+ * @returns The parsed, typed value
+ * @throws {ShelfError} 400 on a schema violation
+ */
+export function parseObject<Schema extends ZodType<any, any, any>>(
+  value: unknown,
+  schema: Schema,
+  options?: Options,
+): Schema["_output"] {
+  const submission = schema.safeParse(value);
+
+  if (!submission.success) {
+    const firstIssue = submission.error.issues[0];
+    const path = firstIssue?.path.join(".");
+
+    throw badRequest(
+      options?.message ||
+        (path
+          ? `${path}: ${firstIssue.message}`
+          : firstIssue?.message ?? "The request body is invalid."),
+      {
+        shouldBeCaptured: false,
+        title: "Validation error",
+        ...options,
+      },
+    );
+  }
+
+  return submission.data as Schema["_output"];
+}
+
+/**
  * Get and validate request params with a zod schema.
  *
  * **Use this function outside of loader/action try/catch blocks.**
@@ -196,7 +278,7 @@ export function parseData<Schema extends ZodType<any, any, any>>(
 export function getParams<Schema extends ZodType<any, any, any>>(
   params: Params<string>,
   schema: Schema,
-  options?: Options
+  options?: Options,
 ) {
   try {
     return parseData(params, schema, {
@@ -233,7 +315,7 @@ export function assertIsDelete(request: Request, message?: string) {
  */
 export function safeRedirect(
   to: FormDataEntryValue | string | null | undefined,
-  defaultRedirect = "/"
+  defaultRedirect = "/",
 ) {
   if (!to || typeof to !== "string") {
     return defaultRedirect;
@@ -375,7 +457,7 @@ export type DataOrErrorResponse<T extends ResponsePayload = ResponsePayload> =
  */
 export function buildContentDisposition(
   name: string | null | undefined,
-  opts: { fallback: string; suffix?: string }
+  opts: { fallback: string; suffix?: string },
 ): string {
   const { fallback, suffix = "" } = opts;
   const source = name && name.trim().length > 0 ? name : fallback;

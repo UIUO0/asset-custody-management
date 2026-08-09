@@ -19,7 +19,7 @@ export const sendEmail = (payload: EmailPayloadType) => {
         message: "email sending failed, pushing to the queue",
         label,
         shouldBeCaptured: false, // Will be captured if all queue retries fail
-      })
+      }),
     );
     void addToQueue(payload);
   });
@@ -46,7 +46,7 @@ const addToQueue = async (payload: EmailPayloadType) => {
         },
         message: "Failed to push email payload to queue",
         label,
-      })
+      }),
     );
   }
 };

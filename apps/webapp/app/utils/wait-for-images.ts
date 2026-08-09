@@ -4,7 +4,7 @@
  * to fully render before operations like html-to-image or printing
  */
 export async function waitForImagesToLoad(
-  container: HTMLElement
+  container: HTMLElement,
 ): Promise<void> {
   const images = Array.from(container.querySelectorAll("img"));
   if (images.length === 0) {
@@ -22,8 +22,8 @@ export async function waitForImagesToLoad(
             img.addEventListener("load", () => resolve(), { once: true });
             img.addEventListener("error", () => resolve(), { once: true });
           }
-        })
-    )
+        }),
+    ),
   );
 
   // Force decode for Safari (ensures data URLs are actually rendered)
@@ -31,8 +31,8 @@ export async function waitForImagesToLoad(
     images.map((img) =>
       img.decode().catch(() => {
         // Ignore decode errors, image might already be decoded
-      })
-    )
+      }),
+    ),
   );
 
   // Final delay to ensure Safari has painted the images

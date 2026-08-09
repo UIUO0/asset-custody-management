@@ -59,7 +59,7 @@ export function getContrastRatio(color1: string, color2: string): number {
 export function meetsWCAG_AA(
   foreground: string,
   background: string,
-  isLargeText: boolean = false
+  isLargeText: boolean = false,
 ): boolean {
   const ratio = getContrastRatio(foreground, background);
   const threshold = isLargeText ? 3.0 : 4.5;
@@ -72,7 +72,7 @@ export function meetsWCAG_AA(
 export function meetsWCAG_AAA(
   foreground: string,
   background: string,
-  isLargeText: boolean = false
+  isLargeText: boolean = false,
 ): boolean {
   const ratio = getContrastRatio(foreground, background);
   const threshold = isLargeText ? 4.5 : 7.0;
@@ -106,7 +106,7 @@ export function getAccessibleTextColor(backgroundColor: string): string {
 export function overlayColor(
   foregroundColor: string,
   backgroundColor: string,
-  opacity: number
+  opacity: number,
 ): string {
   const fg = hexToRgb(foregroundColor);
   const bg = hexToRgb(backgroundColor);

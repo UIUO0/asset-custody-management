@@ -5,7 +5,7 @@ import type { AssetModel } from "@prisma/client";
  * Produces a complete AssetModel object with sensible defaults.
  */
 export function createAssetModel(
-  overrides: Partial<AssetModel> = {}
+  overrides: Partial<AssetModel> = {},
 ): AssetModel {
   return {
     id: "asset-model-123",

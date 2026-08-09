@@ -19,6 +19,7 @@ import { config } from "~/config/shelf.config";
 import { useSearchParams } from "~/hooks/search-params";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
+import { getAuthConfig } from "~/modules/auth/auth-config.server";
 import { signInWithSSO } from "~/modules/auth/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { mobilePkceChallengeCookie } from "~/utils/cookies.server";
@@ -30,6 +31,7 @@ import {
   getActionMethod,
   parseData,
 } from "~/utils/http.server";
+import { getLandingRouteForUser } from "~/utils/landing-route.server";
 import { isValidDomain } from "~/utils/misc";
 
 const SSOLoginFormSchema = z.object({
@@ -62,10 +64,22 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
   try {
     if (context.isAuthenticated && !isMobile) {
-      return redirect("/assets");
+      const { userId } = context.getSession();
+      return redirect(await getLandingRouteForUser({ userId, request }));
     }
 
-    if (disableSSO) {
+    /**
+     * Two gates, deliberately both enforced.
+     *
+     * `DISABLE_SSO` is the process-level kill switch and always wins. Beyond
+     * it, the admin settings screen decides whether a directory method is
+     * selected and fully configured — this page must refuse when it is not,
+     * because the login screen hides its own entry point under the same
+     * condition and a user could still reach this URL directly.
+     */
+    const authConfig = await getAuthConfig();
+
+    if (disableSSO || !authConfig.showSsoEntryPoint) {
       throw new ShelfError({
         cause: null,
         title: t("auth.ssoDisabled"),

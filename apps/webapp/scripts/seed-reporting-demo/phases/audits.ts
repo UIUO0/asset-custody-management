@@ -68,11 +68,11 @@ const FOUND_RATE_MAX = 0.95;
  */
 export async function runAuditsPhase(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   if (state.assetIds.length === 0) {
     throw new Error(
-      "runAuditsPhase: state.assetIds is empty — Phase 3 must run first."
+      "runAuditsPhase: state.assetIds is empty — Phase 3 must run first.",
     );
   }
 
@@ -108,7 +108,7 @@ async function runAudit(
   ctx: SeederContext,
   state: SeederState,
   events: ActivityEventInput[],
-  args: { index: number; createdAt: Date; outcome: Outcome }
+  args: { index: number; createdAt: Date; outcome: Outcome },
 ): Promise<{ auditAssets: number; scans: number }> {
   const creator = ctx.actors.pick(ctx.rng);
   const createdById = creator.userId ?? ctx.ownerUserId;
@@ -117,14 +117,14 @@ async function runAudit(
   const expectedCount = randomIntInRange(
     EXPECTED_PER_AUDIT_MIN,
     EXPECTED_PER_AUDIT_MAX,
-    ctx.rng
+    ctx.rng,
   );
   const unexpectedCount =
     args.outcome === "COMPLETED" || args.outcome === "ARCHIVED"
       ? randomIntInRange(
           UNEXPECTED_PER_AUDIT_MIN,
           UNEXPECTED_PER_AUDIT_MAX,
-          ctx.rng
+          ctx.rng,
         )
       : 0;
 
@@ -132,7 +132,7 @@ async function runAudit(
   const unexpectedAssets = pickDistinct(
     state.assetIds.filter((id) => !expectedAssets.includes(id)),
     unexpectedCount,
-    ctx.rng
+    ctx.rng,
   );
 
   // Resolve the outcome-specific timeline + counters.
@@ -207,7 +207,7 @@ async function runAudit(
       actor: creator,
       auditSessionId: session.id,
       expectedAssetCount: expectedAssets.length,
-    })
+    }),
   );
   for (const aa of auditAssetsCreated.filter((r) => r.expected)) {
     events.push(
@@ -218,7 +218,7 @@ async function runAudit(
         auditSessionId: session.id,
         auditAssetId: aa.id,
         assetId: aa.assetId,
-      })
+      }),
     );
   }
 
@@ -230,7 +230,7 @@ async function runAudit(
         occurredAt: shape.startedAt,
         actor: creator,
         auditSessionId: session.id,
-      })
+      }),
     );
   }
 
@@ -244,7 +244,7 @@ async function runAudit(
     scannedAt: Date;
   }> = [];
   const scannedAuditAssets = auditAssetsCreated.filter(
-    (aa) => aa.status === "FOUND" || aa.status === "UNEXPECTED"
+    (aa) => aa.status === "FOUND" || aa.status === "UNEXPECTED",
   );
   for (const aa of scannedAuditAssets) {
     const scannedAt =
@@ -267,7 +267,7 @@ async function runAudit(
         auditAssetId: aa.id,
         assetId: aa.assetId,
         isExpected: aa.expected,
-      })
+      }),
     );
   }
   if (scanRows.length > 0) {
@@ -294,7 +294,7 @@ async function runAudit(
         foundCount: shape.foundCount,
         missingCount: shape.missingCount,
         unexpectedCount: shape.unexpectedScanned,
-      })
+      }),
     );
   }
   if (shape.cancelledAt) {
@@ -304,7 +304,7 @@ async function runAudit(
         occurredAt: shape.cancelledAt,
         actor: creator,
         auditSessionId: session.id,
-      })
+      }),
     );
   }
   if (shape.archivedAt) {
@@ -314,7 +314,7 @@ async function runAudit(
         occurredAt: shape.archivedAt,
         actor: creator,
         auditSessionId: session.id,
-      })
+      }),
     );
   }
 
@@ -332,7 +332,7 @@ async function runAudit(
 function planAuditShape(
   ctx: SeederContext,
   args: { createdAt: Date; outcome: Outcome },
-  sizes: { expectedCount: number; unexpectedCount: number }
+  sizes: { expectedCount: number; unexpectedCount: number },
 ): {
   finalStatus: "PENDING" | "ACTIVE" | "COMPLETED" | "CANCELLED" | "ARCHIVED";
   startedAt: Date | null;
@@ -358,7 +358,7 @@ function planAuditShape(
     case "COMPLETED": {
       const startedAt = daysAfter(
         args.createdAt,
-        randomIntInRange(1, 5, ctx.rng)
+        randomIntInRange(1, 5, ctx.rng),
       );
       const completedAt = daysAfter(startedAt, randomIntInRange(1, 7, ctx.rng));
       return {
@@ -377,12 +377,12 @@ function planAuditShape(
     case "ARCHIVED": {
       const startedAt = daysAfter(
         args.createdAt,
-        randomIntInRange(1, 5, ctx.rng)
+        randomIntInRange(1, 5, ctx.rng),
       );
       const completedAt = daysAfter(startedAt, randomIntInRange(1, 7, ctx.rng));
       const archivedAt = daysAfter(
         completedAt,
-        randomIntInRange(1, 30, ctx.rng)
+        randomIntInRange(1, 30, ctx.rng),
       );
       return {
         finalStatus: "ARCHIVED",

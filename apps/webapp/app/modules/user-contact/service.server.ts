@@ -73,13 +73,13 @@ export async function updateUserContactInfo(
     stateProvince?: string;
     zipPostalCode?: string;
     countryRegion?: string;
-  }
+  },
 ) {
   // Filter out empty strings and undefined values
   const filteredContactInfo = Object.fromEntries(
     Object.entries(contactInfo).filter(
-      ([_, value]) => value && value.trim() !== ""
-    )
+      ([_, value]) => value && value.trim() !== "",
+    ),
   );
 
   // Only update if we have contact information to set

@@ -17,7 +17,7 @@ const INITIAL_TOOLBAR_STATE: ToolbarState = {
 
 export function useToolbarState() {
   const [toolbarState, setToolbarState] = useState<ToolbarState>(
-    INITIAL_TOOLBAR_STATE
+    INITIAL_TOOLBAR_STATE,
   );
 
   const applyToolbarState = useCallback((state: EditorState) => {

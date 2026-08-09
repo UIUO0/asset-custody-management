@@ -107,7 +107,7 @@ describe("createBarcode", () => {
       createBarcode({
         ...mockCreateParams,
         value: "AB", // Too short for Code128
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -123,7 +123,7 @@ describe("createBarcode", () => {
         ...mockCreateParams,
         type: BarcodeType.DataMatrix,
         value: "ABCD", // Minimum valid length
-      })
+      }),
     ).resolves.not.toThrow();
 
     // Test too short DataMatrix barcode
@@ -132,7 +132,7 @@ describe("createBarcode", () => {
         ...mockCreateParams,
         type: BarcodeType.DataMatrix,
         value: "AB", // Too short for DataMatrix
-      })
+      }),
     ).rejects.toThrow(ShelfError);
 
     // Test too long DataMatrix barcode
@@ -141,7 +141,7 @@ describe("createBarcode", () => {
         ...mockCreateParams,
         type: BarcodeType.DataMatrix,
         value: "A".repeat(101), // Too long for DataMatrix (max 100)
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -201,9 +201,9 @@ describe("createBarcode", () => {
         organizationId: "org-1",
         userId: "user-1",
         assetId: "asset-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 });
@@ -275,7 +275,7 @@ describe("createBarcodes", () => {
         organizationId: "org-1",
         userId: "user-1",
         assetId: "asset-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -313,9 +313,9 @@ describe("createBarcodes", () => {
         organizationId: "org-1",
         userId: "user-1",
         kitId: "kit-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 
@@ -353,9 +353,9 @@ describe("createBarcodes", () => {
         organizationId: "org-1",
         userId: "user-1",
         kitId: "kit-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 });
@@ -438,9 +438,9 @@ describe("updateBarcode", () => {
         value: "DUPLICATE123",
         organizationId: "org-1",
         assetId: "asset-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 
@@ -477,9 +477,9 @@ describe("updateBarcode", () => {
         value: "DUPLICATE123",
         organizationId: "org-1",
         kitId: "kit-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 });
@@ -574,7 +574,7 @@ describe("getBarcodeByValue", () => {
         where: expect.objectContaining({
           OR: [{ value: "abc123" }, { value: "ABC123" }],
         }),
-      })
+      }),
     );
   });
 });
@@ -622,7 +622,7 @@ describe("updateBarcodes", () => {
     db.barcode.findMany.mockResolvedValue(existingBarcodes);
     //@ts-expect-error missing vitest type
     db.$transaction.mockImplementation((operations) =>
-      Promise.all(operations.map(() => ({ success: true })))
+      Promise.all(operations.map(() => ({ success: true }))),
     );
 
     const barcodes = [
@@ -669,7 +669,7 @@ describe("updateBarcodes", () => {
     db.barcode.findMany.mockResolvedValue(existingBarcodes);
     //@ts-expect-error missing vitest type
     db.$transaction.mockImplementation((operations) =>
-      Promise.all(operations.map(() => ({ success: true })))
+      Promise.all(operations.map(() => ({ success: true }))),
     );
 
     const barcodes = [
@@ -702,7 +702,7 @@ describe("updateBarcodes", () => {
         assetId: "asset-1",
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(ShelfError);
   });
 
@@ -747,9 +747,9 @@ describe("updateBarcodes", () => {
         assetId: "asset-1",
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 
@@ -791,9 +791,9 @@ describe("updateBarcodes", () => {
         kitId: "kit-1",
         organizationId: "org-1",
         userId: "user-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcode values are already in use. Please use unique values."
+      "Some barcode values are already in use. Please use unique values.",
     );
   });
 });
@@ -924,7 +924,7 @@ describe("validateBarcodeUniqueness", () => {
     ];
 
     await expect(
-      validateBarcodeUniqueness(barcodes, "org-1")
+      validateBarcodeUniqueness(barcodes, "org-1"),
     ).resolves.not.toThrow();
 
     expect(db.barcode.findMany).toHaveBeenCalledWith({
@@ -955,7 +955,7 @@ describe("validateBarcodeUniqueness", () => {
     const barcodes = [{ type: BarcodeType.Code128, value: "DUPLICATE123" }];
 
     const error = await validateBarcodeUniqueness(barcodes, "org-1").catch(
-      (e) => e
+      (e) => e,
     );
 
     expect(error).toBeInstanceOf(ShelfError);
@@ -983,7 +983,7 @@ describe("validateBarcodeUniqueness", () => {
 
     // Should not throw because the barcode belongs to the current asset being edited
     await expect(
-      validateBarcodeUniqueness(barcodes, "org-1", "current-asset", "asset")
+      validateBarcodeUniqueness(barcodes, "org-1", "current-asset", "asset"),
     ).resolves.not.toThrow();
 
     expect(db.barcode.findMany).toHaveBeenCalled();
@@ -1000,7 +1000,7 @@ describe("validateBarcodeUniqueness", () => {
     ];
 
     const error = await validateBarcodeUniqueness(barcodes, "org-1").catch(
-      (e) => e
+      (e) => e,
     );
 
     expect(error).toBeInstanceOf(ShelfError);
@@ -1030,7 +1030,7 @@ describe("validateBarcodeUniqueness", () => {
     const barcodes = [{ type: BarcodeType.Code128, value: "KITBARCODE123" }];
 
     const error = await validateBarcodeUniqueness(barcodes, "org-1").catch(
-      (e) => e
+      (e) => e,
     );
 
     expect(error.additionalData.validationErrors).toEqual({
@@ -1050,17 +1050,17 @@ describe("importDataHasBarcodes", () => {
     expect(
       importDataHasBarcodes([
         { key: "a", title: "A", barcode_EAN13: "5901234123457" },
-      ])
+      ]),
     ).toBe(true);
     expect(
       importDataHasBarcodes([
         { key: "a", title: "A", barcode_ExternalQR: "abc123" },
-      ])
+      ]),
     ).toBe(true);
     expect(
       importDataHasBarcodes([
         { key: "a", title: "A", barcode_Code128: "ABCD1234" },
-      ])
+      ]),
     ).toBe(true);
   });
 
@@ -1069,7 +1069,7 @@ describe("importDataHasBarcodes", () => {
       importDataHasBarcodes([
         { key: "a", title: "A" },
         { key: "b", title: "B", barcode_Code128: "" },
-      ])
+      ]),
     ).toBe(false);
   });
 
@@ -1077,7 +1077,7 @@ describe("importDataHasBarcodes", () => {
     // why: the parser trims and skips " ", so the guard must too — otherwise an
     // accidental space would 403 a workspace that has barcodes disabled.
     expect(
-      importDataHasBarcodes([{ key: "a", title: "A", barcode_Code128: "   " }])
+      importDataHasBarcodes([{ key: "a", title: "A", barcode_Code128: "   " }]),
     ).toBe(false);
   });
 });
@@ -1196,7 +1196,7 @@ describe("parseBarcodesFromImportData", () => {
         data: invalidData,
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow('Invalid Code128 barcode "AB" for asset "Test Asset 1"');
   });
 
@@ -1223,7 +1223,7 @@ describe("parseBarcodesFromImportData", () => {
       });
     } catch (error) {
       expect((error as ShelfError).message).toBe(
-        "Some barcodes appear multiple times in the import data. Each barcode must be unique."
+        "Some barcodes appear multiple times in the import data. Each barcode must be unique.",
       );
       expect((error as ShelfError).additionalData).toMatchObject({
         duplicateBarcodes: [
@@ -1301,9 +1301,9 @@ describe("parseBarcodesFromImportData", () => {
         data: dataWithLinkedBarcode,
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcodes are already linked to other assets or kits in your organization"
+      "Some barcodes are already linked to other assets or kits in your organization",
     );
   });
 
@@ -1333,9 +1333,9 @@ describe("parseBarcodesFromImportData", () => {
         data: dataWithLinkedBarcode,
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcodes are already linked to other assets or kits in your organization"
+      "Some barcodes are already linked to other assets or kits in your organization",
     );
   });
 
@@ -1436,9 +1436,9 @@ describe("parseBarcodesFromImportData", () => {
         data: dataWithInvalidChars,
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(
-      'Invalid Code128 barcode "ABC\x00123" for asset "Test Asset 1"'
+      'Invalid Code128 barcode "ABC\x00123" for asset "Test Asset 1"',
     );
   });
 
@@ -1607,9 +1607,9 @@ describe("parseBarcodesFromImportData", () => {
         data: dataWithLinkedBarcodes,
         userId: "user-1",
         organizationId: "org-1",
-      })
+      }),
     ).rejects.toThrow(
-      "Some barcodes are already linked to other assets or kits in your organization"
+      "Some barcodes are already linked to other assets or kits in your organization",
     );
   });
 });

@@ -49,7 +49,7 @@ vi.mock("~/hooks/use-disabled", () => ({
 }));
 
 const renderField = (
-  overrides: Partial<Parameters<typeof InlineEditableField>[0]> = {}
+  overrides: Partial<Parameters<typeof InlineEditableField>[0]> = {},
 ) =>
   render(
     <ul>
@@ -63,7 +63,7 @@ const renderField = (
         )}
         {...overrides}
       />
-    </ul>
+    </ul>,
   );
 
 describe("InlineEditableField", () => {
@@ -85,14 +85,14 @@ describe("InlineEditableField", () => {
     it("shows an Edit pencil button when user can edit", () => {
       renderField();
       expect(
-        screen.getByRole("button", { name: "Edit Description" })
+        screen.getByRole("button", { name: "Edit Description" }),
       ).toBeInTheDocument();
     });
 
     it("hides the Edit pencil button when user cannot edit", () => {
       renderField({ canEdit: false });
       expect(
-        screen.queryByRole("button", { name: "Edit Description" })
+        screen.queryByRole("button", { name: "Edit Description" }),
       ).not.toBeInTheDocument();
     });
 
@@ -108,7 +108,7 @@ describe("InlineEditableField", () => {
       renderField({ isEmpty: true });
       expect(screen.getByText("Hello world")).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Edit Description" })
+        screen.getByRole("button", { name: "Edit Description" }),
       ).toBeInTheDocument();
     });
   });
@@ -120,7 +120,7 @@ describe("InlineEditableField", () => {
       expect(screen.getByDisplayValue("Hello world")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Cancel" })
+        screen.getByRole("button", { name: "Cancel" }),
       ).toBeInTheDocument();
     });
 
@@ -128,10 +128,10 @@ describe("InlineEditableField", () => {
       const { container } = renderField();
       fireEvent.click(screen.getByRole("button", { name: "Edit Description" }));
       const intentInput = container.querySelector(
-        'input[name="intent"]'
+        'input[name="intent"]',
       ) as HTMLInputElement;
       const fieldNameInput = container.querySelector(
-        'input[name="fieldName"]'
+        'input[name="fieldName"]',
       ) as HTMLInputElement;
       expect(intentInput?.value).toBe("updateField");
       expect(fieldNameInput?.value).toBe("description");
@@ -143,7 +143,7 @@ describe("InlineEditableField", () => {
       });
       fireEvent.click(screen.getByRole("button", { name: "Edit Description" }));
       const customFieldIdInput = container.querySelector(
-        'input[name="customFieldId"]'
+        'input[name="customFieldId"]',
       ) as HTMLInputElement;
       expect(customFieldIdInput?.value).toBe("cf_123");
     });
@@ -156,11 +156,11 @@ describe("InlineEditableField", () => {
       });
       fireEvent.click(screen.getByRole("button", { name: "Edit Description" }));
       const fieldNameInputs = container.querySelectorAll(
-        'input[name="fieldName"]'
+        'input[name="fieldName"]',
       );
       expect(fieldNameInputs.length).toBe(1);
       expect((fieldNameInputs[0] as HTMLInputElement).value).toBe(
-        "customField"
+        "customField",
       );
     });
   });
@@ -172,10 +172,10 @@ describe("InlineEditableField", () => {
       expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
       fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
       expect(
-        screen.queryByRole("button", { name: "Save" })
+        screen.queryByRole("button", { name: "Save" }),
       ).not.toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: "Edit Description" })
+        screen.getByRole("button", { name: "Edit Description" }),
       ).toBeInTheDocument();
     });
 
@@ -186,7 +186,7 @@ describe("InlineEditableField", () => {
       expect(form).toBeInTheDocument();
       fireEvent.keyDown(form!, { key: "Escape" });
       expect(
-        screen.queryByRole("button", { name: "Save" })
+        screen.queryByRole("button", { name: "Save" }),
       ).not.toBeInTheDocument();
     });
   });
@@ -202,13 +202,13 @@ describe("InlineEditableField", () => {
       // After clicking Edit, stale errors should be hidden until the user
       // submits again
       expect(
-        screen.queryByText("Value must be a valid number")
+        screen.queryByText("Value must be a valid number"),
       ).not.toBeInTheDocument();
       // Submitting the form should surface the (still-present) error
       const form = container.querySelector("form")!;
       fireEvent.submit(form);
       expect(
-        screen.getByText("Value must be a valid number")
+        screen.getByText("Value must be a valid number"),
       ).toBeInTheDocument();
     });
 

@@ -66,7 +66,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       BulkAddToKitSchema,
       {
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     /**

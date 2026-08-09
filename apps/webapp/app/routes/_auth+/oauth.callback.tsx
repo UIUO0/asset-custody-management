@@ -28,6 +28,7 @@ import {
   parseData,
   safeRedirect,
 } from "~/utils/http.server";
+import { getLandingRouteForUser } from "~/utils/landing-route.server";
 import { resolveUserAndOrgForSsoCallback } from "~/utils/sso.server";
 
 /**
@@ -132,9 +133,20 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
         // If org exists (SCIM SSO case), redirect to that org
         if (org?.id) {
-          return redirect(safeRedirect(redirectTo || "/assets"), {
-            headers: [setCookie(await setSelectedOrganizationIdCookie(org.id))],
-          });
+          return redirect(
+            safeRedirect(
+              redirectTo ||
+                (await getLandingRouteForUser({
+                  userId: authSession.userId,
+                  request,
+                })),
+            ),
+            {
+              headers: [
+                setCookie(await setSelectedOrganizationIdCookie(org.id)),
+              ],
+            },
+          );
         }
 
         // Pure SSO case — check if the SSO user has any team orgs
@@ -152,7 +164,15 @@ export async function action({ request, context }: ActionFunctionArgs) {
           return redirect("/sso-pending-assignment");
         }
 
-        return redirect(safeRedirect(redirectTo || "/assets"));
+        return redirect(
+          safeRedirect(
+            redirectTo ||
+              (await getLandingRouteForUser({
+                userId: authSession.userId,
+                request,
+              })),
+          ),
+        );
       }
     }
 
@@ -171,7 +191,9 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const subHeading = t("auth.connectingAccount");
 
   if (context.isAuthenticated) {
-    return redirect("/assets");
+    const { userId } = context.getSession();
+
+    return redirect(await getLandingRouteForUser({ userId, request }));
   }
 
   return data(payload({ title, subHeading }));

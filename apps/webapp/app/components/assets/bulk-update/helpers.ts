@@ -54,7 +54,7 @@ export function validateCsvClientSide(text: string): ClientValidation {
 
   if (!idColumnFound) {
     warnings.push(
-      "No identifier column found. Your CSV needs an Asset ID or ID column to match rows to existing assets."
+      "No identifier column found. Your CSV needs an Asset ID or ID column to match rows to existing assets.",
     );
   }
 

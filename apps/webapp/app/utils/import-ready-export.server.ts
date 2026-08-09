@@ -113,7 +113,7 @@ export function buildImportReadyColumns({
   barcodesEnabled,
 }: BuildImportReadyColumnsArgs): ImportColumn[] {
   const visibleColumnNames = new Set(
-    settingsColumns.filter((c) => c.visible).map((c) => c.name)
+    settingsColumns.filter((c) => c.visible).map((c) => c.name),
   );
   const includeAll = columnScope === "all";
 
@@ -169,7 +169,7 @@ export function buildImportReadyColumns({
  */
 function encodeCustomFieldForImport(
   value: ShelfAssetCustomFieldValueType["value"] | undefined,
-  cfType: CustomFieldType
+  cfType: CustomFieldType,
 ): string {
   // `value` is guaranteed present past this guard, so the per-case checks below
   // read its fields directly (no redundant `value &&`).
@@ -216,7 +216,7 @@ function encodeCustomFieldForImport(
  */
 export function resolveImportReadyCell(
   col: ImportColumn,
-  asset: AdvancedIndexAsset
+  asset: AdvancedIndexAsset,
 ): string {
   switch (col.kind) {
     case "core":
@@ -228,13 +228,13 @@ export function resolveImportReadyCell(
         .join(",");
     case "cf": {
       const entry = asset.customFields?.find(
-        (e) => e.customField.name === col.name
+        (e) => e.customField.name === col.name,
       );
       return encodeCustomFieldForImport(
         entry?.value as unknown as
           | ShelfAssetCustomFieldValueType["value"]
           | undefined,
-        col.cfType
+        col.cfType,
       );
     }
   }
@@ -243,7 +243,7 @@ export function resolveImportReadyCell(
 /** Extracts a core field value in importer-native form. */
 function resolveCoreField(
   field: CoreImportField,
-  asset: AdvancedIndexAsset
+  asset: AdvancedIndexAsset,
 ): string {
   switch (field) {
     case "title":
@@ -301,12 +301,12 @@ export type BuildImportReadyCsvArgs = BuildImportReadyColumnsArgs & {
  * @returns `[headerRow, ...dataRows]`.
  */
 export function buildImportReadyRows(
-  args: BuildImportReadyCsvArgs
+  args: BuildImportReadyCsvArgs,
 ): string[][] {
   const columns = buildImportReadyColumns(args);
   const headerRow = columns.map((c) => c.header);
   const dataRows = args.assets.map((asset) =>
-    columns.map((col) => resolveImportReadyCell(col, asset))
+    columns.map((col) => resolveImportReadyCell(col, asset)),
   );
   return [headerRow, ...dataRows];
 }
@@ -324,7 +324,7 @@ function quoteCsvCell(value: string): string {
  * @returns The CSV file contents.
  */
 export function buildImportReadyCsvFromAssets(
-  args: BuildImportReadyCsvArgs
+  args: BuildImportReadyCsvArgs,
 ): string {
   return buildImportReadyRows(args)
     .map((row) => row.map(quoteCsvCell).join(","))

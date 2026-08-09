@@ -2,19 +2,10 @@ import type { ReactNode } from "react";
 import type { Prisma } from "@prisma/client";
 import { KitStatus, OrganizationRoles } from "@prisma/client";
 import { Trans, useTranslation } from "react-i18next";
-import type {
-  MetaFunction,
-  LoaderFunctionArgs,
-  LinksFunction,
-} from "react-router";
-import { data, redirect, Link, useLoaderData } from "react-router";
+import type { MetaFunction, LoaderFunctionArgs } from "react-router";
+import { data, redirect, Link } from "react-router";
 import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
-import { useKitAvailabilityData } from "~/components/assets/assets-index/use-kit-availability-data";
-import { AvailabilityViewToggle } from "~/components/assets/assets-index/view-toggle";
 import { CategoryBadge } from "~/components/assets/category-badge";
-import AvailabilityCalendar from "~/components/availability-calendar/availability-calendar";
-import { ResourceTitleLink } from "~/components/availability-calendar/resource-title-link";
-import { StatusFilter } from "~/components/booking/status-filter";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import { ChevronRight } from "~/components/icons/library";
 import BulkActionsDropdown from "~/components/kits/bulk-actions-dropdown";
@@ -26,17 +17,15 @@ import LineBreakText from "~/components/layout/line-break-text";
 import { List } from "~/components/list";
 import { ListContentWrapper } from "~/components/list/content-wrapper";
 import { Filters } from "~/components/list/filters";
-import { Pagination } from "~/components/list/pagination";
 import { LocationBadge } from "~/components/location/location-badge";
 import { Button } from "~/components/shared/button";
-import { Card } from "~/components/shared/card";
 import { GrayBadge } from "~/components/shared/gray-badge";
 import { InfoTooltip } from "~/components/shared/info-tooltip";
+import { StatusFilter } from "~/components/shared/status-filter";
 import { Td, Th } from "~/components/table";
 import { TeamMemberBadge } from "~/components/user/team-member-badge";
 import { db } from "~/database/db.server";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
-import { useIsAvailabilityView } from "~/hooks/use-is-availability-view";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
@@ -49,7 +38,6 @@ import {
   updateKitsWithBookingCustodians,
 } from "~/modules/kit/service.server";
 import type { KITS_INCLUDE_FIELDS } from "~/modules/kit/types";
-import calendarStyles from "~/styles/layout/calendar.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { getFiltersFromRequest, setCookie } from "~/utils/cookies.server";
 import { makeShelfError, ShelfError } from "~/utils/error";
@@ -68,10 +56,6 @@ import { resolveTeamMemberName } from "~/utils/user";
 import type { MergeInclude } from "~/utils/utils";
 
 export type KitIndexLoaderData = typeof loader;
-
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: calendarStyles },
-];
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -92,7 +76,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     const searchParams = getCurrentSearchParams(request);
     const hasActiveFilters = computeHasActiveFilters(searchParams);
-    const view = searchParams.get("view") ?? "table";
     const {
       filters,
       redirectNeeded,
@@ -121,69 +104,11 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           qrCodes: { select: { id: true } },
           assetKits: {
             select: {
-              // AssetKit.id surfaces the kit-slice discriminator. The
-              // consumer filters `bookingAssets[].assetKitId === ak.id`
-              // so a QT asset shared between Kit A and Kit B only emits
-              // each booking on its own kit's calendar — without this,
-              // every kit containing the pooled asset would show every
-              // booking of it (Codex review #2676 P2).
-              id: true,
               asset: {
                 select: {
                   id: true,
                   availableToBook: true,
                   status: true,
-                  // Post-Phase-3a: bookings reach assets through the
-                  // BookingAsset pivot (Asset.bookings was removed).
-                  // useKitAvailabilityData reads
-                  // asset.bookingAssets[].booking — see
-                  // components/assets/assets-index/use-kit-availability-data.ts.
-                  // The pre-pivot `bookings: { ... }` select here threw a
-                  // PrismaClientValidationError on every kit search with
-                  // ?view=availability (Sentry SHELF-WEBAPP-1P1).
-                  ...(view === "availability" && {
-                    bookingAssets: {
-                      where: {
-                        booking: {
-                          status: { in: ["RESERVED", "ONGOING", "OVERDUE"] },
-                        },
-                      },
-                      select: {
-                        // Discriminator for per-kit attribution in the
-                        // consumer. NULL = standalone slice (not bound
-                        // to a kit) — those are filtered out so they
-                        // don't pollute any kit's availability calendar.
-                        assetKitId: true,
-                        booking: {
-                          select: {
-                            id: true,
-                            name: true,
-                            status: true,
-                            from: true,
-                            to: true,
-                            description: true,
-                            // FK column the consumer reads directly
-                            // (bookingWithRelations.custodianUserId in the
-                            // useKitAvailabilityData hook). Without it the
-                            // field was undefined at runtime — CodeRabbit
-                            // review #2676.
-                            //
-                            // NOTE: do NOT select `kitId` here — `Booking`
-                            // has no `kitId` scalar (a booking spans kits via
-                            // BookingAsset, not a direct FK). Selecting it
-                            // throws PrismaClientValidationError and 500s the
-                            // whole kits index (Sentry SHELF-WEBAPP-1P1). The
-                            // hook derives the resource id from the kit it's
-                            // iterating (`kitId: kit.id`), so the DB never
-                            // needs to supply it.
-                            custodianUserId: true,
-                            custodianTeamMember: true,
-                            custodianUser: true,
-                          },
-                        },
-                      },
-                    },
-                  }),
                 },
               },
             },
@@ -286,7 +211,6 @@ export const handle = {
 
 export default function KitsIndexPage() {
   const { t } = useTranslation();
-  const { items } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
   const canCreateKit = userHasPermission({
     roles,
@@ -304,9 +228,6 @@ export default function KitsIndexPage() {
     entity: PermissionEntity.kit,
     action: [PermissionAction.update, PermissionAction.custody],
   });
-  const { isAvailabilityView, shouldShowAvailabilityView } =
-    useIsAvailabilityView();
-  const { resources, events } = useKitAvailabilityData(items);
 
   const organization = useCurrentOrganization();
 
@@ -336,7 +257,6 @@ export default function KitsIndexPage() {
                 }}
               />
             ),
-            "right-of-search": <AvailabilityViewToggle />,
           }}
         >
           {canReadCustody && (
@@ -360,87 +280,43 @@ export default function KitsIndexPage() {
             />
           )}
         </Filters>
-        {isAvailabilityView && shouldShowAvailabilityView ? (
-          <>
-            <AvailabilityCalendar
-              resources={resources}
-              events={events}
-              resourceLabelContent={({ resource }) => (
-                <div className="flex items-center gap-2 px-2">
-                  <KitImage
-                    kit={{
-                      kitId: resource.id,
-                      image: resource.extendedProps?.mainImage,
-                      imageExpiration:
-                        resource.extendedProps?.mainImageExpiration,
-                      alt: resource.title,
-                    }}
-                    alt={resource.title}
-                    className="size-14 shrink-0 rounded border object-cover"
-                    withPreview
-                  />
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <ResourceTitleLink
-                      to={`/kits/${resource.id}/assets`}
-                      title={resource.title}
-                    />
-                    <div className="flex items-center gap-2">
-                      <KitStatusBadge
-                        status={resource.extendedProps?.status}
-                        availableToBook={
-                          resource.extendedProps?.availableToBook
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            />
-            <Card className="-mt-2 border-t-0 py-0">
-              <Pagination />
-            </Card>
-          </>
-        ) : (
-          <List
-            className="overflow-x-visible md:overflow-x-auto"
-            ItemComponent={ListContent}
-            bulkActions={
-              canBulkManageKits ? <BulkActionsDropdown /> : undefined
-            }
-            customEmptyStateContent={{
-              title: t("kits.emptyTitle"),
-              text: t("kits.emptyText"),
-              newButtonRoute: "/kits/new",
-              newButtonContent: t("kits.emptyCta"),
-            }}
-            headerChildren={
-              <>
-                <Th>{t("assets.category")}</Th>
-                <Th>{t("assets.location")}</Th>
-                <Th>{t("assets.description")}</Th>
-                <Th>{t("nav.assets")}</Th>
-                <Th className="flex items-center gap-1 whitespace-nowrap">
-                  {t("assets.custodian")}{" "}
-                  <InfoTooltip
-                    iconClassName="size-4"
-                    content={
-                      <>
-                        <h6>{t("assets.custodyTooltipTitle")}</h6>
-                        <p>
-                          <Trans
-                            i18nKey="assets.custodyTooltipBody"
-                            components={{ badge: <GrayBadge /> }}
-                          />
-                        </p>
-                      </>
-                    }
-                  />
-                </Th>
-                <Th>{t("list.actions")}</Th>
-              </>
-            }
-          />
-        )}
+        <List
+          className="overflow-x-visible md:overflow-x-auto"
+          ItemComponent={ListContent}
+          bulkActions={canBulkManageKits ? <BulkActionsDropdown /> : undefined}
+          customEmptyStateContent={{
+            title: t("kits.emptyTitle"),
+            text: t("kits.emptyText"),
+            newButtonRoute: "/kits/new",
+            newButtonContent: t("kits.emptyCta"),
+          }}
+          headerChildren={
+            <>
+              <Th>{t("assets.category")}</Th>
+              <Th>{t("assets.location")}</Th>
+              <Th>{t("assets.description")}</Th>
+              <Th>{t("nav.assets")}</Th>
+              <Th className="flex items-center gap-1 whitespace-nowrap">
+                {t("assets.custodian")}{" "}
+                <InfoTooltip
+                  iconClassName="size-4"
+                  content={
+                    <>
+                      <h6>{t("assets.custodyTooltipTitle")}</h6>
+                      <p>
+                        <Trans
+                          i18nKey="assets.custodyTooltipBody"
+                          components={{ badge: <GrayBadge /> }}
+                        />
+                      </p>
+                    </>
+                  }
+                />
+              </Th>
+              <Th>{t("list.actions")}</Th>
+            </>
+          }
+        />
       </ListContentWrapper>
     </>
   );
@@ -515,9 +391,9 @@ function ListContent({
               <div className="flex flex-wrap items-center gap-2">
                 <KitStatusBadge
                   status={item.status}
-                  // why: undefined assetKits ≠ empty kit — we don't know what's in it,
-                  // so default to not-available (matches the calendar view's semantic
-                  // in use-kit-availability-data.ts).
+                  // why: undefined assetKits ≠ empty kit — we don't know what's
+                  // in it, so default to not-available rather than claiming a
+                  // kit is bookable on the strength of missing data.
                   availableToBook={
                     item.assetKits == null
                       ? false

@@ -92,7 +92,7 @@ describe("validateEmailFooter", () => {
 
   it("accepts multi-line content with email and phone", () => {
     const result = validateEmailFooter(
-      "ACME Corp\nEmail: info@acme.com\nPhone: 555-0100"
+      "ACME Corp\nEmail: info@acme.com\nPhone: 555-0100",
     );
     expect(result.isValid).toBe(true);
   });
@@ -150,11 +150,11 @@ describe("processEmailFooter", () => {
 
   it("returns sanitized message for valid input", () => {
     const result = processEmailFooter(
-      "Contact: support@company.com\nPhone: 555-0100"
+      "Contact: support@company.com\nPhone: 555-0100",
     );
     expect(result.success).toBe(true);
     expect(result.message).toBe(
-      "Contact: support@company.com\nPhone: 555-0100"
+      "Contact: support@company.com\nPhone: 555-0100",
     );
   });
 

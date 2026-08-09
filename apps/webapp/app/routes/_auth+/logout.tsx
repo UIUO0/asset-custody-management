@@ -10,7 +10,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
     await request.formData(),
     z.object({
       redirectTo: z.string().optional(),
-    })
+    }),
   );
 
   context.destroySession();

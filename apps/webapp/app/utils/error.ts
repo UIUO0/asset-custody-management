@@ -46,6 +46,7 @@ export type FailureReason = {
     | "Unknown"
     // Related to our modules
     | "Admin dashboard"
+    | "API Key"
     | "App layout"
     | "Assets"
     | "Asset Index Settings"
@@ -294,7 +295,7 @@ export function isAbortError(cause: unknown) {
  * This helper function is used to check if an error is an instance of `ShelfError` or an object that looks like an `ShelfError`.
  */
 export function isNotFoundError(
-  cause: unknown
+  cause: unknown,
 ): cause is PrismaClientKnownRequestError {
   return (
     typeof cause === "object" &&
@@ -376,7 +377,7 @@ export function isZodValidationError(cause: unknown) {
 export function makeShelfError(
   cause: unknown,
   additionalData?: AdditionalData,
-  shouldBeCaptured?: boolean
+  shouldBeCaptured?: boolean,
 ) {
   if (isAbortError(cause)) {
     return new ShelfError({
@@ -492,7 +493,7 @@ export function notAllowedMethod(method: string, options?: Options) {
  */
 export function badRequest(
   message: string,
-  options?: Omit<Options, "message">
+  options?: Omit<Options, "message">,
 ) {
   return new ShelfError({
     shouldBeCaptured: false,
@@ -514,7 +515,7 @@ export function badRequest(
 export function maybeUniqueConstraintViolation(
   cause: unknown,
   modelName: string,
-  options?: Options
+  options?: Options,
 ) {
   let message = `We could not create or update this ${modelName}. Please try again or contact support.`;
   let shouldBeCaptured = false;

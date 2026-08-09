@@ -16,7 +16,6 @@ import {
 } from "~/utils/permissions/permission.data";
 import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
-import BookSelectedAssetsDropdown from "./assets-index/book-selected-assets-dropdown";
 import BulkAddToAuditDialog from "./bulk-add-to-audit-dialog";
 import BulkAddToKitDialog from "./bulk-add-to-kit-dialog";
 import BulkApproveDialog from "./bulk-approve-dialog";
@@ -61,7 +60,6 @@ export default function BulkActionsDropdown() {
   return (
     <div className="actions-dropdown flex w-full items-center gap-2">
       <ConditionalDropdown />
-      <BookSelectedAssetsDropdown />
     </div>
   );
 }

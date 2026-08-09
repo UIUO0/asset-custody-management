@@ -399,7 +399,7 @@ export async function createAuditAssetImagesAddedNote({
     firstName: uploader.firstName,
     lastName: uploader.lastName,
   })} added ${imageCount} ${imageWord} to ${wrapAssetsWithDataForNote(
-    asset.asset
+    asset.asset,
   )}.`;
 
   // Add the audit_images tag for rendering

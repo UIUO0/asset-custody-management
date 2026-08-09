@@ -130,7 +130,7 @@ export async function checkAndNotifyLowStock({
           message: "Failed to send low-stock alert email to organization owner",
           additionalData: { assetId, organizationId },
           label: "Notification",
-        })
+        }),
       );
     }
   }

@@ -26,7 +26,7 @@ export async function scheduleTrialEndsTomorrowEmail({
       QueueNames.addonTrialQueue,
       data,
       { singletonKey: `trial-ends-tomorrow:${data.subscriptionId}` },
-      when
+      when,
     );
   } catch (cause) {
     throw new ShelfError({

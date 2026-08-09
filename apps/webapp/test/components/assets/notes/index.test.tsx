@@ -138,7 +138,7 @@ function renderNotes() {
   return render(
     <MemoryRouter>
       <Notes />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -173,7 +173,7 @@ describe("Notes", () => {
         totalItems: 0,
         totalPages: 0,
         hasNotes: false,
-      })
+      }),
     );
 
     renderNotes();
@@ -192,13 +192,13 @@ describe("Notes", () => {
         totalPages: 0,
         search: "no-such-note", // active search that matches nothing
         hasNotes: true, // the asset still has notes overall
-      })
+      }),
     );
 
     renderNotes();
 
     expect(
-      screen.getByRole("link", { name: "Export activity CSV" })
+      screen.getByRole("link", { name: "Export activity CSV" }),
     ).toBeInTheDocument();
     // the filtered view is empty, so the "no matching activity" state is shown
     expect(screen.getByText("No matching activity")).toBeInTheDocument();
@@ -210,7 +210,7 @@ describe("Notes", () => {
     // belongs in the current view, so it should render immediately.
     useFetcherMock.mockReturnValue(submittingFetcher("Optimistic comment"));
     useLoaderDataMock.mockReturnValue(
-      makeLoaderData({ items: [], totalItems: 0, totalPages: 0 })
+      makeLoaderData({ items: [], totalItems: 0, totalPages: 0 }),
     );
 
     renderNotes();
@@ -230,7 +230,7 @@ describe("Notes", () => {
         totalItems: 0,
         totalPages: 0,
         search: "camera",
-      })
+      }),
     );
 
     renderNotes();

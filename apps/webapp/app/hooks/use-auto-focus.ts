@@ -32,7 +32,7 @@ export function useAutoFocus<T extends HTMLElement>(
      * to `true`.
      */
     deferToNextFrame?: boolean;
-  } = {}
+  } = {},
 ): RefObject<T | null> {
   const { when = true, deferToNextFrame = true } = options;
   const ref = useRef<T>(null);

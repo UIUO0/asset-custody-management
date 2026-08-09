@@ -25,7 +25,7 @@ export const premiumIsEnabled = config.enablePremiumFeatures;
 
 /** Export */
 export const canExportAssets = (
-  tierLimit: { canExportAssets: boolean } | null | undefined
+  tierLimit: { canExportAssets: boolean } | null | undefined,
 ) => {
   /** If the premium features are not enabled, just return true */
   if (!premiumIsEnabled) return true;
@@ -41,7 +41,7 @@ export const canExportAssets = (
  * @returns `true` if branding can be hidden or premium features are disabled.
  */
 export const canHideShelfBranding = (
-  tierLimit: { canHideShelfBranding: boolean } | null | undefined
+  tierLimit: { canHideShelfBranding: boolean } | null | undefined,
 ) => {
   if (!premiumIsEnabled) return true;
   if (!tierLimit) return false;
@@ -88,7 +88,7 @@ export async function assertUserCanExportAssets({
  * This is because the owner is the one that has the premium package attached to their account
  */
 export const canImportAssets = (
-  tierLimit: { canImportAssets: boolean } | null | undefined
+  tierLimit: { canImportAssets: boolean } | null | undefined,
 ) => {
   /** If the premium features are not enabled, just return true */
   if (!premiumIsEnabled) return true;
@@ -127,7 +127,7 @@ export async function assertUserCanImportAssets({
 }
 
 export const canImportNRM = (
-  tierLimit: { canImportNRM: boolean } | null | undefined
+  tierLimit: { canImportNRM: boolean } | null | undefined,
 ) => {
   /** If the premium features are not enabled, just return true */
   if (!premiumIsEnabled) return true;
@@ -338,7 +338,7 @@ export async function assertUserCanCreateMoreOrganizations(userId: string) {
 
 /** Team Features */
 export const canUseBookings = (
-  currentOrganization: Pick<Organization, "type">
+  currentOrganization: Pick<Organization, "type">,
 ) => {
   if (!premiumIsEnabled) return true;
 
@@ -354,7 +354,7 @@ export const canUseBookings = (
  * Throws error of not allowed
  */
 export function assertCanUseBookings(
-  currentOrganization: Pick<Organization, "type">
+  currentOrganization: Pick<Organization, "type">,
 ) {
   if (!canUseBookings(currentOrganization)) {
     throw new ShelfError({

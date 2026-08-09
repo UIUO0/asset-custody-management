@@ -11,7 +11,7 @@ export function objectToFormData(
     jsonStringifyFields?: string[]; // Fields that need to be JSON.stringify'd
     formData?: FormData;
     namespace?: string;
-  } = {}
+  } = {},
 ): FormData {
   const {
     jsonStringifyFields = [],
@@ -67,14 +67,14 @@ export function objectToFormData(
         } else {
           // Check if the parent field should be stringified
           const nestedFieldToStringify = jsonStringifyFields.find((field) =>
-            field.startsWith(`${namespace ? namespace + "." : ""}${key}.`)
+            field.startsWith(`${namespace ? namespace + "." : ""}${key}.`),
           );
 
           if (nestedFieldToStringify) {
             // If a nested field of this object needs to be stringified,
             // pass down the information in recursive call
             const remainingPath = nestedFieldToStringify.substring(
-              key.length + 1
+              key.length + 1,
             );
             objectToFormData(obj[key], {
               jsonStringifyFields: [...jsonStringifyFields, remainingPath],

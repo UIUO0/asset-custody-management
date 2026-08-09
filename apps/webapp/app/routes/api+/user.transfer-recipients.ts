@@ -28,7 +28,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     const { excludeUserId } = getParams(
       Object.fromEntries(url.searchParams),
       z.object({ excludeUserId: z.string() }),
-      { additionalData: { userId, organizationId } }
+      { additionalData: { userId, organizationId } },
     );
 
     /** Fetch OWNER and ADMIN users in this org, excluding the target user */
@@ -60,7 +60,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
         name: resolveUserDisplayName(uo.user),
         email: uo.user.email,
         isOwner: uo.roles.includes(OrganizationRoles.OWNER),
-      }))
+      })),
     );
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });

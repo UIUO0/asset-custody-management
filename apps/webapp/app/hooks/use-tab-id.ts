@@ -47,7 +47,7 @@ export function useTabId(): string {
 
     window.fetch = function patchedFetch(
       input: RequestInfo | URL,
-      init?: RequestInit
+      init?: RequestInit,
     ) {
       const url =
         typeof input === "string"
@@ -69,7 +69,7 @@ export function useTabId(): string {
         // Seed from Request.headers when input is a Request, then overlay
         // any headers from init so callers' overrides take precedence.
         const headers = new Headers(
-          input instanceof Request ? input.headers : undefined
+          input instanceof Request ? input.headers : undefined,
         );
         new Headers(init?.headers).forEach((v, k) => headers.set(k, v));
         if (!headers.has("X-Tab-Id")) {

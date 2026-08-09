@@ -15,7 +15,7 @@ export function useBubbleMenu() {
     const { from, to } = state.selection;
     if (from === to) {
       setBubbleState((prev) =>
-        prev.visible ? { ...prev, visible: false } : prev
+        prev.visible ? { ...prev, visible: false } : prev,
       );
       return;
     }
@@ -29,7 +29,7 @@ export function useBubbleMenu() {
       setBubbleState({ visible: true, left, top });
     } catch {
       setBubbleState((prev) =>
-        prev.visible ? { ...prev, visible: false } : prev
+        prev.visible ? { ...prev, visible: false } : prev,
       );
     }
   }, []);

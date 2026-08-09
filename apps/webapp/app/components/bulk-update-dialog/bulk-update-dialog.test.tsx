@@ -89,7 +89,7 @@ async function renderDialog(
   props: {
     keepSelectionOnSuccess?: boolean;
     skipCloseOnSuccess?: boolean;
-  } = {}
+  } = {},
 ) {
   const store = createStore();
 
@@ -98,7 +98,7 @@ async function renderDialog(
       <BulkUpdateDialogContent type={type} arrayFieldId="assetIds" {...props}>
         <button type="submit">Confirm</button>
       </BulkUpdateDialogContent>
-    </Provider>
+    </Provider>,
   );
 
   // Seed the dialog open for this type and a non-empty selection now that the
@@ -115,7 +115,7 @@ async function renderDialog(
 /** Flips the fake fetcher to a response and flushes the success/error effect. */
 async function resolveFetcher(
   utils: Awaited<ReturnType<typeof renderDialog>>,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
 ) {
   hoisted.fetcherData = data;
   await act(async () => {
@@ -128,7 +128,7 @@ async function resolveFetcher(
         >
           <button type="submit">Confirm</button>
         </BulkUpdateDialogContent>
-      </Provider>
+      </Provider>,
     );
     await Promise.resolve();
   });
@@ -144,7 +144,10 @@ let lastProps: {
 /** Wraps `renderDialog` capturing config for the rerender helper. */
 function open(
   type: BulkDialogType,
-  props: { keepSelectionOnSuccess?: boolean; skipCloseOnSuccess?: boolean } = {}
+  props: {
+    keepSelectionOnSuccess?: boolean;
+    skipCloseOnSuccess?: boolean;
+  } = {},
 ) {
   lastType = type;
   lastProps = props;
@@ -173,7 +176,7 @@ describe("BulkUpdateDialogContent — post-success selection handling", () => {
 
       expect(utils.store.get(selectedBulkItemsAtom)).toEqual([]);
       expect(utils.store.get(bulkDialogAtom)[type]).toBe(false);
-    }
+    },
   );
 
   it("retains the selection on success when keepSelectionOnSuccess is set", async () => {

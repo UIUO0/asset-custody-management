@@ -42,7 +42,7 @@ const { mockFeedbackModal } = vi.hoisted(() => ({
       open: boolean;
       onClose: () => void;
       errorContext?: Record<string, unknown> | null;
-    }) => null
+    }) => null,
   ),
 }));
 vi.mock("../feedback/feedback-modal", () => ({
@@ -56,7 +56,7 @@ function renderErrorContent() {
   return render(
     <MemoryRouter>
       <ErrorContent />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -89,7 +89,7 @@ describe("ErrorContent report-an-issue", () => {
   it("shows the report button for authenticated layout errors", () => {
     renderErrorContent();
     expect(
-      screen.getByRole("button", { name: /report this issue/i })
+      screen.getByRole("button", { name: /report this issue/i }),
     ).toBeTruthy();
   });
 
@@ -97,7 +97,7 @@ describe("ErrorContent report-an-issue", () => {
     mockUser = undefined;
     renderErrorContent();
     expect(
-      screen.queryByRole("button", { name: /report this issue/i })
+      screen.queryByRole("button", { name: /report this issue/i }),
     ).toBeNull();
     expect(mockFeedbackModal).not.toHaveBeenCalled();
   });
@@ -125,7 +125,7 @@ describe("ErrorContent report-an-issue", () => {
   it("still renders the error message and trace id", () => {
     renderErrorContent();
     expect(
-      screen.getByText(/Something went wrong while fetching the kit/)
+      screen.getByText(/Something went wrong while fetching the kit/),
     ).toBeTruthy();
     expect(screen.getByText(/trace_789/)).toBeTruthy();
   });
@@ -146,12 +146,12 @@ describe("ErrorContent report-an-issue", () => {
 
     await waitFor(() =>
       expect(
-        screen.queryByRole("button", { name: /report this issue/i })
-      ).toBeNull()
+        screen.queryByRole("button", { name: /report this issue/i }),
+      ).toBeNull(),
     );
     // The error page itself survives
     expect(
-      screen.getByText(/Something went wrong while fetching the kit/)
+      screen.getByText(/Something went wrong while fetching the kit/),
     ).toBeTruthy();
 
     consoleError.mockRestore();

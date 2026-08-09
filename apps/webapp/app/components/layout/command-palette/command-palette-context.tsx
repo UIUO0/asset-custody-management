@@ -8,7 +8,7 @@ interface CommandPaletteContextValue {
 }
 
 const CommandPaletteContext = createContext<CommandPaletteContextValue | null>(
-  null
+  null,
 );
 
 export function useCommandPalette() {
@@ -16,7 +16,7 @@ export function useCommandPalette() {
 
   if (!context) {
     throw new Error(
-      "useCommandPalette must be used within a CommandPaletteProvider"
+      "useCommandPalette must be used within a CommandPaletteProvider",
     );
   }
 
@@ -37,7 +37,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
       setOpen,
       toggle: () => setOpen((previous) => !previous),
     }),
-    [open]
+    [open],
   );
 
   return (

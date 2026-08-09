@@ -27,7 +27,7 @@ import { ShelfError } from "~/utils/error";
 export async function lockAssetForQuantityUpdate(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any, // Prisma interactive tx client (no clean type for extended clients)
-  assetId: string
+  assetId: string,
 ): Promise<Asset> {
   const result = await tx.$queryRaw<Asset[]>`
     SELECT * FROM "Asset" WHERE id = ${assetId} FOR UPDATE

@@ -136,7 +136,7 @@ export async function getKitPickerMeta({
       const thisKitRow = row.assetKits.find((ak) => ak.kitId === kitId);
       const otherKitsQty = otherKits.reduce(
         (sum, ak) => sum + (ak.quantity ?? 0),
-        0
+        0,
       );
       const currentInThisKit = thisKitRow?.quantity ?? 0;
       const operatorCustodyTotal = row.custody
@@ -144,11 +144,11 @@ export async function getKitPickerMeta({
         .reduce((sum, c) => sum + (c.quantity ?? 0), 0);
       const ongoingBookingTotal = row.bookingAssets.reduce(
         (sum, ba) => sum + (ba.quantity ?? 0),
-        0
+        0,
       );
       const spaceWithoutMe = Math.max(
         0,
-        totalQty - otherKitsQty - operatorCustodyTotal - ongoingBookingTotal
+        totalQty - otherKitsQty - operatorCustodyTotal - ongoingBookingTotal,
       );
       const maxAllowedForThisKit = Math.max(currentInThisKit, spaceWithoutMe);
 
@@ -166,6 +166,6 @@ export async function getKitPickerMeta({
         unitOfMeasure: row.unitOfMeasure,
       };
       return [row.id, meta];
-    })
+    }),
   );
 }

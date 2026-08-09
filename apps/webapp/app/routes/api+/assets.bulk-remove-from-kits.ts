@@ -37,7 +37,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       BulkRemoveFromKitsSchema,
       {
         additionalData: { userId, organizationId },
-      }
+      },
     );
 
     await bulkRemoveAssetsFromKits({

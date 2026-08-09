@@ -228,19 +228,19 @@ export function hasAssetBookingConflicts(
     status: string;
     bookings?: { id: string; status: string }[];
   },
-  currentBookingId: string
+  currentBookingId: string,
 ): boolean {
   if (!asset.bookings?.length) return false;
 
   const conflictingBookings = asset.bookings.filter(
-    (b) => b.id !== currentBookingId
+    (b) => b.id !== currentBookingId,
   );
 
   if (conflictingBookings.length === 0) return false;
 
   // Check if any conflicting booking is RESERVED (always conflicts)
   const hasReservedConflict = conflictingBookings.some(
-    (b) => b.status === BookingStatus.RESERVED
+    (b) => b.status === BookingStatus.RESERVED,
   );
 
   if (hasReservedConflict) return true;
@@ -250,7 +250,7 @@ export function hasAssetBookingConflicts(
     (b) =>
       (b.status === BookingStatus.ONGOING ||
         b.status === BookingStatus.OVERDUE) &&
-      asset.status === AssetStatus.CHECKED_OUT
+      asset.status === AssetStatus.CHECKED_OUT,
   );
 
   return hasOngoingConflict;
@@ -265,7 +265,7 @@ export function isAssetAlreadyBooked(
     status: string;
     bookings?: { id: string; status: string }[];
   },
-  currentBookingId: string
+  currentBookingId: string,
 ): boolean {
   return hasAssetBookingConflicts(asset, currentBookingId);
 }
@@ -372,7 +372,7 @@ const isCheckedOut =
 
 // Apply same booking conflict logic for unavailable bookings
 const someAssetHasUnavailableBooking = kit.assets.some((asset) =>
-  hasAssetBookingConflicts(asset, currentBookingId)
+  hasAssetBookingConflicts(asset, currentBookingId),
 );
 ```
 

@@ -4,7 +4,6 @@ import {
   parseFormData,
 } from "@remix-run/form-data-parser";
 import { useAtomValue } from "jotai";
-import { useTranslation } from "react-i18next";
 import type {
   ActionFunctionArgs,
   LoaderFunctionArgs,
@@ -441,8 +440,6 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function WorkspaceEditPage() {
-  const { t } = useTranslation();
-
   const name = useAtomValue(dynamicTitleAtom);
   const hasName = name !== "";
   const {

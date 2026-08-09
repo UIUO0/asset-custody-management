@@ -14,7 +14,7 @@ export function sendNotification(notification: Omit<NotificationType, "open">) {
         /** In the case when the user updates an item 2 times in a row for example, the notification will be the same so useEventStream wont react to the changes as its cached.
          * We send the time to make sure it always updates */
         time: Date.now(),
-      })
+      }),
     );
   } catch (cause) {
     throw new ShelfError({

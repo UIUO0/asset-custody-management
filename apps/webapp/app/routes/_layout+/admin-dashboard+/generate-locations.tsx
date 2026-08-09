@@ -56,7 +56,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     const { numberOfLocations } = parseData(
       await clonedRequest.formData(),
-      GenerateLocationSchema.omit({ image: true })
+      GenerateLocationSchema.omit({ image: true }),
     );
 
     const formDataFile = await parseFormData(request);

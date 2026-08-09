@@ -74,7 +74,7 @@ export async function createAssetReminder({
           `/assets/${assetId}/reminders?${new URLSearchParams({
             s: assetReminder.name,
           }).toString()}`,
-          assetReminder.name
+          assetReminder.name,
         )}.`,
       }),
       scheduleAssetReminder({
@@ -101,7 +101,7 @@ export async function createAssetReminder({
 
 async function validateTeamMembersForReminder(
   teamMembers: TeamMember["id"][],
-  organizationId: TeamMember["organizationId"]
+  organizationId: TeamMember["organizationId"],
 ) {
   const teamMembersWithUserCount = await db.teamMember.count({
     where: {

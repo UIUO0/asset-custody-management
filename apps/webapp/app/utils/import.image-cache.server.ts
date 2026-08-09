@@ -21,7 +21,7 @@ export type CachedImage = {
 export async function cacheOptimizedImage(
   path: string,
   originalUrl: string,
-  cache: LRUCache<string, CachedImage>
+  cache: LRUCache<string, CachedImage>,
 ): Promise<CachedImage | null> {
   try {
     const { data, error } = await getSupabaseAdmin()
@@ -35,7 +35,7 @@ export async function cacheOptimizedImage(
           message: "Failed to download optimized image from Supabase",
           additionalData: { path },
           label: "Image Cache",
-        })
+        }),
       );
       return null;
     }
@@ -63,7 +63,7 @@ export async function cacheOptimizedImage(
           : "Failed to cache optimized image",
         additionalData: { path },
         label: "Image Cache",
-      })
+      }),
     );
     return null;
   }

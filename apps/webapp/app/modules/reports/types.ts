@@ -10,7 +10,7 @@
  * @see {@link file://./helpers.server.ts}
  */
 
-import type { AssetType, BookingStatus, Currency } from "@prisma/client";
+import type { AssetType, Currency } from "@prisma/client";
 
 // -----------------------------------------------------------------------------
 // KPI Types
@@ -155,144 +155,7 @@ export interface ReportPayload<TRow = Record<string, unknown>> {
   page: number;
   /** Rows per page */
   pageSize: number;
-
-  // Compliance report specific fields (optional - only present for compliance reports)
-  /** Compliance rate data with prior period comparison */
-  complianceData?: ComplianceData;
-  /** Weekly compliance trend data */
-  complianceTrend?: ComplianceTrendPoint[];
-  /** Custodian performance breakdown */
-  custodianPerformance?: CustodianPerformanceData[];
-
-  // Top Booked Assets report specific fields
-  /** The #1 most booked asset (independent of pagination) */
-  topBookedAsset?: TopBookedAssetRow | null;
-
-  // Top Booked Kits report specific fields
-  /** The #1 most booked kit (independent of pagination) */
-  topBookedKit?: TopBookedKitRow | null;
 }
-
-// -----------------------------------------------------------------------------
-// Compliance Visualization Types
-// -----------------------------------------------------------------------------
-
-/** Compliance rate data with period comparison */
-export interface ComplianceData {
-  /** Bookings completed on time */
-  onTime: number;
-  /** Bookings completed late */
-  late: number;
-  /** Compliance rate as percentage (0-100), null if no completed bookings */
-  rate: number | null;
-  /** Comparison to prior period */
-  priorPeriod?: {
-    rate: number;
-    delta: number;
-    periodLabel: string;
-    /** Prior period start date (for custom ranges) */
-    fromDate?: Date;
-    /** Prior period end date (for custom ranges) */
-    toDate?: Date;
-  };
-}
-
-/** Weekly compliance trend point */
-export interface ComplianceTrendPoint {
-  /** Period label (e.g., "Mon 21", "Week 1", "Mar 3-9") */
-  label: string;
-  /** Start of the period */
-  weekStart: Date;
-  /** Compliance rate for this period (null if no completions) */
-  rate: number | null;
-  /** Bookings completed on time */
-  onTime: number;
-  /** Bookings completed late */
-  late: number;
-  /** Total completions this period */
-  total: number;
-}
-
-/** At-risk booking data */
-export interface AtRiskBookingData {
-  id: string;
-  name: string;
-  custodian: string | null;
-  scheduledEnd: Date;
-  assetCount: number;
-  hoursUntilDue: number;
-}
-
-/** Custodian performance data */
-export interface CustodianPerformanceData {
-  custodianId: string | null;
-  custodianName: string;
-  onTime: number;
-  late: number;
-  total: number;
-  rate: number;
-}
-
-// -----------------------------------------------------------------------------
-// R2: Booking Compliance Report Types
-// -----------------------------------------------------------------------------
-
-/** Row type for the Booking Compliance report */
-export interface BookingComplianceRow {
-  id: string;
-  bookingId: string;
-  bookingName: string;
-  status: BookingStatus;
-  custodian: string | null;
-  assetCount: number;
-  scheduledStart: Date;
-  scheduledEnd: Date;
-  actualCheckout: Date | null;
-  actualCheckin: Date | null;
-  isOnTime: boolean;
-  isOverdue: boolean;
-  /** How late the return was in milliseconds (negative = early, positive = late) */
-  latenessMs: number | null;
-}
-
-/**
- * KPI IDs emitted by the Booking Compliance report.
- *
- * Compliance rate / on-time / late breakdowns are now exposed via the
- * `complianceData` payload (sourced from `computeComplianceRate`) so the
- * KPI list is intentionally minimal.
- */
-export type BookingComplianceKpiId = "total_bookings" | "currently_overdue";
-
-// -----------------------------------------------------------------------------
-// R6: Overdue Items Report Types
-// -----------------------------------------------------------------------------
-
-/** Row type for the Overdue Items report */
-export interface OverdueItemRow {
-  id: string;
-  bookingId: string;
-  bookingName: string;
-  custodian: string | null;
-  custodianId: string | null;
-  assetCount: number;
-  /** Number of assets already checked in (partial returns) */
-  checkedInCount: number;
-  /** Number of assets still outstanding (not yet returned) */
-  uncheckedCount: number;
-  scheduledEnd: Date;
-  daysOverdue: number;
-  /** Total value of assets in this booking (if available) */
-  valueAtRisk: number | null;
-}
-
-/** KPI IDs for the Overdue Items report */
-export type OverdueItemsKpiId =
-  | "total_overdue"
-  | "total_assets_at_risk"
-  | "total_value_at_risk"
-  | "avg_days_overdue"
-  | "longest_overdue";
 
 // -----------------------------------------------------------------------------
 // R4: Idle Assets Report Types
@@ -375,68 +238,6 @@ export type CustodySnapshotKpiId =
   | "avg_days_in_custody";
 
 // -----------------------------------------------------------------------------
-// R3: Top Booked Assets Report Types
-// -----------------------------------------------------------------------------
-
-/** Row type for the Top Booked Assets report */
-export interface TopBookedAssetRow {
-  id: string;
-  assetId: string;
-  assetName: string;
-  /** Asset thumbnail image URL */
-  thumbnailImage: string | null;
-  category: string | null;
-  location: string | null;
-  /** Number of times booked in the timeframe */
-  bookingCount: number;
-  /** Total days booked */
-  totalDaysBooked: number;
-  /** Time booked percentage (days booked / days in period) */
-  timeBookedRate: number;
-}
-
-/** KPI IDs for the Top Booked Assets report */
-export type TopBookedAssetsKpiId =
-  | "total_bookings"
-  | "unique_assets_booked"
-  | "avg_bookings_per_asset"
-  | "most_booked_asset";
-
-/**
- * Row type for the Top Booked Kits report.
- *
- * Kits have no direct relation to bookings — a kit is "booked" when its
- * member assets (which carry its `kitId`) are added to a booking, and kits
- * move atomically (you cannot book a single item out of a kit). So
- * `bookingCount` is the number of distinct bookings the kit appeared in
- * within the timeframe, deduped per booking. Mirrors {@link TopBookedAssetRow}.
- */
-export interface TopBookedKitRow {
-  id: string;
-  kitId: string;
-  kitName: string;
-  /** Kit image URL (server-refreshed if the signed URL had expired) */
-  image: string | null;
-  /** Kit image signed-URL expiration, passed through for client-side fallback */
-  imageExpiration: Date | string | null;
-  category: string | null;
-  location: string | null;
-  /** Number of distinct bookings the kit appeared in during the timeframe */
-  bookingCount: number;
-  /** Total days booked (summed booking durations, counted once per booking) */
-  totalDaysBooked: number;
-  /** Time booked percentage (days booked / days in period) */
-  timeBookedRate: number;
-}
-
-/** KPI IDs for the Top Booked Kits report */
-export type TopBookedKitsKpiId =
-  | "total_kit_bookings"
-  | "unique_kits_booked"
-  | "avg_bookings_per_kit"
-  | "most_booked_kit";
-
-// -----------------------------------------------------------------------------
 // R10: Asset Distribution Report Types
 // -----------------------------------------------------------------------------
 
@@ -510,75 +311,6 @@ export type AssetInventoryKpiId =
   | "in_custody_count";
 
 // -----------------------------------------------------------------------------
-// R9: Monthly Booking Trends Report Types
-// -----------------------------------------------------------------------------
-
-/** Row type for the Monthly Booking Trends report (monthly aggregates) */
-export interface MonthlyBookingTrendRow {
-  id: string;
-  /** Month label (e.g., "Jan 2024") */
-  month: string;
-  /** Start of the month */
-  monthStart: Date;
-  /** Number of bookings created */
-  bookingsCreated: number;
-  /** Number of bookings completed */
-  bookingsCompleted: number;
-  /** Number of unique assets booked */
-  uniqueAssetsBooked: number;
-  /** Month-over-month change percentage */
-  momChange: number | null;
-}
-
-/** KPI IDs for the Monthly Booking Trends report */
-export type MonthlyBookingTrendsKpiId =
-  | "total_bookings"
-  | "avg_monthly_bookings"
-  | "peak_month"
-  | "trend_direction";
-
-// -----------------------------------------------------------------------------
-// R8: Asset Utilization Report Types
-// -----------------------------------------------------------------------------
-
-/** Row type for the Asset Utilization report */
-export interface AssetUtilizationRow {
-  id: string;
-  assetId: string;
-  assetName: string;
-  /** Asset thumbnail image URL */
-  thumbnailImage: string | null;
-  category: string | null;
-  location: string | null;
-  /** Total days in the period */
-  totalDays: number;
-  /** Days the asset was booked/in use */
-  daysInUse: number;
-  /** Utilization percentage (0-100) */
-  utilizationRate: number;
-  /** Number of bookings in the period */
-  bookingCount: number;
-  /** Per-unit valuation if set. The displayed "Value" column shows the
-   * TOTAL (valuation × quantity) for QT assets; see {@link CurrencyCell}. */
-  valuation: number | null;
-  /** Asset kind — drives the quantity-aware value breakdown in cells. */
-  type: AssetType;
-  /** Total stock count; >1 only for QT assets. Nullable to match
-   * Prisma's `Asset.quantity` shape; consumers treat `null` as 1
-   * (see `getAssetTotalValue` in `~/utils/asset-value`). */
-  quantity: number | null;
-  /** Optional unit label (e.g. "boxes") used by the value breakdown. */
-  unitOfMeasure: string | null;
-}
-
-/** KPI IDs for the Asset Utilization report */
-export type AssetUtilizationKpiId =
-  | "avg_utilization"
-  | "highly_utilized_count"
-  | "underutilized_count"
-  | "total_booking_days";
-
-// -----------------------------------------------------------------------------
 // R7: Asset Activity Summary Report Types
 // -----------------------------------------------------------------------------
 
@@ -645,48 +377,6 @@ export interface ReportPdfMetaBase {
   locale: string;
 }
 
-/** Data structure for compliance report PDF generation */
-export interface CompliancePdfMeta extends ReportPdfMetaBase {
-  reportId: "booking-compliance";
-  timeframeLabel: string;
-  timeframeFrom: string;
-  timeframeTo: string;
-  complianceRate: number;
-  onTimeCount: number;
-  lateCount: number;
-  overdueCount: number;
-  priorPeriod?: {
-    rate: number;
-    delta: number;
-    periodLabel: string;
-  };
-  custodianPerformance: Array<{
-    /**
-     * TeamMember id when available — used as the row key in PDF tables.
-     * Falls back to `custodianName` only for legacy rows where the id is
-     * missing; names are NOT unique in the schema and shouldn't be the
-     * primary key.
-     */
-    custodianId: string | null;
-    custodianName: string;
-    rate: number;
-    onTime: number;
-    late: number;
-    total: number;
-  }>;
-  rows: Array<{
-    bookingId: string;
-    bookingName: string;
-    status: string;
-    custodian: string | null;
-    assetCount: number;
-    scheduledStart: string;
-    scheduledEnd: string;
-    isOnTime: boolean;
-    returnStatus: string;
-  }>;
-}
-
 /** Data structure for asset inventory report PDF */
 export interface AssetInventoryPdfMeta extends ReportPdfMetaBase {
   reportId: "asset-inventory";
@@ -727,10 +417,7 @@ export interface CustodySnapshotPdfMeta extends ReportPdfMetaBase {
 }
 
 /** Union type for all report PDF metadata */
-export type ReportPdfMeta =
-  | CompliancePdfMeta
-  | AssetInventoryPdfMeta
-  | CustodySnapshotPdfMeta;
+export type ReportPdfMeta = AssetInventoryPdfMeta | CustodySnapshotPdfMeta;
 
 // -----------------------------------------------------------------------------
 // Report Definition Types

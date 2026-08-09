@@ -22,7 +22,7 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
   const { organizationId } = getParams(
     params,
     z.object({ organizationId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -69,7 +69,7 @@ export const action = async ({
   const { organizationId } = getParams(
     params,
     z.object({ organizationId: z.string() }),
-    { additionalData: { userId } }
+    { additionalData: { userId } },
   );
 
   try {
@@ -78,7 +78,7 @@ export const action = async ({
       await request.clone().formData(),
       z.object({
         intent: z.enum(["createOrphans"]),
-      })
+      }),
     );
 
     switch (intent) {
@@ -88,7 +88,7 @@ export const action = async ({
           z.object({
             amount: z.coerce.number(),
             userId: z.string(),
-          })
+          }),
         );
 
         await generateOrphanedCodes({
@@ -143,7 +143,7 @@ export default function AdminOrgQrCodes() {
   });
 
   const unlinkedCodes = codes.filter(
-    (code) => code.assetId === null && code.kitId === null
+    (code) => code.assetId === null && code.kitId === null,
   );
   return (
     <>

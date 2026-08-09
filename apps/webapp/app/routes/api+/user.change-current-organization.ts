@@ -17,7 +17,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       z.object({
         organizationId: z.string(),
         redirectTo: z.string().optional(),
-      })
+      }),
     );
 
     // Verify membership and pull the extra fields we need to check
@@ -64,7 +64,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
         "Failed to persist lastSelectedOrganizationId",
         userId,
         organizationId,
-        cause
+        cause,
       );
     }
 

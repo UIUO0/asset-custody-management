@@ -39,7 +39,6 @@ import { payload } from "./utils/http.server";
 import { useNonce } from "./utils/nonce-provider";
 import { isAdmin } from "./utils/roles.server";
 import { splashScreenLinks } from "./utils/splash-screen-links";
-import { tw } from "./utils/tw";
 
 export interface RootData {
   env: typeof getBrowserEnv;
@@ -140,20 +139,10 @@ export function Layout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        {/* why: the upstream iOS Smart App Banner (app-id=6765639874) is
-            removed for the EPDA deployment. It made mobile Safari advertise
-            the public "Shelf Companion" App Store listing on every page —
-            a third-party app that is not this deployment's build, shown to
-            authority staff, and a breach of the EPDA identity rule.
-
-            Re-add it only once the authority publishes its own companion app,
-            substituting that listing's id. It must live here in the shared
-            document <head> rather than a route `meta` export: React Router
-            renders the leaf route's meta (not a merge of root + leaf), and
-            150+ routes export their own, so a root-level descriptor would be
-            dropped on the pages users actually visit.
-
-            @see apps/companion — the in-repo companion app */}
+        {/* why: no iOS Smart App Banner. The upstream one advertised the
+            public "Shelf Companion" App Store listing — a third-party app,
+            not this deployment's build. The in-repo companion app was itself
+            removed on 2026-08-06; EPDA runs on the web app only. */}
         <ClientHintCheck nonce={nonce} />
         <style data-fullcalendar />
         <Meta />

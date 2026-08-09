@@ -117,10 +117,20 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           userId,
         });
 
-        /** Redirect to the relevant action. We also set the current org to the one selected, as the user could select  */
+        /**
+         * Redirect to the relevant action. We also set the current org to the
+         * one selected, as the user could select a different one.
+         *
+         * EPDA: `linkTo === "new"` no longer creates an asset. Stock enters
+         * only through مذكرة/محضر استلام, so a scanned sticker can only be
+         * attached to an item that already exists — which is the right order
+         * anyway: the delivery is booked in on a form, then someone walks
+         * around labelling what arrived. The value is still accepted so an
+         * older client sending it lands somewhere sensible instead of erroring.
+         */
         return redirect(
           linkTo === "new"
-            ? `/assets/new?qrId=${qrId}`
+            ? `/receipts/new?qrId=${qrId}`
             : `/qr/${qrId}/link-existing-asset`,
           {
             headers: [
@@ -171,27 +181,26 @@ export default function QrLink() {
               </p>
             </div>
             <div className="flex flex-col justify-center gap-2">
+              {/*
+               * EPDA: "create a new asset here" is gone. It was a second door
+               * into inventory, bypassing the receipt forms that carry the
+               * supplier, the purchase order and the price. Linking a sticker
+               * to an item that already exists is now the primary action —
+               * the delivery is booked in on a form first, then labelled.
+               */}
               <Button
                 variant="primary"
-                className=" max-w-full"
-                to={`/assets/new?qrId=${qrId}`}
-              >
-                {t("ui.createANewAssetAndLink")}
-              </Button>
-              <Button
-                variant="primary"
-                className=" max-w-full"
-                to={`/kits/new?qrId=${qrId}`}
-              >
-                {t("ui.createANewKitAndLink")}
-              </Button>
-
-              <Button
-                variant="secondary"
                 className=" max-w-full"
                 to={`/qr/${qrId}/link/asset`}
               >
                 {t("qr.linkToExisting")}
+              </Button>
+              <Button
+                variant="secondary"
+                className=" max-w-full"
+                to={`/kits/new?qrId=${qrId}`}
+              >
+                {t("ui.createANewKitAndLink")}
               </Button>
 
               <Button variant="secondary" className="max-w-full" to={"/"}>

@@ -45,7 +45,7 @@ const HISTORIC_PAIRS_MAX = 2;
  */
 export async function runCurrentStatePhase(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   if (state.assetIds.length === 0) return;
 
@@ -64,15 +64,15 @@ export async function runCurrentStatePhase(
   // Partition the available pool into three disjoint buckets.
   const shuffled = [...availableIds].sort(() => ctx.rng() - 0.5);
   const currentCount = Math.round(
-    availableIds.length * CURRENT_CUSTODY_FRACTION
+    availableIds.length * CURRENT_CUSTODY_FRACTION,
   );
   const historicCount = Math.round(
-    availableIds.length * HISTORIC_CUSTODY_FRACTION
+    availableIds.length * HISTORIC_CUSTODY_FRACTION,
   );
   const currentBucket = shuffled.slice(0, currentCount);
   const historicBucket = shuffled.slice(
     currentCount,
-    currentCount + historicCount
+    currentCount + historicCount,
   );
 
   const events: ActivityEventInput[] = [];
@@ -85,22 +85,22 @@ export async function runCurrentStatePhase(
     const pairs = randomIntInRange(
       HISTORIC_PAIRS_MIN,
       HISTORIC_PAIRS_MAX,
-      ctx.rng
+      ctx.rng,
     );
     for (let i = 0; i < pairs; i++) {
       const custodian = pickTeamMember(ctx);
       const assignedAt = randomDateBetween(
         ctx.historyStart,
         new Date(ctx.now.getTime() - 7 * 24 * 60 * 60 * 1000),
-        ctx.rng
+        ctx.rng,
       );
       const releasedAt = randomDateBetween(
         assignedAt,
         new Date(
           assignedAt.getTime() +
-            randomIntInRange(1, 30, ctx.rng) * 24 * 60 * 60 * 1000
+            randomIntInRange(1, 30, ctx.rng) * 24 * 60 * 60 * 1000,
         ),
-        ctx.rng
+        ctx.rng,
       );
       events.push(
         custodyAssignedEvent({
@@ -110,7 +110,7 @@ export async function runCurrentStatePhase(
           assetId,
           teamMemberId: custodian.teamMemberId,
           targetUserId: custodian.targetUserId,
-        })
+        }),
       );
       events.push(
         custodyReleasedEvent({
@@ -120,7 +120,7 @@ export async function runCurrentStatePhase(
           assetId,
           teamMemberId: custodian.teamMemberId,
           targetUserId: custodian.targetUserId,
-        })
+        }),
       );
     }
   }
@@ -137,7 +137,7 @@ async function applyCurrentCustody(
   ctx: SeederContext,
   state: SeederState,
   assetIds: string[],
-  events: ActivityEventInput[]
+  events: ActivityEventInput[],
 ): Promise<void> {
   if (assetIds.length === 0) return;
 
@@ -150,7 +150,7 @@ async function applyCurrentCustody(
   // Pick a custodian for each asset. `assignedAt` is spread across the
   // last 6 months so the custody "duration" spans a variety of lengths.
   const sixMonthsAgo = new Date(
-    ctx.now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000
+    ctx.now.getTime() - 6 * 30 * 24 * 60 * 60 * 1000,
   );
 
   for (const assetId of assetIds) {
@@ -171,7 +171,7 @@ async function applyCurrentCustody(
         assetId,
         teamMemberId: custodian.teamMemberId,
         targetUserId: custodian.targetUserId,
-      })
+      }),
     );
   }
 

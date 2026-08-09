@@ -121,7 +121,7 @@ describe("feedbackEmailText", () => {
     expect(text).toContain("Status: 500");
     expect(text).toContain("Title: Oops, something went wrong");
     expect(text).toContain(
-      "Message: Something went wrong while fetching the kit"
+      "Message: Something went wrong while fetching the kit",
     );
     expect(text).toContain("Trace id: trace_789");
     expect(text).toContain("Sentry event id: evt_abc");
@@ -191,7 +191,7 @@ describe("sendFeedbackEmail", () => {
         to: "support@shelf.nu",
         replyTo: "alice@example.com",
         subject: expect.stringContaining("New feedback [Issue]:"),
-      })
+      }),
     );
   });
 
@@ -200,7 +200,7 @@ describe("sendFeedbackEmail", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         subject: expect.stringContaining("New feedback [Error report]:"),
-      })
+      }),
     );
   });
 });

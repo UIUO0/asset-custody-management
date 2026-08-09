@@ -44,21 +44,21 @@ export function useReportRowHandlers(): ReportRowHandlers {
     (row: { bookingId: string }) => {
       void navigate(`/bookings/${row.bookingId}`);
     },
-    [navigate]
+    [navigate],
   );
 
   const onAssetRowClick = useCallback(
     (row: { assetId: string }) => {
       void navigate(`/assets/${row.assetId}`);
     },
-    [navigate]
+    [navigate],
   );
 
   const onKitRowClick = useCallback(
     (row: { kitId: string }) => {
       void navigate(`/kits/${row.kitId}`);
     },
-    [navigate]
+    [navigate],
   );
 
   return { onBookingRowClick, onAssetRowClick, onKitRowClick };

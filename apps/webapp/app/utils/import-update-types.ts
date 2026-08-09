@@ -33,7 +33,7 @@ import {
  */
 export const EXPORT_HEADER_TO_FIELD_MAP: Record<string, string> = {
   ...(Object.fromEntries(
-    Object.entries(columnsLabelsMap).map(([key, label]) => [label, key])
+    Object.entries(columnsLabelsMap).map(([key, label]) => [label, key]),
   ) as Record<string, ColumnLabelKey>),
   // Aliases for qty-tracked + consumption columns that don't live in
   // the asset-index export column system. Customers using the

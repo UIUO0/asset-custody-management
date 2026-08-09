@@ -7,7 +7,7 @@ export const extractImageNameFromSupabaseUrl = ({
 }) => {
   const regex = new RegExp(
     `\\/${bucketName}\\/([a-f0-9-]+)\\/([a-z0-9]+)\\/([a-z0-9\\-]+\\.[a-z]{3,4})`,
-    "i"
+    "i",
   );
   const match = url.split("?")[0].match(regex); // split the url at '?' and take the first part
   if (match) {

@@ -16,14 +16,14 @@ const DEFAULT_PREFIX = "SAM";
  * Creates a PostgreSQL sequence for an organization if it doesn't exist
  */
 export async function createOrganizationSequence(
-  organizationId: string
+  organizationId: string,
 ): Promise<void> {
   try {
     await db.$executeRaw`SELECT create_asset_sequence_for_org(${organizationId})`;
   } catch (error) {
     console.error(
       `Failed to create sequence for organization ${organizationId}:`,
-      error
+      error,
     );
     throw new Error(`Could not create asset sequence for organization`);
   }
@@ -40,7 +40,7 @@ export async function createOrganizationSequence(
  */
 export async function getNextSequentialId(
   organizationId: string,
-  prefix: string = DEFAULT_PREFIX
+  prefix: string = DEFAULT_PREFIX,
 ): Promise<string> {
   try {
     const result = await db.$queryRaw<[{ get_next_sequential_id: string }]>`
@@ -51,7 +51,7 @@ export async function getNextSequentialId(
   } catch (error) {
     console.error(
       `Failed to get next sequential ID for organization ${organizationId}:`,
-      error
+      error,
     );
     throw new Error(`Could not generate sequential ID`);
   }
@@ -67,7 +67,7 @@ export async function getNextSequentialId(
  */
 export async function estimateNextSequentialId(
   organizationId: string,
-  prefix: string = DEFAULT_PREFIX
+  prefix: string = DEFAULT_PREFIX,
 ): Promise<string> {
   try {
     // Ensure the sequence exists (this does not consume a value).
@@ -106,7 +106,7 @@ export async function estimateNextSequentialId(
     // still visible, while no longer emitting a Postgres ERROR on every page load.
     console.error(
       `Failed to read asset sequence for organization ${organizationId}, falling back to max scan:`,
-      error
+      error,
     );
   }
 
@@ -139,7 +139,7 @@ export async function estimateNextSequentialId(
  */
 export function formatSequentialId(
   sequenceNumber: number,
-  prefix: string = DEFAULT_PREFIX
+  prefix: string = DEFAULT_PREFIX,
 ): string {
   const paddedNumber = sequenceNumber.toString().padStart(4, "0");
   return `${prefix}-${paddedNumber}`;
@@ -152,14 +152,14 @@ export function formatSequentialId(
  * @param organizationId - The organization ID
  */
 export async function resetOrganizationSequence(
-  organizationId: string
+  organizationId: string,
 ): Promise<void> {
   try {
     await db.$executeRaw`SELECT reset_asset_sequence_for_org(${organizationId})`;
   } catch (error) {
     console.error(
       `Failed to reset sequence for organization ${organizationId}:`,
-      error
+      error,
     );
     throw new Error(`Could not reset asset sequence for organization`);
   }
@@ -173,7 +173,7 @@ export async function resetOrganizationSequence(
  * @returns Promise<boolean> - True if any assets have sequential IDs
  */
 export async function organizationHasSequentialIds(
-  organizationId: string
+  organizationId: string,
 ): Promise<boolean> {
   try {
     const count = await db.asset.count({
@@ -187,7 +187,7 @@ export async function organizationHasSequentialIds(
   } catch (error) {
     console.error(
       `Failed to check sequential IDs for organization ${organizationId}:`,
-      error
+      error,
     );
     return false;
   }
@@ -201,7 +201,7 @@ export async function organizationHasSequentialIds(
  * @returns Promise<number> - Number of assets without sequential IDs
  */
 export async function getAssetsWithoutSequentialIdCount(
-  organizationId: string
+  organizationId: string,
 ): Promise<number> {
   try {
     return await db.asset.count({
@@ -213,7 +213,7 @@ export async function getAssetsWithoutSequentialIdCount(
   } catch (error) {
     console.error(
       `Failed to count assets without sequential IDs for organization ${organizationId}:`,
-      error
+      error,
     );
     return 0;
   }
@@ -261,7 +261,7 @@ export function extractSequenceNumber(sequentialId: string): number | null {
  */
 export async function generateBulkSequentialIdsEfficient(
   organizationId: string,
-  prefix: string = DEFAULT_PREFIX
+  prefix: string = DEFAULT_PREFIX,
 ): Promise<number> {
   try {
     // Ensure sequence exists
@@ -307,7 +307,7 @@ export async function generateBulkSequentialIdsEfficient(
         id: asset.id,
         sequentialId: `${prefix}-${String(batchStartNum + index).padStart(
           Math.max(4, String(startingNumber + assetIds.length).length),
-          "0"
+          "0",
         )}`,
       }));
 
@@ -318,7 +318,7 @@ export async function generateBulkSequentialIdsEfficient(
         FROM (
           SELECT unnest(${values.map((v) => v.id)}::text[]) as id,
                  unnest(${values.map(
-                   (v) => v.sequentialId
+                   (v) => v.sequentialId,
                  )}::text[]) as sequential_id
         ) as batch_data
         WHERE "Asset".id::text = batch_data.id
@@ -329,7 +329,7 @@ export async function generateBulkSequentialIdsEfficient(
       console.log(
         `🔧 DEBUG: Processed batch ${
           Math.floor(i / BATCH_SIZE) + 1
-        }: ${batchResult} assets updated`
+        }: ${batchResult} assets updated`,
       );
     }
 
@@ -351,15 +351,15 @@ export async function generateBulkSequentialIdsEfficient(
 
     console.log(
       `Generated bulk sequential IDs for organization ${organizationId}: ${result} assets updated, starting from ${prefix}-${String(
-        startingNumber
-      ).padStart(4, "0")}`
+        startingNumber,
+      ).padStart(4, "0")}`,
     );
 
     return Number(result);
   } catch (error) {
     console.error(
       `Failed to efficiently generate bulk sequential IDs for organization ${organizationId}:`,
-      error
+      error,
     );
     throw new Error(`Could not generate sequential IDs for existing assets`);
   }

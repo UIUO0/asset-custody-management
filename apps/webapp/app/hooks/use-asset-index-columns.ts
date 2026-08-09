@@ -56,7 +56,7 @@ export function useAssetIndexColumns() {
   const fetchers = useFetchers();
   /** Find the fetcher used for toggling between asset index modes */
   const columnsFetcher = fetchers.find(
-    (fetcher) => fetcher.key === "asset-index-settings-columns"
+    (fetcher) => fetcher.key === "asset-index-settings-columns",
   );
 
   if (columnsFetcher?.formData) {

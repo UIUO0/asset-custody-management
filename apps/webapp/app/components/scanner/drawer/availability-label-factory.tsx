@@ -1,6 +1,6 @@
 import type { ReactNode, FC } from "react";
 import type { TFunction } from "i18next";
-import { AvailabilityBadge } from "~/components/booking/availability-label";
+import { AvailabilityBadge } from "~/components/shared/availability-badge";
 
 /**
  * Configuration type for a single availability label
@@ -144,17 +144,6 @@ export const assetLabelPresets = {
     tooltipTitle: t("scanAvailability.assetUnavailableTitle"),
     tooltipContent: t("scanAvailability.assetUnavailableContent"),
     priority: 110,
-  }),
-
-  alreadyInBooking: (
-    t: TFunction,
-    isInBooking: boolean = false,
-  ): AvailabilityLabelConfig => ({
-    condition: isInBooking,
-    badgeText: t("scanAvailability.alreadyInBooking"),
-    tooltipTitle: t("scanAvailability.alreadyInBookingTitle"),
-    tooltipContent: t("scanAvailability.alreadyInBookingContent"),
-    priority: 70,
   }),
 };
 

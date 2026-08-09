@@ -15,7 +15,7 @@ export function WarningBox({
       className={tw(
         "relative rounded border border-warning-300 bg-warning-25 p-4 text-sm text-warning-700",
         visible ? "block" : "hidden",
-        rest?.className || ""
+        rest?.className || "",
       )}
     >
       {children}

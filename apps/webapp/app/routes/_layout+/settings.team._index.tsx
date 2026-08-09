@@ -24,7 +24,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
     });
     const isPersonalOrg = currentOrganization.type === "PERSONAL";
     return redirect(
-      isPersonalOrg ? "/settings/team/nrm" : "/settings/team/users"
+      isPersonalOrg ? "/settings/team/nrm" : "/settings/team/users",
     );
   } catch (cause) {
     const reason = makeShelfError(cause);

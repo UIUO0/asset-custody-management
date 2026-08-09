@@ -23,7 +23,7 @@ export function usePagination() {
       prevDisabled: totalPages <= 1 || page <= 1,
       nextDisabled: totalPages <= 1 || page * perPage >= totalItems,
     }),
-    [page, totalPages, perPage, totalItems]
+    [page, totalPages, perPage, totalItems],
   );
 
   return {

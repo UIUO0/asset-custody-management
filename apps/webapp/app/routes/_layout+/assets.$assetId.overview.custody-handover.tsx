@@ -37,6 +37,7 @@ import { partyFor } from "~/modules/custody/handover";
 import {
   openHandover,
   recordHandoverSignature,
+  resolveOwnDepartmentId,
   writeHandoverNote,
 } from "~/modules/custody/handover.server";
 import { getUserByID } from "~/modules/user/service.server";
@@ -88,6 +89,15 @@ const HandoverFormSchema = z
       }
     }),
     conditionNotes: z.string().max(2000).optional(),
+
+    /**
+     * Units to move. Only rendered for quantity-tracked assets; individually
+     * tracked ones submit nothing and the service defaults them to 1.
+     *
+     * Validated against the units actually available in `openHandover` — the
+     * form's `max` is a convenience, not the fence.
+     */
+    quantity: z.coerce.number().int().min(1).optional(),
 
     /**
      * `present` — the employee is standing here and signs on this device.
@@ -167,6 +177,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         custody: {
           select: {
             id: true,
+            quantity: true,
             custodian: {
               select: { id: true, name: true, user: { select: { id: true } } },
             },
@@ -177,10 +188,47 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     const currentCustody = asset?.custody?.[0] ?? null;
 
-    // Direction is a fact about the asset, not a user choice.
-    const kind = currentCustody
-      ? CustodyHandoverKind.RETURN
-      : CustodyHandoverKind.HANDOVER;
+    /**
+     * Direction is a fact about the asset and the viewer, not a user choice.
+     *
+     * Held by nobody          → تسليم from the shelf.
+     * Held by my department   → تسليم onward to one of our staff (a transfer).
+     * Held by anybody else    → استرجاع.
+     *
+     * The middle case is derived the same way here and in the action. If the
+     * loader disagreed with the action the operator would read "استرجاع" on a
+     * screen that then filed a تسليم — the sort of mismatch nobody notices
+     * until the محضر is printed.
+     */
+    const ownDepartmentId = await resolveOwnDepartmentId({
+      userId,
+      organizationId,
+    });
+    const isDepartmentTransfer =
+      Boolean(currentCustody) &&
+      Boolean(ownDepartmentId) &&
+      currentCustody!.custodian.id === ownDepartmentId;
+
+    const kind =
+      currentCustody && !isDepartmentTransfer
+        ? CustodyHandoverKind.RETURN
+        : CustodyHandoverKind.HANDOVER;
+
+    /**
+     * Ceiling for the quantity field. Advisory only — `openHandover` re-derives
+     * it inside the transaction, which is the fence.
+     */
+    const heldTotal = (asset.custody ?? []).reduce(
+      (sum, row) => sum + (row.quantity ?? 0),
+      0,
+    );
+    const maxMovableUnits =
+      asset.type === "QUANTITY_TRACKED"
+        ? currentCustody
+          ? // Transfer or return: bounded by what the current holder has.
+            (currentCustody.quantity ?? 0) || 1
+          : Math.max(1, (asset.quantity ?? 0) - heldTotal)
+        : 1;
 
     const searchParams = getCurrentSearchParams(request);
 
@@ -214,6 +262,19 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       asset,
       kind,
       currentCustody,
+      isDepartmentTransfer,
+      /**
+       * Units the operator may move, and whether to ask at all.
+       *
+       * Individually-tracked assets always move as one, so they get no field.
+       * For quantity-tracked stock the ceiling depends on the direction: a
+       * transfer can only pass on what the desk holds, an issue from the shelf
+       * only what is not already out.
+       */
+      quantity: {
+        tracked: asset.type === "QUANTITY_TRACKED",
+        max: maxMovableUnits,
+      },
       teamMembers,
       totalTeamMembers,
       operatorName:
@@ -254,9 +315,27 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       where: { assetId, asset: { organizationId } },
       select: { teamMemberId: true },
     });
-    const kind = custody
-      ? CustodyHandoverKind.RETURN
-      : CustodyHandoverKind.HANDOVER;
+
+    /**
+     * A department passing stock it received in a batch on to its own staff is
+     * a **transfer**, not a return: the asset never goes back to the shelf.
+     *
+     * Derived from the caller's own membership, never from the form — the
+     * department pointer is what proves this operator speaks for that desk.
+     */
+    const ownDepartmentId = await resolveOwnDepartmentId({
+      userId,
+      organizationId,
+    });
+    const isDepartmentTransfer =
+      Boolean(custody) &&
+      Boolean(ownDepartmentId) &&
+      custody!.teamMemberId === ownDepartmentId;
+
+    const kind =
+      custody && !isDepartmentTransfer
+        ? CustodyHandoverKind.RETURN
+        : CustodyHandoverKind.HANDOVER;
 
     // A self-service employee may only transact for themselves. Re-checked
     // here and not only in the loader, because the loader's filtered list is a
@@ -272,10 +351,16 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     }
 
     const handover = await openHandover({
-      assetId,
+      // Single-asset محضر from the asset page — the batch path (a whole
+      // purchase order to a department) passes many lines to the same service.
+      assets: [{ id: assetId, quantity: form.quantity ?? 1 }],
       organizationId,
       kind,
       counterpartyTeamMemberId: form.custodian.id,
+      // Set only for a department transfer. `openHandover` then requires the
+      // asset to be held by exactly this desk, so it tightens rather than
+      // relaxes the check.
+      releasingTeamMemberId: isDepartmentTransfer ? ownDepartmentId : null,
       operatorUserId: userId,
       conditionNotes: form.conditionNotes,
     });
@@ -366,8 +451,14 @@ export function links() {
 export default function CustodyHandover() {
   // `teamMembers` is loaded for DynamicSelect's `initialDataKey`, which reads
   // it off the loader payload directly rather than from a prop.
-  const { asset, kind, currentCustody, operatorName } =
-    useLoaderData<typeof loader>();
+  const {
+    asset,
+    kind,
+    currentCustody,
+    operatorName,
+    quantity,
+    isDepartmentTransfer,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const disabled = useDisabled();
   const { t } = useTranslation();
@@ -440,6 +531,33 @@ export default function CustodyHandover() {
             />
           </div>
         )}
+
+        {/*
+          Units to move. Only for quantity-tracked stock — an individually
+          tracked asset is one thing, and a field that can only hold 1 is a
+          question with one answer.
+
+          `max` mirrors the server's ceiling so the common mistake is caught
+          before a signature is collected; `openHandover` re-checks it inside
+          the transaction, which is what actually enforces it.
+        */}
+        {quantity.tracked ? (
+          <div className="mb-6">
+            <Input
+              type="number"
+              name="quantity"
+              label={t("custodySignature.quantityLabel")}
+              defaultValue={quantity.max}
+              min={1}
+              max={quantity.max}
+              required
+              hideLabel={false}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              {t("custodySignature.quantityHint", { max: quantity.max })}
+            </p>
+          </div>
+        ) : null}
 
         <div className="mb-6">
           <Input
@@ -525,7 +643,14 @@ export default function CustodyHandover() {
             imageFieldName="warehouseSignature"
             nameFieldName="warehouseName"
             acknowledgementFieldName="warehouseAcknowledgement"
-            title={t("custodySignature.warehouseParty")}
+            title={
+              // On a department transfer the releasing side is the department,
+              // not the warehouse — the desk signing here never touched a
+              // warehouse shelf, and naming it one misstates the record.
+              isDepartmentTransfer
+                ? t("custodySignature.departmentParty")
+                : t("custodySignature.warehouseParty")
+            }
             acknowledgementLabel={
               isReturn
                 ? t("custodySignature.acknowledgeReturnWarehouse")

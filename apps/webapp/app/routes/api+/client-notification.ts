@@ -22,7 +22,7 @@ export async function action({ context, request }: LoaderFunctionArgs) {
   try {
     const parsedData = parseData(
       await request.json(),
-      ClientNotificationSchema
+      ClientNotificationSchema,
     );
 
     const { title, message, icon } = parsedData;

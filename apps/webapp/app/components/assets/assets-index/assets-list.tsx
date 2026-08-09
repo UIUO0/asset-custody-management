@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { m } from "framer-motion";
 import { Package } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
-import { useFetcher, useFetchers, useLoaderData } from "react-router";
+import { useFetcher, useFetchers } from "react-router";
 import { List, type ListProps } from "~/components/list";
 import { ListContentWrapper } from "~/components/list/content-wrapper";
 import { LocationBadge } from "~/components/location/location-badge";
@@ -25,7 +25,6 @@ import { useAssetIndexColumns } from "~/hooks/use-asset-index-columns";
 import { useAssetIndexViewState } from "~/hooks/use-asset-index-view-state";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useDisabled } from "~/hooks/use-disabled";
-import { useIsAvailabilityView } from "~/hooks/use-is-availability-view";
 import { useIsUserAssetsPage } from "~/hooks/use-is-user-assets-page";
 import { useViewportHeight } from "~/hooks/use-viewport-height";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
@@ -33,7 +32,6 @@ import type { AssetsFromViewItem } from "~/modules/asset/types";
 import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
 import { resolveDisplayCode } from "~/modules/barcode/display";
 import { formatCustodyList } from "~/modules/custody/utils";
-import type { AssetIndexLoaderData } from "~/routes/_layout+/assets._index";
 import {
   PermissionAction,
   PermissionEntity,
@@ -50,10 +48,7 @@ import { AssetIndexPagination } from "./asset-index-pagination";
 import AssetQuickActions from "./asset-quick-actions";
 import { AssetIndexFilters } from "./filters";
 import { ListItemTagsColumn } from "./list-item-tags-column";
-import AvailabilityCalendar from "../../availability-calendar/availability-calendar";
-import { ResourceTitleLink } from "../../availability-calendar/resource-title-link";
 import { CategoryBadge } from "../category-badge";
-import { useAssetAvailabilityData } from "./use-asset-availability-data";
 
 export const AssetsList = ({
   customEmptyStateContent,
@@ -67,11 +62,8 @@ export const AssetsList = ({
   wrapperClassName?: string;
 }) => {
   const { t } = useTranslation();
-  const { items } = useLoaderData<AssetIndexLoaderData>();
   // We use the hook because it handles optimistic UI
   const { modeIsSimple } = useAssetIndexViewState();
-  const { isAvailabilityView, shouldShowAvailabilityView } =
-    useIsAvailabilityView();
   const columns = useAssetIndexColumns();
   // Memoize so the object reference stays stable across re-renders,
   // allowing React.memo on AdvancedAssetRow to work effectively.
@@ -95,11 +87,6 @@ export const AssetsList = ({
     ],
   });
   const fetchers = useFetchers();
-  const { resources, events } = useAssetAvailabilityData(items);
-  // Workspace pref + addon entitlement — used by the availability-view
-  // resourceLabelContent to render AssetCodeBadge next to status + category.
-  // resolveDisplayCode short-circuits to QR for non-addon orgs, so always safe.
-  const currentOrganization = useCurrentOrganization();
   /** Find the fetcher used for toggling between asset index modes */
   const modeFetcher = fetchers.find(
     (fetcher) => fetcher.key === "asset-index-settings-mode",
@@ -141,7 +128,6 @@ export const AssetsList = ({
       className={tw(
         "flex flex-col",
         modeIsSimple ? "gap-4 pb-5 pt-4" : "gap-2 py-2",
-        isAvailabilityView ? "pb-3" : "",
         wrapperClassName,
         isSwappingMode && "overflow-hidden",
       )}
@@ -166,86 +152,23 @@ export const AssetsList = ({
           <AssetIndexFilters
             disableTeamMemberFilter={disableTeamMemberFilter}
           />
-          {isAvailabilityView && shouldShowAvailabilityView ? (
-            <>
-              <AvailabilityCalendar
-                resources={resources}
-                events={events}
-                resourceLabelContent={({ resource }) => {
-                  const displayCode = currentOrganization
-                    ? resolveDisplayCode({
-                        entity: {
-                          sequentialId: resource.extendedProps?.sequentialId,
-                          preferredBarcodeId:
-                            resource.extendedProps?.preferredBarcodeId,
-                          qrCodes: resource.extendedProps?.qrCodes,
-                          barcodes: resource.extendedProps?.barcodes,
-                        },
-                        organization: currentOrganization,
-                      })
-                    : null;
-                  return (
-                    <div className="flex items-center gap-2 px-2">
-                      <AssetImage
-                        asset={{
-                          id: resource.id,
-                          mainImage: resource.extendedProps?.mainImage,
-                          thumbnailImage:
-                            resource.extendedProps?.thumbnailImage,
-                          mainImageExpiration:
-                            resource.extendedProps?.mainImageExpiration,
-                        }}
-                        alt={`Image of ${resource.title}`}
-                        className="size-14 shrink-0 rounded border object-cover"
-                        withPreview
-                      />
-                      <div className="flex min-w-0 flex-1 flex-col gap-1">
-                        <ResourceTitleLink
-                          to={`/assets/${resource.id}`}
-                          title={resource.title}
-                        />
-                        <div className="flex flex-wrap items-center gap-2">
-                          <AssetStatusBadge
-                            id={resource.id}
-                            status={resource.extendedProps?.status}
-                            availableToBook={
-                              resource.extendedProps?.availableToBook
-                            }
-                            asset={resource.extendedProps}
-                          />
-                          <CategoryBadge
-                            category={resource.extendedProps?.category}
-                          />
-                          {displayCode ? (
-                            <AssetCodeBadge {...displayCode} />
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-              <AssetIndexPagination />
-            </>
-          ) : (
-            <List
-              title={t("nav.assets")}
-              ItemComponent={modeIsSimple ? ListAssetContent : AdvancedAssetRow}
-              customPagination={<AssetIndexPagination />}
-              bulkActions={
-                disableBulkActions || !canBulkManageAssets ? undefined : (
-                  <BulkActionsDropdown />
-                )
-              }
-              customEmptyStateContent={
-                customEmptyStateContent ? customEmptyStateContent : undefined
-              }
-              headerChildren={headerChildren}
-              extraItemComponentProps={
-                modeIsSimple ? undefined : advancedExtraProps
-              }
-            />
-          )}
+          <List
+            title={t("nav.assets")}
+            ItemComponent={modeIsSimple ? ListAssetContent : AdvancedAssetRow}
+            customPagination={<AssetIndexPagination />}
+            bulkActions={
+              disableBulkActions || !canBulkManageAssets ? undefined : (
+                <BulkActionsDropdown />
+              )
+            }
+            customEmptyStateContent={
+              customEmptyStateContent ? customEmptyStateContent : undefined
+            }
+            headerChildren={headerChildren}
+            extraItemComponentProps={
+              modeIsSimple ? undefined : advancedExtraProps
+            }
+          />
         </ListContentWrapper>
       )}
     </div>

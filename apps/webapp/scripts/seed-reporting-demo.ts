@@ -102,7 +102,7 @@ async function main(): Promise<void> {
       process.exit(0);
     }
     console.error(
-      `\nError: ${err instanceof Error ? err.message : String(err)}\n`
+      `\nError: ${err instanceof Error ? err.message : String(err)}\n`,
     );
     console.error(USAGE);
     process.exit(1);
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
   if (process.env.NODE_ENV === "production" && !options.iKnowWhatImDoing) {
     console.error(
       "\nRefusing to run with NODE_ENV=production without --i-know-what-im-doing.\n" +
-        "This seeder is for staging / dev only. If you truly intend this, pass the flag.\n"
+        "This seeder is for staging / dev only. If you truly intend this, pass the flag.\n",
     );
     process.exit(2);
   }
@@ -141,7 +141,7 @@ async function main(): Promise<void> {
     console.log("Building actor pool (18 fake + real users)…");
     const actors = await buildActorPool(db, options.orgId);
     console.log(
-      `  ${actors.real.length} real users + ${actors.fake.length} fake team members\n`
+      `  ${actors.real.length} real users + ${actors.fake.length} fake team members\n`,
     );
 
     const state = emptyState();
@@ -168,7 +168,7 @@ async function main(): Promise<void> {
  */
 async function validateOrganization(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<{ id: string; name: string }> {
   const org = await db.organization.findUnique({
     where: { id: orgId },
@@ -177,7 +177,7 @@ async function validateOrganization(
   if (!org) {
     throw new Error(
       `Organization ${orgId} does not exist. Create it via the Shelf UI first, ` +
-        "then re-run the seeder with its id."
+        "then re-run the seeder with its id.",
     );
   }
   return org;
@@ -191,7 +191,7 @@ async function validateOrganization(
  */
 async function assertNotAlreadyPopulated(
   db: ExtendedPrismaClient,
-  orgId: string
+  orgId: string,
 ): Promise<void> {
   const eventCount = await db.activityEvent.count({
     where: { organizationId: orgId },
@@ -201,7 +201,7 @@ async function assertNotAlreadyPopulated(
       `Organization ${orgId} already has ${eventCount} ActivityEvent rows. ` +
         "This seeder is intended for empty/near-empty workspaces. If you truly " +
         "want to seed on top of existing data, clear it first with " +
-        "`pnpm webapp:clean:reporting-demo`."
+        "`pnpm webapp:clean:reporting-demo`.",
     );
   }
 }
@@ -214,7 +214,7 @@ async function assertNotAlreadyPopulated(
 function buildContext(
   db: ExtendedPrismaClient,
   options: SeederCliOptions,
-  actors: ActorPool
+  actors: ActorPool,
 ): SeederContext {
   const now = new Date();
   const historyStart = new Date(now);
@@ -257,7 +257,7 @@ function printPlannedTargets(options: SeederCliOptions, orgName: string): void {
       `  Partial Check-ins  ${SEED_TARGETS.partialCheckinBookings}\n` +
       `  Audit Sessions     ${SEED_TARGETS.auditSessions}\n` +
       `  Audit Assets       ~${SEED_TARGETS.approxAuditAssets}\n` +
-      `  Activity Events    ~${SEED_TARGETS.approxActivityEvents}\n`
+      `  Activity Events    ~${SEED_TARGETS.approxActivityEvents}\n`,
   );
 }
 
@@ -267,49 +267,49 @@ function printPlannedTargets(options: SeederCliOptions, orgName: string): void {
  */
 async function runPhases(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   console.log(
-    "Phase 2 — taxonomy (categories, locations, tags, custom fields)…"
+    "Phase 2 — taxonomy (categories, locations, tags, custom fields)…",
   );
   await runTaxonomyPhase(ctx, state);
   console.log(
     `  ${state.counts.categories} categories, ${state.counts.locations} locations, ` +
-      `${state.counts.tags} tags, ${state.counts.customFields} custom fields\n`
+      `${state.counts.tags} tags, ${state.counts.customFields} custom fields\n`,
   );
 
   console.log("Phase 3 — assets with change history…");
   await runAssetsPhase(ctx, state);
   console.log(
-    `  ${state.counts.assets} assets, ${state.counts.activityEvents} activity events so far\n`
+    `  ${state.counts.assets} assets, ${state.counts.activityEvents} activity events so far\n`,
   );
 
   console.log("Phase 4 — kits with asset membership…");
   await runKitsPhase(ctx, state);
   console.log(
-    `  ${state.counts.kits} kits, ${state.counts.activityEvents} activity events so far\n`
+    `  ${state.counts.kits} kits, ${state.counts.activityEvents} activity events so far\n`,
   );
 
   console.log(
-    "Phase 5 — bookings with Pareto popularity, seasonality, outcome mix…"
+    "Phase 5 — bookings with Pareto popularity, seasonality, outcome mix…",
   );
   await runBookingsPhase(ctx, state);
   console.log(
     `  ${state.counts.bookings} bookings, ${state.counts.partialCheckins} partial check-ins, ` +
-      `${state.counts.activityEvents} activity events so far\n`
+      `${state.counts.activityEvents} activity events so far\n`,
   );
 
   console.log("Phase 6 — audit sessions with scan trails…");
   await runAuditsPhase(ctx, state);
   console.log(
     `  ${state.counts.auditSessions} audits, ${state.counts.auditAssets} audit assets, ` +
-      `${state.counts.auditScans} scans, ${state.counts.activityEvents} activity events so far\n`
+      `${state.counts.auditScans} scans, ${state.counts.activityEvents} activity events so far\n`,
   );
 
   console.log("Phase 7 — current-state reconciliation (custody)…");
   await runCurrentStatePhase(ctx, state);
   console.log(
-    `  ${state.counts.custodies} current custodies, ${state.counts.activityEvents} activity events total\n`
+    `  ${state.counts.custodies} current custodies, ${state.counts.activityEvents} activity events total\n`,
   );
 }
 
@@ -326,7 +326,7 @@ main().catch((err) => {
   console.error(
     "\nSeeder failed:\n",
     err instanceof Error ? err.stack ?? err.message : err,
-    "\n"
+    "\n",
   );
   process.exit(1);
 });

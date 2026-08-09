@@ -29,16 +29,16 @@ export function useIsAnyRouteActive(routes: string[]) {
   const resolvedPaths = useMemo(
     () =>
       routes.map((route) =>
-        resolveTo(route, JSON.parse(routePathnamesJson), locationPathname)
+        resolveTo(route, JSON.parse(routePathnamesJson), locationPathname),
       ),
-    [locationPathname, routePathnamesJson, routes]
+    [locationPathname, routePathnamesJson, routes],
   );
 
   return resolvedPaths.some((path) =>
     isRouteActive({
       toPathname: path.pathname,
       locationPathname,
-    })
+    }),
   );
 }
 
@@ -79,7 +79,7 @@ export function resolveTo(
   toArg: string,
   routePathnames: string[],
   locationPathname: string,
-  isPathRelative = false
+  isPathRelative = false,
 ): Path {
   let to: Partial<Path>;
   to = parsePath(toArg);
@@ -150,13 +150,13 @@ export function getResolveToMatches(matches: UIMatch[]) {
   // downstream helpers continue to resolve nested splat routes correctly while
   // we prepare for React Router v7.
   return pathMatches.map((match: any, idx: number) =>
-    idx === pathMatches.length - 1 ? match?.pathname : match?.pathnameBase
+    idx === pathMatches.length - 1 ? match?.pathname : match?.pathnameBase,
   );
 }
 
 export function getPathContributingMatches(matches: any) {
   return matches.filter(
     (match: any, index: number) =>
-      index === 0 || (match?.route?.path && match?.route?.path?.length > 0)
+      index === 0 || (match?.route?.path && match?.route?.path?.length > 0),
   );
 }

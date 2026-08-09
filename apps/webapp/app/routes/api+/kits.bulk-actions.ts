@@ -47,7 +47,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
             "bulk-update-location",
           ]),
         })
-        .and(CurrentSearchParamsSchema)
+        .and(CurrentSearchParamsSchema),
     );
 
     const intent2ActionMap: Record<typeof intent, PermissionAction> = {
@@ -89,7 +89,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       case "bulk-assign-custody": {
         const { kitIds, custodian } = parseData(
           formData,
-          BulkAssignKitCustodySchema
+          BulkAssignKitCustodySchema,
         );
 
         // Validate that the custodian belongs to the same organization
@@ -190,7 +190,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       case "bulk-update-location": {
         const { kitIds, newLocationId, currentSearchParams } = parseData(
           formData,
-          KitBulkLocationUpdateSchema.and(CurrentSearchParamsSchema)
+          KitBulkLocationUpdateSchema.and(CurrentSearchParamsSchema),
         );
 
         await bulkUpdateKitLocation({

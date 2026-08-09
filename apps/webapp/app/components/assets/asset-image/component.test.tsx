@@ -34,7 +34,7 @@ vi.mock("~/components/shared/spinner", () => ({
  * generation path.
  */
 const createAssetNeedingThumbnail = (
-  overrides: Partial<AssetForThumbnail & { mainImage: string }> = {}
+  overrides: Partial<AssetForThumbnail & { mainImage: string }> = {},
 ) =>
   ({
     id: "asset-1",
@@ -76,7 +76,7 @@ describe("AssetImage thumbnail resilience", () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ asset: { thumbnailImage: null } }), {
         status: 200,
-      })
+      }),
     );
 
     render(<AssetImage asset={createAssetNeedingThumbnail()} alt="My asset" />);
@@ -101,8 +101,8 @@ describe("AssetImage thumbnail resilience", () => {
         JSON.stringify({
           error: { message: "Too many requests. Please try again later." },
         }),
-        { status: 429 }
-      )
+        { status: 429 },
+      ),
     );
 
     render(<AssetImage asset={createAssetNeedingThumbnail()} alt="My asset" />);
@@ -132,8 +132,8 @@ describe("AssetImage thumbnail resilience", () => {
         JSON.stringify({
           error: { message: "Too many requests. Please try again later." },
         }),
-        { status: 429 }
-      )
+        { status: 429 },
+      ),
     );
 
     render(<AssetImage asset={createAssetNeedingThumbnail()} alt="My asset" />);
@@ -153,8 +153,8 @@ describe("AssetImage thumbnail resilience", () => {
         JSON.stringify({
           error: { message: "Too many requests. Please try again later." },
         }),
-        { status: 429 }
-      )
+        { status: 429 },
+      ),
     );
 
     render(
@@ -162,7 +162,7 @@ describe("AssetImage thumbnail resilience", () => {
         asset={createExpiredPreviewAsset()}
         alt="My asset"
         withPreview
-      />
+      />,
     );
     await act(() => vi.advanceTimersByTimeAsync(3000));
 
@@ -170,7 +170,7 @@ describe("AssetImage thumbnail resilience", () => {
     // endpoint — and the 429 must be swallowed without crashing.
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(String(fetchMock.mock.calls[0][0])).toContain(
-      "/api/asset/refresh-main-image"
+      "/api/asset/refresh-main-image",
     );
     expect(screen.getAllByAltText("My asset").length).toBeGreaterThan(0);
   });
@@ -181,14 +181,14 @@ describe("AssetImage thumbnail resilience", () => {
     const fetchMock = vi.spyOn(global, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ asset: { thumbnailImage: null } }), {
         status: 200,
-      })
+      }),
     );
 
     const { rerender } = render(
       <AssetImage
         asset={createAssetNeedingThumbnail({ id: "asset-1" })}
         alt="First"
-      />
+      />,
     );
     await act(() => vi.advanceTimersByTimeAsync(3000));
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -199,7 +199,7 @@ describe("AssetImage thumbnail resilience", () => {
       <AssetImage
         asset={createAssetNeedingThumbnail({ id: "asset-9" })}
         alt="Second"
-      />
+      />,
     );
     await act(() => vi.advanceTimersByTimeAsync(3000));
 
@@ -221,14 +221,14 @@ describe("AssetImage thumbnail resilience", () => {
       (input: RequestInfo | URL, init?: RequestInit) =>
         new Promise<Response>((resolve) => {
           calls.push({ url: String(input), signal: init?.signal, resolve });
-        })
+        }),
     );
 
     const { rerender } = render(
       <AssetImage
         asset={createAssetNeedingThumbnail({ id: "asset-1" })}
         alt="Pic"
-      />
+      />,
     );
     await act(() => vi.advanceTimersByTimeAsync(3000));
     expect(calls).toHaveLength(1);
@@ -239,7 +239,7 @@ describe("AssetImage thumbnail resilience", () => {
       <AssetImage
         asset={createAssetNeedingThumbnail({ id: "asset-9" })}
         alt="Pic"
-      />
+      />,
     );
     await act(() => vi.advanceTimersByTimeAsync(3000));
     expect(calls).toHaveLength(2);

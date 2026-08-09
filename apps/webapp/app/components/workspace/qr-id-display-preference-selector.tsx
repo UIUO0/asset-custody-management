@@ -135,7 +135,7 @@ export default function QrIdDisplayPreferenceSelector({
           .toLowerCase()
           .includes(searchQuery.toLowerCase()),
     );
-  }, [searchQuery, availableOptions]);
+  }, [searchQuery, availableOptions, t]);
 
   // Keep `selectedIndex` aligned with the currently-resolved selection in the
   // filtered list. Without this, the index is seeded once at mount but never

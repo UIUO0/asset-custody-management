@@ -68,7 +68,7 @@ export type Error404AdditionalData = z.infer<
  *          If it's a valid 404 error, returns {isError404: true, additionalData: Error404AdditionalData}
  */
 export function parse404ErrorData(
-  response: unknown
+  response: unknown,
 ):
   | { isError404: false; additionalData: null }
   | { isError404: true; additionalData: Error404AdditionalData } {
@@ -77,7 +77,7 @@ export function parse404ErrorData(
   }
 
   const parsedDataResponse = error404AdditionalDataSchema.safeParse(
-    response.data.error.additionalData
+    response.data.error.additionalData,
   );
 
   if (!parsedDataResponse.success) {
@@ -94,7 +94,7 @@ export function parse404ErrorData(
  * @returns A string representing the human-readable label for the model
  */
 export function getModelLabelForEnumValue(
-  model: Error404AdditionalData["model"]
+  model: Error404AdditionalData["model"],
 ): string {
   if (model === "customField") {
     return "Custom field";

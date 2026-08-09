@@ -1,421 +1,99 @@
-import { OrganizationRoles, AssetStatus } from "@prisma/client";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+/**
+ * Tests for the legacy unsigned custody-assignment route.
+ *
+ * This route used to assign custody directly. EPDA requires both parties to
+ * sign a محضر before an asset changes hands, so it was reduced to a redirect
+ * onto the signed handover flow — see the docblock on the route itself.
+ *
+ * What is worth testing therefore changed completely. The old suite pinned
+ * cross-org validation and note-writing, none of which this route performs any
+ * more; those guarantees moved to `handover.server.ts` and are covered by its
+ * own tests. What matters *here* is the property the redirect exists to
+ * provide:
+ *
+ *   **A POST replayed against this URL must not move custody.**
+ *
+ * A tab opened before the signed flow shipped still holds a form pointing at
+ * this action. If that POST ever fell through to an assignment, an asset would
+ * change hands with no signatures attached — precisely the hole the handover
+ * feature closes. Guarding the loader alone would not catch it, which is why
+ * the action is asserted separately below.
+ *
+ * @see {@link file://../../app/routes/_layout+/assets.$assetId.overview.assign-custody.tsx}
+ * @see {@link file://../../app/modules/custody/handover.server.ts}
+ * @see {@link file://../../../docs/epda-custody-signatures.md}
+ */
+
+import { createActionArgs, createLoaderArgs } from "@mocks/remix";
 
 import {
   action,
   loader,
 } from "~/routes/_layout+/assets.$assetId.overview.assign-custody";
-import { ShelfError } from "~/utils/error";
-import { requirePermission } from "~/utils/roles.server";
-import { getAsset } from "~/modules/asset/service.server";
-import { getUserByID } from "~/modules/user/service.server";
-import { createNote } from "~/modules/note/service.server";
-import { sendNotification } from "~/utils/emitter/send-notification.server";
 
-const dbMocks = vi.hoisted(() => {
-  return {
-    asset: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    teamMember: {
-      findMany: vi.fn(),
-      count: vi.fn(),
-    },
-    custody: {
-      // why: action now clears stale custody before assignment
-      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
-    },
-  };
-});
+// @vitest-environment node
 
-const teamMemberServiceMocks = vi.hoisted(() => ({
-  getTeamMember: vi.fn(),
-}));
+const ASSET_ID = "asset-123";
+const SIGNED_FLOW_PATH = `/assets/${ASSET_ID}/overview/custody-handover`;
 
-// why: testing route handler without executing actual database operations
-vi.mock("~/database/db.server", () => ({
-  db: {
-    asset: {
-      findUnique: dbMocks.asset.findUnique,
-      update: dbMocks.asset.update,
-    },
-    teamMember: {
-      findMany: dbMocks.teamMember.findMany,
-      count: dbMocks.teamMember.count,
-    },
-    custody: {
-      deleteMany: dbMocks.custody.deleteMany,
-    },
-    // why: action wraps custody cleanup + assignment in a transaction
-    $transaction: vi.fn((cb: (tx: unknown) => unknown) =>
-      cb({
-        custody: { deleteMany: dbMocks.custody.deleteMany },
-        asset: { update: dbMocks.asset.update },
-      })
-    ),
-  },
-}));
-
-// why: testing authorization logic without executing actual permission checks
-vi.mock("~/utils/roles.server", () => ({
-  requirePermission: vi.fn(),
-}));
-
-// why: testing custody assignment without executing actual asset service operations
-vi.mock("~/modules/asset/service.server", () => ({
-  getAsset: vi.fn(),
-}));
-
-// why: testing custody assignment without fetching actual user data
-vi.mock("~/modules/user/service.server", () => ({
-  getUserByID: vi.fn(),
-}));
-
-// why: testing team member organization validation without database lookups
-vi.mock("~/modules/team-member/service.server", () => ({
-  getTeamMember: teamMemberServiceMocks.getTeamMember,
-}));
-
-// why: testing custody assignment without creating actual notes
-vi.mock("~/modules/note/service.server", () => ({
-  createNote: vi.fn(),
-}));
-
-// why: testing custody assignment without executing actual activity event recording
-vi.mock("~/modules/activity-event/service.server", () => ({
-  recordEvent: vi.fn().mockResolvedValue(undefined),
-  recordEvents: vi.fn().mockResolvedValue(undefined),
-}));
-
-// why: preventing actual notification sending during route tests
-vi.mock("~/utils/emitter/send-notification.server", () => ({
-  sendNotification: vi.fn(),
-}));
-
-// why: mocking redirect, json, and data response helpers for testing route handler status codes
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router");
-  const mockResponse = (data: any, init?: { status?: number }) =>
-    new Response(JSON.stringify(data), {
-      status: init?.status || 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  return {
-    ...actual,
-    redirect: vi.fn(() => new Response(null, { status: 302 })),
-    json: vi.fn(mockResponse),
-    data: vi.fn(mockResponse),
-  };
-});
-
-const mockAssetFindUnique = dbMocks.asset.findUnique;
-const mockAssetUpdate = dbMocks.asset.update;
-const mockTeamMemberFindMany = dbMocks.teamMember.findMany;
-const mockTeamMemberCount = dbMocks.teamMember.count;
-const mockGetTeamMember = teamMemberServiceMocks.getTeamMember;
-
-const requirePermissionMock = vi.mocked(requirePermission);
-const getAssetMock = vi.mocked(getAsset);
-const getUserByIdMock = vi.mocked(getUserByID);
-const createNoteMock = vi.mocked(createNote);
-const sendNotificationMock = vi.mocked(sendNotification);
-
-function createLoaderArgs(
-  overrides: Partial<LoaderFunctionArgs> = {}
-): LoaderFunctionArgs {
-  return {
-    context: {
-      getSession: () => ({ userId: "user-123" }),
-    },
-    params: { assetId: "asset-123" },
-    request: new Request(
-      "https://example.com/assets/asset-123/overview/assign-custody"
-    ),
-    ...overrides,
-  } as LoaderFunctionArgs;
+/** Args carrying the asset id the route reads out of the URL params. */
+function argsFor(overrides: Parameters<typeof createActionArgs>[0] = {}) {
+  return { params: { assetId: ASSET_ID }, ...overrides };
 }
 
-function createActionArgs(
-  overrides: Partial<ActionFunctionArgs> = {}
-): ActionFunctionArgs {
-  return {
-    context: {
-      getSession: () => ({ userId: "user-123" }),
-    },
-    params: { assetId: "asset-123" },
-    request: new Request(
-      "https://example.com/assets/asset-123/overview/assign-custody",
-      { method: "POST" }
-    ),
-    ...overrides,
-  } as ActionFunctionArgs;
-}
+describe("assets.$assetId.overview.assign-custody", () => {
+  describe("loader", () => {
+    it("redirects a bookmarked GET onto the signed handover flow", () => {
+      const response = loader(
+        createLoaderArgs(argsFor()) as Parameters<typeof loader>[0],
+      ) as Response;
 
-beforeEach(() => {
-  vi.clearAllMocks();
-
-  mockAssetFindUnique.mockReset();
-  mockAssetUpdate.mockReset();
-  mockTeamMemberFindMany.mockReset();
-  mockTeamMemberCount.mockReset();
-  mockGetTeamMember.mockReset();
-
-  // Reset service mocks
-  getAssetMock.mockReset();
-  requirePermissionMock.mockReset();
-
-  getUserByIdMock.mockResolvedValue({
-    id: "user-123",
-    firstName: "Test",
-    lastName: "User",
-  } as any);
-  createNoteMock.mockResolvedValue(undefined as any);
-  sendNotificationMock.mockReturnValue(undefined as any);
-});
-
-describe("assets.$assetId.overview.assign-custody loader", () => {
-  it("rejects when the asset belongs to a different organization", async () => {
-    requirePermissionMock.mockResolvedValue({
-      organizationId: "org-1",
-      role: OrganizationRoles.ADMIN,
-      userOrganizations: [{ organizationId: "org-1" }],
-    } as any);
-
-    const unauthorizedError = new ShelfError({
-      cause: null,
-      label: "Assets",
-      message: "Asset not found",
-      status: 404,
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe(SIGNED_FLOW_PATH);
     });
-
-    getAssetMock.mockRejectedValue(unauthorizedError);
-
-    await expect(loader(createLoaderArgs())).rejects.toMatchObject({
-      status: 404,
-    });
-
-    expect(getAssetMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "asset-123",
-        organizationId: "org-1",
-      })
-    );
-    expect(mockAssetFindUnique).not.toHaveBeenCalled();
-    expect(mockTeamMemberFindMany).not.toHaveBeenCalled();
-  });
-});
-
-describe("assets.$assetId.overview.assign-custody action", () => {
-  it("does not allow assigning custody for foreign organization assets", async () => {
-    requirePermissionMock.mockResolvedValue({
-      organizationId: "org-1",
-      role: OrganizationRoles.ADMIN,
-    } as any);
-
-    // Valid custodian from same org
-    mockGetTeamMember.mockResolvedValue({
-      id: "team-123",
-      userId: "user-456",
-    });
-
-    // Mock asset update to fail due to organization mismatch
-    const unauthorizedError = new ShelfError({
-      cause: null,
-      label: "Assets",
-      message: "Asset not found",
-      status: 404,
-    });
-
-    mockAssetUpdate.mockRejectedValue(unauthorizedError);
-
-    const formData = new FormData();
-    formData.set(
-      "custodian",
-      JSON.stringify({ id: "team-123", name: "Team Member" })
-    );
-
-    const request = new Request(
-      "https://example.com/assets/asset-123/overview/assign-custody",
-      { method: "POST", body: formData }
-    );
-
-    const response = await action(createActionArgs({ request }));
-
-    expect((response as Response).status).toBe(404);
-
-    expect(mockAssetUpdate).toHaveBeenCalledWith({
-      where: { id: "asset-123", organizationId: "org-1" },
-      data: expect.any(Object),
-      select: { id: true, title: true },
-    });
-    expect(createNoteMock).not.toHaveBeenCalled();
   });
 
-  it("does not allow assigning custody to team members from different organizations", async () => {
-    requirePermissionMock.mockResolvedValue({
-      organizationId: "org-1",
-      role: OrganizationRoles.ADMIN,
-      userOrganizations: [{ organizationId: "org-1" }],
-    } as any);
+  describe("action", () => {
+    it("refuses to assign custody and redirects the POST instead", async () => {
+      const formData = new FormData();
+      formData.set(
+        "custodian",
+        JSON.stringify({ id: "team-123", name: "Team Member" }),
+      );
 
-    // Asset validation passes (same org)
-    getAssetMock.mockResolvedValue({
-      id: "asset-123",
-      organizationId: "org-1",
-    } as any);
+      const response = action(
+        createActionArgs(
+          argsFor({
+            request: new Request(
+              `https://example.com/assets/${ASSET_ID}/overview/assign-custody`,
+              { method: "POST", body: formData },
+            ),
+          }),
+        ) as Parameters<typeof action>[0],
+      ) as Response;
 
-    // Custodian validation fails (different org)
-    mockGetTeamMember.mockRejectedValue(new Error("Not found"));
-
-    const formData = new FormData();
-    formData.set(
-      "custodian",
-      JSON.stringify({
-        id: "foreign-team-member-123",
-        name: "Foreign Team Member",
-      })
-    );
-
-    const request = new Request(
-      "https://example.com/assets/asset-123/overview/assign-custody",
-      { method: "POST", body: formData }
-    );
-
-    const response = await action(createActionArgs({ request }));
-
-    expect((response as Response).status).toBe(404);
-
-    expect(mockGetTeamMember).toHaveBeenCalledWith({
-      id: "foreign-team-member-123",
-      organizationId: "org-1",
-      select: {
-        id: true,
-        name: true,
-        userId: true,
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            displayName: true,
-          },
-        },
-      },
+      expect(response.headers.get("Location")).toBe(SIGNED_FLOW_PATH);
     });
 
-    expect(mockAssetUpdate).not.toHaveBeenCalled();
-    expect(createNoteMock).not.toHaveBeenCalled();
-  });
+    it("answers 303 so the browser does not replay the POST body", () => {
+      /**
+       * The status code is the substance of this test, not a detail. A 302 on a
+       * POST leaves the method to browser discretion, and a client that repeats
+       * the POST would deliver an unsigned custody payload to the handover
+       * route. 303 forces the follow-up to be a GET.
+       */
+      const response = action(
+        createActionArgs(
+          argsFor({
+            request: new Request(
+              `https://example.com/assets/${ASSET_ID}/overview/assign-custody`,
+              { method: "POST", body: new FormData() },
+            ),
+          }),
+        ) as Parameters<typeof action>[0],
+      ) as Response;
 
-  it("allows assigning custody to team members from the same organization", async () => {
-    requirePermissionMock.mockResolvedValue({
-      organizationId: "org-1",
-      role: OrganizationRoles.ADMIN,
-      userOrganizations: [{ organizationId: "org-1" }],
-    } as any);
-
-    // Custodian validation passes (same org)
-    mockGetTeamMember.mockResolvedValue({
-      id: "team-member-123",
-      userId: "user-456",
+      expect(response.status).toBe(303);
     });
-
-    // Asset update succeeds
-    mockAssetUpdate.mockResolvedValue({
-      id: "asset-123",
-      title: "Test Asset",
-      status: "IN_CUSTODY",
-      user: {
-        firstName: "Test",
-        lastName: "User",
-      },
-    } as any);
-
-    const formData = new FormData();
-    formData.set(
-      "custodian",
-      JSON.stringify({ id: "team-member-123", name: "Valid Team Member" })
-    );
-
-    const request = new Request(
-      "https://example.com/assets/asset-123/overview/assign-custody",
-      { method: "POST", body: formData }
-    );
-
-    const response = await action(createActionArgs({ request }));
-
-    expect((response as Response).status).toBe(302); // Redirect on success
-
-    expect(mockGetTeamMember).toHaveBeenCalledWith({
-      id: "team-member-123",
-      organizationId: "org-1",
-      select: {
-        id: true,
-        name: true,
-        userId: true,
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            displayName: true,
-          },
-        },
-      },
-    });
-
-    expect(mockAssetUpdate).toHaveBeenCalledWith({
-      where: { id: "asset-123", organizationId: "org-1" },
-      data: expect.objectContaining({
-        status: AssetStatus.IN_CUSTODY,
-        custody: {
-          create: {
-            custodian: { connect: { id: "team-member-123" } },
-          },
-        },
-      }),
-      select: { id: true, title: true },
-    });
-
-    expect(createNoteMock).toHaveBeenCalled();
-  });
-
-  it("prevents self-service users from assigning custody to other team members", async () => {
-    requirePermissionMock.mockResolvedValue({
-      organizationId: "org-1",
-      role: OrganizationRoles.SELF_SERVICE,
-      userOrganizations: [{ organizationId: "org-1" }],
-    } as any);
-
-    getAssetMock.mockResolvedValue({
-      id: "asset-123",
-      organizationId: "org-1",
-    } as any);
-
-    // Valid team member from same org, but different user
-    mockGetTeamMember.mockResolvedValue({
-      id: "team-member-456",
-      userId: "other-user-456", // Different from current user
-    });
-
-    const formData = new FormData();
-    formData.set(
-      "custodian",
-      JSON.stringify({ id: "team-member-456", name: "Other Team Member" })
-    );
-
-    const request = new Request(
-      "https://example.com/assets/asset-123/overview/assign-custody",
-      { method: "POST", body: formData }
-    );
-
-    const response = await action(createActionArgs({ request }));
-
-    expect((response as Response).status).toBe(500); // ShelfError defaults to 500
-
-    expect(mockAssetUpdate).not.toHaveBeenCalled();
-    expect(createNoteMock).not.toHaveBeenCalled();
   });
 });

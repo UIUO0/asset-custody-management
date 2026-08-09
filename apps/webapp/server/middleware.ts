@@ -98,7 +98,7 @@ export function protect({
     if (!auth) {
       session.flash(
         "errorMessage",
-        "This content is only available to logged in users."
+        "This content is only available to logged in users.",
       );
 
       return c.redirect(`${onFailRedirectTo}?redirectTo=${c.req.path}`);
@@ -108,7 +108,7 @@ export function protect({
     if (!isValidSession) {
       session.flash(
         "errorMessage",
-        "Session might have expired. Please log in again."
+        "Session might have expired. Please log in again.",
       );
       session.unset(authSessionKey);
       Logger.error(
@@ -117,7 +117,7 @@ export function protect({
           message: "Session might have expired. Please log in again.",
           label: "Auth",
           shouldBeCaptured: false,
-        })
+        }),
       );
       return c.redirect(`${onFailRedirectTo}?redirectTo=${c.req.path}`);
     }
@@ -161,7 +161,7 @@ export function refreshSession() {
     } catch (_cause) {
       session.flash(
         "errorMessage",
-        "You have been logged out. Please log in again."
+        "You have been logged out. Please log in again.",
       );
 
       session.unset(authSessionKey);

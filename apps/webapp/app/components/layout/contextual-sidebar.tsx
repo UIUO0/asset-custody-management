@@ -39,7 +39,7 @@ export default function ContextualSidebar({
       const dialogBackdrops = document.querySelectorAll(".dialog-backdrop");
       // Check for Radix AlertDialog overlays that are actually visible
       const radixOverlays = document.querySelectorAll(
-        '[data-radix-alert-dialog-overlay][data-state="open"]'
+        '[data-radix-alert-dialog-overlay][data-state="open"]',
       );
 
       // Only navigate away if there's no nested dialog open
@@ -47,7 +47,7 @@ export default function ContextualSidebar({
         void navigate(prevRoute.pathname);
       }
     },
-    [navigate, prevRoute.pathname]
+    [navigate, prevRoute.pathname],
   );
 
   return (
@@ -55,7 +55,7 @@ export default function ContextualSidebar({
       <SheetContent
         className={tw(
           "flex w-full border-l-0 bg-white p-0 md:w-[85vw] md:max-w-[85vw]",
-          className
+          className,
         )}
       >
         {showSidebar && (

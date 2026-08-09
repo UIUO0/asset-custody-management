@@ -83,7 +83,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           MarkdownNoteSchema,
           {
             additionalData: { userId, targetUserId },
-          }
+          },
         );
 
         const note = await createTeamMemberNote({
@@ -121,7 +121,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
           z.object({ noteId: z.string() }),
           {
             additionalData: { userId, targetUserId },
-          }
+          },
         );
 
         await deleteTeamMemberNote({

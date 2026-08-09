@@ -12,7 +12,7 @@ import { ShelfError } from "./error";
 // ---------------------------------------------------------------------------
 
 export function buildAssetsByStatusChart(
-  statusGroups: { status: string; _count: { _all: number } }[]
+  statusGroups: { status: string; _count: { _all: number } }[],
 ) {
   const chartData = statusGroups.map((g) => ({
     status: userFriendlyAssetStatus(g.status as AssetStatus),
@@ -48,7 +48,7 @@ const MONTH_NAMES = [
 
 export function buildMonthlyGrowthData(
   monthlyRows: MonthlyGrowthRow[],
-  baselineCount: number
+  baselineCount: number,
 ) {
   const now = new Date();
   const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
@@ -226,7 +226,7 @@ export function getCustodiansOrderedByTotalCustodies({
   // Sort by count desc, then by id for stable order
   const sorted = [...countMap.entries()]
     .sort(
-      ([aKey, a], [bKey, b]) => b.count - a.count || aKey.localeCompare(bKey)
+      ([aKey, a], [bKey, b]) => b.count - a.count || aKey.localeCompare(bKey),
     )
     .slice(0, 5);
 

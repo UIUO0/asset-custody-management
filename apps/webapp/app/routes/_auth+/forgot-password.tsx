@@ -31,6 +31,7 @@ import {
   parseData,
   readFormData,
 } from "~/utils/http.server";
+import { getLandingRouteForUser } from "~/utils/landing-route.server";
 import { validEmail } from "~/utils/misc";
 
 const ForgotPasswordSchema = z.object({
@@ -51,8 +52,14 @@ const OtpSchema = z
       .string()
       .min(8, "Password is too short. Minimum 8 characters."),
   })
+  /**
+   * Messages stay in English here by design: this schema runs at module scope
+   * and is parsed on the server too, where React hooks cannot run at all.
+   * Translation happens at the display boundary via `useValidationMessage`.
+   *
+   * @see {@link file://./../../i18n/validation-messages.ts}
+   */
   .superRefine(({ password, confirmPassword, otp, email }, ctx) => {
-    const { t } = useTranslation();
     if (password !== confirmPassword) {
       return ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -77,7 +84,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       : t("auth.step1EnterEmail");
 
   if (context.isAuthenticated) {
-    return redirect("/assets");
+    const { userId } = context.getSession();
+    return redirect(await getLandingRouteForUser({ userId, request }));
   }
 
   return data(payload({ title, subHeading }));

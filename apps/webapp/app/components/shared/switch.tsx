@@ -24,14 +24,14 @@ export const Switch = ({ children }: { children: ReactNode }) => {
   if (hasInvalidComponent) {
     // eslint-disable-next-line no-console
     console.warn(
-      "Children of <Switch /> component should be a type of ReactNode"
+      "Children of <Switch /> component should be a type of ReactNode",
     );
   }
 
   // Filter components by the value of the 'when' props or path
   const filteredComponent = components.find(
     (component) =>
-      isValidElement<SwitchChild>(component) && component.props.when
+      isValidElement<SwitchChild>(component) && component.props.when,
   ) as ReactElement<SwitchChild>;
 
   // Render filteredComponents

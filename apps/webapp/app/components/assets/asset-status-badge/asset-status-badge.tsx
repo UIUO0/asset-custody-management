@@ -25,8 +25,8 @@ import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { useTranslation } from "react-i18next";
 import useApiQuery from "~/hooks/use-api-query";
 import { isQuantityTracked } from "~/modules/asset/utils";
+import type { ExtendedAssetStatus } from "~/utils/asset-status";
 import { BADGE_COLORS } from "~/utils/badge-colors";
-import type { ExtendedAssetStatus } from "~/utils/booking-assets";
 import {
   getQuantityBadgeLabelAndColor,
   getQuantityData,
@@ -150,7 +150,7 @@ export function AssetStatusBadge({
     return (
       <span className="flex items-center gap-1.5">
         <Badge color={colors.bg} textColor={colors.text}>
-          {t("status.PENDING", "قيد الانتظار")}
+          {t("status.PENDING")}
         </Badge>
       </span>
     );

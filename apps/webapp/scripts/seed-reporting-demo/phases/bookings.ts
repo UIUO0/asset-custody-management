@@ -107,11 +107,11 @@ const FINAL_STATUS: Readonly<Record<Outcome, string>> = {
  */
 export async function runBookingsPhase(
   ctx: SeederContext,
-  state: SeederState
+  state: SeederState,
 ): Promise<void> {
   if (state.assetIds.length === 0) {
     throw new Error(
-      "runBookingsPhase: state.assetIds is empty — Phase 3 must run first."
+      "runBookingsPhase: state.assetIds is empty — Phase 3 must run first.",
     );
   }
 
@@ -119,7 +119,7 @@ export async function runBookingsPhase(
   // stable hash of the id so the ordering is deterministic across runs
   // rather than dependent on insert-time Prisma ordering.
   const popularityOrder = [...state.assetIds].sort((a, b) =>
-    a.localeCompare(b)
+    a.localeCompare(b),
   );
 
   // Distribute bookings across months using `seasonalMultiplier`.
@@ -205,7 +205,7 @@ async function createBooking(
       assetIds: string[];
       checkinTimestamp: Date;
     }>;
-  }
+  },
 ): Promise<{ id: string }> {
   const { popularityOrder, createdAt, outcome, events } = args;
   const creator = ctx.actors.pick(ctx.rng);
@@ -220,7 +220,7 @@ async function createBooking(
   const assetCount = randomIntInRange(
     ASSETS_PER_BOOKING_MIN,
     ASSETS_PER_BOOKING_MAX,
-    ctx.rng
+    ctx.rng,
   );
   const assetIds = pickParetoDistinct(popularityOrder, assetCount, ctx.rng);
 
@@ -273,7 +273,7 @@ async function createBooking(
       occurredAt: createdAt,
       actor: creator,
       bookingId: booking.id,
-    })
+    }),
   );
 
   // One BOOKING_ASSETS_ADDED per asset at creation.
@@ -285,7 +285,7 @@ async function createBooking(
         actor: creator,
         bookingId: booking.id,
         assetId,
-      })
+      }),
     );
   }
 
@@ -300,7 +300,7 @@ async function createBooking(
         bookingId: booking.id,
         fromStatus: step.from,
         toStatus: step.to,
-      })
+      }),
     );
 
     if (step.to === "ONGOING") {
@@ -312,7 +312,7 @@ async function createBooking(
             actor: creator,
             bookingId: booking.id,
             assetId,
-          })
+          }),
         );
       }
     } else if (step.to === "COMPLETE") {
@@ -324,7 +324,7 @@ async function createBooking(
             actor: creator,
             bookingId: booking.id,
             assetId,
-          })
+          }),
         );
       }
     } else if (step.to === "CANCELLED") {
@@ -334,7 +334,7 @@ async function createBooking(
           occurredAt: step.at,
           actor: creator,
           bookingId: booking.id,
-        })
+        }),
       );
     } else if (step.to === "ARCHIVED") {
       events.push(
@@ -343,7 +343,7 @@ async function createBooking(
           occurredAt: step.at,
           actor: creator,
           bookingId: booking.id,
-        })
+        }),
       );
     }
   }
@@ -358,13 +358,13 @@ async function createBooking(
   ) {
     const partialCount = Math.min(
       randomIntInRange(1, 2, ctx.rng),
-      assetIds.length
+      assetIds.length,
     );
     const partialAssets = assetIds.slice(0, partialCount);
     const partialAt = randomDateBetween(
       timeline.ongoingAt,
       timeline.completedAt,
-      ctx.rng
+      ctx.rng,
     );
 
     args.partialCheckinRows.push({
@@ -382,7 +382,7 @@ async function createBooking(
           actor: creator,
           bookingId: booking.id,
           assetId,
-        })
+        }),
       );
     }
   }
@@ -403,7 +403,7 @@ async function createBooking(
 function buildTimeline(
   ctx: SeederContext,
   createdAt: Date,
-  outcome: Outcome
+  outcome: Outcome,
 ): {
   from: Date;
   to: Date;
@@ -480,7 +480,7 @@ function buildTimeline(
       const completedAt = checkInTimeRelativeTo(to);
       const archivedAt = daysAfter(
         completedAt,
-        randomIntInRange(1, 30, ctx.rng)
+        randomIntInRange(1, 30, ctx.rng),
       );
       return {
         from,
@@ -583,7 +583,7 @@ function buildTimeline(
 function pickParetoDistinct(
   pool: readonly string[],
   count: number,
-  rng: () => number
+  rng: () => number,
 ): string[] {
   const want = Math.min(count, pool.length);
   const out = new Set<string>();

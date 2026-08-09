@@ -10,7 +10,7 @@ export interface UseWorkingHoursResult {
 
 export function useWorkingHours(): UseWorkingHoursResult {
   const workingHours = useRouteLoaderData<LayoutLoaderResponse>(
-    "routes/_layout+/_layout"
+    "routes/_layout+/_layout",
   )?.workingHours as WorkingHoursData | undefined;
 
   return {

@@ -20,6 +20,6 @@ export default function useFetcherWithReset<TData = unknown>() {
       data,
       reset: () => setData(undefined),
     }),
-    [data, fetcher]
+    [data, fetcher],
   );
 }

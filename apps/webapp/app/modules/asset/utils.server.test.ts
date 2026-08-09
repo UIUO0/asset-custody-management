@@ -298,7 +298,7 @@ describe("detectCustomFieldChanges", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([
@@ -329,7 +329,7 @@ describe("detectCustomFieldChanges", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([
@@ -360,7 +360,7 @@ describe("detectCustomFieldChanges", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([
@@ -391,7 +391,7 @@ describe("detectCustomFieldChanges", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([]);
@@ -404,7 +404,7 @@ describe("detectCustomFieldChanges", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([]);
@@ -442,7 +442,7 @@ describe("detectCustomFieldChanges", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([
@@ -475,7 +475,7 @@ describe("getCustomFieldUpdateNoteContent", () => {
     });
 
     expect(result).toBe(
-      '{% link to="/settings/team/users/user-123" text="John Doe" /%} set **Serial Number** to **SN123456**.'
+      '{% link to="/settings/team/users/user-123" text="John Doe" /%} set **Serial Number** to **SN123456**.',
     );
   });
 
@@ -491,7 +491,7 @@ describe("getCustomFieldUpdateNoteContent", () => {
     });
 
     expect(result).toBe(
-      '{% link to="/settings/team/users/user-456" text="Jane Smith" /%} updated **Warranty Status** from **Active** to **Expired**.'
+      '{% link to="/settings/team/users/user-456" text="Jane Smith" /%} updated **Warranty Status** from **Active** to **Expired**.',
     );
   });
 
@@ -507,7 +507,7 @@ describe("getCustomFieldUpdateNoteContent", () => {
     });
 
     expect(result).toBe(
-      '{% link to="/settings/team/users/user-789" text="Bob Johnson" /%} removed **Purchase Order** value **PO-2024-001**.'
+      '{% link to="/settings/team/users/user-789" text="Bob Johnson" /%} removed **Purchase Order** value **PO-2024-001**.',
     );
   });
 
@@ -523,7 +523,7 @@ describe("getCustomFieldUpdateNoteContent", () => {
     });
 
     expect(result).toBe(
-      '{% link to="/settings/team/users/user-123" text="John Doe" /%} set **Serial Number** to **SN123456**.'
+      '{% link to="/settings/team/users/user-123" text="John Doe" /%} set **Serial Number** to **SN123456**.',
     );
   });
 
@@ -586,7 +586,7 @@ describe("detectCustomFieldChanges - Display Value Formatting", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([
@@ -622,7 +622,7 @@ describe("detectCustomFieldChanges - Display Value Formatting", () => {
     const result = detectCustomFieldChanges(
       existingValues,
       formValues,
-      mockCustomFields
+      mockCustomFields,
     );
 
     expect(result).toEqual([

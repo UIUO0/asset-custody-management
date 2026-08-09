@@ -34,7 +34,7 @@ vi.mock("~/database/db.server", () => ({
 // why: stabilizing date formatting output for CSV assertions
 vi.mock("~/utils/client-hints", async () => {
   const actual = await vi.importActual<typeof import("~/utils/client-hints")>(
-    "~/utils/client-hints"
+    "~/utils/client-hints",
   );
 
   return {
@@ -103,10 +103,10 @@ describe("app/routes/_layout+/assets.$assetId.activity[.csv] loader", () => {
       createLoaderArgs({
         context,
         request: new Request(
-          "https://example.com/assets/asset-123/activity.csv"
+          "https://example.com/assets/asset-123/activity.csv",
         ),
         params: { assetId: "asset-123" },
-      })
+      }),
     );
 
     expect(requirePermissionMock).toHaveBeenNthCalledWith(
@@ -116,7 +116,7 @@ describe("app/routes/_layout+/assets.$assetId.activity[.csv] loader", () => {
         request: expect.any(Request),
         entity: PermissionEntity.asset,
         action: PermissionAction.read,
-      })
+      }),
     );
     expect(requirePermissionMock).toHaveBeenNthCalledWith(
       2,
@@ -125,27 +125,27 @@ describe("app/routes/_layout+/assets.$assetId.activity[.csv] loader", () => {
         request: expect.any(Request),
         entity: PermissionEntity.note,
         action: PermissionAction.read,
-      })
+      }),
     );
 
     // Loader returns Response for success
     expect(response instanceof Response).toBe(true);
     expect((response as unknown as Response).status).toBe(200);
     expect((response as unknown as Response).headers.get("content-type")).toBe(
-      "text/csv"
+      "text/csv",
     );
     expect(
-      (response as unknown as Response).headers.get("content-disposition")
+      (response as unknown as Response).headers.get("content-disposition"),
     ).toContain("Test Asset-activity");
 
     const csv = await (response as unknown as Response).text();
     const rows = csv.trim().split("\n");
     expect(rows[0]).toBe("Date,Author,Type,Content");
     expect(rows[1]).toBe(
-      '"formatted-2024-01-02T10:00:00.000Z","Carlos Virreira","COMMENT","Line with ""quotes"" and newline"'
+      '"formatted-2024-01-02T10:00:00.000Z","Carlos Virreira","COMMENT","Line with ""quotes"" and newline"',
     );
     expect(rows[2]).toBe(
-      '"formatted-2024-01-01T09:30:00.000Z","","UPDATE","System note"'
+      '"formatted-2024-01-01T09:30:00.000Z","","UPDATE","System note"',
     );
   });
 });

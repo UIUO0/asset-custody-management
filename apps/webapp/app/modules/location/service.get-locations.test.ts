@@ -28,7 +28,7 @@ describe("getLocations", () => {
     await getLocations({ organizationId });
 
     expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: "desc" } })
+      expect.objectContaining({ orderBy: { createdAt: "desc" } }),
     );
   });
 
@@ -40,7 +40,7 @@ describe("getLocations", () => {
     });
 
     expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { name: "asc" } })
+      expect.objectContaining({ orderBy: { name: "asc" } }),
     );
   });
 
@@ -56,7 +56,7 @@ describe("getLocations", () => {
     expect(findManyMock).toHaveBeenCalledWith(
       expect.objectContaining({
         orderBy: { assetLocations: { _count: "desc" } },
-      })
+      }),
     );
   });
 
@@ -68,7 +68,7 @@ describe("getLocations", () => {
     });
 
     expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: "asc" } })
+      expect.objectContaining({ orderBy: { createdAt: "asc" } }),
     );
   });
 
@@ -80,7 +80,7 @@ describe("getLocations", () => {
     });
 
     expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { createdAt: "asc" } })
+      expect.objectContaining({ orderBy: { createdAt: "asc" } }),
     );
   });
 
@@ -93,7 +93,7 @@ describe("getLocations", () => {
     });
 
     expect(findManyMock).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { name: "desc" } })
+      expect.objectContaining({ orderBy: { name: "desc" } }),
     );
   });
 

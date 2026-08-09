@@ -30,7 +30,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     const { intent } = parseData(
       formData,
-      z.object({ intent: z.enum(["bulk-activate", "bulk-deactivate"]) })
+      z.object({ intent: z.enum(["bulk-activate", "bulk-deactivate"]) }),
     );
 
     const intentToActionMap: Record<typeof intent, PermissionAction> = {
@@ -54,7 +54,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
         const { customFieldIds } = parseData(
           formData,
-          BulkActivateCustomFieldSchema
+          BulkActivateCustomFieldSchema,
         );
 
         const newActivatingFields = await db.customField.findMany({
@@ -89,7 +89,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       case "bulk-deactivate": {
         const { customFieldIds } = parseData(
           formData,
-          BulkDeactivateCustomFieldSchema
+          BulkDeactivateCustomFieldSchema,
         );
         const newActivatingFields = await db.customField.findMany({
           where: customFieldIds.includes(ALL_SELECTED_KEY)

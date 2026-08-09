@@ -83,7 +83,7 @@ export function getValidatedPathname(pathname: string): CookieNameSuffix {
 export function getCookieName(
   organizationId: string,
   modeIsAdvanced: boolean,
-  pathname: string
+  pathname: string,
 ): string {
   if (modeIsAdvanced) {
     return `${organizationId}_advancedAssetFilter_v2`;
@@ -116,7 +116,7 @@ export const useSearchParams = (): [
   SearchParamsType,
   (
     nextInit: Parameters<SetSearchParamsType>[0],
-    navigateOptions?: Parameters<SetSearchParamsType>[1]
+    navigateOptions?: Parameters<SetSearchParamsType>[1],
   ) => void,
 ] => {
   const [searchParams, setSearchParams] = remixUseSearchParams();
@@ -131,7 +131,7 @@ export const useSearchParams = (): [
 
   const customSetSearchParams: (
     nextInit: Parameters<SetSearchParamsType>[0],
-    navigateOptions?: Parameters<SetSearchParamsType>[1]
+    navigateOptions?: Parameters<SetSearchParamsType>[1],
   ) => void = (nextInit, navigateOptions) => {
     const prevParams = new URLSearchParams(searchParams.toString());
 
@@ -173,7 +173,7 @@ export const useSearchParams = (): [
 };
 
 type SetSearchParams = (
-  setter: (prev: URLSearchParams) => URLSearchParams
+  setter: (prev: URLSearchParams) => URLSearchParams,
 ) => void;
 
 /**
@@ -195,7 +195,7 @@ export function useAssetIndexCookieSearchParams() {
   const cookieSearchParams = new URLSearchParams(
     isPageWithCookieFilters && filters && filters !== ""
       ? filters.toString()
-      : ""
+      : "",
   );
 
   return cookieSearchParams;
@@ -211,7 +211,7 @@ export function useAssetIndexCookieSearchParams() {
  */
 export function checkValueInCookie(
   keys: string[],
-  cookieSearchParams: URLSearchParams
+  cookieSearchParams: URLSearchParams,
 ): boolean {
   return keys.map((key) => cookieSearchParams.has(key)).some(Boolean);
 }
@@ -228,7 +228,7 @@ export function useSearchParamHasValue(...keys: string[]): boolean {
   const isPageWithCookieFilters = useIsPageWithCookieFilters();
   const hasValue = useMemo(
     () => keys.map((key) => searchParams.has(key)).some(Boolean),
-    [keys, searchParams]
+    [keys, searchParams],
   );
 
   const hasValueInCookie =
@@ -245,7 +245,7 @@ export function useSearchParamHasValue(...keys: string[]): boolean {
  */
 export function deleteKeysInSearchParams(
   keys: string[],
-  setSearchParams: SetSearchParams
+  setSearchParams: SetSearchParams,
 ) {
   // Delete all keys in a single setSearchParams call to avoid multiple cookie updates
   setSearchParams((prev) => {
@@ -268,7 +268,7 @@ export function destroyCookieValues(
   cookieName: string,
   keys: string[],
   cookieSearchParams: URLSearchParams,
-  cookiePath?: string
+  cookiePath?: string,
 ) {
   // Always remove excluded keys and the specifically requested keys
   keys.forEach((key) => {
@@ -335,7 +335,7 @@ export function useClearValueFromParams(...keys: string[]): Function {
       const cookieName = getCookieName(
         currentOrganization.id,
         effectiveModeIsAdvanced,
-        location.pathname
+        location.pathname,
       );
 
       // Always use root path to match server-side cookie path
@@ -383,7 +383,7 @@ export function useCookieDestroy() {
       const cookieName = getCookieName(
         currentOrganization.id,
         effectiveModeIsAdvanced,
-        location.pathname
+        location.pathname,
       );
 
       // Always use root path to match server-side cookie path

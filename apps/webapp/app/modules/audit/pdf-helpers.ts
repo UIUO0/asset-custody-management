@@ -111,7 +111,7 @@ export async function fetchAllAuditPdfRelatedData(
   organizationId: string,
   userId: string,
   role: OrganizationRoles | undefined,
-  _request: Request
+  _request: Request,
 ): Promise<AuditPdfDbResult> {
   try {
     // Fetch audit session with creator and assignee information
@@ -159,7 +159,7 @@ export async function fetchAllAuditPdfRelatedData(
     // Permission check: BASE/SELF_SERVICE users can only view audits they're assigned to
     if (role && (role === "BASE" || role === "SELF_SERVICE")) {
       const isAssignee = session.assignments.some(
-        (assignment) => assignment.user.id === userId
+        (assignment) => assignment.user.id === userId,
       );
 
       if (!isAssignee) {
@@ -191,7 +191,7 @@ export async function fetchAllAuditPdfRelatedData(
       auditAssets.map((aa) => [
         aa.assetId,
         { expected: aa.expected, auditStatus: aa.status },
-      ])
+      ]),
     );
 
     // Fetch all images for this audit with asset relationship
@@ -293,7 +293,7 @@ export async function fetchAllAuditPdfRelatedData(
           expected: false,
           auditStatus: null,
         },
-      })
+      }),
     );
 
     // Generate QR code data URLs for each asset

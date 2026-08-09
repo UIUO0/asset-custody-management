@@ -27,7 +27,7 @@ export async function resolveRemindersActions({
 
   const { intent } = parseData(
     formData,
-    z.object({ intent: z.enum(["edit-reminder", "delete-reminder"]) })
+    z.object({ intent: z.enum(["edit-reminder", "delete-reminder"]) }),
   );
 
   switch (intent) {
@@ -38,7 +38,7 @@ export async function resolveRemindersActions({
         // Expected user-input validation (e.g. "Please select a date in the
         // future") — a 400, not a server error. The create path already opts
         // out; mirror it here (was noise: SHELF-WEBAPP-1ME).
-        { shouldBeCaptured: false }
+        { shouldBeCaptured: false },
       );
 
       const hints = getHints(request);
@@ -46,7 +46,7 @@ export async function resolveRemindersActions({
       const alertDateTime = DateTime.fromFormat(
         formData.get("alertDateTime")!.toString()!,
         DATE_TIME_FORMAT,
-        { zone: hints.timeZone }
+        { zone: hints.timeZone },
       ).toJSDate();
 
       await editAssetReminder({

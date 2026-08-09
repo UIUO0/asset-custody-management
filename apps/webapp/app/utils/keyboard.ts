@@ -31,7 +31,7 @@ export function isActivationKey(event: KeyboardEvent): boolean {
  * @returns Keyboard event handler
  */
 export function handleActivationKeyPress(
-  callback: () => void
+  callback: () => void,
 ): (event: KeyboardEvent) => void {
   return (event: KeyboardEvent) => {
     // Only handle the key press when the element itself is focused.

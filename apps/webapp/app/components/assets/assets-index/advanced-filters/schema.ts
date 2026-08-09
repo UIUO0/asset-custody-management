@@ -100,7 +100,7 @@ export const filterSchema = z
     {
       message: "Invalid filter configuration",
       path: ["value"],
-    }
+    },
   );
 
 // Export the main Filter type
@@ -135,7 +135,7 @@ filterSchema.refine(
   {
     message: "Invalid operator for this field type",
     path: ["operator"],
-  }
+  },
 );
 
 // Helper types for value access

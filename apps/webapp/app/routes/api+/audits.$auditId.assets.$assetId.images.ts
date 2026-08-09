@@ -32,7 +32,7 @@ export async function loader({ request, context, params }: LoaderFunctionArgs) {
     const { auditId, assetId } = getParams(
       params,
       z.object({ auditId: z.string(), assetId: z.string() }),
-      { additionalData: { userId } }
+      { additionalData: { userId } },
     );
 
     // Fetch images for the specific audit asset
@@ -63,7 +63,7 @@ export async function action({ request, context, params }: LoaderFunctionArgs) {
     const { auditId } = getParams(
       params,
       z.object({ auditId: z.string(), assetId: z.string() }),
-      { additionalData: { userId } }
+      { additionalData: { userId } },
     );
 
     const { intent, imageId } = parseData(
@@ -72,7 +72,7 @@ export async function action({ request, context, params }: LoaderFunctionArgs) {
         intent: z.enum(["delete"]),
         imageId: z.string(),
       }),
-      { additionalData: { userId, auditId } }
+      { additionalData: { userId, auditId } },
     );
 
     if (intent === "delete") {

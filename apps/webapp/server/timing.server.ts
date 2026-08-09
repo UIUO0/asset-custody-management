@@ -43,7 +43,7 @@ export function serverTiming(): MiddlewareHandler {
 
     c.res.headers.append(
       "Server-Timing",
-      `total;dur=${duration.toFixed(1)};desc="Total Request"`
+      `total;dur=${duration.toFixed(1)};desc="Total Request"`,
     );
   };
 }

@@ -14,7 +14,7 @@ export function resolveUserDisplayName(
   user:
     | Partial<Pick<User, "displayName" | "firstName" | "lastName">>
     | null
-    | undefined
+    | undefined,
 ): string {
   if (!user) return "";
   const trimmedDisplayName = user.displayName?.trim();
@@ -37,7 +37,7 @@ export const resolveTeamMemberName = (
       }
     | null
     | undefined,
-  includeEmail?: boolean
+  includeEmail?: boolean,
 ): string => {
   if (!teamMember) return "";
   const displayName = teamMember?.user

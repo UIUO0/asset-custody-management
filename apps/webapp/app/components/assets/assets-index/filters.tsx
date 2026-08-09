@@ -1,12 +1,12 @@
 import { AssetStatus } from "@prisma/client";
 import { useTranslation } from "react-i18next";
-import { StatusFilter } from "~/components/booking/status-filter";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import { ChevronRight } from "~/components/icons/library";
 import ImageWithPreview from "~/components/image-with-preview/image-with-preview";
 import { Filters } from "~/components/list/filters";
 import { SortBy } from "~/components/list/filters/sort-by";
 import { Button } from "~/components/shared/button";
+import { StatusFilter } from "~/components/shared/status-filter";
 import When from "~/components/when/when";
 import {
   useClearValueFromParams,
@@ -21,7 +21,6 @@ import { resolveTeamMemberName } from "~/utils/user";
 import { AdvancedFilteringAndSorting } from "./advanced-asset-index-filters-and-sorting";
 import { ConfigureColumnsDropdown } from "./configure-columns-dropdown";
 import { SavedFilterPresetsControls } from "./saved-filter-presets";
-import { AvailabilityViewToggle } from "./view-toggle";
 
 /**
  * Sorting options for asset lists, with translated labels.
@@ -76,8 +75,6 @@ export function AssetIndexFilters({
                 defaultSortingBy="createdAt"
                 className="flex-1"
               />
-
-              <AvailabilityViewToggle />
             </div>
           ),
         }}
@@ -197,11 +194,6 @@ function AdvancedAssetIndexFilters() {
     <Filters
       slots={{
         "left-of-search": <AdvancedFilteringAndSorting />,
-        "right-of-search": (
-          <div className="flex items-center gap-2">
-            <AvailabilityViewToggle modeIsSimple={false} />
-          </div>
-        ),
       }}
       searchClassName="leading-5"
     >

@@ -32,14 +32,14 @@ export const Filters = ({
       className={tw(
         modeIsAdvanced ? "md:p-3" : "md:px-4 md:py-5",
         "flex items-center justify-between bg-white py-2 md:rounded md:border md:border-gray-200 ",
-        className
+        className,
       )}
     >
       <div className="form-wrapper search-form w-full items-center justify-between gap-2 md:flex">
         <div
           className={tw(
             "flex w-full flex-col gap-2 md:flex-row md:items-center",
-            innerWrapperClassName
+            innerWrapperClassName,
           )}
         >
           {slots?.["left-of-search"] || null}

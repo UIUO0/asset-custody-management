@@ -43,7 +43,7 @@ export const Badge = ({
       className={tw(
         "inline-flex items-center rounded-2xl py-[2px] ps-[6px] text-[12px] font-medium",
         withDot ? " gap-1 pe-2" : "px-2",
-        className
+        className,
       )}
     >
       {withDot ? (

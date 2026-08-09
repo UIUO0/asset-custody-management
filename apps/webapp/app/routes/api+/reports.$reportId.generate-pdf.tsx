@@ -14,16 +14,16 @@ import { z } from "zod";
 
 import { db } from "~/database/db.server";
 import {
-  resolveTimeframe,
-  bookingComplianceReport,
+  readAssetInventoryFilters,
+  readCustodySnapshotFilters,
+} from "~/modules/reports/filters";
+import {
   assetInventoryReport,
   custodySnapshotReport,
 } from "~/modules/reports/helpers.server";
 import { getReportById } from "~/modules/reports/registry";
 import type {
-  TimeframePreset,
   ReportPdfMeta,
-  CompliancePdfMeta,
   AssetInventoryPdfMeta,
   CustodySnapshotPdfMeta,
 } from "~/modules/reports/types";
@@ -41,42 +41,6 @@ import {
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
 
-/**
- * Format return status for PDF - matches the CSV export format.
- * Shows "On time" or the lateness duration (e.g., "4h 30m late").
- */
-function formatReturnStatus(
-  isOnTime: boolean,
-  latenessMs: number | null
-): string {
-  if (isOnTime) {
-    return "On time";
-  }
-
-  if (latenessMs === null) {
-    return "Pending";
-  }
-
-  const absMs = Math.abs(latenessMs);
-  const minutes = Math.floor(absMs / (1000 * 60));
-  const hours = Math.floor(absMs / (1000 * 60 * 60));
-  const days = Math.floor(absMs / (1000 * 60 * 60 * 24));
-
-  let value: string;
-  if (days > 0) {
-    const remainingHours = hours % 24;
-    value = remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
-  } else if (hours > 0) {
-    const remainingMinutes = minutes % 60;
-    value =
-      remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  } else {
-    value = `${minutes}m`;
-  }
-
-  return latenessMs > 0 ? `${value} late` : `${value} early`;
-}
-
 export const loader = async ({
   context,
   request,
@@ -90,7 +54,7 @@ export const loader = async ({
     }),
     {
       additionalData: { userId },
-    }
+    },
   );
 
   try {
@@ -112,18 +76,18 @@ export const loader = async ({
       });
     }
 
-    // Parse filters
+    /**
+     * The filters the operator had applied on screen.
+     *
+     * These were parsed here and then never used, so a filtered report printed
+     * as an unfiltered one — the PDF is the copy that gets filed, which makes
+     * that the worst of the three places to silently ignore them. They are now
+     * read from `modules/reports/filters.ts`, the same source the screen uses.
+     */
     const searchParams = getCurrentSearchParams(request);
-    const timeframePreset =
-      (searchParams.get("timeframe") as TimeframePreset) || "last_30d";
-    const customFrom = searchParams.get("from");
-    const customTo = searchParams.get("to");
 
-    const timeframe = resolveTimeframe(
-      timeframePreset,
-      customFrom ? new Date(customFrom) : undefined,
-      customTo ? new Date(customTo) : undefined
-    );
+    // A PDF is the whole report, never a page of it.
+    const paging = { page: 1, pageSize: 10000 };
 
     // Get organization info. `currency` is required so PDF monetary values
     // render in the workspace's configured currency rather than a hardcoded "$".
@@ -168,68 +132,11 @@ export const loader = async ({
     let pdfMeta: ReportPdfMeta;
 
     switch (reportId) {
-      case "booking-compliance": {
-        const reportData = await bookingComplianceReport({
-          organizationId,
-          timeframe,
-          page: 1,
-          pageSize: 10000, // PDF can handle large tables
-        });
-
-        const overdueKpi = reportData.kpis.find(
-          (k) => k.id === "currently_overdue"
-        );
-
-        pdfMeta = {
-          ...monetaryMeta,
-          reportId,
-          reportTitle: reportDef.title,
-          reportDescription: reportDef.description,
-          organizationName: organization.name,
-          organizationImageId: organization.imageId,
-          organizationUpdatedAt: organization.updatedAt,
-          generatedAt: dateFormat.format(new Date()),
-          timeframeLabel: timeframe.label,
-          timeframeFrom: dateFormat.format(timeframe.from),
-          timeframeTo: dateFormat.format(timeframe.to),
-          complianceRate: reportData.complianceData?.rate ?? 0,
-          onTimeCount: reportData.complianceData?.onTime ?? 0,
-          lateCount: reportData.complianceData?.late ?? 0,
-          // Use totalRows from report (includes COMPLETE + OVERDUE) for accurate row count
-          totalCount: reportData.totalRows,
-          overdueCount: (overdueKpi?.rawValue as number) || 0,
-          priorPeriod: reportData.complianceData?.priorPeriod,
-          custodianPerformance: (reportData.custodianPerformance ?? [])
-            .filter((c) => c.total >= 2)
-            .slice(0, 10)
-            .map((c) => ({
-              custodianId: c.custodianId,
-              custodianName: c.custodianName,
-              rate: c.rate,
-              onTime: c.onTime,
-              late: c.late,
-              total: c.total,
-            })),
-          rows: reportData.rows.map((row) => ({
-            bookingId: row.bookingId,
-            bookingName: row.bookingName,
-            status: row.status,
-            custodian: row.custodian,
-            assetCount: row.assetCount,
-            scheduledStart: dateFormat.format(new Date(row.scheduledStart)),
-            scheduledEnd: dateFormat.format(new Date(row.scheduledEnd)),
-            isOnTime: row.isOnTime,
-            returnStatus: formatReturnStatus(row.isOnTime, row.latenessMs),
-          })),
-        } satisfies CompliancePdfMeta;
-        break;
-      }
-
       case "asset-inventory": {
         const reportData = await assetInventoryReport({
           organizationId,
-          page: 1,
-          pageSize: 10000,
+          ...readAssetInventoryFilters(searchParams),
+          ...paging,
         });
 
         // Calculate status breakdown
@@ -276,13 +183,13 @@ export const loader = async ({
       case "custody-snapshot": {
         const reportData = await custodySnapshotReport({
           organizationId,
-          page: 1,
-          pageSize: 10000,
+          ...readCustodySnapshotFilters(searchParams),
+          ...paging,
         });
 
         // Calculate totals
         const uniqueCustodians = new Set(
-          reportData.rows.map((r) => r.custodianName)
+          reportData.rows.map((r) => r.custodianName),
         );
         let totalValuation = 0;
         for (const row of reportData.rows) {

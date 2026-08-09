@@ -56,7 +56,7 @@ export const action = async ({ context, request }: ActionFunctionArgs) => {
           .or(z.literal("")),
         publishDate: z.string().transform((str) => new Date(str)),
         status: z.nativeEnum(UpdateStatus),
-      })
+      }),
     );
 
     await createUpdate({

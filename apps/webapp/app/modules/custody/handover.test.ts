@@ -32,7 +32,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("~/database/db.server", () => ({
   db: {
     $transaction: vi.fn(),
-    asset: { findFirst: vi.fn(), update: vi.fn() },
+    asset: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     custody: { deleteMany: vi.fn(), findFirst: vi.fn() },
     custodyHandover: {
       findFirst: vi.fn(),
@@ -44,7 +44,14 @@ vi.mock("~/database/db.server", () => ({
       findFirstOrThrow: vi.fn(),
     },
     custodyHandoverSignature: { create: vi.fn(), count: vi.fn() },
-    teamMember: { findUnique: vi.fn() },
+    // why: the service reads team members with `findFirst`, not `findUnique` —
+    // it scopes every lookup by `organizationId` as well as `id`, which is not
+    // a unique compound and so cannot go through `findUnique`.
+    teamMember: { findFirst: vi.fn() },
+    // why: `resolveOwnDepartmentId` reads the caller's membership to find the
+    // department desk they speak for. Without this the signature queue throws
+    // instead of returning a count.
+    userOrganization: { findFirst: vi.fn() },
   },
 }));
 
@@ -162,7 +169,7 @@ describe("decodeSignatureDataUrl", () => {
 
 describe("openHandover", () => {
   const base = {
-    assetId: "asset-1",
+    assets: [{ id: "asset-1" }],
     organizationId: "org-1",
     counterpartyTeamMemberId: "tm-1",
     operatorUserId: "user-1",
@@ -171,11 +178,15 @@ describe("openHandover", () => {
   it("refuses a handover for an asset already in custody", async () => {
     runTransactionWith({
       asset: {
-        findFirst: vi.fn().mockResolvedValue({
-          id: "asset-1",
-          title: "Laptop",
-          custody: [{ id: "c-1", teamMemberId: "tm-9" }],
-        }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "asset-1",
+            title: "Laptop",
+            type: "INDIVIDUAL",
+            quantity: null,
+            custody: [{ id: "c-1", teamMemberId: "tm-9", quantity: 1 }],
+          },
+        ]),
       },
       custodyHandover: { updateMany: vi.fn(), count: vi.fn(), create: vi.fn() },
     });
@@ -188,9 +199,15 @@ describe("openHandover", () => {
   it("refuses a return for an asset nobody holds", async () => {
     runTransactionWith({
       asset: {
-        findFirst: vi
-          .fn()
-          .mockResolvedValue({ id: "asset-1", title: "Laptop", custody: [] }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "asset-1",
+            title: "Laptop",
+            type: "INDIVIDUAL",
+            quantity: null,
+            custody: [],
+          },
+        ]),
       },
       custodyHandover: { updateMany: vi.fn(), count: vi.fn(), create: vi.fn() },
     });
@@ -203,11 +220,17 @@ describe("openHandover", () => {
   it("refuses a return that names someone other than the current custodian", async () => {
     runTransactionWith({
       asset: {
-        findFirst: vi.fn().mockResolvedValue({
-          id: "asset-1",
-          title: "Laptop",
-          custody: [{ id: "c-1", teamMemberId: "tm-actual-holder" }],
-        }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "asset-1",
+            title: "Laptop",
+            type: "INDIVIDUAL",
+            quantity: null,
+            custody: [
+              { id: "c-1", teamMemberId: "tm-actual-holder", quantity: 1 },
+            ],
+          },
+        ]),
       },
       custodyHandover: { updateMany: vi.fn(), count: vi.fn(), create: vi.fn() },
     });
@@ -225,9 +248,15 @@ describe("openHandover", () => {
     const updateMany = vi.fn().mockResolvedValue({ count: 1 });
     runTransactionWith({
       asset: {
-        findFirst: vi
-          .fn()
-          .mockResolvedValue({ id: "asset-1", title: "Laptop", custody: [] }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "asset-1",
+            title: "Laptop",
+            type: "INDIVIDUAL",
+            quantity: null,
+            custody: [],
+          },
+        ]),
       },
       custodyHandover: {
         updateMany,
@@ -428,6 +457,38 @@ describe("resolveSignableParty", () => {
     ).toBe(CustodyHandoverParty.RECEIVING);
   });
 
+  it("does not let that same operator then sign the desk's slot", () => {
+    // The other half of the same trap. The operator above signed as the
+    // employee; nothing may now offer them the warehouse slot, or one person
+    // would have executed both halves of a محضر and the second signature — the
+    // one that actually moves custody — would witness nothing.
+    expect(
+      resolveSignableParty({
+        handover: open({
+          counterpartyTeamMemberId: "tm-operator",
+          signatures: [{ party: CustodyHandoverParty.RECEIVING }],
+        }),
+        canOperate: true,
+        ownTeamMemberId: "tm-operator",
+      }),
+    ).toBeNull();
+  });
+
+  it("still lets a different operator countersign that record", () => {
+    // The rule constrains who may sign, not whether the record can complete:
+    // any other holder of `asset.custody` closes it.
+    expect(
+      resolveSignableParty({
+        handover: open({
+          counterpartyTeamMemberId: "tm-operator",
+          signatures: [{ party: CustodyHandoverParty.RECEIVING }],
+        }),
+        canOperate: true,
+        ownTeamMemberId: "tm-other-operator",
+      }),
+    ).toBe(CustodyHandoverParty.RELEASING);
+  });
+
   it("refuses everyone once the record is closed", () => {
     for (const state of [
       CustodyHandoverState.COMPLETED,
@@ -466,64 +527,593 @@ describe("resolveSignableParty", () => {
   });
 });
 
+/**
+ * The custody writes a completed محضر performs.
+ *
+ * These assert on the `Custody` table rather than on `Asset.status`, because
+ * the status is a summary and the table is the fact. Partial movement is the
+ * property worth guarding: a department handing on 10 of its 30 pens must keep
+ * 20, and a `deleteMany` would silently return those 20 to the shelf with the
+ * only trace being a stock count that stopped adding up.
+ */
 describe("applyHandoverEffect", () => {
-  it("puts the asset in custody when a handover completes", async () => {
-    const update = vi.fn().mockResolvedValue({});
-    const deleteMany = vi.fn().mockResolvedValue({ count: 0 });
-    const tx = {
-      asset: { update },
-      custody: { deleteMany },
-      teamMember: { findUnique: vi.fn().mockResolvedValue({ id: "tm-1" }) },
+  /** A transaction fake that records what it was asked to write. */
+  function makeTx(
+    custodyRow: { id: string; quantity: number } | null = null,
+    stillOut = 0,
+  ) {
+    return {
+      asset: { update: vi.fn().mockResolvedValue({}) },
+      custody: {
+        findFirst: vi.fn().mockResolvedValue(custodyRow),
+        create: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        delete: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        count: vi.fn().mockResolvedValue(stillOut),
+      },
+      teamMember: { findFirst: vi.fn().mockResolvedValue({ id: "tm-1" }) },
     };
+  }
 
-    await applyHandoverEffect(
+  function run(
+    tx: unknown,
+    overrides: Partial<{
+      kind: CustodyHandoverKind;
+      assets: { assetId: string; quantity?: number }[];
+      releasingTeamMemberId: string | null;
+    }> = {},
+  ) {
+    return applyHandoverEffect(
       {
         id: "ho-1",
         kind: CustodyHandoverKind.HANDOVER,
-        assetId: "asset-1",
+        assets: [{ assetId: "a-1", quantity: 1 }],
         organizationId: "org-1",
         counterpartyTeamMemberId: "tm-1",
         operatorUserId: "user-1",
+        ...overrides,
       },
       // @ts-expect-error -- partial transaction client, see runTransactionWith
       tx,
     );
+  }
 
-    expect(update).toHaveBeenCalledWith(
+  it("creates custody for the units the محضر lists", async () => {
+    const tx = makeTx();
+    await run(tx, { assets: [{ assetId: "a-1", quantity: 30 }] });
+
+    expect(tx.custody.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ quantity: 30, teamMemberId: "tm-1" }),
+      }),
+    );
+    expect(tx.asset.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: AssetStatus.IN_CUSTODY }),
       }),
     );
   });
 
-  it("frees the asset when a return completes", async () => {
-    const update = vi.fn().mockResolvedValue({});
-    const tx = {
-      asset: { update },
-      custody: { deleteMany: vi.fn() },
-      teamMember: { findUnique: vi.fn().mockResolvedValue({ id: "tm-1" }) },
-    };
+  it("adds to an existing holding rather than replacing it", async () => {
+    // why: an employee holding 5 who signs for 10 more holds 15, not 10.
+    const tx = makeTx({ id: "c-1", quantity: 5 });
+    await run(tx, { assets: [{ assetId: "a-1", quantity: 10 }] });
 
-    await applyHandoverEffect(
-      {
-        id: "ho-1",
-        kind: CustodyHandoverKind.RETURN,
-        assetId: "asset-1",
-        organizationId: "org-1",
-        counterpartyTeamMemberId: "tm-1",
-        operatorUserId: "user-1",
-      },
-      // @ts-expect-error -- partial transaction client, see runTransactionWith
-      tx,
+    expect(tx.custody.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { quantity: { increment: 10 } } }),
     );
+    expect(tx.custody.create).not.toHaveBeenCalled();
+  });
 
-    expect(update).toHaveBeenCalledWith(
+  it("leaves the remainder with a department that hands on part of its stock", async () => {
+    const tx = makeTx({ id: "c-dept", quantity: 30 });
+    await run(tx, {
+      assets: [{ assetId: "a-1", quantity: 10 }],
+      releasingTeamMemberId: "tm-dept",
+    });
+
+    // 30 − 10 = 20 stay with the desk; the row is updated, never deleted.
+    expect(tx.custody.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { quantity: 20 } }),
+    );
+    expect(tx.custody.delete).not.toHaveBeenCalled();
+  });
+
+  it("removes the releasing row when it hands on everything", async () => {
+    const tx = makeTx({ id: "c-dept", quantity: 10 });
+    await run(tx, {
+      assets: [{ assetId: "a-1", quantity: 10 }],
+      releasingTeamMemberId: "tm-dept",
+    });
+
+    expect(tx.custody.delete).toHaveBeenCalledWith({ where: { id: "c-dept" } });
+  });
+
+  it("frees the asset when a return takes back the last units", async () => {
+    const tx = makeTx({ id: "c-1", quantity: 5 }, 0);
+    await run(tx, {
+      kind: CustodyHandoverKind.RETURN,
+      assets: [{ assetId: "a-1", quantity: 5 }],
+    });
+
+    expect(tx.custody.delete).toHaveBeenCalled();
+    expect(tx.asset.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          status: AssetStatus.AVAILABLE,
-          custody: { deleteMany: {} },
-        }),
+        data: expect.objectContaining({ status: AssetStatus.AVAILABLE }),
       }),
     );
+  });
+
+  it("keeps the asset IN_CUSTODY when a partial return leaves units out", async () => {
+    // why: flipping to AVAILABLE while units are still held is what lets a
+    // second handover over-allocate the same stock.
+    const tx = makeTx({ id: "c-1", quantity: 30 }, 1);
+    await run(tx, {
+      kind: CustodyHandoverKind.RETURN,
+      assets: [{ assetId: "a-1", quantity: 10 }],
+    });
+
+    expect(tx.custody.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { quantity: 20 } }),
+    );
+    expect(tx.asset.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: AssetStatus.IN_CUSTODY }),
+      }),
+    );
+  });
+
+  it("applies every line of a batch, not just the first", async () => {
+    const tx = makeTx();
+    await run(tx, {
+      assets: [
+        { assetId: "a-1", quantity: 1 },
+        { assetId: "a-2", quantity: 1 },
+        { assetId: "a-3", quantity: 1 },
+      ],
+    });
+
+    expect(tx.custody.create).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("openHandover — batch", () => {
+  const base = {
+    organizationId: "org-1",
+    counterpartyTeamMemberId: "tm-facilities",
+    operatorUserId: "user-1",
+  };
+
+  const freeAsset = (id: string) => ({
+    id,
+    title: id,
+    type: "INDIVIDUAL" as const,
+    quantity: null,
+    custody: [],
+  });
+
+  it("puts every selected asset on one record with one reference", async () => {
+    const create = vi
+      .fn()
+      .mockResolvedValue({ id: "ho-1", reference: "EPDA-HO-2026-0001" });
+    runTransactionWith({
+      asset: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue(["a-1", "a-2", "a-3"].map(freeAsset)),
+      },
+      custodyHandover: {
+        updateMany: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
+        create,
+      },
+    });
+
+    await openHandover({
+      ...base,
+      assets: [{ id: "a-1" }, { id: "a-2" }, { id: "a-3" }],
+      kind: CustodyHandoverKind.HANDOVER,
+    });
+
+    expect(create).toHaveBeenCalledOnce();
+    expect(create.mock.calls[0][0].data.assets.create).toEqual([
+      { assetId: "a-1", quantity: 1 },
+      { assetId: "a-2", quantity: 1 },
+      { assetId: "a-3", quantity: 1 },
+    ]);
+  });
+
+  it("rejects the whole batch when one asset is already in custody", async () => {
+    const create = vi.fn();
+    runTransactionWith({
+      asset: {
+        findMany: vi.fn().mockResolvedValue([
+          freeAsset("a-1"),
+          {
+            id: "a-2",
+            title: "Held laptop",
+            type: "INDIVIDUAL" as const,
+            quantity: null,
+            custody: [{ id: "c-1", teamMemberId: "tm-9", quantity: 1 }],
+          },
+          freeAsset("a-3"),
+        ]),
+      },
+      custodyHandover: { updateMany: vi.fn(), count: vi.fn(), create },
+    });
+
+    await expect(
+      openHandover({
+        ...base,
+        assets: [{ id: "a-1" }, { id: "a-2" }, { id: "a-3" }],
+        kind: CustodyHandoverKind.HANDOVER,
+      }),
+    ).rejects.toThrow(/already in someone's custody/i);
+
+    // The two healthy assets must NOT have been handed over on their own.
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("rejects the batch when an asset is not in the workspace", async () => {
+    const create = vi.fn();
+    runTransactionWith({
+      // Only two of the three ids come back — the third belongs elsewhere.
+      asset: {
+        findMany: vi.fn().mockResolvedValue(["a-1", "a-2"].map(freeAsset)),
+      },
+      custodyHandover: { updateMany: vi.fn(), count: vi.fn(), create },
+    });
+
+    await expect(
+      openHandover({
+        ...base,
+        assets: [{ id: "a-1" }, { id: "a-2" }, { id: "a-cross-org" }],
+        kind: CustodyHandoverKind.HANDOVER,
+      }),
+    ).rejects.toThrow(/do not exist in your workspace/i);
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("refuses an empty selection instead of creating a blank محضر", async () => {
+    await expect(
+      openHandover({
+        ...base,
+        assets: [],
+        kind: CustodyHandoverKind.HANDOVER,
+      }),
+    ).rejects.toThrow(/at least one asset/i);
+  });
+
+  it("sums a repeated asset into one line rather than tripping the unique index", async () => {
+    const create = vi.fn().mockResolvedValue({ id: "ho-1", reference: "R" });
+    runTransactionWith({
+      asset: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "a-1",
+            title: "Pens",
+            type: "QUANTITY_TRACKED" as const,
+            quantity: 30,
+            custody: [],
+          },
+        ]),
+      },
+      custodyHandover: {
+        updateMany: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
+        create,
+      },
+    });
+
+    await openHandover({
+      ...base,
+      assets: [{ id: "a-1" }, { id: "a-1" }],
+      kind: CustodyHandoverKind.HANDOVER,
+    });
+
+    // Repeated ids SUM: two lines of one unit is a request for two.
+    expect(create.mock.calls[0][0].data.assets.create).toEqual([
+      { assetId: "a-1", quantity: 2 },
+    ]);
+  });
+});
+
+describe("openHandover — department transfer", () => {
+  const base = {
+    organizationId: "org-1",
+    counterpartyTeamMemberId: "tm-employee",
+    operatorUserId: "user-1",
+    assets: [{ id: "a-1" }],
+    kind: CustodyHandoverKind.HANDOVER,
+  };
+
+  function heldBy(teamMemberId: string | null) {
+    return {
+      asset: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "a-1",
+            title: "Laptop",
+            type: "INDIVIDUAL",
+            quantity: null,
+            custody: teamMemberId
+              ? [{ id: "c-1", teamMemberId, quantity: 1 }]
+              : [],
+          },
+        ]),
+      },
+      custodyHandover: {
+        updateMany: vi.fn(),
+        count: vi.fn().mockResolvedValue(0),
+        create: vi.fn().mockResolvedValue({ id: "ho-1", reference: "R" }),
+      },
+    };
+  }
+
+  it("hands an asset the department holds on to an employee", async () => {
+    const tx = heldBy("tm-facilities");
+    runTransactionWith(tx);
+
+    await openHandover({ ...base, releasingTeamMemberId: "tm-facilities" });
+
+    expect(tx.custodyHandover.create).toHaveBeenCalledOnce();
+  });
+
+  it("refuses when the named desk is not the actual holder", async () => {
+    // why: this is the tightening. Without it a department could name itself
+    // as the releasing side and hand over stock another custodian is holding.
+    const tx = heldBy("tm-someone-else");
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({ ...base, releasingTeamMemberId: "tm-facilities" }),
+    ).rejects.toThrow(/not yours to pass on/i);
+
+    expect(tx.custodyHandover.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a transfer of an asset nobody holds", async () => {
+    const tx = heldBy(null);
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({ ...base, releasingTeamMemberId: "tm-facilities" }),
+    ).rejects.toThrow(/not in anyone's custody/i);
+  });
+
+  it("refuses to hand an asset to the side already holding it", async () => {
+    // why: both signature slots would belong to the same party, and the محضر
+    // would record a movement that never happened.
+    const tx = heldBy("tm-facilities");
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({
+        ...base,
+        counterpartyTeamMemberId: "tm-facilities",
+        releasingTeamMemberId: "tm-facilities",
+      }),
+    ).rejects.toThrow(/must be different/i);
+  });
+
+  it("still refuses an ordinary handover of a held asset", async () => {
+    // why: the transfer path must not have weakened the default. Omitting
+    // `releasingTeamMemberId` keeps the original rule.
+    const tx = heldBy("tm-facilities");
+    runTransactionWith(tx);
+
+    await expect(openHandover(base)).rejects.toThrow(
+      /already in someone's custody/i,
+    );
+  });
+});
+
+/**
+ * Department officers signing on behalf of their desk.
+ *
+ * A batch محضر names `إدارة المرافق` — a TeamMember row with no user account —
+ * so nobody's personal row ever equals the counterparty. Without this the
+ * receiving department could never sign and every batch would stall.
+ *
+ * The tests below pin BOTH directions: they can sign their desk's half, and
+ * widening "who is the counterparty" did **not** let them sign both halves.
+ */
+describe("resolveSignableParty — department desk", () => {
+  const DESK = "tm-facilities";
+  const OFFICER = "tm-officer";
+
+  const batch = (signed: CustodyHandoverParty[] = []) => ({
+    kind: CustodyHandoverKind.HANDOVER,
+    state: CustodyHandoverState.AWAITING_SIGNATURES,
+    counterpartyTeamMemberId: DESK,
+    signatures: signed.map((party) => ({ party })),
+  });
+
+  it("lets an officer sign their desk's half of a batch محضر", () => {
+    expect(
+      resolveSignableParty({
+        handover: batch([CustodyHandoverParty.RELEASING]),
+        canOperate: true,
+        ownTeamMemberId: OFFICER,
+        ownDepartmentTeamMemberId: DESK,
+      }),
+    ).toBe(CustodyHandoverParty.RECEIVING);
+  });
+
+  it("does NOT let that officer also sign the warehouse half", () => {
+    // why: this is the rule the widening could have broken. Being recognised
+    // as the counterparty must return that slot and stop — a محضر signed by
+    // one person on both sides witnesses nothing.
+    expect(
+      resolveSignableParty({
+        handover: batch([CustodyHandoverParty.RECEIVING]),
+        canOperate: true,
+        ownTeamMemberId: OFFICER,
+        ownDepartmentTeamMemberId: DESK,
+      }),
+    ).toBeNull();
+  });
+
+  it("gives nothing to someone from a different department", () => {
+    expect(
+      resolveSignableParty({
+        handover: batch([CustodyHandoverParty.RELEASING]),
+        canOperate: false,
+        ownTeamMemberId: OFFICER,
+        ownDepartmentTeamMemberId: "tm-some-other-desk",
+      }),
+    ).toBeNull();
+  });
+
+  it("still gives the warehouse slot to an operator with no department", () => {
+    // Regression guard: the default must keep the pre-existing behaviour.
+    expect(
+      resolveSignableParty({
+        handover: batch(),
+        canOperate: true,
+        ownTeamMemberId: "tm-warehouse",
+      }),
+    ).toBe(CustodyHandoverParty.RELEASING);
+  });
+});
+
+/**
+ * A محضر moves the whole line, so `Custody.quantity` must carry the asset's
+ * full stock.
+ *
+ * `Custody.quantity` defaults to 1 in the schema. For a QUANTITY_TRACKED asset
+ * — a receipt line of 30 pens is ONE asset with `quantity = 30` — that default
+ * records the department receiving a single pen while 29 read as still on the
+ * shelf. Nothing surfaces the discrepancy until someone counts.
+ */
+
+/**
+ * Quantity limits on a محضر.
+ *
+ * A signed document that says 40 pens moved when only 30 exist is worse than a
+ * rejected request: it is evidence of something that did not happen. These pin
+ * the arithmetic the service refuses to skip.
+ */
+describe("openHandover — quantity limits", () => {
+  const base = {
+    organizationId: "org-1",
+    counterpartyTeamMemberId: "tm-employee",
+    operatorUserId: "user-1",
+    kind: CustodyHandoverKind.HANDOVER,
+  };
+
+  function pens(custody: Array<{ teamMemberId: string; quantity: number }>) {
+    const create = vi.fn().mockResolvedValue({ id: "ho-1", reference: "R" });
+    return {
+      create,
+      tx: {
+        asset: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              id: "a-1",
+              title: "أقلام",
+              type: "QUANTITY_TRACKED" as const,
+              quantity: 30,
+              custody: custody.map((c, i) => ({ id: `c-${i}`, ...c })),
+            },
+          ]),
+        },
+        custodyHandover: {
+          updateMany: vi.fn(),
+          count: vi.fn().mockResolvedValue(0),
+          create,
+        },
+      },
+    };
+  }
+
+  it("hands over part of the stock and records that quantity", async () => {
+    const { create, tx } = pens([]);
+    runTransactionWith(tx);
+
+    await openHandover({ ...base, assets: [{ id: "a-1", quantity: 10 }] });
+
+    expect(create.mock.calls[0][0].data.assets.create).toEqual([
+      { assetId: "a-1", quantity: 10 },
+    ]);
+  });
+
+  it("refuses more units than the shelf holds", async () => {
+    const { create, tx } = pens([]);
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({ ...base, assets: [{ id: "a-1", quantity: 40 }] }),
+    ).rejects.toThrow(/only 30 of 30 units are available/i);
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("counts units already out when computing what is available", async () => {
+    // 30 total, 25 already with somebody else → 5 left, so 10 must fail.
+    const { tx } = pens([{ teamMemberId: "tm-other", quantity: 25 }]);
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({ ...base, assets: [{ id: "a-1", quantity: 10 }] }),
+    ).rejects.toThrow(/only 5 .*available .*25 already in custody/i);
+  });
+
+  it("still allows a handover from stock that is only partly out", async () => {
+    // why: "already in custody" is arithmetic for quantity-tracked assets, not
+    // a yes/no gate — 20 pens remain on the shelf and may be issued.
+    const { create, tx } = pens([{ teamMemberId: "tm-other", quantity: 10 }]);
+    runTransactionWith(tx);
+
+    await openHandover({ ...base, assets: [{ id: "a-1", quantity: 20 }] });
+
+    expect(create).toHaveBeenCalledOnce();
+  });
+
+  it("refuses a transfer of more than the releasing side holds", async () => {
+    const { create, tx } = pens([{ teamMemberId: "tm-dept", quantity: 30 }]);
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({
+        ...base,
+        assets: [{ id: "a-1", quantity: 40 }],
+        releasingTeamMemberId: "tm-dept",
+      }),
+    ).rejects.toThrow(/only 30 units are in your custody/i);
+
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("refuses a quantity below one", async () => {
+    const { tx } = pens([]);
+    runTransactionWith(tx);
+
+    await expect(
+      openHandover({ ...base, assets: [{ id: "a-1", quantity: 0 }] }),
+    ).rejects.toThrow(/at least 1/i);
+  });
+
+  it("refuses more than one unit of an individually-tracked asset", async () => {
+    runTransactionWith({
+      asset: {
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "a-1",
+            title: "لابتوب",
+            type: "INDIVIDUAL" as const,
+            quantity: null,
+            custody: [],
+          },
+        ]),
+      },
+      custodyHandover: { updateMany: vi.fn(), count: vi.fn(), create: vi.fn() },
+    });
+
+    await expect(
+      openHandover({ ...base, assets: [{ id: "a-1", quantity: 3 }] }),
+    ).rejects.toThrow(/tracked individually/i);
   });
 });

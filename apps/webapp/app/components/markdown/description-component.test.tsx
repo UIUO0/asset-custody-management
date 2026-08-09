@@ -52,7 +52,7 @@ describe("DescriptionComponent", () => {
       expect(screen.getByRole("button")).toBeInTheDocument();
       const button = screen.getByRole("button");
       expect(button.textContent).toContain(
-        "This is a very long description that exceeds the m..."
+        "This is a very long description that exceeds the m...",
       );
     });
 
@@ -79,7 +79,7 @@ describe("DescriptionComponent", () => {
       const longOldText =
         "This is a very long old description that should be truncated and shown in popover";
       render(
-        <DescriptionComponent oldText={longOldText} newText="Short new" />
+        <DescriptionComponent oldText={longOldText} newText="Short new" />,
       );
 
       const buttons = screen.getAllByRole("button");
@@ -87,7 +87,7 @@ describe("DescriptionComponent", () => {
 
       const [oldButton] = buttons;
       expect(oldButton.textContent).toContain(
-        "This is a very long old description that should be..."
+        "This is a very long old description that should be...",
       );
       expect(screen.getByText("Short new")).toBeInTheDocument();
       expect(screen.getByText("Previous Description:")).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("DescriptionComponent", () => {
       const longNewText =
         "This is a very long new description that should be truncated and shown in popover";
       render(
-        <DescriptionComponent oldText="Short old" newText={longNewText} />
+        <DescriptionComponent oldText="Short old" newText={longNewText} />,
       );
 
       const buttons = screen.getAllByRole("button");
@@ -107,7 +107,7 @@ describe("DescriptionComponent", () => {
       expect(screen.getByText("Short old")).toBeInTheDocument();
       const [newButton] = buttons;
       expect(newButton.textContent).toContain(
-        "This is a very long new description that should be..."
+        "This is a very long new description that should be...",
       );
       expect(screen.getByText("New Description:")).toBeInTheDocument();
       expect(screen.getByText(longNewText)).toBeInTheDocument();
@@ -119,7 +119,7 @@ describe("DescriptionComponent", () => {
       const longNewText =
         "This is a very long new description that should be truncated and shown in popover when clicked";
       render(
-        <DescriptionComponent oldText={longOldText} newText={longNewText} />
+        <DescriptionComponent oldText={longOldText} newText={longNewText} />,
       );
 
       const buttons = screen.getAllByRole("button");
@@ -127,10 +127,10 @@ describe("DescriptionComponent", () => {
 
       const [oldButton, newButton] = buttons;
       expect(oldButton.textContent).toContain(
-        "This is a very long old description that should be..."
+        "This is a very long old description that should be...",
       );
       expect(newButton.textContent).toContain(
-        "This is a very long new description that should be..."
+        "This is a very long new description that should be...",
       );
       expect(screen.getByText("Previous Description:")).toBeInTheDocument();
       expect(screen.getByText("New Description:")).toBeInTheDocument();
@@ -178,7 +178,7 @@ describe("DescriptionComponent", () => {
       expect(screen.getByTestId("popover")).toBeInTheDocument();
       const button = screen.getByRole("button");
       expect(button.textContent).toContain(
-        "This description is exactly fifty-one characters l..."
+        "This description is exactly fifty-one characters l...",
       );
     });
   });
@@ -220,7 +220,7 @@ describe("DescriptionComponent", () => {
       expect(screen.getByTestId("popover")).toBeInTheDocument();
       const button = screen.getByRole("button");
       expect(button.textContent).toContain(
-        "Thisisaverylongdescriptionwithoutanyspacesthatshou..."
+        "Thisisaverylongdescriptionwithoutanyspacesthatshou...",
       );
     });
   });
@@ -246,7 +246,7 @@ describe("DescriptionComponent", () => {
         "border",
         "bg-white",
         "p-3",
-        "shadow-lg"
+        "shadow-lg",
       );
       expect(screen.getByText("Full Description:")).toBeInTheDocument();
     });

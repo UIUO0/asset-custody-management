@@ -23,6 +23,10 @@ import { config } from "~/config/shelf.config";
 import { useSearchParams } from "~/hooks/search-params";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { createI18nInstance, getLocale } from "~/i18n/i18n.server";
+import {
+  assertPasswordLoginAllowed,
+  getAuthConfig,
+} from "~/modules/auth/auth-config.server";
 import { signInWithEmail } from "~/modules/auth/service.server";
 
 import {
@@ -46,13 +50,14 @@ import {
   parseData,
   safeRedirect,
 } from "~/utils/http.server";
+import { getLandingRouteForUser } from "~/utils/landing-route.server";
 import { validEmail } from "~/utils/misc";
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
-  const { disableSignup, disableSSO } = config;
-
   if (context.isAuthenticated) {
-    return redirect("/assets");
+    const { userId } = context.getSession();
+
+    return redirect(await getLandingRouteForUser({ userId, request }));
   }
 
   // Title/subheading are rendered by the parent `_auth` layout from loader
@@ -60,12 +65,27 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   // `t()` call in this route's component.
   const i18n = await createI18nInstance(getLocale(request));
 
+  /**
+   * Which sign-in options to offer now comes from the admin settings screen
+   * rather than from `.env`, so changing the identity source no longer needs a
+   * redeploy. `DISABLE_SIGNUP` / `DISABLE_SSO` remain the fallback for a
+   * deployment that has never saved the form.
+   *
+   * `authConfig` carries booleans and the method name only — no credentials —
+   * so it is safe in a loader payload.
+   */
+  const authConfig = await getAuthConfig();
+
+  // The env flag stays an absolute kill switch: if the operator disabled SSO at
+  // the process level, no stored setting may re-enable it.
+  const showSsoEntryPoint = !config.disableSSO && authConfig.showSsoEntryPoint;
+
   return data(
     payload({
       title: i18n.t("auth.loginTitle"),
       subHeading: i18n.t("auth.loginSubheading"),
-      disableSignup,
-      disableSSO,
+      disableSignup: authConfig.disableSignup || config.disableSignup,
+      showSsoEntryPoint,
     }),
   );
 }
@@ -141,6 +161,19 @@ export async function action({ context, request }: ActionFunctionArgs) {
         const { userId } = authSession;
 
         /**
+         * Enforced *after* the credentials check, not before: refusing unknown
+         * addresses earlier than known ones would let a caller discover which
+         * accounts exist, and which of them are admins.
+         *
+         * App-wide admins are exempt — a misconfigured directory must never
+         * lock out the account needed to fix it. See auth-config.server.ts.
+         */
+        await assertPasswordLoginAllowed({
+          userId,
+          authConfig: await getAuthConfig(),
+        });
+
+        /**
          * The only reason we need to do this is because of the initial login
          * Theoretically, the user should always have a selected organization cookie as soon as they login for the first time
          * However we do this check to make sure they are still part of that organization
@@ -150,10 +183,15 @@ export async function action({ context, request }: ActionFunctionArgs) {
           request,
         });
 
-        // Set the auth session and redirect to the assets page
+        // Set the auth session and send the user to their landing page — an
+        // explicit `redirectTo` (a deep link they were bounced off) wins;
+        // otherwise it depends on their role in the organisation above.
         context.setSession(authSession);
 
-        return redirect(safeRedirect(redirectTo || "/assets"), {
+        const landingRoute =
+          redirectTo || (await getLandingRouteForUser({ userId, request }));
+
+        return redirect(safeRedirect(landingRoute), {
           headers: [
             setCookie(await setSelectedOrganizationIdCookie(organizationId)),
           ],
@@ -180,7 +218,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export default function IndexLoginForm() {
   const { t } = useTranslation();
-  const { disableSignup, disableSSO } = useLoaderData<typeof loader>();
+  const { disableSignup, showSsoEntryPoint } = useLoaderData<typeof loader>();
   const zo = useZorm("NewQuestionWizardScreen", LoginFormSchema);
   const [searchParams] = useSearchParams();
   const redirectTo = searchParams.get("redirectTo") ?? undefined;
@@ -261,12 +299,12 @@ export default function IndexLoginForm() {
         </div>
       </Form>
       {/*
-       * SSO entry point — hidden while DISABLE_SSO="true".
-       * When the Azure AD (Microsoft Entra ID) integration is activated,
-       * set DISABLE_SSO="false" in .env and this link re-appears; employee
-       * accounts are then provisioned automatically on first SSO login.
+       * SSO entry point. Shown only when the admin settings screen selects a
+       * directory method AND that directory is completely configured — a
+       * half-filled form would otherwise send employees to a broken redirect.
+       * `DISABLE_SSO="true"` in .env still overrides everything.
        */}
-      {!disableSSO && (
+      {showSsoEntryPoint && (
         <div className="mt-6 text-center">
           <Button variant="link" to="/sso-login">
             {t("auth.ssoLogin")}

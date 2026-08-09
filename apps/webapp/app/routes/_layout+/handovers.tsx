@@ -149,7 +149,11 @@ export default function HandoversPage() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold">
-                      {handover.asset.title}
+                      {handover.assets.length === 1
+                        ? handover.assets[0].asset.title
+                        : t("custodySignature.assetCount", {
+                            count: handover.assets.length,
+                          })}
                     </span>
                     <Badge color={handover.waitingOnMe ? "#B54708" : "#475467"}>
                       {handover.kind === CustodyHandoverKind.HANDOVER

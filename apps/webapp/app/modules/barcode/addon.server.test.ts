@@ -84,7 +84,7 @@ function makeNonBarcodeProduct() {
 }
 
 function makeSubscription(
-  overrides: Partial<Stripe.Subscription> = {}
+  overrides: Partial<Stripe.Subscription> = {},
 ): Stripe.Subscription {
   return {
     id: "sub_123",
@@ -170,14 +170,14 @@ describe("createBarcodeAddonTrialSubscription", () => {
       expect.objectContaining({
         trial_period_days: 7,
         default_payment_method: "pm_123",
-      })
+      }),
     );
   });
 
   it("creates subscription without default_payment_method when none exists", async () => {
     mockStripe.paymentMethods.list.mockResolvedValue({ data: [] });
     mockStripe.subscriptions.create.mockResolvedValue(
-      makeSubscription({ status: "trialing" as any })
+      makeSubscription({ status: "trialing" as any }),
     );
 
     await createBarcodeAddonTrialSubscription(baseTrialParams);
@@ -313,7 +313,7 @@ describe("linkBarcodeAddonToOrganization", () => {
       "sub_barcode",
       {
         metadata: { existing: "data", organizationId: "org_1" },
-      }
+      },
     );
   });
 
@@ -332,7 +332,7 @@ describe("linkBarcodeAddonToOrganization", () => {
           barcodesEnabled: true,
           barcodesEnabledAt: expect.any(Date),
         }),
-      })
+      }),
     );
   });
 
@@ -349,7 +349,7 @@ describe("linkBarcodeAddonToOrganization", () => {
         data: expect.objectContaining({
           usedBarcodeTrial: true,
         }),
-      })
+      }),
     );
   });
 
@@ -388,7 +388,7 @@ describe("linkBarcodeAddonToOrganization", () => {
       "sub_unlinked",
       expect.objectContaining({
         metadata: expect.objectContaining({ organizationId: "org_1" }),
-      })
+      }),
     );
   });
 
@@ -408,7 +408,7 @@ describe("linkBarcodeAddonToOrganization", () => {
       "sub_same_org",
       expect.objectContaining({
         metadata: expect.objectContaining({ organizationId: "org_1" }),
-      })
+      }),
     );
     expect(mockOrgUpdate).toHaveBeenCalled();
   });
@@ -524,7 +524,7 @@ describe("handleBarcodeAddonWebhook", () => {
           barcodesEnabled: true,
           barcodesEnabledAt: expect.any(Date),
         }),
-      })
+      }),
     );
   });
 
@@ -547,7 +547,7 @@ describe("handleBarcodeAddonWebhook", () => {
           barcodesEnabled: true,
           usedBarcodeTrial: true,
         }),
-      })
+      }),
     );
   });
 
@@ -581,7 +581,7 @@ describe("handleBarcodeAddonWebhook", () => {
     expect(mockOrgUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { barcodesEnabled: true },
-      })
+      }),
     );
   });
 
@@ -597,7 +597,7 @@ describe("handleBarcodeAddonWebhook", () => {
     expect(mockOrgUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { barcodesEnabled: false },
-      })
+      }),
     );
   });
 
@@ -610,7 +610,7 @@ describe("handleBarcodeAddonWebhook", () => {
     expect(mockOrgUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { barcodesEnabled: false },
-      })
+      }),
     );
   });
 
@@ -623,7 +623,7 @@ describe("handleBarcodeAddonWebhook", () => {
     expect(mockOrgUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: { barcodesEnabled: false },
-      })
+      }),
     );
   });
 

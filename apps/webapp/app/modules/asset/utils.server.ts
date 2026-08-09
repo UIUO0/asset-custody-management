@@ -80,11 +80,11 @@ export function getLocationUpdateNoteContent({
   if (currentLocation && newLocation) {
     const currentLocationLink = wrapLinkForNote(
       `/locations/${currentLocation.id}`,
-      currentLocation.name.trim()
+      currentLocation.name.trim(),
     );
     const newLocationLink = wrapLinkForNote(
       `/locations/${newLocation.id}`,
-      newLocation.name.trim()
+      newLocation.name.trim(),
     );
     message = count
       ? `${userLink} moved ${count} from ${currentLocationLink} to ${newLocationLink}.`
@@ -94,7 +94,7 @@ export function getLocationUpdateNoteContent({
   if (newLocation && !currentLocation) {
     const newLocationLink = wrapLinkForNote(
       `/locations/${newLocation.id}`,
-      newLocation.name.trim()
+      newLocation.name.trim(),
     );
     message = count
       ? `${userLink} placed ${count} at ${newLocationLink}.`
@@ -104,7 +104,7 @@ export function getLocationUpdateNoteContent({
   if (isRemoving || !newLocation) {
     const currentLocationLink = wrapLinkForNote(
       `/locations/${currentLocation?.id}`,
-      currentLocation?.name.trim() || ""
+      currentLocation?.name.trim() || "",
     );
     message = count
       ? `${userLink} removed ${count} from ${currentLocationLink}.`
@@ -222,7 +222,7 @@ export function getCustomFieldUpdateNoteContent({
 export function compareCustomFieldValues(
   oldValue: ICustomFieldValueJson | null | undefined,
   newValue: ICustomFieldValueJson | null | undefined,
-  fieldType: CustomFieldType
+  fieldType: CustomFieldType,
 ): boolean {
   // Handle null/undefined cases
   if (!oldValue && !newValue) return false; // No change
@@ -294,13 +294,13 @@ export function detectPotentialChanges(
   formValues: Array<{
     id: string;
     value: ICustomFieldValueJson | null;
-  }>
+  }>,
 ): Array<{ fieldId: string; hasChange: boolean }> {
   const changes: Array<{ fieldId: string; hasChange: boolean }> = [];
 
   for (const formField of formValues) {
     const existingValue = existingValues.find(
-      (cf) => cf.customFieldId === formField.id
+      (cf) => cf.customFieldId === formField.id,
     );
 
     // Quick check for potential changes
@@ -377,7 +377,7 @@ export function detectCustomFieldChanges(
     id: string;
     name: string;
     type: CustomFieldType;
-  }>
+  }>,
 ): CustomFieldChangeInfo[] {
   const changes: CustomFieldChangeInfo[] = [];
 
@@ -389,7 +389,7 @@ export function detectCustomFieldChanges(
     if (!customField) continue;
 
     const existingValue = existingValues.find(
-      (cf) => cf.customFieldId === formField.id
+      (cf) => cf.customFieldId === formField.id,
     );
 
     // Format values for display using the same function as the UI
@@ -435,7 +435,7 @@ export function detectCustomFieldChanges(
       shouldCreateNote = compareCustomFieldValues(
         existingValue.value,
         formField.value,
-        customField.type
+        customField.type,
       );
     }
 
@@ -663,7 +663,7 @@ export const advancedFilterFormatSchema = z.string().refine(
   },
   {
     message: "Filter must be in format 'operator:value' with valid operator",
-  }
+  },
 );
 
 /**
@@ -685,7 +685,7 @@ function isValidAdvancedFilterFormat(value: string): boolean {
  */
 export function validateAdvancedFilterParams(
   searchParams: URLSearchParams,
-  columns: Column[]
+  columns: Column[],
 ): URLSearchParams {
   const validatedParams = new URLSearchParams();
   const columnNames = columns.map((col) => col.name);
@@ -756,7 +756,7 @@ export async function getAllSelectedValuesFromFilters(
   columns: Column[],
   organizationId?: string,
   /** Pre-parsed filters — pass these to avoid a redundant parseFiltersWithHierarchy call */
-  preParsedFilters?: Filter[]
+  preParsedFilters?: Filter[],
 ) {
   const parsedFilters =
     preParsedFilters ??

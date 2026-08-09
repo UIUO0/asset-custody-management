@@ -185,7 +185,7 @@ describe("activity event reports", () => {
         assetId: "asset-1",
         from,
         to,
-      })
+      }),
     ).rejects.toMatchObject({
       label: "Activity",
       additionalData: expect.objectContaining({ helper: "assetChangeHistory" }),

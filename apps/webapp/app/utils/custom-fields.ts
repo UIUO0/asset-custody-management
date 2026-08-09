@@ -141,7 +141,7 @@ export const extractCustomFieldValuesFromPayload = ({
 }): ShelfAssetCustomFieldValueType[] => {
   /** Get the custom fields keys and values */
   const customFieldsKeys = Object.keys(payload).filter((key) =>
-    key.startsWith("cf-")
+    key.startsWith("cf-"),
   );
 
   return customFieldsKeys
@@ -175,7 +175,7 @@ const CURRENCY_SYMBOLS_REGEX = /[$€£¥₹₽₩₪₫฿₴₦₲₵₡₺₨
 function formatInvalidNumericMessage(
   fieldName: string,
   rawValue: unknown,
-  options?: { assetTitle?: string }
+  options?: { assetTitle?: string },
 ) {
   const value =
     typeof rawValue === "string"
@@ -213,7 +213,7 @@ function formatInvalidNumericMessage(
  */
 function sanitizeNumericInput(
   raw: unknown,
-  def: CustomField
+  def: CustomField,
 ): { numericValue: number; normalizedText: string } {
   const throwInvalid = (reason?: string): never => {
     const baseMessage = formatInvalidNumericMessage(def.name, raw);
@@ -281,7 +281,7 @@ function sanitizeNumericInput(
     // Reject if multiple separators are present (indicates thousand separators)
     if (dotCount > 1 || commaCount > 1 || (dotCount > 0 && commaCount > 0)) {
       throwInvalid(
-        "Contains thousand separator format (multiple dots/commas or mixed separators)."
+        "Contains thousand separator format (multiple dots/commas or mixed separators).",
       );
     }
 
@@ -294,7 +294,7 @@ function sanitizeNumericInput(
       // If exactly 3 digits after comma and more than 1 digit before, likely thousand separator
       if (afterComma.length === 3 && parts[0].length > 0) {
         throwInvalid(
-          "Contains thousand separator format (comma with 3 digits after it)."
+          "Contains thousand separator format (comma with 3 digits after it).",
         );
       }
       value = value.replace(",", ".");
@@ -304,7 +304,7 @@ function sanitizeNumericInput(
       // If exactly 3 digits after dot and more than 1 digit before, likely thousand separator
       if (afterDot.length === 3 && parts[0].length > 0) {
         throwInvalid(
-          "Contains thousand separator format (dot with 3 digits after it)."
+          "Contains thousand separator format (dot with 3 digits after it).",
         );
       }
     }
@@ -333,7 +333,7 @@ function sanitizeNumericInput(
 
 export const buildCustomFieldValue = (
   value: ShelfAssetCustomFieldValueType["value"],
-  def: CustomField
+  def: CustomField,
 ): ShelfAssetCustomFieldValueType["value"] | undefined => {
   try {
     const { raw } = value;
@@ -469,7 +469,7 @@ export { formatInvalidNumericMessage as formatInvalidNumericCustomFieldMessage }
  */
 export const getCustomFieldDisplayValue = (
   value: ShelfAssetCustomFieldValueType["value"],
-  hints?: ClientHint
+  hints?: ClientHint,
 ): string | RenderableTreeNode => {
   if (value.valueMultiLineText) {
     return parseMarkdownToReact(value.raw as string);
@@ -492,7 +492,7 @@ export const getCustomFieldDisplayValue = (
 
 //header = "cf:name,type:text"
 export const getDefinitionFromCsvHeader = (
-  header: string
+  header: string,
 ): Pick<CustomField, "helpText" | "name" | "type" | "required" | "active"> => {
   const defArr = header.split(",").map((e) => e.trim()); //["cf:name","type:text"]
   const name = defArr

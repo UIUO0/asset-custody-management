@@ -12,7 +12,7 @@
  * expect(response.init?.status).toBe(500);
  */
 export function assertIsDataWithResponseInit(
-  response: unknown
+  response: unknown,
 ): asserts response is {
   init: ResponseInit | null;
   data: unknown;
@@ -29,6 +29,6 @@ export function assertIsDataWithResponseInit(
     return;
   }
   throw new Error(
-    `Expected DataWithResponseInit but got: ${JSON.stringify(response)}`
+    `Expected DataWithResponseInit but got: ${JSON.stringify(response)}`,
   );
 }

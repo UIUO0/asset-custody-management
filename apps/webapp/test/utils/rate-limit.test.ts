@@ -22,7 +22,7 @@ describe("enforceUserRateLimit", () => {
 
     for (let i = 0; i < 10; i++) {
       await expect(
-        enforceUserRateLimit(userId, "bulk")
+        enforceUserRateLimit(userId, "bulk"),
       ).resolves.toBeUndefined();
     }
 
@@ -52,7 +52,7 @@ describe("enforceUserRateLimit", () => {
     // Burn 200 bulk calls across 20 minutes (10/min within the limit each min)
     for (let minute = 0; minute < 20; minute++) {
       vi.setSystemTime(
-        new Date(`2026-05-01T00:${minute.toString().padStart(2, "0")}:00Z`)
+        new Date(`2026-05-01T00:${minute.toString().padStart(2, "0")}:00Z`),
       );
       for (let i = 0; i < 10; i++) {
         await enforceUserRateLimit(userId, "bulk");
@@ -76,7 +76,7 @@ describe("enforceUserRateLimit", () => {
 
     // user-B is unaffected
     await expect(
-      enforceUserRateLimit("user-B", "bulk")
+      enforceUserRateLimit("user-B", "bulk"),
     ).resolves.toBeUndefined();
   });
 

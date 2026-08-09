@@ -57,11 +57,11 @@ describe("FeedbackModal", () => {
     // Exact names: the dialog backdrop has role="button" and its accessible
     // name concatenates all dialog text, so regex queries would be ambiguous
     expect(
-      screen.getByRole("button", { name: "Issue" }).closest("div.hidden")
+      screen.getByRole("button", { name: "Issue" }).closest("div.hidden"),
     ).toBeNull();
     expect(screen.getByRole("button", { name: "Idea" })).toBeTruthy();
     expect(
-      screen.queryByText(/attached to your report automatically/i)
+      screen.queryByText(/attached to your report automatically/i),
     ).toBeNull();
   });
 
@@ -73,24 +73,24 @@ describe("FeedbackModal", () => {
 
   it("renders the error-report variant when errorContext is set", () => {
     render(
-      <FeedbackModal open onClose={vi.fn()} errorContext={ERROR_CONTEXT} />
+      <FeedbackModal open onClose={vi.fn()} errorContext={ERROR_CONTEXT} />,
     );
 
     expect(screen.getByText("Report this issue")).toBeTruthy();
     // The toggle is hidden: an error report is always an issue
     expect(
-      screen.getByRole("button", { name: "Issue" }).closest("div.hidden")
+      screen.getByRole("button", { name: "Issue" }).closest("div.hidden"),
     ).toBeTruthy();
     // The user is told the technical details travel along
     expect(
-      screen.getByText(/attached to your report automatically/i)
+      screen.getByText(/attached to your report automatically/i),
     ).toBeTruthy();
     expect(screen.getByText(/trace_789/)).toBeTruthy();
   });
 
   it("attaches the error details as hidden fields", () => {
     render(
-      <FeedbackModal open onClose={vi.fn()} errorContext={ERROR_CONTEXT} />
+      <FeedbackModal open onClose={vi.fn()} errorContext={ERROR_CONTEXT} />,
     );
 
     expect(getHiddenInput("type")?.value).toBe("issue");
@@ -98,10 +98,10 @@ describe("FeedbackModal", () => {
     expect(getHiddenInput("sentryEventId")?.value).toBe("evt_abc");
     expect(getHiddenInput("errorStatus")?.value).toBe("500");
     expect(getHiddenInput("errorTitle")?.value).toBe(
-      "Oops, something went wrong"
+      "Oops, something went wrong",
     );
     expect(getHiddenInput("errorMessage")?.value).toBe(
-      "Something went wrong while fetching the kit"
+      "Something went wrong while fetching the kit",
     );
   });
 
@@ -120,7 +120,7 @@ describe("FeedbackModal", () => {
         open
         onClose={vi.fn()}
         errorContext={{ ...ERROR_CONTEXT, errorMessage: "x".repeat(5000) }}
-      />
+      />,
     );
     expect(getHiddenInput("errorMessage")?.value.length).toBe(3000);
   });
@@ -128,7 +128,7 @@ describe("FeedbackModal", () => {
   it("discloses the auto-captured context in the regular variant", () => {
     render(<FeedbackModal open onClose={vi.fn()} />);
     expect(
-      screen.getByText(/included automatically to help us debug/i)
+      screen.getByText(/included automatically to help us debug/i),
     ).toBeTruthy();
   });
 });

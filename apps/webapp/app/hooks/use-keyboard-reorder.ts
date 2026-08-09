@@ -37,7 +37,7 @@ interface UseKeyboardReorderReturn {
    */
   handleKeyDown: (
     event: ReactKeyboardEvent<HTMLElement>,
-    index: number
+    index: number,
   ) => void;
   /**
    * Current announcement for screen readers
@@ -76,7 +76,7 @@ export function useKeyboardReorder<T>({
   const [announcement, setAnnouncement] = useState("");
   const itemRefs = useRef<(HTMLElement | null)[]>([]);
   const announcementTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
+    null,
   );
 
   // Clean up timeout on unmount
@@ -86,7 +86,7 @@ export function useKeyboardReorder<T>({
         clearTimeout(announcementTimeoutRef.current);
       }
     },
-    []
+    [],
   );
 
   // Clear announcement after a short delay so screen readers can read it
@@ -125,7 +125,7 @@ export function useKeyboardReorder<T>({
 
       const itemName = getItemName(movedItem);
       announceChange(
-        `${itemName} moved up. Now at position ${index} of ${items.length}`
+        `${itemName} moved up. Now at position ${index} of ${items.length}`,
       );
 
       if (onItemMoved) {
@@ -135,7 +135,7 @@ export function useKeyboardReorder<T>({
       // Restore focus to the moved item
       setItemFocus(index - 1);
     },
-    [items, onReorder, getItemName, onItemMoved, announceChange, setItemFocus]
+    [items, onReorder, getItemName, onItemMoved, announceChange, setItemFocus],
   );
 
   const moveItemDown = useCallback(
@@ -155,7 +155,7 @@ export function useKeyboardReorder<T>({
       announceChange(
         `${itemName} moved down. Now at position ${index + 2} of ${
           items.length
-        }`
+        }`,
       );
 
       if (onItemMoved) {
@@ -165,7 +165,7 @@ export function useKeyboardReorder<T>({
       // Restore focus to the moved item
       setItemFocus(index + 1);
     },
-    [items, onReorder, getItemName, onItemMoved, announceChange, setItemFocus]
+    [items, onReorder, getItemName, onItemMoved, announceChange, setItemFocus],
   );
 
   const handleKeyDown = useCallback(
@@ -184,7 +184,7 @@ export function useKeyboardReorder<T>({
         return;
       }
     },
-    [moveItemUp, moveItemDown]
+    [moveItemUp, moveItemDown],
   );
 
   return {
