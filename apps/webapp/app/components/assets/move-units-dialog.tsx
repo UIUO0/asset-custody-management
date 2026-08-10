@@ -83,8 +83,6 @@ export interface MoveUnitsDialogProps {
 
   /** For `axis="location"`: current location id + name + qty at the source row. */
   fromLocation?: { id: string; name: string; quantity: number };
-  /** For `axis="kit"`: current kit id + name + qty at the source row. */
-  fromKit?: { id: string; name: string; quantity: number };
   /** For `axis="place-unplaced"`: how many units are currently unplaced. */
   unplacedQuantity?: number;
 
@@ -116,23 +114,19 @@ export interface MoveUnitsDialogProps {
  *
  * @param axis - Which axis the move acts on
  * @param fromLocation - Source location row (axis === "location")
- * @param fromKit - Source kit row (axis === "kit")
  * @param unplacedQuantity - Currently unplaced units (axis === "place-unplaced")
  */
 function resolveMaxQuantity({
   axis,
   fromLocation,
-  fromKit,
   unplacedQuantity,
 }: Pick<
   MoveUnitsDialogProps,
-  "axis" | "fromLocation" | "fromKit" | "unplacedQuantity"
+  "axis" | "fromLocation" | "unplacedQuantity"
 >): number {
   switch (axis) {
     case "location":
       return fromLocation?.quantity ?? 0;
-    case "kit":
-      return fromKit?.quantity ?? 0;
     case "place-unplaced":
       return unplacedQuantity ?? 0;
   }
@@ -154,13 +148,12 @@ function resolveMaxQuantity({
 function resolveCopy({
   axis,
   fromLocation,
-  fromKit,
   unplacedQuantity,
   unitLabel,
   t,
 }: Pick<
   MoveUnitsDialogProps,
-  "axis" | "fromLocation" | "fromKit" | "unplacedQuantity"
+  "axis" | "fromLocation" | "unplacedQuantity"
 > & {
   unitLabel: string;
   t: TFunction;
@@ -178,21 +171,6 @@ function resolveCopy({
         }),
         destinationLabel: t("moveUnits.destinationLocation"),
         destinationPlaceholder: t("moveUnits.selectALocation"),
-        submitIdle: t("moveUnits.move"),
-        submitBusy: t("moveUnits.moving"),
-      };
-    case "kit":
-      return {
-        title: t("moveUnits.titleFromKit", {
-          unit: unitLabel,
-          name: fromKit?.name ?? "",
-        }).trim(),
-        description: t("moveUnits.descriptionKit", {
-          count: fromKit?.quantity ?? 0,
-          unit: unitLabel,
-        }),
-        destinationLabel: t("moveUnits.destinationKit"),
-        destinationPlaceholder: t("moveUnits.selectAKit"),
         submitIdle: t("moveUnits.move"),
         submitBusy: t("moveUnits.moving"),
       };
@@ -231,7 +209,6 @@ export function MoveUnitsDialog({
   assetTitle,
   unitOfMeasure,
   fromLocation,
-  fromKit,
   unplacedQuantity,
   destinations,
   trigger,
@@ -278,13 +255,11 @@ export function MoveUnitsDialog({
   const maxQuantity = resolveMaxQuantity({
     axis,
     fromLocation,
-    fromKit,
     unplacedQuantity,
   });
   const copy = resolveCopy({
     axis,
     fromLocation,
-    fromKit,
     unplacedQuantity,
     unitLabel,
     t,
@@ -300,7 +275,6 @@ export function MoveUnitsDialog({
       z.object({
         [MOVE_UNITS_INTENT_FIELD]: z.enum([
           "location",
-          "kit",
           "place-unplaced",
         ]),
         toId: z.string().cuid("Please pick a destination."),
@@ -408,9 +382,6 @@ export function MoveUnitsDialog({
               name="fromLocationId"
               value={fromLocation.id}
             />
-          ) : null}
-          {fromKit ? (
-            <input type="hidden" name="fromKitId" value={fromKit.id} />
           ) : null}
           {/* Hidden mirror of the picker so the server gets `toId` regardless
               of whether the Radix Select component submits it natively. */}

@@ -4200,14 +4200,20 @@ export async function createAssetsFromContentImport({
         title: asset.title,
         description: asset.description || "",
         userId,
-        kitId,
         categoryId: asset.category ? categories?.[asset.category] : null,
         locationId: asset.location ? locations?.[asset.location] : undefined,
-        // Kit rows: custody belongs to the kit (assigned + inherited to members
-        // in setKitCustodyAfterAssetImport). Don't also create a direct operator
-        // custody on the asset, or it'd be IN_CUSTODY before the kit assignment
-        // (double-holding + tripping bulkAssignKitCustody's availability guard).
-        custodian: kitId ? undefined : custodianId,
+        /**
+         * Deliberately NOT `custodianId`: custody never transfers without a
+         * signed محضر. `CustodyHandover` requires two signatures, and the
+         * second one is what actually moves the asset — a CSV row cannot
+         * stand in for that. The `custodian` column is still parsed and
+         * validated (an unresolvable name fails the import loudly), but it
+         * does not create custody; the warehouse hands the asset over from
+         * the asset page afterwards.
+         *
+         * @see {@link file://./../custody/handover.server.ts} `recordHandoverSignature`
+         */
+        custodian: undefined,
         valuation: asset.valuation ? +asset.valuation : null,
         customFieldsValues,
         availableToBook: asset?.bookable !== "no",

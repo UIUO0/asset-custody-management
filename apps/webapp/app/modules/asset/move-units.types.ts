@@ -3,7 +3,6 @@
  *
  * Shared types + constants for the split/merge UX. Used by:
  * - `moveAssetLocationUnits` (modules/asset/service.server.ts)
- * - `moveAssetKitUnits` (modules/kit/service.server.ts)
  * - `placeUnplacedUnits` (modules/asset/service.server.ts)
  * - `MoveUnitsDialog` component (components/assets/move-units-dialog.tsx)
  * - The action handler on `assets.$assetId.overview.tsx`
@@ -23,15 +22,12 @@
  * - `location`       — move between AssetLocation rows (manual pivot only,
  *                      i.e. rows where `assetKitId IS NULL`). Kit-driven
  *                      rows must be moved via the `kit` axis.
- * - `kit`            — move between AssetKit rows. Cascades the new
- *                      quantities to kit-driven BookingAsset slices
- *                      (per the existing `updateKitAssets` pattern).
  * - `place-unplaced` — one-sided variant: place N of the asset's unplaced
  *                      units at a destination location. No source row to
  *                      decrement; fills the gap between `Asset.quantity`
  *                      and `sum(AssetLocation.quantity WHERE assetKitId IS NULL)`.
  */
-export type MoveAxis = "location" | "kit" | "place-unplaced";
+export type MoveAxis = "location" | "place-unplaced";
 
 /**
  * Hidden form-field name used by `MoveUnitsDialog` and consumed by the

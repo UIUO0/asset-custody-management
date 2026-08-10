@@ -79,7 +79,6 @@ import {
 import { getRemindersForOverviewPage } from "~/modules/asset-reminder/service.server";
 import { getPrimaryCustody } from "~/modules/custody/utils";
 import { getActiveCustomFields } from "~/modules/custom-field/service.server";
-import { moveAssetKitUnits } from "~/modules/kit/service.server";
 import { generateQrObj } from "~/modules/qr/utils.server";
 import { getScanByQrId } from "~/modules/scan/service.server";
 import { parseScanData } from "~/modules/scan/utils.server";
@@ -735,16 +734,6 @@ const moveUnitsLocationSchema = z.object({
     .positive("Quantity must be greater than zero."),
 });
 
-const moveUnitsKitSchema = z.object({
-  [MOVE_UNITS_INTENT_FIELD]: z.literal("kit"),
-  fromKitId: z.string().cuid("Invalid source kit."),
-  toId: z.string().cuid("Please pick a destination."),
-  quantity: z.coerce
-    .number()
-    .int("Quantity must be a whole number.")
-    .positive("Quantity must be greater than zero."),
-});
-
 const placeUnplacedSchema = z.object({
   [MOVE_UNITS_INTENT_FIELD]: z.literal("place-unplaced"),
   toId: z.string().cuid("Please pick a destination."),
@@ -784,7 +773,6 @@ async function handleMoveUnitsIntent({
    */
   const moveAxisEnum: z.ZodType<MoveAxis> = z.enum([
     "location",
-    "kit",
     "place-unplaced",
   ]);
   const { [MOVE_UNITS_INTENT_FIELD]: axis } = parseData(
@@ -804,18 +792,6 @@ async function handleMoveUnitsIntent({
           userId,
           fromLocationId: parsed.fromLocationId,
           toLocationId: parsed.toId,
-          quantity: parsed.quantity,
-        });
-        return payload({ success: true });
-      }
-      case "kit": {
-        const parsed = parseData(formData, moveUnitsKitSchema);
-        await moveAssetKitUnits({
-          assetId,
-          organizationId,
-          userId,
-          fromKitId: parsed.fromKitId,
-          toKitId: parsed.toId,
           quantity: parsed.quantity,
         });
         return payload({ success: true });
