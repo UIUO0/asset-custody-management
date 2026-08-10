@@ -25,6 +25,24 @@ export interface Config {
   };
 
   /**
+   * The authority this deployment belongs to, as it is written on the official
+   * paper forms.
+   *
+   * Prefilled into مذكرة/محضر الاستلام rather than typed each time: every
+   * receipt in this deployment names the same جهة, and re-typing it is how one
+   * receipt ends up saying «هيئة تطوير المنطقة الشرقيه» and another
+   * «الهيئة» — three spellings of one authority in a set of signed documents.
+   *
+   * A default, not a lock: the operator can still correct the box.
+   */
+  entity: {
+    /** الجهة — the authority's name. */
+    name: string;
+    /** رقم الجهة — its number in the government's register. */
+    number: string;
+  };
+
+  /**
    * Primary color for emails
    */
   emailPrimaryColor: string;

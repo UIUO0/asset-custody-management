@@ -70,6 +70,12 @@ export default function TeamSettings() {
         ]
       : []),
     { to: "nrm", content: t("team.nonRegisteredMembers") },
+    // Departments are team members too (desks rather than people), so they
+    // belong on this screen — see the route's docblock for why they need one
+    // at all.
+    ...(!isPersonalOrg
+      ? [{ to: "departments", content: t("team.departments") }]
+      : []),
   ];
 
   const params = useParams();

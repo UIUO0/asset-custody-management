@@ -210,14 +210,7 @@ export function AdvancedIndexColumn({
       );
 
     case "status":
-      return (
-        <StatusColumn
-          id={item.id}
-          status={item.status}
-          availableToBook={item.availableToBook}
-          asset={item}
-        />
-      );
+      return <StatusColumn id={item.id} status={item.status} asset={item} />;
 
     case "description":
       return <DescriptionColumn value={item.description ?? ""} />;
@@ -402,12 +395,7 @@ function StatusColumn({
 }) {
   return (
     <Td className="w-full max-w-none whitespace-nowrap">
-      <AssetStatusBadge
-        id={id}
-        status={status}
-        availableToBook={availableToBook ?? true}
-        asset={asset}
-      />
+      <AssetStatusBadge id={id} status={status} asset={asset} />
     </Td>
   );
 }

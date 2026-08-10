@@ -10,7 +10,6 @@ import { data, redirect, Link, useLoaderData } from "react-router";
 import { z } from "zod";
 import { InfoIcon } from "~/components/icons/library";
 import { Dialog, DialogPortal } from "~/components/layout/dialog";
-import { CrispButton } from "~/components/marketing/crisp";
 import { Button } from "~/components/shared/button";
 
 import { DateS } from "~/components/shared/date";
@@ -346,10 +345,7 @@ export default function SubscriptionPage() {
           <br />
           {isEnterprise && <>{t("subscription.customPlanNote")} </>}
           To get more information about your plan, please{" "}
-          <CrispButton variant="link" className="inline w-auto">
-            {t("subscription.contactSupport")}
-          </CrispButton>
-          .
+          <span>{t("subscription.contactSupport")}</span>.
         </p>
       </div>
     );

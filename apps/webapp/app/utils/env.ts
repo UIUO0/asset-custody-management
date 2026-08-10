@@ -9,9 +9,6 @@ declare global {
       SUPABASE_URL: string;
       SUPABASE_ANON_PUBLIC: string;
       MAPTILER_TOKEN: string;
-      MICROSOFT_CLARITY_ID: string;
-      CRISP_WEBSITE_ID: string;
-      CLOUDFLARE_WEB_ANALYTICS_TOKEN: string;
       ENABLE_PREMIUM_FEATURES: string;
       MAINTENANCE_MODE: string;
       CHROME_EXECUTABLE_PATH: string;
@@ -26,7 +23,6 @@ declare global {
        */
       SENTRY_RELEASE: string;
       SUPPORT_EMAIL: string;
-      FULL_CALENDAR_LICENSE_KEY: string;
       SHOW_HOW_DID_YOU_FIND_US: string;
       COLLECT_BUSINESS_INTEL: string;
     };
@@ -51,9 +47,6 @@ declare global {
        */
       APP_SECRETS_KEY: string;
       MAPTILER_TOKEN: string;
-      CRISP_WEBSITE_ID: string;
-      MICROSOFT_CLARITY_ID: string;
-      CLOUDFLARE_WEB_ANALYTICS_TOKEN: string;
       STRIPE_SECRET_KEY: string;
       STRIPE_WEBHOOK_ENDPOINT_SECRET: string;
       ENABLE_PREMIUM_FEATURES: string;
@@ -77,12 +70,9 @@ declare global {
       FINGERPRINT: string;
       FREE_TRIAL_DAYS: string;
       SUPPORT_EMAIL: string;
-      FULL_CALENDAR_LICENSE_KEY: string;
       SHOW_HOW_DID_YOU_FIND_US: string;
       COLLECT_BUSINESS_INTEL: string;
       COOKIE_DOMAIN: string;
-      POSTHOG_API_KEY: string;
-      POSTHOG_HOST: string;
     }
   }
 }
@@ -225,21 +215,6 @@ export const CUSTOM_INSTALL_CUSTOMERS = getEnv("CUSTOM_INSTALL_CUSTOMERS", {
 });
 
 /**
- * PostHog server-side analytics (free→paid funnel events). Optional — when
- * `POSTHOG_API_KEY` is unset the server analytics client is a no-op (see
- * ~/integrations/posthog/client.server). `POSTHOG_HOST` defaults to PostHog
- * US cloud in the client when empty.
- */
-export const POSTHOG_API_KEY = getEnv("POSTHOG_API_KEY", {
-  isSecret: true,
-  isRequired: false,
-});
-export const POSTHOG_HOST = getEnv("POSTHOG_HOST", {
-  isSecret: true,
-  isRequired: false,
-});
-
-/**
  * Shared envs
  */
 export const NODE_ENV = getEnv("NODE_ENV", {
@@ -253,25 +228,6 @@ export const SUPABASE_ANON_PUBLIC = getEnv("SUPABASE_ANON_PUBLIC", {
 export const MAPTILER_TOKEN = getEnv("MAPTILER_TOKEN", {
   isSecret: false,
 });
-export const CRISP_WEBSITE_ID = getEnv("CRISP_WEBSITE_ID", {
-  isSecret: false,
-  isRequired: false,
-});
-export const MICROSOFT_CLARITY_ID = getEnv("MICROSOFT_CLARITY_ID", {
-  isSecret: false,
-  isRequired: false,
-});
-export const CLOUDFLARE_WEB_ANALYTICS_TOKEN = getEnv(
-  "CLOUDFLARE_WEB_ANALYTICS_TOKEN",
-  {
-    isSecret: false,
-    isRequired: false,
-  },
-);
-export const FORMBRICKS_ENV_ID = getEnv("FORMBRICKS_ENV_ID", {
-  isSecret: false,
-  isRequired: false,
-});
 
 export const SUPPORT_EMAIL = getEnv("SUPPORT_EMAIL", {
   isSecret: false,
@@ -279,11 +235,6 @@ export const SUPPORT_EMAIL = getEnv("SUPPORT_EMAIL", {
 });
 
 export const GEOCODING_USER_AGENT = getEnv("GEOCODING_USER_AGENT", {
-  isSecret: false,
-  isRequired: false,
-});
-
-export const FULL_CALENDAR_LICENSE_KEY = getEnv("FULL_CALENDAR_LICENSE_KEY", {
   isSecret: false,
   isRequired: false,
 });
@@ -347,16 +298,12 @@ export function getBrowserEnv() {
     SUPABASE_URL,
     SUPABASE_ANON_PUBLIC,
     MAPTILER_TOKEN,
-    CRISP_WEBSITE_ID,
-    MICROSOFT_CLARITY_ID,
-    CLOUDFLARE_WEB_ANALYTICS_TOKEN,
     ENABLE_PREMIUM_FEATURES,
     MAINTENANCE_MODE,
     CHROME_EXECUTABLE_PATH,
     URL_SHORTENER,
     FREE_TRIAL_DAYS,
     SUPPORT_EMAIL,
-    FULL_CALENDAR_LICENSE_KEY,
     SENTRY_DSN,
     SENTRY_RELEASE,
   };

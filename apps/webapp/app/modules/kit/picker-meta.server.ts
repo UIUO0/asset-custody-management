@@ -36,13 +36,11 @@ export type PickerAssetMeta = {
   inOtherKits: { kitId: string; kitName: string; quantity: number }[];
   /** Sum of operator-only `Custody.quantity` (kitCustodyId IS NULL). */
   operatorCustodyTotal: number;
-  /** Sum of `BookingAsset.quantity` for ONGOING / OVERDUE bookings. */
-  ongoingBookingTotal: number;
   /**
    * Strict-available pool — the upper bound on what this kit may claim.
    * Equals `max(currentInThisKit, spaceWithoutMe)` so the user can keep
-   * their existing slice in the overcommitted edge case (operator /
-   * booking growth pushed the pool below the kit's current allocation).
+   * their existing slice in the overcommitted edge case (operator custody
+   * growth pushed the pool below the kit's current allocation).
    */
   maxAllowedForThisKit: number;
   /** Unit of measure label (passed through for the qty input suffix). */
@@ -76,7 +74,7 @@ export type PickerAssetMeta = {
  *   3. We re-fetch the assets here even though the route loader already
  *      pulls them via `getPaginatedAndFilterableAssets`. The view-style
  *      payload that helper returns doesn't carry the relations we need
- *      (`assetKits[].kit`, `custody.kitCustodyId`, `bookingAssets`), and
+ *      (`assetKits[].kit`, `custody.kitCustodyId`), and
  *      hydrating it would mean threading those relations into the
  *      shared list view used everywhere. Cheaper to do a second narrow
  *      fetch scoped to the qty-tracked rows on this page.
@@ -120,12 +118,6 @@ export async function getKitPickerMeta({
       // `kitCustodyId` distinguishes operator-allocated rows from rows
       // that are the materialised custody of a kit. See subtlety (1).
       custody: { select: { quantity: true, kitCustodyId: true } },
-      bookingAssets: {
-        where: {
-          booking: { status: { in: ["ONGOING", "OVERDUE"] } },
-        },
-        select: { quantity: true },
-      },
     },
   });
 
@@ -142,13 +134,9 @@ export async function getKitPickerMeta({
       const operatorCustodyTotal = row.custody
         .filter((c) => c.kitCustodyId == null)
         .reduce((sum, c) => sum + (c.quantity ?? 0), 0);
-      const ongoingBookingTotal = row.bookingAssets.reduce(
-        (sum, ba) => sum + (ba.quantity ?? 0),
-        0,
-      );
       const spaceWithoutMe = Math.max(
         0,
-        totalQty - otherKitsQty - operatorCustodyTotal - ongoingBookingTotal,
+        totalQty - otherKitsQty - operatorCustodyTotal,
       );
       const maxAllowedForThisKit = Math.max(currentInThisKit, spaceWithoutMe);
 
@@ -161,7 +149,6 @@ export async function getKitPickerMeta({
           quantity: ak.quantity,
         })),
         operatorCustodyTotal,
-        ongoingBookingTotal,
         maxAllowedForThisKit,
         unitOfMeasure: row.unitOfMeasure,
       };

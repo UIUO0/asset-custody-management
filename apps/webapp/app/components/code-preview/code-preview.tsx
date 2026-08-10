@@ -18,7 +18,6 @@ import { waitForImagesToLoad } from "~/utils/wait-for-images";
 import { AddBarcodeDialog } from "./add-barcode-dialog";
 import { Ean13LookupLink } from "../barcode/barcode-card";
 import { UnlockBarcodesModal } from "../barcode/unlock-barcodes-banner";
-import { CrispButton } from "../marketing/crisp";
 import When from "../when/when";
 
 type SizeKeys = "cable" | "small" | "medium" | "large";
@@ -371,8 +370,7 @@ export const CodePreview = ({
                         <>
                           Your workspace doesn't currently support barcodes.
                           Contact your workspace owner to enable this feature,
-                          or get in touch with{" "}
-                          <CrispButton variant="link">sales</CrispButton>.
+                          or get in touch with إدارة تقنية المعلومات.
                         </>
                       ),
                     }

@@ -1,29 +1,21 @@
 /**
  * AssetStatusBadge — unit tests
  *
- * Verifies the rendering contract of the asset status badge, with a
- * focus on the new `suppressQtyAware` escape hatch used by booking
- * surfaces (booking-row badge cleanup):
+ * This file used to be almost entirely about `suppressQtyAware`, the escape
+ * hatch booking rows passed to stop the badge relabelling them from the global
+ * quantity breakdown. Bookings are gone, the prop is gone, and so are those
+ * cases — they asserted the behaviour of a caller that no longer exists.
  *
- *  - When the caller opts out via `suppressQtyAware`, the global
- *    qty-aware breakdown (custody/other-booking inference into
- *    "Partial custody" / "Partially checked out" relabels) is bypassed
- *    for QUANTITY_TRACKED assets — the caller-supplied `status` wins.
- *  - Booking-context pseudo-statuses (e.g. `PARTIALLY_CHECKED_OUT_QTY`)
- *    still render with their dedicated label + color in the suppressed
- *    path — the underlying `userFriendlyAssetStatus` /
- *    `assetStatusColorMap` mapping carries the violet pseudo-status
- *    treatment regardless of which branch renders it.
- *  - When `suppressQtyAware` is left at its default (`false`), the
- *    existing qty-aware branch is preserved for QT assets (hover-card +
- *    "Partial custody"/"Partially checked out" relabels).
- *  - When `suppressQtyAware` is set, the lazy
- *    `/api/assets/:id/quantity-breakdown` fetch is skipped — booking
- *    rows render 50+ rows at a time and must not fan out per-row HTTP
- *    requests on cursor enter.
- *  - For INDIVIDUAL assets the flag is a no-op (the
- *    `isQuantityTracked` check already short-circuits the qty-aware
- *    branch for non-QT assets).
+ * What is worth pinning now is narrower and outlives the booking removal:
+ *
+ *  - A quantity-tracked asset with units in custody relabels to the qty-aware
+ *    wording rather than showing its bare status.
+ *  - The lazy `/api/assets/:id/quantity-breakdown` fetch stays disabled until
+ *    the cursor enters the badge — an index renders a hundred of these, and
+ *    fetching on mount would fan out a hundred requests.
+ *  - The fetch is skipped entirely when the caller already supplied the data
+ *    inline, and for INDIVIDUAL assets, which have no breakdown to fetch.
+ *  - A `PENDING` asset shows its lifecycle stage, not its status.
  *
  * @see {@link file://./asset-status-badge.tsx}
  */
@@ -36,29 +28,25 @@ import { AssetStatusBadge } from "./asset-status-badge";
 import type { QuantityAwareAsset } from "./quantity-data";
 
 /**
- * Captures calls into the `useApiQuery` hook so each test can assert
- * whether the qty-breakdown endpoint was queried. The hook returns
- * `{ data: undefined }` so the badge renders its initial (pre-fetch)
- * state — exactly what booking rows render on first paint.
+ * Captures calls into the `useApiQuery` hook so each test can assert whether
+ * the qty-breakdown endpoint was queried, and with `enabled` true or false.
+ * The hook returns `{ data: undefined }` so the badge renders its pre-fetch
+ * state.
  */
 const apiQueryCalls: Array<{ api: string; enabled: boolean }> = [];
 
-// why: AssetStatusBadge uses `useApiQuery` for two endpoints
-// (`/api/assets/:id/quantity-breakdown` and
-// `/api/assets/:id/ongoing-booking`). We mock the hook so the test
-// runs without a network/loader, and so we can introspect the call
-// shape — case (d) below asserts the breakdown endpoint is NEVER
-// enabled when `suppressQtyAware` is set on a QT asset.
-// why: the badge resolves its label through i18next. These assertions use
-// the English wording, and every `status.*` key falls back to the shared
-// `@shelf/labels` string, so returning the fallback reproduces the
-// pre-i18n behaviour without booting an i18n instance in JSDOM.
+// why: the badge resolves its label through i18next. These assertions use the
+// English wording, and every `status.*` key falls back to the shared
+// `@shelf/labels` string, so returning the fallback reproduces the runtime
+// wording without booting an i18n instance in JSDOM.
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (_key: string, fallback?: string) => fallback ?? _key,
   }),
 }));
 
+// why: the hook performs a real fetch. Mocking it keeps the test off the
+// network and lets the assertions below introspect the call shape.
 vi.mock("~/hooks/use-api-query", () => ({
   default: ({ api, enabled }: { api: string; enabled?: boolean }) => {
     apiQueryCalls.push({ api, enabled: !!enabled });
@@ -66,11 +54,9 @@ vi.mock("~/hooks/use-api-query", () => ({
   },
 }));
 
-// why: Radix HoverCard relies on `ResizeObserver` and complex portal
-// pointer-events plumbing that happy-dom doesn't fully simulate. We
-// only need the trigger (Badge text) to render — wrap the Radix
-// components in passthrough renderers so the badge text reaches the
-// DOM without needing to drive the hover lifecycle.
+// why: Radix HoverCard relies on `ResizeObserver` and portal pointer-events
+// plumbing that happy-dom doesn't fully simulate. Only the trigger text needs
+// to reach the DOM, so passthrough renderers are enough.
 vi.mock("../../shared/hover-card", () => ({
   HoverCard: ({ children }: { children: ReactNode }) => <>{children}</>,
   HoverCardTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -85,155 +71,124 @@ beforeEach(() => {
   apiQueryCalls.length = 0;
 });
 
-/**
- * Builds a minimal QT asset shape carrying a custody slice so the
- * default (non-suppressed) qty-aware branch would produce a "Partial
- * custody" relabel — used to prove that `suppressQtyAware` overrides
- * that inference.
- */
-function makeQtAssetWithCustodyElsewhere(): QuantityAwareAsset {
+/** A quantity-tracked asset with some of its units held. */
+function qtAssetPartlyHeld(): QuantityAwareAsset {
   return {
     type: "QUANTITY_TRACKED",
     quantity: 10,
-    // Custody held by someone else on the global asset; without
-    // suppression this would relabel an AVAILABLE row to "Partial
-    // custody" via `getQuantityBadgeLabelAndColor`.
     custody: [{ quantity: 4 }],
-    bookingAssets: [],
-    assetKits: [],
+    assetKits: null,
+  };
+}
+
+/** A quantity-tracked asset with nothing held and no inline slices. */
+function qtAssetWithoutData(): QuantityAwareAsset {
+  return {
+    type: "QUANTITY_TRACKED",
+    quantity: 10,
+    custody: null,
+    assetKits: null,
   };
 }
 
 describe("AssetStatusBadge", () => {
-  describe("suppressQtyAware (booking-row escape hatch)", () => {
-    it("renders 'Available' for an AVAILABLE QT row even when global custody would infer 'Partial custody'", () => {
-      // Case (a): the booking-row use case. The caller knows this row
-      // is AVAILABLE for THIS booking; the global custody slice on the
-      // pooled asset must not bleed in as "Partial custody".
-      render(
-        <AssetStatusBadge
-          id="asset-qt-1"
-          status="AVAILABLE"
-          availableToBook
-          suppressQtyAware
-          asset={makeQtAssetWithCustodyElsewhere()}
-        />,
-      );
+  it("relabels a partly-held quantity-tracked asset", () => {
+    // The point of the qty-aware branch: "Available" is wrong for an asset
+    // with four of ten units out, and the persisted status cannot say so.
+    render(
+      <AssetStatusBadge
+        id="asset-1"
+        status="AVAILABLE"
+        asset={qtAssetPartlyHeld()}
+      />,
+    );
 
-      expect(screen.getByText("Available")).toBeInTheDocument();
-      expect(screen.queryByText(/partial custody/i)).not.toBeInTheDocument();
-      expect(
-        screen.queryByText(/partially checked out/i),
-      ).not.toBeInTheDocument();
-    });
+    expect(screen.getByText("Partial custody")).toBeTruthy();
+  });
 
-    it("renders the violet 'Partially checked out' pseudo-status for PARTIALLY_CHECKED_OUT_QTY", () => {
-      // Case (b): caller-supplied pseudo-status wins. The dedicated
-      // `userFriendlyAssetStatus` mapping converts the pseudo-status
-      // into the user-facing "Partially checked out" label with the
-      // violet color treatment — and this must survive
-      // `suppressQtyAware` because the pseudo-status itself encodes
-      // the row's authoritative booking-context state.
-      render(
-        <AssetStatusBadge
-          id="asset-qt-2"
-          status="PARTIALLY_CHECKED_OUT_QTY"
-          availableToBook
-          suppressQtyAware
-          asset={makeQtAssetWithCustodyElsewhere()}
-        />,
-      );
+  it("falls back to the plain status while the breakdown is unknown", () => {
+    render(
+      <AssetStatusBadge
+        id="asset-1"
+        status="AVAILABLE"
+        asset={qtAssetWithoutData()}
+      />,
+    );
 
-      expect(screen.getByText("Partially checked out")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Available")).toBeTruthy();
+  });
 
-    it("preserves the qty-aware hover-card branch when suppressQtyAware is left at its default (false)", () => {
-      // Case (c): regression guard for non-booking surfaces (asset
-      // index, asset overview, scanner drawer). With the default
-      // (`suppressQtyAware=false`), a QT asset with custody elsewhere
-      // must still relabel to "Partial custody" via the qty-aware
-      // branch — that's the whole point of the global breakdown.
-      render(
-        <AssetStatusBadge
-          id="asset-qt-3"
-          status="AVAILABLE"
-          availableToBook
-          asset={makeQtAssetWithCustodyElsewhere()}
-        />,
-      );
+  it("does not fetch the breakdown until the cursor enters", () => {
+    // An asset index renders a hundred of these. Fetching on mount would fan
+    // out a hundred requests for tooltips nobody opened.
+    const { container } = render(
+      <AssetStatusBadge
+        id="asset-1"
+        status="AVAILABLE"
+        asset={qtAssetWithoutData()}
+      />,
+    );
 
-      expect(screen.getByText("Partial custody")).toBeInTheDocument();
-      expect(screen.queryByText("Available")).not.toBeInTheDocument();
-    });
+    const breakdownCall = apiQueryCalls.find((call) =>
+      call.api.includes("quantity-breakdown"),
+    );
+    expect(breakdownCall?.enabled).toBe(false);
 
-    it("does not enable the lazy /quantity-breakdown fetch when suppressQtyAware is set on a QT asset", () => {
-      // Case (d): perf guard. Booking rows render many QT assets at
-      // once; enabling the lazy fetch (even on hover) would fan out
-      // one HTTP request per row. The asset has NO inline
-      // `bookingAssets`, so without suppression the badge would arm
-      // the lazy fetch onMouseEnter.
-      const { container } = render(
-        <AssetStatusBadge
-          id="asset-qt-4"
-          status="AVAILABLE"
-          availableToBook
-          suppressQtyAware
-          asset={{
-            type: "QUANTITY_TRACKED",
-            quantity: 5,
-            custody: null,
-            bookingAssets: null,
-            assetKits: null,
-          }}
-        />,
-      );
+    const badge = container.querySelector("span");
+    expect(badge).toBeTruthy();
+    fireEvent.mouseEnter(badge as Element);
 
-      // Fire the cursor-enter event that would normally arm the lazy
-      // fetch — we want to prove suppression survives it.
-      const root = container.querySelector("span");
-      if (root) fireEvent.mouseEnter(root);
+    const afterHover = apiQueryCalls.filter((call) =>
+      call.api.includes("quantity-breakdown"),
+    );
+    expect(afterHover.some((call) => call.enabled)).toBe(true);
+  });
 
-      const breakdownCalls = apiQueryCalls.filter((call) =>
-        call.api.includes("/quantity-breakdown"),
-      );
-      // The hook is invoked unconditionally (React rules of hooks),
-      // but it must NEVER be `enabled` for a suppressed QT row.
-      expect(breakdownCalls.every((call) => call.enabled === false)).toBe(true);
-    });
+  it("never fetches for an asset whose slices came inline", () => {
+    render(
+      <AssetStatusBadge
+        id="asset-1"
+        status="AVAILABLE"
+        asset={qtAssetPartlyHeld()}
+      />,
+    );
 
-    it("is a no-op for INDIVIDUAL assets (the qty-aware branch never applied to them)", () => {
-      // Case (e): defensive — flipping the flag on an INDIVIDUAL
-      // asset must not change the rendered output. INDIVIDUAL assets
-      // always render via the standard status path.
-      const individualAsset: QuantityAwareAsset = {
-        type: "INDIVIDUAL",
-        quantity: 1,
-        custody: null,
-        bookingAssets: [],
-        assetKits: [],
-      };
+    expect(
+      apiQueryCalls
+        .filter((call) => call.api.includes("quantity-breakdown"))
+        .every((call) => !call.enabled),
+    ).toBe(true);
+  });
 
-      const { rerender } = render(
-        <AssetStatusBadge
-          id="asset-ind-1"
-          status="AVAILABLE"
-          availableToBook
-          asset={individualAsset}
-        />,
-      );
-      expect(screen.getByText("Available")).toBeInTheDocument();
+  it("never fetches for an individually-tracked asset", () => {
+    // There is no breakdown to fetch — one thing is either held or it is not.
+    render(
+      <AssetStatusBadge
+        id="asset-1"
+        status="IN_CUSTODY"
+        asset={{ type: "INDIVIDUAL", quantity: 1, custody: null }}
+      />,
+    );
 
-      // Flip the flag — output must stay identical.
-      rerender(
-        <AssetStatusBadge
-          id="asset-ind-1"
-          status="AVAILABLE"
-          availableToBook
-          suppressQtyAware
-          asset={individualAsset}
-        />,
-      );
-      expect(screen.getByText("Available")).toBeInTheDocument();
-    });
+    expect(screen.getByText("In custody")).toBeTruthy();
+    expect(
+      apiQueryCalls
+        .filter((call) => call.api.includes("quantity-breakdown"))
+        .every((call) => !call.enabled),
+    ).toBe(true);
+  });
+
+  it("shows the lifecycle stage for an asset still awaiting approval", () => {
+    // `PENDING` is not an `AssetStatus` — an item that has not been approved
+    // yet has no meaningful availability, so the stage wins over the status.
+    render(
+      <AssetStatusBadge
+        id="asset-1"
+        status="AVAILABLE"
+        asset={{ type: "INDIVIDUAL", quantity: 1, lifecycleStage: "PENDING" }}
+      />,
+    );
+
+    expect(screen.getByText("status.PENDING")).toBeTruthy();
   });
 });

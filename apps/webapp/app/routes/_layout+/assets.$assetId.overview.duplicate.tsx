@@ -1,254 +1,46 @@
-import { useTranslation } from "react-i18next";
-import type { MetaFunction } from "react-router";
+/**
+ * Legacy asset duplication — superseded by the goods-receipt forms.
+ *
+ * The third intake door, and the least obvious one. `/assets/new` and
+ * `/assets/import` were closed when the receipt flow shipped, but duplication
+ * created assets by another name: it needs only `asset.create`, it is reachable
+ * from the asset actions dropdown, and it minted up to
+ * `MAX_DUPLICATES_ALLOWED` rows carrying **no** `receiptLine`. Those rows then
+ * passed `assertReceiptSignedBeforeApproval` untouched — that guard exempts
+ * items with no receipt line on purpose, for the inventory that predates the
+ * flow — and went straight to `READY`.
+ *
+ * So the paper controls could be walked around entirely: open any existing
+ * asset, duplicate it, approve the copies. No supplier, no purchase order, no
+ * unit price, no three signatures. Ten copies of a laptop the authority never
+ * bought, indistinguishable in the register from ten it did.
+ *
+ * Closed the same way as its two siblings: `assertIntakeClosed` in the loader
+ * **and** the action, so a POST replayed from a tab opened before this shipped
+ * cannot slip through behind the redirect. The dropdown entry is gone too — a
+ * button that only redirects is a worse experience than no button.
+ *
+ * Genuinely needing many identical items is the case the receipt forms already
+ * answer better: one line with a quantity, priced and referenced to its
+ * purchase order.
+ *
+ * The previous implementation lives in git history at the commit that closed
+ * this door.
+ *
+ * @see {@link file://./receipts.new.tsx} the flow that replaces it
+ * @see {@link file://./../../modules/goods-receipt/intake-guard.server.ts}
+ * @see {@link file://./../../modules/goods-receipt/receipt-gate.server.ts}
+ */
+
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import {
-  data,
-  redirect,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from "react-router";
-import { useZorm } from "react-zorm";
-import { z } from "zod";
-import { AssetImage } from "~/components/assets/asset-image/component";
-import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
-import { Form } from "~/components/custom-form";
-import Input from "~/components/forms/input";
-import Icon from "~/components/icons/icon";
-import Header from "~/components/layout/header";
-import { Button } from "~/components/shared/button";
-import { Spinner } from "~/components/shared/spinner";
-import { getFixedT, getLocale } from "~/i18n/i18n.server";
-import ar from "~/i18n/locales/ar.json";
-import en from "~/i18n/locales/en.json";
-import { duplicateAsset, getAsset } from "~/modules/asset/service.server";
-import styles from "~/styles/layout/custom-modal.css?url";
-import { appendToMetaTitle } from "~/utils/append-to-meta-title";
-import { MAX_DUPLICATES_ALLOWED } from "~/utils/constants";
-import { sendNotification } from "~/utils/emitter/send-notification.server";
-import { makeShelfError } from "~/utils/error";
-import { isFormProcessing } from "~/utils/form";
-import { getValidationErrors } from "~/utils/http";
-import { payload, error, getParams, parseData } from "~/utils/http.server";
-import {
-  PermissionAction,
-  PermissionEntity,
-} from "~/utils/permissions/permission.data";
-import { requirePermission } from "~/utils/roles.server";
+import { assertIntakeClosed } from "~/modules/goods-receipt/intake-guard.server";
 
-export const meta: MetaFunction = ({ matches }) => {
-  // why: `meta` runs outside React — locale comes from the root loader.
-  const rootData = matches.find((match) => match.id === "root")?.data as
-    | { locale?: string }
-    | undefined;
-  const resources = rootData?.locale === "en" ? en : ar;
-
-  return [{ title: appendToMetaTitle(resources.assets.duplicateTitle) }];
-};
-
-export async function loader({ context, request, params }: LoaderFunctionArgs) {
-  const authSession = context.getSession();
-  const { userId } = authSession;
-  const { assetId } = getParams(params, z.object({ assetId: z.string() }), {
-    additionalData: { userId },
-  });
-
-  try {
-    // why: loaders run outside React, so `useTranslation` is unavailable —
-    // `getFixedT` gives the same `t` bound to the request's locale.
-    const t = await getFixedT(getLocale(request));
-
-    const { organizationId, userOrganizations } = await requirePermission({
-      userId,
-      request,
-      entity: PermissionEntity.asset,
-      action: PermissionAction.create,
-    });
-
-    const asset = await getAsset({
-      id: assetId,
-      organizationId,
-      userOrganizations,
-      request,
-      include: {
-        custody: { select: { quantity: true } },
-      },
-    });
-
-    return payload({
-      header: {
-        title: t("assets.duplicateTitle"),
-        subHeading: t("assets.duplicateSubHeading"),
-      },
-      showModal: true,
-      asset,
-    });
-  } catch (cause) {
-    const reason = makeShelfError(cause, { userId, assetId });
-    throw data(error(reason), { status: reason.status });
-  }
+export function loader(_args: LoaderFunctionArgs): never {
+  assertIntakeClosed();
 }
 
-const DuplicateAssetSchema = z.object({
-  amountOfDuplicates: z.coerce
-    .number()
-    .min(1, { message: "There should be at least 1 duplicate." })
-    .max(MAX_DUPLICATES_ALLOWED, {
-      message: `There can be a max of ${MAX_DUPLICATES_ALLOWED} duplicates created at a time.`,
-    }),
-});
-
-export async function action({ context, request, params }: ActionFunctionArgs) {
-  const authSession = context.getSession();
-  const { userId } = authSession;
-  const { assetId } = getParams(params, z.object({ assetId: z.string() }), {
-    additionalData: { userId },
-  });
-
-  try {
-    const { organizationId, userOrganizations } = await requirePermission({
-      userId,
-      request,
-      entity: PermissionEntity.asset,
-      action: PermissionAction.create,
-    });
-
-    const asset = await getAsset({
-      id: assetId,
-      organizationId,
-      userOrganizations,
-      include: {
-        custody: { include: { custodian: true } },
-        tags: true,
-        customFields: true,
-        // Pulled so the duplicate inherits the source asset's primary
-        // placement (`duplicateAsset` reads it via `getPrimaryLocation`).
-        assetLocations: {
-          select: { location: { select: { id: true } } },
-        },
-      },
-    });
-
-    const { amountOfDuplicates } = parseData(
-      await request.formData(),
-      DuplicateAssetSchema,
-    );
-
-    const duplicatedAssets = await duplicateAsset({
-      asset,
-      userId,
-      amountOfDuplicates,
-      organizationId,
-    });
-
-    sendNotification({
-      title: "Asset successfully duplicated",
-      message: `${asset.title} has been duplicated.`,
-      icon: { name: "success", variant: "success" },
-      senderId: userId,
-    });
-
-    return redirect(
-      `/assets/${amountOfDuplicates > 1 ? "" : duplicatedAssets[0].id}`,
-    );
-  } catch (cause) {
-    const reason = makeShelfError(cause, { userId, assetId });
-    return data(error(reason), { status: reason.status });
-  }
-}
-
-export function links() {
-  return [{ rel: "stylesheet", href: styles }];
-}
-
-export default function DuplicateAsset() {
-  const { t } = useTranslation();
-  const zo = useZorm("DuplicateAsset", DuplicateAssetSchema);
-  const { asset } = useLoaderData<typeof loader>();
-  const navigation = useNavigation();
-  const isProcessing = isFormProcessing(navigation.state);
-  const actionData = useActionData<typeof action>();
-
-  return (
-    <Form ref={zo.ref} method="post">
-      <div className="modal-content-wrapper">
-        <div className="inline-flex items-center justify-center rounded-full border-8 border-solid border-primary-50 bg-primary-100 p-1.5 text-primary">
-          <Icon icon="duplicate" />
-        </div>
-        <Header hideBreadcrumbs classNames="[&>div]:border-b-0" />
-
-        <div className="flex flex-col items-center gap-3 ">
-          <div className="flex w-full items-center gap-3 rounded-md border p-4">
-            <div className="flex size-14 shrink-0 items-center justify-center">
-              <AssetImage
-                asset={{
-                  id: asset.id,
-                  mainImage: asset.mainImage,
-                  thumbnailImage: asset.thumbnailImage,
-                  mainImageExpiration: asset.mainImageExpiration,
-                }}
-                alt={`Image of ${asset.title}`}
-                className="size-full rounded-[4px] border object-cover"
-              />
-            </div>
-            <div className="min-w-[130px]">
-              <span className="word-break mb-1 block font-medium">
-                {asset.title}
-              </span>
-              <div>
-                <AssetStatusBadge
-                  id={asset.id}
-                  status={asset.status}
-                  availableToBook={asset.availableToBook}
-                  asset={asset}
-                />
-              </div>
-            </div>
-          </div>
-
-          <Input
-            type="number"
-            label={t("ui.amountOfDuplicates")}
-            name={zo.fields.amountOfDuplicates()}
-            defaultValue={1}
-            placeholder={t("ui.howManyDuplicatesAssetsYouWantToCreateForThi")}
-            className="w-full"
-            disabled={isProcessing}
-            required
-            /* We have to find a way to normalize the error object when it comes from zod */
-            error={
-              zo.errors.amountOfDuplicates()?.message ||
-              getValidationErrors<typeof DuplicateAssetSchema>(
-                actionData?.error,
-              )?.amountOfDuplicates?.message
-            }
-          />
-        </div>
-        <div className="mt-6 flex gap-3">
-          <Button
-            to=".."
-            variant="secondary"
-            width="full"
-            disabled={isProcessing}
-          >
-            {t("common.cancel")}
-          </Button>
-          <Button
-            variant="primary"
-            width="full"
-            type="submit"
-            disabled={isProcessing}
-          >
-            {isProcessing ? <Spinner /> : "Duplicate"}
-          </Button>
-        </div>
-        {actionData?.error ? (
-          <div className="text-error-500">
-            <p className="font-medium">{actionData.error?.title || ""}</p>
-            <p>{actionData?.error?.message}</p>
-          </div>
-        ) : null}
-      </div>
-    </Form>
-  );
+export function action(_args: ActionFunctionArgs): never {
+  // 303 so a replayed POST is re-issued as a GET rather than posting its body
+  // at the receipt form.
+  assertIntakeClosed({ status: 303 });
 }

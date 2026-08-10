@@ -28,6 +28,7 @@
 
 import type { GoodsReceiptType } from "@prisma/client";
 import ExcelJS from "exceljs";
+import { config } from "~/config/shelf.config";
 import { CAPITALIZATION_RULES } from "./capitalization";
 import { getFormShape } from "./form-shape";
 import {
@@ -44,6 +45,9 @@ const BRAND = "FF044E8B";
 const BRAND_LIGHT = "FFE8EFF6";
 /** Distinguishes the two columns the paper form does not have. */
 const SYSTEM_COLUMN = "FFFFF4CE";
+
+/** Marks a header field the validator will refuse the receipt without. */
+const REQUIRED_LABEL = "FFB42318";
 
 /** Blank item rows written into the template, pre-styled and validated. */
 const BLANK_ROWS = 25;
@@ -91,7 +95,7 @@ export async function buildTemplateWorkbook(
   type: GoodsReceiptType,
 ): Promise<Buffer> {
   const shape = getFormShape(type);
-  const headerFields = headerFieldsFor(type);
+  const headerFields = headerFieldsFor(type, config.entity);
   const columns = itemColumnsFor(type, categoryOptions());
 
   const workbook = new ExcelJS.Workbook();
@@ -114,7 +118,7 @@ export async function buildTemplateWorkbook(
 
   const note = sheet.getCell(2, 1);
   note.value =
-    "عبّئ الخانات ثم ارفع الملف من صفحة «نموذج استلام جديد». لا تحذف عناوين الخانات — النظام يقرأ بها. رقم التسلسل يولّده النظام.";
+    "عبّئ الخانات ثم ارفع الملف من صفحة «نموذج استلام جديد». لا تحذف عناوين الخانات — النظام يقرأ بها. رقم التسلسل وعدد الصفحات يولّدهما النظام، والجهة ورقمها معبّآن مسبقاً.";
   sheet.mergeCells(2, 1, 2, Math.max(columns.length, 4));
   note.alignment = { horizontal: "right", vertical: "middle", wrapText: true };
   note.font = { size: 10, color: { argb: "FF555555" } };
@@ -123,9 +127,18 @@ export async function buildTemplateWorkbook(
   // ── الترويسة: تسمية في العمود الأول وقيمة بجانبها ──
   let row = 4;
   for (const field of headerFields) {
+    /**
+     * The label cell is the parser's key — it matches on this exact text — so
+     * "required" is marked by *style and a separate note*, never by decorating
+     * the label. Appending «(مطلوب)» here broke every upload, and the round-trip
+     * tests are what caught it.
+     */
     const labelCell = sheet.getCell(row, 1);
     labelCell.value = field.label;
-    labelCell.font = { bold: true };
+    labelCell.font = {
+      bold: true,
+      color: { argb: field.required ? REQUIRED_LABEL : "FF000000" },
+    };
     labelCell.alignment = { horizontal: "right" };
     filled(labelCell, BRAND_LIGHT);
     bordered(labelCell);
@@ -134,14 +147,28 @@ export async function buildTemplateWorkbook(
     bordered(valueCell);
     valueCell.alignment = { horizontal: "right" };
 
+    // Prefilled fields (الجهة / رقم الجهة) arrive already answered — same
+    // values the browser form starts with, so the two doors agree.
+    if (field.defaultValue !== undefined) {
+      valueCell.value = field.defaultValue;
+    }
+
     if (field.kind === "date") {
       valueCell.numFmt = "yyyy-mm-dd";
     }
 
-    if (field.hint) {
+    const note = [field.required ? "مطلوب" : null, field.hint]
+      .filter(Boolean)
+      .join(" — ");
+
+    if (note) {
       const hintCell = sheet.getCell(row, 3);
-      hintCell.value = field.hint;
-      hintCell.font = { size: 9, color: { argb: "FF888888" } };
+      hintCell.value = note;
+      hintCell.font = {
+        size: 9,
+        bold: Boolean(field.required),
+        color: { argb: field.required ? REQUIRED_LABEL : "FF888888" },
+      };
       hintCell.alignment = { horizontal: "right" };
     }
 
@@ -377,7 +404,7 @@ export async function parseTemplateWorkbook(
     throw new Error("الملف لا يحتوي على أي ورقة عمل.");
   }
 
-  const headerFields = headerFieldsFor(type);
+  const headerFields = headerFieldsFor(type, config.entity);
   const columns = itemColumnsFor(type, categoryOptions());
 
   const header: Record<string, string | undefined> = {};

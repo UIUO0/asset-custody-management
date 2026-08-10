@@ -38,6 +38,19 @@ export type ReferenceField = {
   label: string;
   /** Label for the number sub-column; the forms are not consistent about it. */
   numberLabel: string;
+  /**
+   * Whether the number is required.
+   *
+   * True for exactly one reference per form — the order number. `orderNumberOf`
+   * reads `purchaseOrderNumber ?? purchaseRequestNumber`, so a receipt without
+   * it belongs to no أمر شراء: its items enter the register and never surface
+   * for coding. The rest are genuinely optional on paper — not every delivery
+   * has an inspection record or a provisional notice.
+   *
+   * The schema enforces it per type in its `superRefine`; this flag is what
+   * makes the form say so before the operator submits.
+   */
+  required?: boolean;
 };
 
 /** Everything that differs between نموذج 2 and نموذج 3. */
@@ -85,6 +98,7 @@ const MEMO: ReceiptFormShape = {
       dateField: "purchaseOrderDate",
       label: "أمر الشراء",
       numberLabel: "الرقم",
+      required: true,
     },
     {
       numberField: "shippingDocNumber",
@@ -137,6 +151,7 @@ const RECORD: ReceiptFormShape = {
       numberField: "purchaseRequestNumber",
       label: "رقم طلب الشراء / التعميد",
       numberLabel: "الرقم",
+      required: true,
     },
     {
       numberField: "supportingDocNumber",

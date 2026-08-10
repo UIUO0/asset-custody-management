@@ -17,7 +17,7 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { validatePermission } from "~/utils/permissions/permission.validator.server";
-import { isDemotion } from "~/utils/roles";
+import { highestRole, isDemotion } from "~/utils/roles";
 import { randomUsernameFromEmail } from "~/utils/user";
 import {
   changeUserRole,
@@ -325,7 +325,15 @@ export async function resolveUserAction(
         });
       }
 
-      const currentRole = targetUserOrg.roles[0];
+      /**
+       * Rank across the whole array, not `roles[0]`.
+       *
+       * The ranks encode breadth of visibility, and a demotion is what triggers
+       * `transferEntitiesToNewOwner`. Reading the first element instead of the
+       * widest role would call ADMIN → WAREHOUSE a demotion for a membership
+       * stored `[DEPARTMENT, ADMIN]` and reassign everything that user owned.
+       */
+      const currentRole = highestRole(targetUserOrg.roles);
 
       /** Transfer entities on demotion */
       if (isDemotion(currentRole, newRole)) {

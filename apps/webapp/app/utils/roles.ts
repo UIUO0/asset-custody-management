@@ -139,3 +139,55 @@ export const ASSIGNABLE_ORGANIZATION_ROLES: [
   OrganizationRoles.BASE,
   OrganizationRoles.SELF_SERVICE,
 ];
+
+/**
+ * The user's effective rank — the widest-seeing role they hold.
+ *
+ * A membership is an *array*, and `roles[0]` is whatever happened to be written
+ * first. Reading rank off it makes every guard order-dependent: a membership
+ * stored `[DEPARTMENT, ADMIN]` reads as a DEPARTMENT user, and the "only the
+ * owner may change an administrator's role" check waves it through.
+ *
+ * @param roles - The user's roles in one organization
+ * @returns The highest-ranked role held, or `BASE` for an empty membership —
+ *   the narrowest answer, so a missing membership can never widen anything
+ */
+export function highestRole(
+  roles: readonly OrganizationRoles[] | undefined | null,
+): OrganizationRoles {
+  if (!roles?.length) return OrganizationRoles.BASE;
+
+  return roles.reduce((highest, role) =>
+    ROLE_RANK[role] > ROLE_RANK[highest] ? role : highest,
+  );
+}
+
+/**
+ * Roles the change-role dialog has no vocabulary for, and so must not destroy.
+ *
+ * `DEPARTMENT` is not a rank — it is the marker that says "this account speaks
+ * for a department desk", and it pairs with
+ * `UserOrganization.departmentTeamMemberId`. The dialog cannot assign it
+ * (it is absent from {@link ASSIGNABLE_ORGANIZATION_ROLES}), so a role change
+ * that overwrote the whole array would strip it with **no way to put it back
+ * short of editing the database** — and the desk's open handovers would become
+ * unsignable, which is how a محضر ends up pending forever.
+ *
+ * Derived from {@link ASSIGNABLE_ORGANIZATION_ROLES} rather than listed, so a
+ * future non-assignable role is preserved automatically instead of being
+ * silently dropped by the first role change after it ships.
+ *
+ * @param roles - The membership's current roles
+ * @returns Those the dialog did not put there and cannot restore
+ */
+export function preservedRoles(
+  roles: readonly OrganizationRoles[] | undefined | null,
+): OrganizationRoles[] {
+  if (!roles?.length) return [];
+
+  return roles.filter(
+    (role) =>
+      role !== OrganizationRoles.OWNER &&
+      !ASSIGNABLE_ORGANIZATION_ROLES.includes(role),
+  );
+}

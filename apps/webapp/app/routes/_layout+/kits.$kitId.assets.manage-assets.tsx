@@ -821,7 +821,6 @@ const RowComponent = ({
                         ? AssetStatus.AVAILABLE
                         : item.status
                     }
-                    availableToBook={item.availableToBook}
                     asset={item}
                   />
                 </When>

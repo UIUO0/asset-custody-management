@@ -20,8 +20,6 @@ import {
 import { ErrorContent } from "./components/errors";
 import BlockInteractions from "./components/layout/maintenance-mode";
 import { SidebarTrigger } from "./components/layout/sidebar/sidebar";
-import { Clarity } from "./components/marketing/clarity";
-import { CloudflareWebAnalytics } from "./components/marketing/cloudflare-web-analytics";
 import { AnimationProvider } from "./components/shared/animation-provider";
 import { TooltipProvider } from "./components/shared/tooltip";
 import { config } from "./config/shelf.config";
@@ -144,10 +142,8 @@ export function Layout({ children }: { children: ReactNode }) {
             not this deployment's build. The in-repo companion app was itself
             removed on 2026-08-06; EPDA runs on the web app only. */}
         <ClientHintCheck nonce={nonce} />
-        <style data-fullcalendar />
         <Meta />
         <Links />
-        <Clarity />
       </head>
       <body suppressHydrationWarning>
         <noscript>
@@ -181,7 +177,6 @@ export function Layout({ children }: { children: ReactNode }) {
             __html: `window.env = ${JSON.stringify(data?.env)}`,
           }}
         />
-        <CloudflareWebAnalytics />
         <Scripts />
       </body>
     </html>

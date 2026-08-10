@@ -860,6 +860,11 @@ export async function recordHandoverSignature({
         },
       });
 
+      // The stock this محضر was opened against may have moved since. Checked
+      // here, immediately before the effect, inside the same transaction — see
+      // {@link assertHandoverStillApplicable}.
+      await assertHandoverStillApplicable(completed, tx);
+
       await applyHandoverEffect(completed, tx);
 
       return completed;
@@ -889,11 +894,181 @@ export async function recordHandoverSignature({
 }
 
 /**
+ * Re-checks, at signing time, that the stock the محضر was opened against is
+ * still there.
+ *
+ * ## Why the checks in `openHandover` are not enough
+ *
+ * The effect lands on the **second signature**, which may be days after the
+ * first — that delay is the whole point of remote signing. `openHandover` voids
+ * any competing handover on the same assets, so a second محضر cannot appear in
+ * the gap. But every *other* custody path is still open in it:
+ * `releaseCustody` wipes an asset's custody rows, and the quantity-custody
+ * dialog issues units straight off the shelf. Neither knows an unsigned محضر is
+ * waiting on that stock.
+ *
+ * Without this re-check the effect applies regardless, and the arithmetic
+ * silently stops adding up:
+ *
+ * - **Off the shelf.** 30 pens, a محضر open for all 30, and 30 issued
+ *   elsewhere in the meantime. Signing writes another custody row for 30 — 60
+ *   units of an asset that has 30.
+ * - **A transfer.** The releasing side's row is gone by signing time, so
+ *   {@link applyHandoverEffect} finds nothing to decrement and skips it, while
+ *   still crediting the receiving side. Units appear from nowhere.
+ * - **An individual asset.** Its single custody row belongs to somebody else by
+ *   now, and the partial unique index is on `(assetId, teamMemberId)` — a
+ *   *different* holder is a different pair, so the database allows two people to
+ *   hold one laptop.
+ *
+ * Throwing rolls the whole transaction back, signature included: a محضر whose
+ * stock has moved must not be completed on the strength of what was true when
+ * it was opened. The operator re-opens it against the real position, which is
+ * the document that should have been signed.
+ *
+ * The rules mirror `openHandover` deliberately — the same arithmetic at both
+ * ends, so a محضر that could be opened can be signed unless the world changed.
+ *
+ * @param handover - The record being completed, with its asset lines
+ * @param tx - The open transaction client
+ * @throws {ShelfError} 409 naming the asset and the shortfall
+ */
+export async function assertHandoverStillApplicable(
+  handover: {
+    kind: CustodyHandoverKind;
+    assets: { assetId: string; quantity?: number }[];
+    organizationId: string;
+    counterpartyTeamMemberId: string;
+    releasingTeamMemberId?: string | null;
+  },
+  tx: HandoverTxClient,
+): Promise<void> {
+  const assetIds = handover.assets.map((line) => line.assetId);
+  if (assetIds.length === 0) return;
+
+  const releasingTeamMemberId = handover.releasingTeamMemberId ?? null;
+
+  const assets = await tx.asset.findMany({
+    where: { id: { in: assetIds }, organizationId: handover.organizationId },
+    select: {
+      id: true,
+      title: true,
+      type: true,
+      quantity: true,
+      custody: { select: { teamMemberId: true, quantity: true } },
+    },
+  });
+
+  const byId = new Map(assets.map((asset) => [asset.id, asset]));
+
+  /** The same 409 for every shortfall — one shape the UI can present. */
+  const stale = (message: string, additionalData: Record<string, unknown>) =>
+    new ShelfError({
+      cause: null,
+      title: "Stock has moved",
+      message,
+      additionalData: {
+        ...additionalData,
+        organizationId: handover.organizationId,
+      },
+      label,
+      status: 409,
+      shouldBeCaptured: false,
+    });
+
+  for (const line of handover.assets) {
+    const asset = byId.get(line.assetId);
+
+    if (!asset) {
+      // Deleted between opening and signing. Nothing to move, and a محضر that
+      // names a row nobody can look up is not a document worth completing.
+      throw stale(
+        "One of the assets on this record no longer exists in your workspace. Open a new record for the assets that are still there.",
+        { assetId: line.assetId },
+      );
+    }
+
+    const moved = Math.max(1, line.quantity ?? 1);
+    const isQtyTracked = asset.type === AssetType.QUANTITY_TRACKED;
+    const heldTotal = asset.custody.reduce(
+      (sum, row) => sum + (row.quantity ?? 0),
+      0,
+    );
+
+    if (handover.kind === CustodyHandoverKind.HANDOVER) {
+      if (releasingTeamMemberId) {
+        const releasable =
+          asset.custody.find(
+            (row) => row.teamMemberId === releasingTeamMemberId,
+          )?.quantity ?? 0;
+
+        if (moved > releasable) {
+          throw stale(
+            `"${asset.title}" has moved since this record was opened — the releasing side now holds ${releasable} of the ${moved} it lists. Open a new record for what they actually hold.`,
+            { assetId: asset.id, moved, releasable, releasingTeamMemberId },
+          );
+        }
+
+        continue;
+      }
+
+      if (isQtyTracked) {
+        const available = (asset.quantity ?? 0) - heldTotal;
+
+        if (moved > available) {
+          throw stale(
+            `"${
+              asset.title
+            }" has moved since this record was opened — only ${available} of ${
+              asset.quantity ?? 0
+            } units are still on the shelf, and this record hands over ${moved}.`,
+            { assetId: asset.id, moved, available, heldTotal },
+          );
+        }
+
+        continue;
+      }
+
+      if (heldTotal > 0 || asset.custody.length > 0) {
+        throw stale(
+          `"${asset.title}" was given to somebody else after this record was opened. It has to be returned before it can be handed over again.`,
+          { assetId: asset.id, heldBy: asset.custody[0]?.teamMemberId ?? null },
+        );
+      }
+
+      continue;
+    }
+
+    /**
+     * A return only ever *reduces* custody, so it cannot inflate stock and the
+     * check is correspondingly narrow: the counterparty must still hold at
+     * least what the محضر says they are giving back. Holding nothing at all is
+     * left to {@link applyHandoverEffect}, which no-ops — somebody else having
+     * released it already is a duplicate, not a discrepancy.
+     */
+    const held =
+      asset.custody.find(
+        (row) => row.teamMemberId === handover.counterpartyTeamMemberId,
+      )?.quantity ?? 0;
+
+    if (held > 0 && moved > held) {
+      throw stale(
+        `"${asset.title}" has moved since this record was opened — ${held} units are in that custody and this record returns ${moved}.`,
+        { assetId: asset.id, moved, held },
+      );
+    }
+  }
+}
+
+/**
  * Applies the custody change a completed handover authorises.
  *
  * Runs inside the same transaction that flipped the record to `COMPLETED`, so
  * the record and its effect commit together or not at all. Called only from
  * {@link recordHandoverSignature} — exported for tests, not for routes.
+ *
+ * The stock is re-checked first by {@link assertHandoverStillApplicable}; this
+ * function assumes that guard has passed and does not re-derive it.
  *
  * @param handover - The record, already `COMPLETED`
  * @param tx - The open transaction client

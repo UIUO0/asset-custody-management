@@ -33,7 +33,6 @@ import {
   SidebarTrigger,
 } from "~/components/layout/sidebar/sidebar";
 import { SkipLinks } from "~/components/layout/skip-links";
-import { useCrisp } from "~/components/marketing/crisp";
 import { ShelfMobileLogo } from "~/components/marketing/logos";
 import { SequentialIdMigrationModal } from "~/components/sequential-id-migration-modal";
 import { Spinner } from "~/components/shared/spinner";
@@ -52,7 +51,6 @@ import {
 } from "~/modules/organization/context.server";
 import { getUnreadCountForUser } from "~/modules/update/service.server";
 import { getUserByID } from "~/modules/user/service.server";
-import { getWorkingHoursForOrganization } from "~/modules/working-hours/service.server";
 import styles from "~/styles/layout/index.css?url";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import {
@@ -197,44 +195,54 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       });
     }
 
-    // Run working hours and the unread/handover counts in parallel —
-    // all only depend on organizationId/userId which are available now.
-
-    const [workingHours, unreadUpdatesCount, pendingHandoverCount] =
-      await Promise.all([
-        getWorkingHoursForOrganization(currentOrganization.id),
-        currentOrganizationUserRoles?.[0]
-          ? getUnreadCountForUser({
-              userId: authSession.userId,
-              userRole: currentOrganizationUserRoles[0],
-            })
-          : Promise.resolve(0),
-        /**
-         * Counted for everyone, unlike the requests badge: anybody can be named
-         * as the employee on a handover, so there is no role that provably never
-         * has one waiting.
-         *
-         * `canOperate` decides whether desk-side signatures count too. Without
-         * it an employee-initiated return sits signed and unannounced — the
-         * warehouse is the blocking party but nothing tells them so.
-         */
-        countHandoversAwaitingMySignature({
-          userId: authSession.userId,
-          organizationId: currentOrganization.id,
-          canOperate: userHasPermission({
-            roles: currentOrganizationUserRoles ?? [],
-            entity: PermissionEntity.asset,
-            action: PermissionAction.custody,
-          }),
+    /**
+     * Run the unread/handover counts in parallel — both only depend on
+     * organizationId/userId, which are available now.
+     *
+     * Working hours used to be fetched here and put in the payload. Nothing
+     * read it: the schedule was booking-availability UI, and that UI is gone.
+     * It was a database round trip and a payload field on **every**
+     * authenticated page load, answering a question nobody asked. The service
+     * itself is still used — by the org admin screen and `/api/:org/working-hours`.
+     */
+    const [unreadUpdatesCount, pendingHandoverCount] = await Promise.all([
+      /**
+       * The whole role array, not `roles[0]`. An update aimed at `DEPARTMENT`
+       * belongs in this badge for an account stored `[OWNER, DEPARTMENT]`, and
+       * reading the first element hid it from the badge, the list, and
+       * "mark all as read" alike.
+       */
+      currentOrganizationUserRoles?.length
+        ? getUnreadCountForUser({
+            userId: authSession.userId,
+            userRoles: currentOrganizationUserRoles,
+          })
+        : Promise.resolve(0),
+      /**
+       * Counted for everyone, unlike the requests badge: anybody can be named
+       * as the employee on a handover, so there is no role that provably never
+       * has one waiting.
+       *
+       * `canOperate` decides whether desk-side signatures count too. Without
+       * it an employee-initiated return sits signed and unannounced — the
+       * warehouse is the blocking party but nothing tells them so.
+       */
+      countHandoversAwaitingMySignature({
+        userId: authSession.userId,
+        organizationId: currentOrganization.id,
+        canOperate: userHasPermission({
+          roles: currentOrganizationUserRoles ?? [],
+          entity: PermissionEntity.asset,
+          action: PermissionAction.custody,
         }),
-      ]);
+      }),
+    ]);
 
     return data(
       payload({
         user,
         organizations,
         currentOrganizationId: organizationId,
-        workingHours,
         currentOrganization,
         currentOrganizationUserRoles,
         subscription,
@@ -304,7 +312,6 @@ export const meta: MetaFunction<typeof loader> = ({ error, matches }) => {
 
 export default function App() {
   const { t } = useTranslation();
-  useCrisp();
   const {
     disabledTeamOrg,
     hasUnpaidInvoice,

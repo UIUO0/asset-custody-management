@@ -143,6 +143,18 @@ export async function requirePermission({
     organizationId,
     currentOrganization,
     role,
+    /**
+     * Every role the membership holds.
+     *
+     * `role` above is `roles[0]`, which is enough to answer "may they do this?"
+     * (the widest wins) but is **lossy** for anything that asks *which* roles.
+     * `admin@epda.local` is stored `[OWNER, DEPARTMENT]`, so a caller reading
+     * `role` alone concludes they do not run a department desk — and they do.
+     *
+     * Prefer this wherever the question is about role membership rather than
+     * rank: role-targeted announcements, desk resolution, visibility scoping.
+     */
+    roles: roles ?? [role],
     isScopedToOwnRecords,
     userOrganizations,
     canSeeAllBookings,

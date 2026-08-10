@@ -375,20 +375,13 @@ const ConditionalActionsDropdown = () => {
                     </span>
                   </Button>
                 </div>
-                <div className="px-0 py-1 md:p-0">
-                  <Button
-                    to="overview/duplicate"
-                    role="link"
-                    variant="link"
-                    className="justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
-                    width="full"
-                    onClick={handleMenuClose}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Icon icon="duplicate" /> {t("assetActions.duplicate")}
-                    </span>
-                  </Button>
-                </div>
+                {/*
+                 * «تكرار الصنف» is gone: duplication was a third intake door,
+                 * minting assets with no receipt, no supplier and no purchase
+                 * order. The route now redirects to the receipt forms — see
+                 * `assets.$assetId.overview.duplicate.tsx` — and an entry that
+                 * only leads to a redirect is worse than no entry.
+                 */}
 
                 <div className="border-t p-4 md:hidden md:p-0">
                   <Button

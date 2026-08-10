@@ -21,7 +21,6 @@ import { db } from "~/database/db.server";
 
 import { SOFT_DELETED_EMAIL_DOMAIN } from "~/emails/email.worker.server";
 import { sendEmail } from "~/emails/mail.server";
-import { captureServerEvent } from "~/integrations/posthog/client.server";
 import { getSupabaseAdmin } from "~/integrations/supabase/client";
 import {
   deleteAuthAccount,
@@ -40,6 +39,7 @@ import { getCurrentSearchParams } from "~/utils/http.server";
 import { id as generateId } from "~/utils/id/id.server";
 import { getParamsValues } from "~/utils/list";
 import { Logger } from "~/utils/logger";
+import { highestRole, preservedRoles } from "~/utils/roles";
 import { getRoleFromGroupId } from "~/utils/roles.server";
 import {
   deleteProfilePicture,
@@ -776,21 +776,6 @@ export async function createUser(
       { maxWait: 6000, timeout: 10000 },
     );
 
-    /**
-     * Best-effort funnel analytics: a brand-new account was created. Fire-and-
-     * forget — never throws and is a no-op when PostHog is unconfigured, so it
-     * cannot affect signup. `created_with_invite` / `is_sso` let the funnel
-     * isolate genuine self-serve signups downstream.
-     */
-    captureServerEvent({
-      distinctId: userId,
-      event: "signup_completed",
-      properties: {
-        created_with_invite: Boolean(createdWithInvite),
-        is_sso: Boolean(isSSO),
-      },
-    });
-
     return createdUser;
   } catch (cause) {
     const isUniqueViolation =
@@ -1431,7 +1416,15 @@ export async function changeUserRole({
       });
     }
 
-    const currentRole = userOrg.roles[0];
+    /**
+     * The membership's rank, read across the whole array.
+     *
+     * `roles[0]` is whatever was written first, so the two guards below became
+     * order-dependent: a membership stored `[DEPARTMENT, ADMIN]` reads as a
+     * DEPARTMENT user and slips past "only the owner may change an
+     * administrator's role".
+     */
+    const currentRole = highestRole(userOrg.roles);
 
     if (currentRole === OrganizationRoles.OWNER) {
       throw new ShelfError({
@@ -1473,6 +1466,15 @@ export async function changeUserRole({
       });
     }
 
+    /**
+     * Replace the rank, keep what this dialog cannot hand back.
+     *
+     * `set: [newRole]` overwrote the whole array, and `DEPARTMENT` is not in
+     * the dialog's vocabulary — so one role change stripped a department
+     * account's desk marker with no way to restore it short of editing the
+     * database. The desk's open محاضر then had no signable counterparty and sat
+     * pending forever. See {@link preservedRoles}.
+     */
     const updated = await client.userOrganization.update({
       where: {
         userId_organizationId: {
@@ -1481,7 +1483,7 @@ export async function changeUserRole({
         },
       },
       data: {
-        roles: { set: [newRole] },
+        roles: { set: [newRole, ...preservedRoles(userOrg.roles)] },
       },
     });
 

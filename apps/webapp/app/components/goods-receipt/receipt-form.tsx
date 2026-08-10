@@ -26,10 +26,12 @@ import { useMemo, useState } from "react";
 
 import type { GoodsReceiptLineTracking, ItemCategory } from "@prisma/client";
 import { PlusIcon, Trash2Icon } from "lucide-react";
+import { useActionData } from "react-router";
 import { Form } from "~/components/custom-form";
 import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
 // Browser-safe enum values — see modules/goods-receipt/enums.ts.
+import { config } from "~/config/shelf.config";
 import {
   CAPITALIZATION_RULES,
   thresholdFor,
@@ -40,6 +42,10 @@ import {
 } from "~/modules/goods-receipt/classification";
 import { LineTracking } from "~/modules/goods-receipt/enums";
 import type { ReceiptFormShape } from "~/modules/goods-receipt/form-shape";
+import { pageCountFor } from "~/modules/goods-receipt/pagination";
+import type { GoodsReceiptSchema } from "~/modules/goods-receipt/schema";
+import { getValidationErrors } from "~/utils/http";
+import type { DataOrErrorResponse } from "~/utils/http.server";
 import { formatHalalas, parseRiyalParts } from "~/utils/money";
 
 /** One row of the item table, as the operator is typing it. */
@@ -118,6 +124,43 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
   const [vatRiyals, setVatRiyals] = useState("");
   const [vatHalalas, setVatHalalas] = useState("");
 
+  /** Live page count, from the same rule the server stores. */
+  const pageCount = pageCountFor(lines.length);
+
+  /**
+   * Server-side validation errors, per field.
+   *
+   * The `required` attributes below give the browser's own red outline before
+   * the request leaves — but that is a courtesy, not a guarantee: it is skipped
+   * for a disabled-JS submit, an uploaded template, or a hand-built POST. The
+   * schema is the real gate, and this is what puts its answer back on the box
+   * that caused it instead of one line at the top of the page.
+   *
+   * @see CLAUDE.md — "Form Validation Pattern", which requires this fallback.
+   */
+  const actionData = useActionData<DataOrErrorResponse>();
+  const validationErrors = getValidationErrors<typeof GoodsReceiptSchema>(
+    actionData?.error,
+  );
+
+  /** The message for one header field, or undefined. */
+  const fieldError = (field: string) =>
+    (validationErrors as Record<string, { message?: string }> | undefined)?.[
+      field
+    ]?.message;
+
+  /**
+   * The item table's message, if any row failed.
+   *
+   * Not per-row: `parseObject` builds its error map from Zod's
+   * `formErrors.fieldErrors`, which keys by the **top-level** field — every
+   * issue inside `lines[]` collapses onto `lines`. Rendering that one message
+   * against each row would paint the whole table red for one bad cell, so it is
+   * shown once above the table and the browser's own `required` marks the
+   * actual box.
+   */
+  const linesError = fieldError("lines");
+
   /**
    * Live totals.
    *
@@ -180,26 +223,62 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
           <Input
             label="السنة المالية"
             name="fiscalYear"
+            required
+            error={fieldError("fiscalYear")}
             inputClassName="w-full"
           />
-          <Input label="الجهة" name="entityName" inputClassName="w-full" />
+          {/*
+           * الجهة and رقم الجهة are prefilled from the deployment's identity
+           * (`config.entity`). Every receipt here names the same authority, and
+           * re-typing it is how one signed document ends up spelling it
+           * differently from the next. `defaultValue`, not `value` — the
+           * operator can still correct the box.
+           */}
+          <Input
+            label="الجهة"
+            name="entityName"
+            defaultValue={config.entity.name}
+            required
+            error={fieldError("entityName")}
+            inputClassName="w-full"
+          />
           <Input
             label="رقم الجهة"
             name="entityNumber"
+            defaultValue={config.entity.number}
+            required
+            error={fieldError("entityNumber")}
             inputClassName="w-full"
           />
-          <Input label="مستودع" name="warehouseName" inputClassName="w-full" />
           <Input
-            label="عدد الصفحات"
-            name="pageCount"
-            type="number"
-            min={1}
+            label="مستودع"
+            name="warehouseName"
+            required
+            error={fieldError("warehouseName")}
             inputClassName="w-full"
           />
+          {/*
+           * عدد الصفحات is derived, not typed. It is a fact about the printed
+           * document — see `pagination.ts` for why the box was taken away from
+           * the operator. Shown so the number on screen matches the number that
+           * will print, and not submitted: the server computes it again from
+           * the lines it actually saved.
+           */}
+          <div>
+            <div className="mb-1 block font-medium">عدد الصفحات</div>
+            <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700">
+              {pageCount}
+              <span className="ms-2 text-xs text-gray-500">
+                يحسبها النظام من عدد الأسطر
+              </span>
+            </div>
+          </div>
           <Input
             label={shape.dateLabel}
             name="receiptDate"
             type="date"
+            required
+            error={fieldError("receiptDate")}
             inputClassName="w-full"
           />
         </div>
@@ -209,7 +288,13 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
       <section className="mb-8 rounded-lg border border-gray-200 p-6">
         <h3 className="mb-4">المورد والمستندات</h3>
         <div className="mb-4">
-          <Input label="المورد" name="supplier" inputClassName="w-full" />
+          <Input
+            label="المورد"
+            name="supplier"
+            required
+            error={fieldError("supplier")}
+            inputClassName="w-full"
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -223,6 +308,8 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
                 <Input
                   label={reference.numberLabel}
                   name={reference.numberField}
+                  required={reference.required}
+                  error={fieldError(reference.numberField)}
                   inputClassName="w-full"
                 />
                 {/* Not every reference has a date column on paper — نموذج 3's
@@ -262,6 +349,12 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
             <strong className="text-gray-900">{itemCount}</strong> سجلاً
           </div>
         </div>
+
+        {linesError ? (
+          <div className="mb-4 rounded border border-error-300 bg-error-50 p-3 text-sm text-error-700">
+            {linesError}
+          </div>
+        ) : null}
 
         <div className="space-y-4">
           {lines.map((line, index) => (
@@ -358,6 +451,7 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
                     name={`lines[${index}].unitPriceRiyals`}
                     type="number"
                     min={0}
+                    required
                     value={line.unitPriceRiyals}
                     onChange={(event) =>
                       updateLine(line.key, {
@@ -506,6 +600,9 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
                     name="vatRiyals"
                     type="number"
                     min={0}
+                    required
+                    error={fieldError("vat")}
+                    hideErrorText
                     value={vatRiyals}
                     onChange={(event) => setVatRiyals(event.target.value)}
                     inputClassName="w-full"
@@ -520,6 +617,14 @@ export function ReceiptForm({ shape }: { shape: ReceiptFormShape }) {
                     onChange={(event) => setVatHalalas(event.target.value)}
                     inputClassName="w-full"
                   />
+                  {/* One message under both boxes: the schema validates them
+                      together, so repeating it beside each would say the same
+                      thing twice about one answer. */}
+                  {fieldError("vat") ? (
+                    <div className="col-span-2 text-sm text-error-500">
+                      {fieldError("vat")}
+                    </div>
+                  ) : null}
                 </dd>
               </div>
             </>

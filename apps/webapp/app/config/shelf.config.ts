@@ -23,6 +23,13 @@ export const config: Config = {
     symbol: "/static/images/sda-symbol.png",
   },
   faviconPath: "/static/favicon.ico",
+
+  // As written on نموذج 2 and نموذج 3.
+  entity: {
+    name: "هيئة تطوير المنطقة الشرقية",
+    number: "1",
+  },
+
   emailPrimaryColor: "#044E8B",
   appName: "SDA Assets",
   appIdentifier: "SDA",

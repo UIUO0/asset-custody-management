@@ -133,7 +133,6 @@ const Row = ({
                 <AssetStatusBadge
                   id={item.id}
                   status={item.status}
-                  availableToBook={item.availableToBook}
                   asset={item}
                 />
               </div>

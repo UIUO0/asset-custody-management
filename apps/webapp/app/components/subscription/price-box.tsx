@@ -8,7 +8,6 @@ import {
   MultiLayerIcon,
   SingleLayerIcon,
 } from "../icons/library";
-import { CrispButton } from "../marketing/crisp";
 import {
   Tooltip,
   TooltipContent,
@@ -97,7 +96,7 @@ export const PerWorkspaceTooltip = () => (
           <Trans
             i18nKey="subscription.multipleWorkspacesHint"
             components={{
-              1: <CrispButton variant="link" className="!w-auto text-xs" />,
+              1: <span className="text-xs font-medium" />,
             }}
           />
         </p>

@@ -21,7 +21,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { role } = await requirePermission({
+    const { roles } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.update,
@@ -31,7 +31,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     // Get updates for the user with their organization role
     const updates = await getUpdatesForUser({
       userId,
-      userRole: role,
+      userRoles: roles,
     });
 
     return data(
@@ -53,7 +53,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { role } = await requirePermission({
+    const { roles } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.update,
@@ -74,7 +74,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       }
 
       case "markAllAsRead": {
-        await markAllUpdatesAsRead({ userId, userRole: role });
+        await markAllUpdatesAsRead({ userId, userRoles: roles });
         return data(payload({ success: true }));
       }
 

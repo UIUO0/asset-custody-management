@@ -451,7 +451,7 @@ const RowComponent = ({
               <p className="word-break whitespace-break-spaces font-medium">
                 {item.name}
               </p>
-              <KitStatusBadge status={item.status} availableToBook />
+              <KitStatusBadge status={item.status} />
             </div>
           </div>
         </div>

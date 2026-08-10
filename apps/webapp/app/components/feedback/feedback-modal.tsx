@@ -1,11 +1,9 @@
 import type React from "react";
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import { Crisp } from "crisp-sdk-web";
 import {
   AlertCircleIcon,
   ImageIcon,
   LightbulbIcon,
-  MessageCircleIcon,
   TriangleAlertIcon,
   XIcon,
 } from "lucide-react";
@@ -516,18 +514,6 @@ export default function FeedbackModal({
 
             {/* Footer */}
             <div className="flex items-center justify-between border-t px-6 py-4">
-              <button
-                type="button"
-                onClick={() => {
-                  Crisp.chat.open();
-                  handleClose();
-                }}
-                className="flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-700"
-              >
-                <MessageCircleIcon className="size-4" />
-                {t("feedback.chatWithUs")}
-              </button>
-
               <Button type="submit" disabled={disabled}>
                 {disabled ? "Sending..." : t("feedback.sendFeedback")}
               </Button>

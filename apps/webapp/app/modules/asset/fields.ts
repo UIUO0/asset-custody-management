@@ -1,4 +1,4 @@
-import type { BookingStatus, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 export const LOCATION_WITH_HIERARCHY = {
   select: {
@@ -112,37 +112,11 @@ export const getAssetOverviewFields = (
     // A QUANTITY_TRACKED asset can sit in multiple kits at distinct slices.
     // Pull `quantity` so the asset-overview sidebar can list each kit with
     // its allocation and so the loader can derive a true "available" pool
-    // (units NOT in any kit, custody, or active booking).
+    // (units NOT in any kit or custody).
     assetKits: {
       select: {
         quantity: true,
         kit: { select: { id: true, name: true, status: true } },
-      },
-    },
-    bookingAssets: {
-      where: {
-        booking: {
-          status: { in: ["ONGOING", "OVERDUE"] },
-          // Exclude bookings where this asset has been partially checked in
-          NOT: {
-            partialCheckins: {
-              some: {
-                assetIds: { has: assetId },
-              },
-            },
-          },
-        },
-      },
-      include: {
-        booking: {
-          select: {
-            id: true,
-            name: true,
-            from: true,
-            custodianTeamMember: true,
-            custodianUser: true,
-          },
-        },
       },
     },
   } satisfies Prisma.AssetInclude;
@@ -172,19 +146,16 @@ export const getAssetOverviewFields = (
 };
 
 /**
- * Generates include fields for asset queries with optimized field selection
- * @param params Optional parameters to customize included fields
+ * Include fields for the simple asset index.
+ *
+ * It used to take `bookingFrom` / `bookingTo` / `unavailableBookingStatuses`
+ * and swap in a wider `bookingAssets` include when an availability window was
+ * being previewed. Nothing supplies those any more, and the pivot they selected
+ * belongs to the removed booking system.
+ *
  * @returns Prisma include object for asset queries
  */
-export const assetIndexFields = ({
-  bookingFrom,
-  bookingTo,
-  unavailableBookingStatuses,
-}: {
-  bookingFrom?: Date | null;
-  bookingTo?: Date | null;
-  unavailableBookingStatuses?: BookingStatus[];
-} = {}) => {
+export const assetIndexFields = () => {
   const fields = {
     assetKits: { select: { kit: true } },
     category: true,
@@ -244,82 +215,7 @@ export const assetIndexFields = ({
     barcodes: {
       select: { id: true, type: true, value: true },
     },
-    /**
-     * Include booking custodian data for CHECKED_OUT assets inline,
-     * eliminating the N+1 re-query in updateAssetsWithBookingCustodians().
-     * Only ONGOING/OVERDUE bookings have custodian info relevant to display.
-     */
-    bookingAssets: {
-      where: {
-        booking: {
-          status: { in: ["ONGOING", "OVERDUE"] },
-        },
-      },
-      take: 1,
-      include: {
-        booking: {
-          select: {
-            id: true,
-            status: true,
-            custodianTeamMember: true,
-            custodianUser: {
-              select: {
-                firstName: true,
-                lastName: true,
-                displayName: true,
-                profilePicture: true,
-              },
-            },
-          },
-        },
-      },
-    },
   } satisfies Prisma.AssetInclude;
-
-  // Conditionally add bookings if date range is provided
-  if (bookingTo && bookingFrom && unavailableBookingStatuses) {
-    return {
-      ...fields,
-      bookingAssets: {
-        where: {
-          booking: {
-            status: { in: unavailableBookingStatuses },
-            OR: [
-              {
-                from: { lte: bookingTo },
-                to: { gte: bookingFrom },
-              },
-              {
-                from: { gte: bookingFrom },
-                to: { lte: bookingTo },
-              },
-            ],
-          },
-        },
-        include: {
-          booking: {
-            select: {
-              from: true,
-              to: true,
-              status: true,
-              id: true,
-              name: true,
-              // Custodian fields needed by updateAssetsWithBookingCustodians()
-              custodianTeamMember: true,
-              custodianUser: {
-                select: {
-                  firstName: true,
-                  lastName: true,
-                  displayName: true,
-                  profilePicture: true,
-                },
-              },
-            },
-          },
-        },
-      },
-    } satisfies Prisma.AssetInclude;
-  }
 
   return fields;
 };

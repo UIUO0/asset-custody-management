@@ -257,7 +257,6 @@ function ListContent({ item }: { item: ListItemForKitPage }) {
                 <AssetStatusBadge
                   id={item.id}
                   status={item.status}
-                  availableToBook={item.availableToBook}
                   asset={item}
                 />
                 {displayCode ? <AssetCodeBadge {...displayCode} /> : null}

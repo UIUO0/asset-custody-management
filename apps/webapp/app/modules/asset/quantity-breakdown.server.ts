@@ -8,15 +8,16 @@
  * `~/components/assets/asset-status-badge/quantity-data.ts`).
  *
  * Extracted from the inline logic that previously lived in the web
- * `/api/assets/$assetId/quantity-breakdown` loader so the web tooltip path
- * and the mobile asset detail endpoint share ONE implementation.
+ * `/api/assets/$assetId/quantity-breakdown` loader. It had a second consumer at
+ * the time — the mobile asset-detail endpoint — which went with the companion
+ * app in 2026-08-06; the extraction is kept because the loader is still the
+ * wrong place for the arithmetic, not because two callers share it.
  *
  * The booking half of this breakdown was dropped with the booking system
  * itself: EPDA moves assets on custody records, so custody and kit
  * allocation are the only consumers of a quantity-tracked pool.
  *
  * @see {@link file://./../../routes/api+/assets.$assetId.quantity-breakdown.ts}
- * @see {@link file://./../../routes/api+/mobile+/assets.$assetId.ts}
  * @see {@link file://./../../components/assets/asset-status-badge/quantity-data.ts}
  */
 

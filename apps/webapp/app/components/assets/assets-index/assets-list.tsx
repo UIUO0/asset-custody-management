@@ -259,7 +259,6 @@ export const ListAssetContent = ({
                 <AssetStatusBadge
                   id={item.id}
                   status={item.status}
-                  availableToBook={item.availableToBook}
                   asset={item}
                 />
                 {displayCode ? <AssetCodeBadge {...displayCode} /> : null}

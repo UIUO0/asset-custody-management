@@ -394,11 +394,6 @@ function ListContent({
                   // why: undefined assetKits ≠ empty kit — we don't know what's
                   // in it, so default to not-available rather than claiming a
                   // kit is bookable on the strength of missing data.
-                  availableToBook={
-                    item.assetKits == null
-                      ? false
-                      : !item.assetKits.some((ak) => !ak.asset.availableToBook)
-                  }
                 />
                 {displayCode ? <AssetCodeBadge {...displayCode} /> : null}
               </div>

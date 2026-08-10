@@ -1,7 +1,7 @@
 /** In this file you can find the different ways of fetching data for the asset index. They are either for the simple or advanced mode */
 
 import type { AssetIndexSettings, Kit } from "@prisma/client";
-import { OrganizationRoles } from "@prisma/client";
+import type { OrganizationRoles } from "@prisma/client";
 import { data, redirect } from "react-router";
 import type { HeaderData } from "~/components/layout/header/types";
 import { db } from "~/database/db.server";
@@ -35,7 +35,6 @@ import {
   getEntitiesWithSelectedValues,
   getPaginatedAndFilterableAssets,
   refreshExpiredAssetImages,
-  updateAssetsWithBookingCustodians,
 } from "./service.server";
 import { getAllSelectedValuesFromFilters } from "./utils.server";
 import { MAX_SAVED_FILTER_PRESETS } from "../asset-filter-presets/constants";
@@ -207,11 +206,6 @@ export async function simpleModeLoader({
   const currentUserTeamMember = isSelfService
     ? teamMembers.find((tm) => tm.userId === userId) ?? null
     : null;
-
-  // Synchronous — no DB call. Booking custodian data is already included
-  // in the initial asset query (via assetIndexFields), so this just reshapes
-  // it into the `custody.custodian` structure the UI expects.
-  assets = updateAssetsWithBookingCustodians(assets);
 
   // Refresh expired signed URLs before returning so users never see broken images.
   // Runs after the main query completes but is awaited to ensure fresh URLs.
@@ -421,8 +415,6 @@ export async function advancedModeLoader({
       filters,
       settings,
       canUseBarcodes: currentOrganization.barcodesEnabled ?? false,
-      // See the `isSelfService` note above — intentionally SELF_SERVICE-only.
-      availableToBookOnly: role === OrganizationRoles.SELF_SERVICE,
       /** @see the simple-mode loader above for why this is scoped this way */
       onlyReadyAssets: isScopedToOwnRecords,
       preParsedFilters: parsedFilters,

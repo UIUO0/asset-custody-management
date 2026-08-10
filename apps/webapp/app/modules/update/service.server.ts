@@ -35,36 +35,60 @@ export type UpdateForUser = Prisma.UpdateGetPayload<{
 }>;
 
 /**
- * Get all updates visible to a specific user based on their role
+ * The published-and-targeted-at-me filter, shared by all three readers.
+ *
+ * ## Why it takes the whole role array
+ *
+ * A membership holds *several* roles, and every caller here used to pass
+ * `roles[0]`. An update aimed at `DEPARTMENT` was invisible to the account that
+ * actually runs a department desk — `admin@epda.local` is stored
+ * `[OWNER, DEPARTMENT]`, so the first element answered a question nobody asked.
+ * Worse, it was invisible *consistently*: absent from the badge, absent from the
+ * list, and not cleared by "mark all as read", so nothing on screen hinted that
+ * an announcement existed at all.
+ *
+ * One helper rather than three copies of the same `OR`, so the badge count can
+ * never disagree with the list it is counting.
+ *
+ * @param userRoles - Every role the user holds in the current organization
+ * @returns A `where` fragment matching untargeted updates plus those aimed at
+ *   any role the user holds
+ */
+function visibleToRoles(userRoles: OrganizationRoles[]) {
+  return {
+    status: UpdateStatus.PUBLISHED,
+    publishDate: {
+      lte: new Date(),
+    },
+    OR: [
+      // Updates with no role targeting (visible to all)
+      {
+        targetRoles: {
+          isEmpty: true,
+        },
+      },
+      // Updates that target any role the user holds
+      {
+        targetRoles: {
+          hasSome: userRoles,
+        },
+      },
+    ],
+  } satisfies Prisma.UpdateWhereInput;
+}
+
+/**
+ * Get all updates visible to a specific user based on their roles
  */
 export function getUpdatesForUser({
   userId,
-  userRole,
+  userRoles,
 }: {
   userId: string;
-  userRole: OrganizationRoles;
+  userRoles: OrganizationRoles[];
 }): Promise<UpdateForUser[]> {
   return db.update.findMany({
-    where: {
-      status: UpdateStatus.PUBLISHED,
-      publishDate: {
-        lte: new Date(),
-      },
-      OR: [
-        // Updates with no role targeting (visible to all)
-        {
-          targetRoles: {
-            isEmpty: true,
-          },
-        },
-        // Updates that target the user's role
-        {
-          targetRoles: {
-            has: userRole,
-          },
-        },
-      ],
-    },
+    where: visibleToRoles(userRoles),
     include: {
       userReads: {
         where: {
@@ -83,31 +107,14 @@ export function getUpdatesForUser({
  */
 export function getUnreadCountForUser({
   userId,
-  userRole,
+  userRoles,
 }: {
   userId: string;
-  userRole: OrganizationRoles;
+  userRoles: OrganizationRoles[];
 }): Promise<number> {
   return db.update.count({
     where: {
-      status: UpdateStatus.PUBLISHED,
-      publishDate: {
-        lte: new Date(),
-      },
-      OR: [
-        // Updates with no role targeting (visible to all)
-        {
-          targetRoles: {
-            isEmpty: true,
-          },
-        },
-        // Updates that target the user's role
-        {
-          targetRoles: {
-            has: userRole,
-          },
-        },
-      ],
+      ...visibleToRoles(userRoles),
       NOT: {
         userReads: {
           some: {
@@ -160,30 +167,15 @@ export async function markUpdateAsRead({
  */
 export async function markAllUpdatesAsRead({
   userId,
-  userRole,
+  userRoles,
 }: {
   userId: string;
-  userRole: OrganizationRoles;
+  userRoles: OrganizationRoles[];
 }): Promise<void> {
   // Get all unread updates for the user
   const unreadUpdates = await db.update.findMany({
     where: {
-      status: UpdateStatus.PUBLISHED,
-      publishDate: {
-        lte: new Date(),
-      },
-      OR: [
-        {
-          targetRoles: {
-            isEmpty: true,
-          },
-        },
-        {
-          targetRoles: {
-            has: userRole,
-          },
-        },
-      ],
+      ...visibleToRoles(userRoles),
       NOT: {
         userReads: {
           some: {

@@ -3,16 +3,11 @@
  *
  * - `GET` lists assets, filterable by search text, status, lifecycle stage and
  *   category. Requires `assets:read`.
- * - `POST` creates an asset. Requires `assets:write`.
+ * - `POST` is closed — see {@link action}. Stock enters on a receipt form.
  *
  * The organization is taken from the API key and never from the request. There
  * is deliberately no `organizationId` parameter on this route: with one, a key
  * issued for workspace A could read workspace B by asking nicely.
- *
- * New assets are created at `lifecycleStage: PENDING`, the same as one added
- * through the UI. An integration that could inject assets straight into
- * `READY` would bypass المستودعات' approval step, which is the control the
- * intake workflow exists to provide.
  *
  * @see {@link file://./assets_.$assetId.ts} single-asset reads and updates
  * @see {@link file://./../../../modules/external-api/serializers.server.ts}
@@ -20,13 +15,10 @@
 
 import { AssetStatus, AssetLifecycleStage, type Prisma } from "@prisma/client";
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
 import { db } from "~/database/db.server";
 import { requireApiKey } from "~/modules/api-key/auth.server";
-import { createAsset } from "~/modules/asset/service.server";
 import {
   apiError,
-  apiItem,
   apiList,
   getApiPagination,
 } from "~/modules/external-api/response.server";
@@ -35,17 +27,6 @@ import {
   serializeAsset,
 } from "~/modules/external-api/serializers.server";
 import { ShelfError } from "~/utils/error";
-import { parseJsonBody } from "~/utils/http.server";
-
-const CreateAssetSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(200),
-  description: z.string().max(1000).nullish(),
-  categoryId: z.string().nullish(),
-  locationId: z.string().nullish(),
-  /** Monetary value. Rejected rather than coerced if not a number. */
-  valuation: z.number().nullish(),
-  availableToBook: z.boolean().optional(),
-});
 
 export async function loader({ request }: LoaderFunctionArgs) {
   let apiKeyId: string | undefined;
@@ -110,104 +91,41 @@ export async function loader({ request }: LoaderFunctionArgs) {
   }
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  let apiKeyId: string | undefined;
-
-  try {
-    const context = await requireApiKey(request, "assets:write");
-    apiKeyId = context.apiKeyId;
-
-    if (request.method !== "POST") {
-      throw new ShelfError({
-        cause: null,
-        message: "Use POST to create an asset.",
-        label: "Assets",
-        status: 405,
-        shouldBeCaptured: false,
-      });
-    }
-
-    const body = await parseJsonBody(request, CreateAssetSchema);
-
-    // Referenced records must belong to the key's workspace. Prisma would
-    // happily accept a foreign id and create a cross-organization link, so this
-    // is checked before the write rather than trusted.
-    if (body.categoryId) {
-      await assertBelongsToOrg(
-        "category",
-        body.categoryId,
-        context.organizationId,
-      );
-    }
-    if (body.locationId) {
-      await assertBelongsToOrg(
-        "location",
-        body.locationId,
-        context.organizationId,
-      );
-    }
-
-    const created = await createAsset({
-      title: body.title,
-      description: body.description ?? "",
-      categoryId: body.categoryId ?? null,
-      locationId: body.locationId ?? undefined,
-      valuation: body.valuation ?? null,
-      availableToBook: body.availableToBook ?? true,
-      organizationId: context.organizationId,
-      // Attributed to the admin who issued the key — see ApiKeyContext.
-      userId: context.actingUserId,
-    });
-
-    // Re-read for the response shape. Still org-scoped even though we just
-    // created the row in this organization — an id-only lookup here would be
-    // one refactor away from being reachable with a caller-supplied id.
-    const asset = await db.asset.findFirstOrThrow({
-      where: { id: created.id, organizationId: context.organizationId },
-      select: API_ASSET_SELECT,
-    });
-
-    return apiItem(serializeAsset(asset), 201);
-  } catch (cause) {
-    return apiError(cause, apiKeyId);
-  }
-}
-
 /**
- * Confirms a referenced record lives in the caller's workspace.
+ * Asset creation over the API is closed — stock enters on a receipt form.
  *
- * @param model - Which reference collection to check
- * @param id - The referenced id
- * @param organizationId - The API key's workspace
- * @throws {ShelfError} 400 when the id does not exist in this workspace. The
- *   message says "not found in this workspace" rather than distinguishing
- *   "missing" from "belongs to someone else", so the endpoint cannot be used to
- *   probe for ids in other organizations.
+ * This was the last door left open after `/assets/new`, `/assets/import` and
+ * asset duplication were closed. An API key with `assets:write` could mint rows
+ * carrying no supplier, no purchase-order reference, no unit price and no
+ * signatures — and because those rows have no `receiptLine`,
+ * `assertReceiptSignedBeforeApproval` waves them through to `READY`. A control
+ * that three UI paths respect and one machine path does not is not a control.
+ *
+ * `405`, and the message carries the permanence. `410 Gone` would say it more
+ * precisely, but `ShelfError`'s status union is a deliberate allow-list and
+ * widening it for one call site is the wrong trade. What matters is that an
+ * integrator reading the response is told where the door moved rather than
+ * being left to retry.
+ *
+ * Updating assets over the API is untouched — `PATCH /api/v1/assets/:id` is how
+ * المالية push coding back, and it creates nothing.
+ *
+ * @see {@link file://./../../../modules/goods-receipt/intake-guard.server.ts}
  */
-async function assertBelongsToOrg(
-  model: "category" | "location",
-  id: string,
-  organizationId: string,
-): Promise<void> {
-  const found =
-    model === "category"
-      ? await db.category.findFirst({
-          where: { id, organizationId },
-          select: { id: true },
-        })
-      : await db.location.findFirst({
-          where: { id, organizationId },
-          select: { id: true },
-        });
+export function action({ request }: ActionFunctionArgs) {
+  // Read nothing and touch no database: the answer is the same for every body,
+  // and parsing one would suggest a shape that might still be accepted.
+  void request;
 
-  if (!found) {
-    throw new ShelfError({
+  return apiError(
+    new ShelfError({
       cause: null,
-      message: `The referenced ${model} was not found in this workspace.`,
-      additionalData: { model, id },
+      title: "Asset creation is closed",
+      message:
+        "Assets can no longer be created through the API. Stock enters this system on a goods-receipt form (مذكرة/محضر استلام), which records the supplier, purchase order, unit price and the three signatures. Use PATCH /api/v1/assets/:id to update items that already exist.",
       label: "Assets",
-      status: 400,
+      status: 405,
       shouldBeCaptured: false,
-    });
-  }
+    }),
+  );
 }

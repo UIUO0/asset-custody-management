@@ -34,7 +34,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { role } = await requirePermission({
+    const { roles } = await requirePermission({
       userId,
       request,
       entity: PermissionEntity.update,
@@ -44,7 +44,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     // Get updates for the user with their organization role
     const updates = await getUpdatesForUser({
       userId,
-      userRole: role,
+      userRoles: roles,
     });
 
     return data(

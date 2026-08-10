@@ -47,6 +47,7 @@ import { ShelfError, isLikeShelfError } from "~/utils/error";
 import { halalasToRiyals, lineTotal } from "~/utils/money";
 import { classifyReceiptLine } from "./classification";
 import { getFormShape, partiesForType } from "./form-shape";
+import { pageCountFor } from "./pagination";
 import type { GoodsReceiptInput, ReceiptLineInput } from "./schema";
 
 const label = "Assets" as const;
@@ -161,7 +162,14 @@ function stripForeignFields(input: GoodsReceiptInput) {
     entityName: input.entityName ?? null,
     entityNumber: input.entityNumber ?? null,
     warehouseName: input.warehouseName ?? null,
-    pageCount: input.pageCount ?? null,
+    /**
+     * Derived, never taken from the client — like `itemClass` on a line.
+     *
+     * It is a fact about the printed document, and the only body that knows how
+     * many lines were actually saved is this one. A client-supplied count would
+     * be a number on a signed form that nothing checked.
+     */
+    pageCount: pageCountFor(input.lines.length),
     receiptDate: input.receiptDate ?? null,
     supplier: input.supplier ?? null,
   };

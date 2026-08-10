@@ -81,6 +81,7 @@ vi.mock("~/modules/note/service.server", () => ({
 const { db } = await import("~/database/db.server");
 const {
   applyHandoverEffect,
+  assertHandoverStillApplicable,
   countHandoversAwaitingMySignature,
   decodeSignatureDataUrl,
   openHandover,
@@ -524,6 +525,154 @@ describe("resolveSignableParty", () => {
         ownTeamMemberId: "tm-employee",
       }),
     ).toBe(CustodyHandoverParty.RELEASING);
+  });
+});
+
+/**
+ * The stock re-check that runs on the second signature.
+ *
+ * The gap it closes is the days between the two signatures. `openHandover`
+ * voids competing محاضر, so nothing here is about two handovers racing — it is
+ * about the *other* custody paths (`releaseCustody`, the quantity-custody
+ * dialog) moving the stock underneath a محضر that is already open.
+ *
+ * Every assertion below is a way units could otherwise be conjured or a single
+ * asset end up in two hands at once.
+ */
+describe("assertHandoverStillApplicable", () => {
+  /** A transaction fake whose asset rows are whatever the test says they are. */
+  function makeTx(
+    assets: Array<{
+      id: string;
+      title: string;
+      type: "INDIVIDUAL" | "QUANTITY_TRACKED";
+      quantity: number | null;
+      custody: Array<{ teamMemberId: string; quantity: number }>;
+    }>,
+  ) {
+    return { asset: { findMany: vi.fn().mockResolvedValue(assets) } };
+  }
+
+  function check(
+    tx: unknown,
+    overrides: Partial<{
+      kind: CustodyHandoverKind;
+      assets: { assetId: string; quantity?: number }[];
+      releasingTeamMemberId: string | null;
+    }> = {},
+  ) {
+    return assertHandoverStillApplicable(
+      {
+        kind: CustodyHandoverKind.HANDOVER,
+        assets: [{ assetId: "a-1", quantity: 1 }],
+        organizationId: "org-1",
+        counterpartyTeamMemberId: "tm-employee",
+        ...overrides,
+      },
+      // @ts-expect-error -- partial transaction client, see runTransactionWith
+      tx,
+    );
+  }
+
+  /** A quantity-tracked asset row, custody as supplied. */
+  const pens = (
+    custody: Array<{ teamMemberId: string; quantity: number }>,
+  ) => ({
+    id: "a-1",
+    title: "أقلام",
+    type: "QUANTITY_TRACKED" as const,
+    quantity: 30,
+    custody,
+  });
+
+  it("passes when nothing moved", async () => {
+    await expect(
+      check(makeTx([pens([])]), { assets: [{ assetId: "a-1", quantity: 30 }] }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses to hand over units that were issued elsewhere in the meantime", async () => {
+    // The inflation case: a محضر open for all 30 pens, and 30 issued off the
+    // shelf before it was signed. Applying it would put 60 units of a 30-unit
+    // asset into custody.
+    await expect(
+      check(makeTx([pens([{ teamMemberId: "tm-other", quantity: 30 }])]), {
+        assets: [{ assetId: "a-1", quantity: 30 }],
+      }),
+    ).rejects.toThrow(/moved since this record was opened/);
+  });
+
+  it("still allows the part that is genuinely on the shelf", async () => {
+    // Partial movement is not a failure — 10 out of 30 gone still leaves 20,
+    // and a محضر for 20 is honest.
+    await expect(
+      check(makeTx([pens([{ teamMemberId: "tm-other", quantity: 10 }])]), {
+        assets: [{ assetId: "a-1", quantity: 20 }],
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a transfer the releasing side can no longer cover", async () => {
+    // `applyHandoverEffect` finds no row to decrement and skips it silently,
+    // while still crediting the receiving side — units out of nowhere.
+    await expect(
+      check(makeTx([pens([{ teamMemberId: "tm-dept", quantity: 3 }])]), {
+        assets: [{ assetId: "a-1", quantity: 10 }],
+        releasingTeamMemberId: "tm-dept",
+      }),
+    ).rejects.toThrow(/releasing side now holds 3/);
+  });
+
+  it("refuses an individual asset that somebody else now holds", async () => {
+    // The partial unique index is on (assetId, teamMemberId), so a *different*
+    // holder is a different pair — the database would happily record two people
+    // holding one laptop.
+    await expect(
+      check(
+        makeTx([
+          {
+            id: "a-1",
+            title: "لابتوب",
+            type: "INDIVIDUAL",
+            quantity: 1,
+            custody: [{ teamMemberId: "tm-other", quantity: 1 }],
+          },
+        ]),
+      ),
+    ).rejects.toThrow(/given to somebody else/);
+  });
+
+  it("refuses when an asset on the record was deleted", async () => {
+    await expect(check(makeTx([]))).rejects.toThrow(/no longer exists/);
+  });
+
+  it("lets a return through when the custodian still holds enough", async () => {
+    await expect(
+      check(makeTx([pens([{ teamMemberId: "tm-employee", quantity: 10 }])]), {
+        kind: CustodyHandoverKind.RETURN,
+        assets: [{ assetId: "a-1", quantity: 10 }],
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it("refuses a return of more units than the custodian still holds", async () => {
+    await expect(
+      check(makeTx([pens([{ teamMemberId: "tm-employee", quantity: 4 }])]), {
+        kind: CustodyHandoverKind.RETURN,
+        assets: [{ assetId: "a-1", quantity: 10 }],
+      }),
+    ).rejects.toThrow(/4 units are in that custody/);
+  });
+
+  it("lets a return through when the custody is already gone", async () => {
+    // Somebody released it first. That is a duplicate, not a discrepancy — a
+    // return can only ever reduce custody, so nothing can be inflated by it.
+    await expect(
+      check(makeTx([pens([])]), {
+        kind: CustodyHandoverKind.RETURN,
+        assets: [{ assetId: "a-1", quantity: 10 }],
+      }),
+    ).resolves.toBeUndefined();
   });
 });
 

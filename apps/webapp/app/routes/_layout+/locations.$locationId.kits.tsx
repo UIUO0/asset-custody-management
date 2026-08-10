@@ -409,7 +409,7 @@ const Row = ({
                   {item.name}
                 </Button>
               </span>
-              <KitStatusBadge status={item.status} availableToBook />
+              <KitStatusBadge status={item.status} />
             </div>
           </div>
         </div>

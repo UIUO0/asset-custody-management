@@ -64,6 +64,23 @@ export type TemplateHeaderField = {
   kind: TemplateFieldKind;
   /** Shown under the header block as filling guidance. */
   hint?: string;
+  /**
+   * Marked «(مطلوب)» in the sheet and coloured.
+   *
+   * The same fields `GoodsReceiptSchema` requires. Without the marks an
+   * operator fills eighty lines, uploads, and is told the supplier is missing —
+   * the template has to ask for what the validator asks for, or the upload is a
+   * guessing game played after the work.
+   */
+  required?: boolean;
+  /**
+   * Written into the value cell when the template is built.
+   *
+   * For the fields that are the same on every receipt this deployment issues —
+   * الجهة and رقم الجهة. The operator can overwrite the cell; it is a starting
+   * point, not a lock.
+   */
+  defaultValue?: string;
 };
 
 /**
@@ -73,24 +90,53 @@ export type TemplateHeaderField = {
  * form appears in its template without a second edit — the drift this whole
  * module exists to avoid.
  *
- * `رقم التسلسل` is deliberately absent: the system assigns it
- * (`EPDA-RCV-YYYY-NNNN`). A box for it would invite an operator to write one
- * and then find it silently ignored.
+ * `رقم التسلسل` and `عدد الصفحات` are deliberately absent: the system assigns
+ * the first (`EPDA-RCV-YYYY-NNNN`) and derives the second from the item lines.
+ * A box for either would invite an operator to write a value and then find it
+ * silently ignored.
  *
  * @param type - Which form
+ * @param entity - The authority's name and number, prefilled into the sheet
  * @returns Labelled header cells, top to bottom
  */
-export function headerFieldsFor(type: GoodsReceiptType): TemplateHeaderField[] {
+export function headerFieldsFor(
+  type: GoodsReceiptType,
+  entity: { name: string; number: string },
+): TemplateHeaderField[] {
   const shape = getFormShape(type);
 
   const fields: TemplateHeaderField[] = [
-    { field: "fiscalYear", label: "السنة المالية", kind: "text" },
-    { field: "entityName", label: "الجهة", kind: "text" },
-    { field: "entityNumber", label: "رقم الجهة", kind: "text" },
-    { field: "warehouseName", label: "مستودع", kind: "text" },
-    { field: "pageCount", label: "عدد الصفحات", kind: "number" },
-    { field: "receiptDate", label: shape.dateLabel, kind: "date" },
-    { field: "supplier", label: "المورد", kind: "text" },
+    {
+      field: "fiscalYear",
+      label: "السنة المالية",
+      kind: "text",
+      required: true,
+    },
+    {
+      field: "entityName",
+      label: "الجهة",
+      kind: "text",
+      required: true,
+      defaultValue: entity.name,
+    },
+    {
+      field: "entityNumber",
+      label: "رقم الجهة",
+      kind: "text",
+      required: true,
+      defaultValue: entity.number,
+    },
+    { field: "warehouseName", label: "مستودع", kind: "text", required: true },
+    // «عدد الصفحات» is deliberately absent: the system derives it from the
+    // item lines. A box here would invite an operator to write a number and
+    // then find it silently replaced — see `pagination.ts`.
+    {
+      field: "receiptDate",
+      label: shape.dateLabel,
+      kind: "date",
+      required: true,
+    },
+    { field: "supplier", label: "المورد", kind: "text", required: true },
   ];
 
   for (const reference of shape.references) {
@@ -106,6 +152,8 @@ export function headerFieldsFor(type: GoodsReceiptType): TemplateHeaderField[] {
       field: reference.numberField,
       label: `${reference.label} — ${reference.numberLabel}`,
       kind: "text",
+      // Exactly one reference per form is required — the order number.
+      required: reference.required,
     });
 
     if (reference.dateField) {
@@ -124,6 +172,7 @@ export function headerFieldsFor(type: GoodsReceiptType): TemplateHeaderField[] {
       field: "vat",
       label: "مجموع ضريبة القيمة المضافة",
       kind: "number",
+      required: true,
       hint: "بالريال، مثال: 1500.00 — كما هي في فاتورة المورد لا محسوبة بنسبة",
     });
   }

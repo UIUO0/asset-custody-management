@@ -556,15 +556,6 @@ export async function getAsset<T extends Prisma.AssetInclude | undefined>({
   }
 }
 
-/** This is used by both  getAssetsFromView & getAssets
- * Those are the statuses that are considered unavailable for booking assets
- */
-const unavailableBookingStatuses = [
-  BookingStatus.RESERVED,
-  BookingStatus.ONGOING,
-  BookingStatus.OVERDUE,
-];
-
 /**
  * Matches the shape of an asset identifier or barcode / QR id. Two forms:
  *   - bare numeric ("21035", or a 12-digit UPC) — users commonly drop the
@@ -608,10 +599,6 @@ export async function getAssets(params: {
   locationIds?: Location["id"][] | null;
   tagsIds?: Tag["id"][] | null;
   status?: Asset["status"] | null;
-  hideUnavailable?: Asset["availableToBook"];
-  bookingFrom?: Booking["from"];
-  bookingTo?: Booking["to"];
-  unhideAssetsBookigIds?: Booking["id"][];
   teamMemberIds?: TeamMember["id"][] | null;
   extraInclude?: Prisma.AssetInclude;
   /**
@@ -622,7 +609,6 @@ export async function getAssets(params: {
    * */
   hideUnavailableToAddToKit?: boolean;
   assetKitFilter?: string | null;
-  availableToBookOnly?: boolean;
   /**
    * Hide assets still awaiting warehouse approval (`lifecycleStage: PENDING`).
    * Set for roles scoped to their own records — ordinary employees must not
@@ -646,14 +632,9 @@ export async function getAssets(params: {
     locationIds,
     tagsIds,
     status,
-    bookingFrom,
-    bookingTo,
-    hideUnavailable,
-    unhideAssetsBookigIds,
     teamMemberIds,
     extraInclude,
     assetKitFilter,
-    availableToBookOnly,
     excludeCurrentlyBooked = false,
     onlyReadyAssets,
   } = params;
@@ -675,10 +656,6 @@ export async function getAssets(params: {
     // to `where.OR`, so the fallback re-query replaces only these first
     // entries with the full clause and preserves the appended filter clauses.
     let narrowSearchOrCount = 0;
-
-    if (availableToBookOnly) {
-      where.availableToBook = true;
-    }
 
     // why: PENDING assets are not yet part of the visible inventory; filtering
     // in the query (not after) keeps `totalAssets` and paging consistent.
@@ -934,105 +911,6 @@ export async function getAssets(params: {
       }
     }
 
-    if (hideUnavailable) {
-      //not disabled for booking
-      where.availableToBook = true;
-      /**
-       * For INDIVIDUAL assets, exclude those with active custody.
-       * For QUANTITY_TRACKED assets, always show them — partial availability
-       * is checked at booking time based on available quantity.
-       */
-      where.AND = [
-        ...(Array.isArray(where.AND)
-          ? where.AND
-          : where.AND
-          ? [where.AND]
-          : []),
-        {
-          OR: [{ type: "QUANTITY_TRACKED" }, { custody: { none: {} } }],
-        },
-      ];
-      if (bookingFrom && bookingTo) {
-        /**
-         * Booking overlap filters only apply to INDIVIDUAL assets.
-         * QUANTITY_TRACKED assets can have multiple overlapping bookings
-         * as long as total reserved doesn't exceed available quantity.
-         * Availability is validated at booking time, not at filter time.
-         */
-        where.AND = [
-          ...(Array.isArray(where.AND)
-            ? where.AND
-            : where.AND
-            ? [where.AND]
-            : []),
-          // Rule 1: Exclude INDIVIDUAL assets from RESERVED bookings
-          {
-            OR: [
-              { type: "QUANTITY_TRACKED" },
-              {
-                bookingAssets: {
-                  none: {
-                    booking: {
-                      ...(unhideAssetsBookigIds?.length && {
-                        id: { notIn: unhideAssetsBookigIds },
-                      }),
-                      status: BookingStatus.RESERVED,
-                      OR: [
-                        { from: { lte: bookingTo }, to: { gte: bookingFrom } },
-                        { from: { gte: bookingFrom }, to: { lte: bookingTo } },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-          // Rule 2: For ONGOING/OVERDUE bookings, only exclude CHECKED_OUT INDIVIDUAL assets
-          {
-            OR: [
-              { type: "QUANTITY_TRACKED" },
-              // Either asset is AVAILABLE (checked in from partial check-in)
-              { status: AssetStatus.AVAILABLE },
-              // Or asset has no conflicting ONGOING/OVERDUE bookings
-              {
-                bookingAssets: {
-                  none: {
-                    booking: {
-                      ...(unhideAssetsBookigIds?.length && {
-                        id: { notIn: unhideAssetsBookigIds },
-                      }),
-                      status: {
-                        in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                      },
-                      OR: [
-                        { from: { lte: bookingTo }, to: { gte: bookingFrom } },
-                        { from: { gte: bookingFrom }, to: { lte: bookingTo } },
-                      ],
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        ];
-      }
-    }
-    if (hideUnavailable === true && (!bookingFrom || !bookingTo)) {
-      throw new ShelfError({
-        cause: null,
-        message: "booking dates are needed to hide unavailable assets",
-        additionalData: {
-          hideUnavailable,
-          bookingFrom,
-          bookingTo,
-        },
-        label,
-      });
-    }
-    if (bookingFrom && bookingTo) {
-      where.availableToBook = true;
-    }
-
     if (tagsIds && tagsIds.length) {
       // Check if 'untagged' is part of the selected tag IDs
       if (tagsIds.includes("untagged")) {
@@ -1067,28 +945,6 @@ export async function getAssets(params: {
           some: { locationId: { in: locationIds } },
         };
       }
-    }
-
-    /**
-     * `hideUnavailable` filters INDIVIDUAL assets that are in any kit out
-     * of the picker (those are managed via the kit, not picked directly).
-     * QUANTITY_TRACKED assets bypass this filter: a partial-kit allocation
-     * is a slice, not whole-asset exclusion — the free pool stays bookable
-     * as a standalone slice. Picker's availability math subtracts the
-     * kit-committed sum downstream so the displayed "Available" count is
-     * already correct.
-     */
-    if (hideUnavailable === true) {
-      where.AND = [
-        ...(Array.isArray(where.AND)
-          ? where.AND
-          : where.AND
-          ? [where.AND]
-          : []),
-        {
-          OR: [{ type: "QUANTITY_TRACKED" }, { assetKits: { none: {} } }],
-        },
-      ];
     }
 
     if (teamMemberIds && teamMemberIds.length) {
@@ -1156,11 +1012,7 @@ export async function getAssets(params: {
           take,
           where: assetWhere,
           include: {
-            ...assetIndexFields({
-              bookingFrom,
-              bookingTo,
-              unavailableBookingStatuses,
-            }),
+            ...assetIndexFields(),
             ...extraInclude,
           },
           // Stable `id` tiebreaker for deterministic skip/take paging when
@@ -1222,7 +1074,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   takeAll = false,
   assetIds,
   canUseBarcodes = false,
-  availableToBookOnly = false,
   onlyReadyAssets = false,
   preParsedFilters,
 }: {
@@ -1233,7 +1084,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
   takeAll?: boolean;
   assetIds?: string[];
   canUseBarcodes?: boolean;
-  availableToBookOnly?: boolean;
   /** Hide assets awaiting warehouse approval — see {@link getAssets} */
   onlyReadyAssets?: boolean;
   /** Pre-parsed filters — pass these to skip redundant parseFiltersWithHierarchy call */
@@ -1266,7 +1116,6 @@ export async function getAdvancedPaginatedAndFilterableAssets({
       search,
       parsedFilters,
       assetIds,
-      availableToBookOnly,
       onlyReadyAssets,
     );
     const sortByValues = searchParams.getAll("sortBy");
@@ -4155,10 +4004,6 @@ export async function getPaginatedAndFilterableAssets({
     search,
     categoriesIds,
     tagsIds,
-    bookingFrom,
-    bookingTo,
-    hideUnavailable,
-    unhideAssetsBookigIds,
     locationIds,
     teamMemberIds,
     assetKitFilter,
@@ -4208,15 +4053,10 @@ export async function getPaginatedAndFilterableAssets({
         categoriesIds,
         tagsIds,
         status,
-        bookingFrom: bookingFrom ?? undefined,
-        bookingTo: bookingTo ?? undefined,
-        hideUnavailable,
-        unhideAssetsBookigIds,
         locationIds,
         teamMemberIds,
         extraInclude,
         assetKitFilter,
-        availableToBookOnly: isSelfService,
         onlyReadyAssets,
       }),
     ]);
@@ -5365,110 +5205,6 @@ export async function updateAssetBookingAvailability({
       additionalData: { id },
     });
   }
-}
-
-/**
- * Enriches CHECKED_OUT assets with booking custodian info as a synthetic `custody` property.
- *
- * Previously this made a separate DB query (N+1 pattern). Now the booking custodian
- * data is included in the initial asset query via `assetIndexFields`, so this function
- * just reads the active booking from `asset.bookings` directly — no DB call needed.
- *
- * @param assets - Assets with `bookingAssets` already included from the initial query
- * @returns The same assets array with `custody.custodian` added for checked-out assets
- */
-export function updateAssetsWithBookingCustodians<
-  T extends Asset & {
-    bookingAssets?: Array<{
-      booking?: {
-        id: string;
-        status?: string;
-        custodianTeamMember?: { name: string } | null;
-        custodianUser?: {
-          firstName: string | null;
-          lastName: string | null;
-          displayName: string | null;
-          profilePicture: string | null;
-        } | null;
-        [key: string]: unknown;
-      };
-      [key: string]: unknown;
-    }>;
-  },
->(assets: T[]) {
-  const checkedOutAssetIds = new Set(
-    assets.filter((a) => a.status === "CHECKED_OUT").map((a) => a.id),
-  );
-
-  if (checkedOutAssetIds.size === 0) {
-    return assets;
-  }
-
-  /**
-   * Map over assets and use the already-included bookingAssets data
-   * to build the same custody shape the UI expects.
-   */
-  return assets.map((a) => {
-    if (!checkedOutAssetIds.has(a.id)) {
-      return a;
-    }
-
-    // When the availability view is active, bookingAssets may include RESERVED
-    // entries alongside ONGOING/OVERDUE. Pick the active checkout explicitly.
-    const bookingAsset =
-      a.bookingAssets?.find(
-        (ba) =>
-          "booking" in ba &&
-          ba.booking &&
-          "status" in ba.booking &&
-          (ba.booking.status === "ONGOING" || ba.booking.status === "OVERDUE"),
-      ) ?? a.bookingAssets?.[0];
-    const booking = bookingAsset?.booking;
-    const custodianUser = booking?.custodianUser;
-    const custodianTeamMember = booking?.custodianTeamMember;
-
-    /** If there is a custodian user, use its data to display the name */
-    if (custodianUser) {
-      return {
-        ...a,
-        custody: {
-          custodian: {
-            // Prioritizes displayName, falls back to firstName + lastName
-            name: resolveUserDisplayName(custodianUser),
-            user: {
-              firstName: custodianUser.firstName || "",
-              lastName: custodianUser.lastName || "",
-              profilePicture: custodianUser.profilePicture || null,
-            },
-          },
-        },
-      };
-    }
-
-    /** If there is a custodian teamMember, use its name */
-    if (custodianTeamMember) {
-      return {
-        ...a,
-        custody: {
-          custodian: {
-            name: custodianTeamMember.name,
-          },
-        },
-      };
-    }
-
-    /** Data integrity edge case: asset is CHECKED_OUT but booking has no custodian assigned */
-    Logger.warn(
-      new ShelfError({
-        cause: null,
-        message: "Couldn't find custodian for asset",
-        additionalData: { assetId: a.id, status: a.status },
-        label,
-      }),
-    );
-
-    return a;
-  });
 }
 
 /**

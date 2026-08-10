@@ -516,12 +516,7 @@ export default function KitDetails() {
   ) : (
     <>
       <Header
-        subHeading={
-          <KitStatusBadge
-            status={kit.status}
-            availableToBook={!kitHasUnavailableAssets}
-          />
-        }
+        subHeading={<KitStatusBadge status={kit.status} />}
         slots={{
           "left-of-title": (
             <KitImage

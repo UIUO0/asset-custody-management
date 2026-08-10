@@ -18,7 +18,11 @@ import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import { ReceiptType } from "./enums";
 import { GoodsReceiptSchema } from "./schema";
-import { ITEM_TABLE_ANCHOR, TEMPLATE_SHEET_NAME } from "./template";
+import {
+  headerFieldsFor,
+  ITEM_TABLE_ANCHOR,
+  TEMPLATE_SHEET_NAME,
+} from "./template";
 import {
   buildTemplateWorkbook,
   parseTemplateWorkbook,
@@ -129,6 +133,89 @@ describe("buildTemplateWorkbook", () => {
     expect(() => columnOf(record.sheet, "رقم التصنيف التسلسلي")).not.toThrow();
   });
 
+  it("asks for every box the validator requires", () => {
+    /*
+     * The failure this prevents: an operator fills eighty lines, uploads, and
+     * is told the warehouse name is missing — a box the sheet never asked for.
+     * The template and `GoodsReceiptSchema` have to want the same things.
+     */
+    for (const type of [ReceiptType.MEMO, ReceiptType.RECORD]) {
+      const labels = headerFieldsFor(type, {
+        name: "x",
+        number: "y",
+      })
+        .filter((field) => field.required)
+        .map((field) => field.label);
+
+      for (const shared of [
+        "السنة المالية",
+        "الجهة",
+        "رقم الجهة",
+        "مستودع",
+        "المورد",
+      ]) {
+        expect(labels).toContain(shared);
+      }
+    }
+
+    // One order reference per form, and only its own.
+    expect(
+      headerFieldsFor(ReceiptType.MEMO, { name: "x", number: "y" })
+        .filter((f) => f.required)
+        .map((f) => f.label),
+    ).toContain("أمر الشراء — الرقم");
+    expect(
+      headerFieldsFor(ReceiptType.RECORD, { name: "x", number: "y" })
+        .filter((f) => f.required)
+        .map((f) => f.label),
+    ).toContain("رقم طلب الشراء / التعميد — الرقم");
+  });
+
+  it("keeps the label itself clean — the parser matches on it", async () => {
+    // Marking required by appending «(مطلوب)» to the label broke every upload.
+    // The mark lives in style and a separate note; the label is the contract.
+    const { sheet } = await openTemplate(ReceiptType.MEMO);
+
+    let found = false;
+    sheet.eachRow((row) => {
+      if (row.getCell(1).text.trim() === "المورد") found = true;
+    });
+
+    expect(found).toBe(true);
+  });
+
+  it("prefills الجهة and رقم الجهة", async () => {
+    // Every receipt this deployment issues names the same authority. Typing it
+    // each time is how one signed document spells it differently from the next.
+    const { sheet } = await openTemplate(ReceiptType.MEMO);
+
+    const valueBeside = (label: string) => {
+      let found: string | undefined;
+      sheet.eachRow((row) => {
+        if (row.getCell(1).text.trim() === label) {
+          found = row.getCell(2).text.trim();
+        }
+      });
+      return found;
+    };
+
+    expect(valueBeside("الجهة")).toBe("هيئة تطوير المنطقة الشرقية");
+    expect(valueBeside("رقم الجهة")).toBe("1");
+  });
+
+  it("has no عدد الصفحات box — the system derives it", async () => {
+    // A box the operator fills and the server then overwrites is a lie printed
+    // on a signed form. See pagination.ts.
+    for (const type of [ReceiptType.MEMO, ReceiptType.RECORD]) {
+      const { sheet } = await openTemplate(type);
+      let found = false;
+      sheet.eachRow((row) => {
+        if (row.getCell(1).text.trim() === "عدد الصفحات") found = true;
+      });
+      expect(found).toBe(false);
+    }
+  });
+
   it("splits the price into ريال and هـ, as the paper form does", async () => {
     // Not cosmetic: two boxes is the only shape `parseRiyalParts` accepts, so a
     // single combined amount cannot enter through the template either.
@@ -143,8 +230,13 @@ describe("parseTemplateWorkbook", () => {
   it("round-trips a filled نموذج 2 into a valid submission", async () => {
     const { workbook, sheet } = await openTemplate(ReceiptType.MEMO);
 
+    // Every box the schema requires — the template and the validator have to
+    // ask for the same things, and this round trip is what proves they do.
     setHeader(sheet, "السنة المالية", "1447");
     setHeader(sheet, "الجهة", "هيئة تطوير المنطقة الشرقية");
+    setHeader(sheet, "رقم الجهة", "1");
+    setHeader(sheet, "مستودع", "المستودع الرئيسي");
+    setHeader(sheet, "تاريخ الاستلام", "2026-08-10");
     setHeader(sheet, "المورد", "شركة الحاسبات المتقدمة");
     setHeader(sheet, "أمر الشراء — الرقم", "PO-2026-900");
     setHeader(sheet, "مجموع ضريبة القيمة المضافة", "1500.00");

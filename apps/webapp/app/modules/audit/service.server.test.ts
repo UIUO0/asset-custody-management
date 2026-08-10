@@ -61,7 +61,6 @@ vi.mock("~/utils/scheduler.server", () => ({
   scheduler: { cancel: vi.fn().mockResolvedValue(undefined) },
   QueueNames: {
     emailQueue: "email-queue",
-    bookingQueue: "booking-queue",
     auditQueue: "audit-queue",
     assetsQueue: "assets-queue",
     addonTrialQueue: "addon-trial-queue",

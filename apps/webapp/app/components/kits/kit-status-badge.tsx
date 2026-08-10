@@ -1,9 +1,7 @@
 import { KitStatus } from "@prisma/client";
 import { useTranslation } from "react-i18next";
-import type { ExtendedKitStatus } from "~/utils/asset-status";
 import { BADGE_COLORS, type BadgeColorScheme } from "~/utils/badge-colors";
 import { Badge } from "../shared/badge";
-import { UnavailableBadge } from "../shared/unavailable-badge";
 
 /**
  * Maps a kit status to the i18n key of its user-facing label.
@@ -12,29 +10,23 @@ import { UnavailableBadge } from "../shared/unavailable-badge";
  * (no React context), so it cannot call the `useTranslation` hook. Callers
  * resolve the key with `t()`.
  *
- * @param status - The kit status (including the derived `PARTIALLY_CHECKED_IN`)
+ * @param status - The kit status
  * @returns The i18n key for the status label
  */
-export function userFriendlyKitStatus(status: ExtendedKitStatus) {
+export function userFriendlyKitStatus(status: KitStatus) {
   switch (status) {
     case KitStatus.IN_CUSTODY:
       return "kits.statusInCustody";
     case KitStatus.CHECKED_OUT:
       return "kits.statusCheckedOut";
-    case "PARTIALLY_CHECKED_IN":
-      return "kits.statusPartiallyCheckedIn";
     default:
       return "kits.statusAvailable";
   }
 }
 
-export const kitStatusColorMap = (
-  status: ExtendedKitStatus,
-): BadgeColorScheme => {
+export const kitStatusColorMap = (status: KitStatus): BadgeColorScheme => {
   switch (status) {
     case KitStatus.IN_CUSTODY:
-      return BADGE_COLORS.blue;
-    case "PARTIALLY_CHECKED_IN":
       return BADGE_COLORS.blue;
     case KitStatus.CHECKED_OUT:
       return BADGE_COLORS.violet;
@@ -44,25 +36,23 @@ export const kitStatusColorMap = (
   }
 };
 
-export function KitStatusBadge({
-  status,
-  availableToBook = true,
-}: {
-  status: ExtendedKitStatus;
-  availableToBook: boolean;
-}) {
+/**
+ * The kit's status, as a badge.
+ *
+ * It used to carry a second "not available for bookings" badge driven by
+ * `availableToBook`. That badge told a user in a system with no bookings that
+ * something could not be booked — a warning about an action nobody can take.
+ * The column itself is kept (see CLAUDE.md), but nothing renders it any more.
+ *
+ * @param status - The kit's persisted status
+ */
+export function KitStatusBadge({ status }: { status: KitStatus }) {
   const { t } = useTranslation();
   const colors = kitStatusColorMap(status);
+
   return (
-    <div className="flex items-center gap-[6px]">
-      <Badge color={colors.bg} textColor={colors.text}>
-        {t(userFriendlyKitStatus(status))}
-      </Badge>
-      {!availableToBook && (
-        <UnavailableBadge
-          title={t("ui.thisKitIsNotAvailableForBookingsBecauseSomeO")}
-        />
-      )}
-    </div>
+    <Badge color={colors.bg} textColor={colors.text}>
+      {t(userFriendlyKitStatus(status))}
+    </Badge>
   );
 }
