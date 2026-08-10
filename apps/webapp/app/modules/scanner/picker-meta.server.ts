@@ -1,6 +1,6 @@
 /**
  * Per-scan strict-available pool computation for the QR-scanner
- * drawers (location, kit, booking).
+ * drawers (location, booking).
  *
  * Each scanner drawer wants the same "· X available" / "qty input
  * MAX" UX the manage-assets picker shows. The picker computes this
@@ -11,7 +11,6 @@
  * qty input or an "available" annotation for them.
  *
  * @see {@link file://./../location/picker-meta.server.ts} `getLocationPickerMeta`
- * @see {@link file://./../kit/picker-meta.server.ts} `getKitPickerMeta`
  * @see {@link file://./../../routes/_layout+/bookings.$bookingId.overview.manage-assets.tsx}
  *   booking picker's inline availability formula (Phase 4b)
  */
@@ -19,12 +18,11 @@
 import { AssetType, BookingStatus } from "@prisma/client";
 import { z } from "zod";
 import { db } from "~/database/db.server";
-import { getKitPickerMeta } from "~/modules/kit/picker-meta.server";
 import { getLocationPickerMeta } from "~/modules/location/picker-meta.server";
 
 /** Identifies which destination the scanner is feeding. */
 export const ScannerPickerContextSchema = z.object({
-  type: z.enum(["location", "kit", "booking"]),
+  type: z.enum(["location", "booking"]),
   id: z.string().min(1),
 });
 
@@ -78,21 +76,6 @@ export async function getScannerPickerMeta({
     if (!meta) return null;
     return {
       maxAllowed: meta.maxAllowedForThisLocation,
-      assetQuantity: totalQty,
-      unitOfMeasure: meta.unitOfMeasure,
-    };
-  }
-
-  if (context.type === "kit") {
-    const metaMap = await getKitPickerMeta({
-      kitId: context.id,
-      organizationId,
-      assetIds: [assetId],
-    });
-    const meta = metaMap.get(assetId);
-    if (!meta) return null;
-    return {
-      maxAllowed: meta.maxAllowedForThisKit,
       assetQuantity: totalQty,
       unitOfMeasure: meta.unitOfMeasure,
     };

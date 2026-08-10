@@ -53,7 +53,6 @@ import {
 } from "~/modules/custom-field/service.server";
 import type { CustomFieldDraftPayload } from "~/modules/custom-field/types";
 import { assertReceiptSignedBeforeApproval } from "~/modules/goods-receipt/receipt-gate.server";
-import { bulkAssignKitCustody } from "~/modules/kit/service.server";
 import {
   createLocationChangeNote,
   createLocationsIfNotExists,
@@ -167,7 +166,6 @@ import {
 import { cancelAssetReminderScheduler } from "../asset-reminder/scheduler.server";
 import { lockAssetForQuantityUpdate } from "../consumption-log/quantity-lock.server";
 import { createConsumptionLog } from "../consumption-log/service.server";
-import { createKitsIfNotExists } from "../kit/service.server";
 import { createSystemLocationNote } from "../location-note/service.server";
 import {
   createAssetCategoryChangeNote,
@@ -230,225 +228,7 @@ async function fetchAssetBeforeUpdate({
 /**
  * Sets kit custody for imported assets after all assets have been created
  */
-/**
- * Assigns kit custody for imported assets after all assets have been created.
- *
- * A CSV row carrying both a `kit` and a `custodian` means the KIT is in that
- * person's custody (`validateKitCustodyConflicts` has already guaranteed a single
- * custodian per kit). This groups the affected kits by custodian and delegates to
- * the canonical {@link bulkAssignKitCustody} flow — one call per custodian —
- * which creates the `KitCustody`, sets the kit and its member assets to
- * `IN_CUSTODY`, inherits a kit-driven `Custody` row onto every member asset, and
- * records the matching notes + `CUSTODY_ASSIGNED` events. Rows lacking either a
- * kit or a custodian are ignored. Must run after the create loop because it
- * relies on the `AssetKit` pivot rows already existing.
- *
- * @param args.data - The parsed import rows (source of kit/custodian names).
- * @param args.kits - Kit-name → Kit, from the org-scoped `createKitsIfNotExists` map.
- * @param args.teamMembers - Custodian-name → TeamMember (org-scoped).
- * @param args.userId - The importing user (actor for the custody events/notes).
- * @param args.organizationId - The workspace the import runs in.
- */
-export async function setKitCustodyAfterAssetImport({
-  data,
-  kits,
-  teamMembers,
-  userId,
-  organizationId,
-}: {
-  data: CreateAssetFromContentImportPayload[];
-  kits: Record<string, Kit>;
-  teamMembers: Record<string, TeamMember>;
-  userId: string;
-  organizationId: string;
-}) {
-  // A row's `custodian` combined with a `kit` means the KIT is in that person's
-  // custody (validateKitCustodyConflicts already guarantees a single custodian
-  // per kit). Group the kits that need custody by their custodian so we make one
-  // bulkAssignKitCustody call per custodian.
-  const kitIdsByCustodian = new Map<
-    string,
-    { custodianName: string; kitIds: Set<string> }
-  >();
 
-  for (const asset of data) {
-    const kitName = asset.kit?.trim();
-    const custodianName = asset.custodian?.trim();
-    if (!kitName || !custodianName) continue;
-
-    const kit = kits[kitName];
-    const teamMember = teamMembers[custodianName];
-    if (!kit || !teamMember) continue;
-
-    const existing = kitIdsByCustodian.get(teamMember.id);
-    if (existing) {
-      existing.kitIds.add(kit.id);
-    } else {
-      kitIdsByCustodian.set(teamMember.id, {
-        custodianName: teamMember.name,
-        kitIds: new Set([kit.id]),
-      });
-    }
-  }
-
-  // Reuse the canonical kit-custody flow: it creates the KitCustody, sets kit +
-  // member-asset status to IN_CUSTODY, and inherits a kit-driven Custody row to
-  // every member asset (with matching notes + CUSTODY_ASSIGNED events). This
-  // keeps imports in lock-step with the interactive "assign custody to a kit".
-  for (const [custodianId, { custodianName, kitIds }] of kitIdsByCustodian) {
-    await bulkAssignKitCustody({
-      kitIds: [...kitIds],
-      organizationId,
-      custodianId,
-      custodianName,
-      userId,
-    });
-  }
-}
-
-/**
- * Validates custody conflicts for kits during import.
- * This includes:
- * - Assets with custody being imported into kits that exist but are not in custody,
- * - Existing kits with different custodians,
- * - Multiple custodians assigned to the same kit within the same import.
- */
-async function validateKitCustodyConflicts({
-  data,
-  organizationId,
-}: {
-  data: CreateAssetFromContentImportPayload[];
-  organizationId: Organization["id"];
-}) {
-  // Extract assets that have both a kit and a custodian
-  // Normalize kit/custodian names so padded CSV values don't bypass conflict checks.
-  const conflictCandidates = data
-    .map((asset) => ({
-      title: asset.title,
-      kit: asset.kit?.trim(),
-      custodian: asset.custodian?.trim(),
-    }))
-    .filter((asset) => asset.kit && asset.custodian);
-
-  if (conflictCandidates.length === 0) {
-    return; // No conflicts possible
-  }
-
-  // Get unique kit names that might have conflicts
-  const kitNames = [
-    ...new Set(conflictCandidates.map((asset) => asset.kit)),
-  ].filter(Boolean) as string[];
-
-  // Fetch existing kits and their custody status in one query.
-  const existingKitsRaw = await db.kit.findMany({
-    where: {
-      name: { in: kitNames },
-      organizationId,
-    },
-    select: {
-      id: true,
-      name: true,
-      custody: {
-        select: {
-          id: true,
-          custodian: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-      assetKits: {
-        select: {
-          asset: { select: { id: true } },
-        },
-      },
-    },
-  });
-
-  // Flatten pivot rows into the in-memory `assets` shape the existing
-  // conflict logic expects.
-  const existingKits = existingKitsRaw.map((kit) => ({
-    ...kit,
-    assets: kit.assetKits.map((ak) => ak.asset),
-  }));
-
-  // Find conflicts: existing kits without custody that would receive assets with custody
-  const conflicts: Array<{
-    asset: string;
-    custodian: string;
-    kit: string;
-    issue: string;
-  }> = [];
-  const existingKitsMap = new Map(existingKits.map((kit) => [kit.name, kit]));
-
-  // Check for conflicts within the import data itself - assets going to same kit with different custodians
-  const kitToCustodiansMap = new Map<string, Set<string>>();
-  for (const asset of conflictCandidates) {
-    if (!kitToCustodiansMap.has(asset.kit!)) {
-      kitToCustodiansMap.set(asset.kit!, new Set());
-    }
-    kitToCustodiansMap.get(asset.kit!)!.add(asset.custodian!);
-  }
-
-  // Add conflicts for kits with multiple custodians in the same import
-  for (const [kitName, custodians] of kitToCustodiansMap) {
-    if (custodians.size > 1) {
-      const custodiansArray = Array.from(custodians);
-      const assetsForThisKit = conflictCandidates.filter(
-        (asset) => asset.kit === kitName,
-      );
-
-      for (const asset of assetsForThisKit) {
-        conflicts.push({
-          asset: asset.title,
-          custodian: asset.custodian!,
-          kit: asset.kit!,
-          issue: `Kit has assets with multiple custodians: ${custodiansArray.join(
-            ", ",
-          )}`,
-        });
-      }
-    }
-  }
-
-  for (const asset of conflictCandidates) {
-    const existingKit = existingKitsMap.get(asset.kit!);
-
-    if (existingKit) {
-      if (!existingKit.custody && existingKit.assets.length > 0) {
-        conflicts.push({
-          asset: asset.title,
-          custodian: asset.custodian!,
-          kit: asset.kit!,
-          issue: `Kit exists without custody but has ${
-            existingKit.assets.length
-          } existing asset${existingKit.assets.length === 1 ? "" : "s"}`,
-        });
-      } else if (existingKit.custody) {
-        conflicts.push({
-          asset: asset.title,
-          custodian: asset.custodian!,
-          kit: asset.kit!,
-          issue: `Kit already has a custodian (${existingKit.custody.custodian.name}). Importing custody for kits that already have a custodian is not allowed`,
-        });
-      }
-    }
-  }
-
-  if (conflicts.length > 0) {
-    throw new ShelfError({
-      cause: null,
-      message: `We found custody conflicts with existing kits. Assets with custody cannot be imported into existing kits that are not in custody.`,
-      additionalData: {
-        kitCustodyConflicts: conflicts,
-      },
-      label: "Assets",
-      status: 400,
-      shouldBeCaptured: false,
-    });
-  }
-}
 
 type AssetWithInclude<T extends Prisma.AssetInclude | undefined> =
   T extends Prisma.AssetInclude
@@ -4155,26 +3935,14 @@ export async function createAssetsFromContentImport({
         })
       : [];
 
-    // Validate kit-custody conflicts before any database operations
-    await validateKitCustodyConflicts({
-      data,
-      organizationId,
-    });
-
     // Create all required related entities
     const [
-      kits,
       categories,
       locations,
       teamMembers,
       { customFields },
       assetModels,
     ] = await Promise.all([
-      createKitsIfNotExists({
-        data,
-        userId,
-        organizationId,
-      }),
       createCategoriesIfNotExists({
         data,
         userId,
@@ -4355,24 +4123,7 @@ export async function createAssetsFromContentImport({
       const assetBarcodes =
         barcodesPerAsset.find((item) => item.key === asset.key)?.barcodes || [];
 
-      // Resolve kit/custodian IDs from normalized CSV values to avoid undefined lookups.
-      const kitKey = asset.kit?.trim();
-      const kitId = kitKey ? kits?.[kitKey]?.id : undefined;
-      // Surface a clear import error instead of a TypeError when a kit value can't be resolved.
-      if (kitKey && !kitId) {
-        throw new ShelfError({
-          cause: null,
-          message: `Kit "${kitKey}" could not be resolved for asset "${asset.title}". Please verify the kit column values in your CSV.`,
-          additionalData: {
-            assetKey: asset.key,
-            assetTitle: asset.title,
-            kit: kitKey,
-          },
-          label: "Assets",
-          shouldBeCaptured: false,
-        });
-      }
-
+      // Resolve the custodian ID from normalized CSV values to avoid undefined lookups.
       const custodianKey = asset.custodian?.trim();
       const custodianId = custodianKey
         ? teamMembers?.[custodianKey]?.id
@@ -4474,15 +4225,6 @@ export async function createAssetsFromContentImport({
         consumptionType,
       });
     }
-
-    // Set kit custody for imported assets after all assets have been created
-    await setKitCustodyAfterAssetImport({
-      data,
-      kits,
-      teamMembers,
-      userId,
-      organizationId,
-    });
 
     return true;
   } catch (cause) {
