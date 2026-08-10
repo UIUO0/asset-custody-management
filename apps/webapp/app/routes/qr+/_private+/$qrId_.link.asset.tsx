@@ -105,12 +105,10 @@ export const loader = async ({
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     } = await getPaginatedAndFilterableAssets({
@@ -152,7 +150,6 @@ export const loader = async ({
         qrId,
         items: assets,
         categories,
-        tags,
         locations,
         totalLocations,
         search,
@@ -167,7 +164,6 @@ export const loader = async ({
           text: t("search.assetsText"),
         },
         totalCategories,
-        totalTags,
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
@@ -274,17 +270,6 @@ export default function QrLinkExisting() {
               label={t("list.filterByCategory")}
               initialDataKey="categories"
               countKey="totalCategories"
-            />
-            <DynamicDropdown
-              trigger={
-                <div className="flex cursor-pointer items-center gap-2">
-                  Tags <ChevronRight className="hidden rotate-90 md:inline" />
-                </div>
-              }
-              model={{ name: "tag", queryKey: "name" }}
-              label={t("list.filterByTags")}
-              initialDataKey="tags"
-              countKey="totalTags"
             />
             <DynamicDropdown
               trigger={

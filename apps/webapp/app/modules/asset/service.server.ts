@@ -3615,7 +3615,6 @@ export function createCustomFieldsPayloadFromAsset(
   asset: Prisma.AssetGetPayload<{
     include: {
       custody: { include: { custodian: true } };
-      tags: true;
       customFields: true;
     };
   }>,
@@ -3660,7 +3659,6 @@ export async function duplicateAsset({
   asset: Prisma.AssetGetPayload<{
     include: {
       custody: { include: { custodian: true } };
-      tags: true;
       customFields: true;
       // Needed so the duplicate can copy the primary placement.
       assetLocations: { select: { location: { select: { id: true } } } };
@@ -4763,53 +4761,6 @@ export async function createAssetsFromBackupImport({
               },
             });
           }
-        }
-
-        /** Tags */
-        if (asset.tags && asset.tags.length > 0) {
-          const tagsNames = asset.tags.map((t) => t.name);
-          // now we loop through the categories and check if they exist
-          const tags: Record<string, string> = {};
-          for (const tag of tagsNames) {
-            const existingTag = await db.tag.findFirst({
-              where: {
-                name: tag,
-                organizationId,
-              },
-            });
-
-            if (!existingTag) {
-              // if the tag doesn't exist, we create a new one
-              const newTag = await db.tag.create({
-                data: {
-                  name: tag as string,
-                  user: {
-                    connect: {
-                      id: userId,
-                    },
-                  },
-                  organization: {
-                    connect: {
-                      id: organizationId,
-                    },
-                  },
-                },
-              });
-              tags[tag] = newTag.id;
-            } else {
-              // if the tag exists, we just update the id
-              tags[tag] = existingTag.id;
-            }
-          }
-
-          Object.assign(d.data, {
-            tags:
-              asset.tags.length > 0
-                ? {
-                    connect: asset.tags.map((tag) => ({ id: tags[tag.name] })),
-                  }
-                : undefined,
-          });
         }
 
         /** Custom fields */
@@ -6641,14 +6592,12 @@ export async function getUserAssetsTabLoaderData({
 export async function getEntitiesWithSelectedValues({
   organizationId,
   allSelectedEntries,
-  selectedTagIds = [],
   selectedCategoryIds = [],
   selectedLocationIds = [],
   selectedAssetModelIds = [],
 }: {
   organizationId: Organization["id"];
   allSelectedEntries: AllowedModelNames[];
-  selectedTagIds: Array<Tag["id"]>;
   selectedCategoryIds: Array<Category["id"]>;
   selectedLocationIds: Array<Location["id"]>;
   selectedAssetModelIds?: string[];
@@ -6658,10 +6607,6 @@ export async function getEntitiesWithSelectedValues({
     categoryExcludedSelected,
     selectedCategories,
     totalCategories,
-
-    // Tags
-    tagsExcludedSelected,
-    selectedTags,
 
     // Locations
     locationExcludedSelected,
@@ -6686,42 +6631,6 @@ export async function getEntitiesWithSelectedValues({
     db.category.count({ where: { organizationId } }),
     /** Categories end */
 
-    /** Tags start */
-    db.tag.findMany({
-      where: {
-        organizationId,
-        id: { notIn: selectedTagIds },
-        OR: [
-          { useFor: { isEmpty: true } },
-          { useFor: { has: TagUseFor.ASSET } },
-        ],
-      },
-      take: allSelectedEntries.includes("tag") ? undefined : 12,
-      orderBy: { name: "asc" },
-    }),
-    selectedTagIds.length > 0
-      ? db.tag.findMany({
-          where: {
-            organizationId,
-            id: { in: selectedTagIds },
-            OR: [
-              { useFor: { isEmpty: true } },
-              { useFor: { has: TagUseFor.ASSET } },
-            ],
-          },
-          orderBy: { name: "asc" },
-        })
-      : Promise.resolve([]),
-    db.tag.count({
-      where: {
-        organizationId,
-        OR: [
-          { useFor: { isEmpty: true } },
-          { useFor: { has: TagUseFor.ASSET } },
-        ],
-      },
-    }),
-    /** Tags end */
 
     /** Location start */
     db.location.findMany({
@@ -6752,7 +6661,6 @@ export async function getEntitiesWithSelectedValues({
   return {
     categories: [...selectedCategories, ...categoryExcludedSelected],
     totalCategories,
-    tags: [...selectedTags, ...tagsExcludedSelected],
     locations: [...selectedLocations, ...locationExcludedSelected],
     totalLocations,
     assetModels: [...selectedAssetModels, ...assetModelExcludedSelected],

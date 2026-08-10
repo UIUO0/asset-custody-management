@@ -1797,10 +1797,7 @@ function TagsField({
                         if (id === "untagged") {
                           return t("advancedFilters.untagged");
                         }
-                        const tag = data.tags?.find(
-                          (tagOption) => tagOption.id === id,
-                        );
-                        return tag?.name || "";
+                        return "";
                       })
                       .join(", ")
                   : t("advancedFilters.selectTag")}

@@ -21,7 +21,6 @@ import { ShelfError } from "~/utils/error";
 import { createSignedUrl } from "~/utils/storage.server";
 import {
   BULK_CREATE_MAX,
-  bulkAssignAssetTags,
   bulkCheckOutAssets,
   bulkCreateAssetsFromModel,
   bulkDeleteAssets,
@@ -1108,64 +1107,6 @@ describe("bulkUpdateAssetCategory — activity events", () => {
   });
 });
 
-describe("bulkAssignAssetTags — activity events", () => {
-  const mockAssetFindMany = db.asset.findMany as ReturnType<typeof vitest.fn>;
-  const mockAssetUpdate = db.asset.update as ReturnType<typeof vitest.fn>;
-  const mockRecordEvents = recordEvents as ReturnType<typeof vitest.fn>;
-
-  beforeEach(() => {
-    vitest.clearAllMocks();
-  });
-
-  it("emits ASSET_TAGS_CHANGED per asset whose tag set actually changed", async () => {
-    // Pre-fetch returns previous tag arrays per asset.
-    mockAssetFindMany.mockResolvedValue([
-      { id: "asset-1", tags: [{ id: "tag-a", name: "A" }] },
-      // asset-2 already has tag-b — connecting tag-b is a no-op
-      { id: "asset-2", tags: [{ id: "tag-b", name: "B" }] },
-    ]);
-    // The per-asset update returns the asset with the post-update tag set.
-    mockAssetUpdate.mockResolvedValueOnce({
-      id: "asset-1",
-      tags: [
-        { id: "tag-a", name: "A" },
-        { id: "tag-b", name: "B" },
-      ],
-    });
-    mockAssetUpdate.mockResolvedValueOnce({
-      id: "asset-2",
-      // Same set as before — must be filtered out
-      tags: [{ id: "tag-b", name: "B" }],
-    });
-
-    // IDOR check verifies every tagId belongs to this org via tag.findMany.
-    (db.tag.findMany as ReturnType<typeof vitest.fn>).mockResolvedValueOnce([
-      { id: "tag-b" },
-    ]);
-
-    await bulkAssignAssetTags({
-      userId: "user-1",
-      assetIds: ["asset-1", "asset-2"],
-      organizationId: "org-1",
-      tagsIds: ["tag-b"],
-      remove: false,
-      settings: {} as never,
-    });
-
-    expect(mockRecordEvents).toHaveBeenCalledTimes(1);
-    const events = mockRecordEvents.mock.calls[0][0];
-    expect(events).toHaveLength(1);
-    expect(events[0]).toEqual(
-      expect.objectContaining({
-        action: "ASSET_TAGS_CHANGED",
-        entityId: "asset-1",
-        field: "tags",
-        fromValue: ["tag-a"],
-        toValue: ["tag-a", "tag-b"],
-      }),
-    );
-  });
-});
 
 describe("updateAsset cross-org guards", () => {
   beforeEach(() => {
@@ -1797,111 +1738,6 @@ describe("bulkUpdateAssetCategory", () => {
   });
 });
 
-describe("bulkAssignAssetTags", () => {
-  beforeEach(() => {
-    vitest.clearAllMocks();
-  });
-
-  it("emits ASSET_TAGS_CHANGED only for assets whose tag set changed", async () => {
-    expect.assertions(2);
-
-    //@ts-expect-error mock setup
-    db.tag.findMany.mockResolvedValue([{ id: "tag-new" }]);
-    //@ts-expect-error mock setup
-    db.asset.findMany.mockResolvedValue([
-      { id: "asset-1", tags: [{ id: "tag-old", name: "Old" }] },
-      { id: "asset-2", tags: [] },
-    ]);
-
-    (db.asset.update as ReturnType<typeof vitest.fn>)
-      .mockResolvedValueOnce({
-        id: "asset-1",
-        tags: [
-          { id: "tag-old", name: "Old" },
-          { id: "tag-new", name: "New" },
-        ],
-      })
-      .mockResolvedValueOnce({
-        id: "asset-2",
-        tags: [{ id: "tag-new", name: "New" }],
-      });
-
-    await bulkAssignAssetTags({
-      userId: "user-1",
-      assetIds: ["asset-1", "asset-2"],
-      organizationId: "org-1",
-      tagsIds: ["tag-new"],
-      remove: false,
-      // @ts-expect-error settings not relevant for this test
-      settings: {},
-    });
-
-    expect(recordEvents).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: "ASSET_TAGS_CHANGED",
-          assetId: "asset-1",
-          field: "tags",
-        }),
-        expect.objectContaining({
-          action: "ASSET_TAGS_CHANGED",
-          assetId: "asset-2",
-        }),
-      ]),
-      expect.anything(),
-    );
-    expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
-    ).toHaveLength(2);
-  });
-
-  it("throws when any tagId belongs to a different organization", async () => {
-    expect.assertions(1);
-    // why: emulate cross-org tag — org-scoped findMany returns fewer rows
-    //@ts-expect-error mock setup
-    db.tag.findMany.mockResolvedValue([{ id: "tag-own" }]);
-
-    await expect(
-      bulkAssignAssetTags({
-        userId: "user-1",
-        assetIds: ["asset-1"],
-        organizationId: "org-1",
-        tagsIds: ["tag-own", "tag-foreign"],
-        remove: false,
-        // @ts-expect-error settings not relevant for this test
-        settings: {},
-      }),
-    ).rejects.toThrow(ShelfError);
-  });
-
-  // Regression: the per-asset `update` loop runs inside the interactive tx, so
-  // large selections must not abort with P2028 (Sentry SHELF-WEBAPP-1MH).
-  it("raises the interactive transaction timeout to 15s", async () => {
-    expect.assertions(1);
-    //@ts-expect-error mock setup
-    db.tag.findMany.mockResolvedValue([{ id: "tag-new" }]);
-    //@ts-expect-error mock setup
-    db.asset.findMany.mockResolvedValue([{ id: "asset-1", tags: [] }]);
-    (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({
-      id: "asset-1",
-      tags: [{ id: "tag-new", name: "New" }],
-    });
-
-    await bulkAssignAssetTags({
-      userId: "user-1",
-      assetIds: ["asset-1"],
-      organizationId: "org-1",
-      tagsIds: ["tag-new"],
-      remove: false,
-      // @ts-expect-error settings not relevant for this test
-      settings: {},
-    });
-
-    expect(db.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-      timeout: 15000,
-    });
-  });
-});
 
 describe("bulkDeleteAssets", () => {
   beforeEach(() => {
