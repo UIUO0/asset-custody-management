@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-import { TagUseFor } from "@prisma/client";
 import { useAtomValue } from "jotai";
 import type {
   ActionFunctionArgs,
@@ -26,7 +24,6 @@ import { getPrimaryLocation } from "~/modules/asset/utils";
 import { getAssetModels } from "~/modules/asset-model/service.server";
 
 import { getActiveCustomFields } from "~/modules/custom-field/service.server";
-import { buildTagsSet } from "~/modules/tag/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { extractBarcodesFromFormData } from "~/utils/barcode-form-data.server";
 import {
@@ -75,7 +72,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       organizationId,
       id,
       include: {
-        tags: true,
         customFields: true,
         assetKits: {
           select: {
@@ -105,7 +101,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     });
 
     const [
-      { categories, totalCategories, tags, locations, totalLocations },
+      { categories, totalCategories, locations, totalLocations },
       { assetModels, totalAssetModels },
     ] = await Promise.all([
       getAllEntriesForCreateAndEdit({
@@ -115,7 +111,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           category: asset.categoryId,
           location: getPrimaryLocation(asset)?.id ?? null,
         },
-        tagUseFor: TagUseFor.ASSET,
       }),
       getAssetModels({ organizationId, page: 1, perPage: 100 }),
     ]);
@@ -137,8 +132,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       header,
       categories,
       totalCategories,
-      tags,
-      totalTags: tags.length,
       locations,
       totalLocations,
       assetModels,
@@ -234,9 +227,6 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       unitOfMeasure,
     } = parsedData;
 
-    /** This checks if tags are passed and build the  */
-    const tags = buildTagsSet(parsedData.tags);
-
     /** Extract barcode data from form */
     const barcodes = canUseBarcodes
       ? extractBarcodesFromFormData(formData)
@@ -248,7 +238,6 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       description,
       categoryId: category ? category : "uncategorized",
       assetModelId: assetModelId || null,
-      tags,
       newLocationId,
       currentLocationId,
       userId: authSession.userId,
@@ -293,10 +282,6 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 export default function AssetEditPage() {
   const title = useAtomValue(dynamicTitleAtom);
   const { asset, referer } = useLoaderData<typeof loader>();
-  const tags = useMemo(
-    () => asset.tags?.map((tag) => ({ label: tag.name, value: tag.id })) || [],
-    [asset.tags],
-  );
 
   const { roles } = useUserRoleHelper();
   const canApproveAsset = userHasPermission({
@@ -341,7 +326,6 @@ export default function AssetEditPage() {
           minQuantity={asset.minQuantity}
           consumptionType={asset.consumptionType}
           unitOfMeasure={asset.unitOfMeasure}
-          tags={tags}
           barcodes={asset.barcodes}
           preferredBarcodeId={asset.preferredBarcodeId}
           referer={referer}

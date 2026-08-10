@@ -36,7 +36,6 @@ import {
   useNavigate,
   useNavigation,
 } from "react-router";
-import type { Tag } from "react-tag-autocomplete";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { updateDynamicTitleAtom } from "~/atoms/dynamic-title-atom";
@@ -93,7 +92,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../shared/tooltip";
-import { TagsAutocomplete } from "../tag/tags-autocomplete";
 import When from "../when/when";
 
 export const NewAssetFormSchema = z.object({
@@ -124,7 +122,6 @@ export const NewAssetFormSchema = z.object({
    */
   currentLocationId: z.string().optional(),
   qrId: z.string().optional(),
-  tags: z.string().optional(),
   /**
    * Per-asset override of which Barcode to display in list views. Empty
    * string means "use workspace default" (resolver follows
@@ -254,7 +251,6 @@ type Props = Partial<
   >
 > & {
   qrId?: Qr["id"] | null;
-  tags?: Tag[];
   barcodes?: Pick<Barcode, "id" | "value" | "type">[];
   referer?: string | null;
   /**
@@ -299,7 +295,6 @@ export const AssetForm = ({
   consumptionType,
   unitOfMeasure,
   qrId,
-  tags,
   barcodes,
   preferredBarcodeId,
   referer,
@@ -540,12 +535,6 @@ export const AssetForm = ({
       ? actionData?.error?.message
       : undefined) ??
     fileError;
-  /** Get the tags from the loader */
-  const tagsSuggestions = useLoaderData<typeof loader>().tags.map((tag) => ({
-    label: tag.name,
-    value: tag.id,
-  }));
-
   /**
    * Asset Model selector — rendered in two positions depending on mode
    * (see the two render sites in the JSX below). Hidden entirely for
@@ -1056,31 +1045,6 @@ export const AssetForm = ({
                 }}
               />
             )}
-          />
-        </FormRow>
-
-        <FormRow
-          rowLabel={t("assets.tags")}
-          subHeading={
-            <p>
-              {t("assetForm.tagsHint")}{" "}
-              <Button
-                to="/tags/new"
-                className="text-gray-600 underline"
-                target="_blank"
-                variant="link-gray"
-              >
-                {t("assetForm.createTags")}
-              </Button>
-            </p>
-          }
-          className="border-b-0 py-[10px]"
-          // required={zodFieldIsRequired(FormSchema.shape.tags)}
-        >
-          <TagsAutocomplete
-            existingTags={tags ?? []}
-            suggestions={tagsSuggestions}
-            hideLabel
           />
         </FormRow>
 

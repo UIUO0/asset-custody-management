@@ -27,7 +27,6 @@ export function useFilterPreview(options?: {
   const {
     locations = [],
     categories = [],
-    tags = [],
     teamMembers = [],
   } = loaderData;
 
@@ -36,10 +35,9 @@ export function useFilterPreview(options?: {
     () => ({
       locations: locations.map((loc) => ({ id: loc.id, name: loc.name })),
       categories: categories.map((cat) => ({ id: cat.id, name: cat.name })),
-      tags: tags.map((tag) => ({ id: tag.id, name: tag.name })),
       teamMembers: teamMembers.map((tm) => ({ id: tm.id, name: tm.name })),
     }),
-    [locations, categories, tags, teamMembers],
+    [locations, categories, teamMembers],
   );
 
   /**

@@ -47,7 +47,6 @@ import { AdvancedTableHeader } from "./advanced-table-header";
 import { AssetIndexPagination } from "./asset-index-pagination";
 import AssetQuickActions from "./asset-quick-actions";
 import { AssetIndexFilters } from "./filters";
-import { ListItemTagsColumn } from "./list-item-tags-column";
 import { CategoryBadge } from "../category-badge";
 
 export const AssetsList = ({
@@ -95,7 +94,6 @@ export const AssetsList = ({
   const headerChildren = modeIsSimple ? (
     <>
       <Th>{t("assets.category")}</Th>
-      <Th>{t("assets.tags")}</Th>
       <When truthy={!isUserPage}>
         <Th className="flex items-center gap-1 whitespace-nowrap">
           {t("assets.custodian")}{" "}
@@ -184,7 +182,7 @@ export const ListAssetContent = ({
   bulkActions?: ReactNode;
   isUserPage?: boolean;
 }) => {
-  const { category, tags, custody: custodyArray } = item;
+  const { category, custody: custodyArray } = item;
   // Render only the single primary-location badge in the list column —
   // a qty-tracked asset can sit at multiple locations via AssetLocation.
   const location = getPrimaryLocation(item);
@@ -273,10 +271,6 @@ export const ListAssetContent = ({
         <CategoryBadge category={category} />
       </Td>
 
-      {/* Tags */}
-      <Td className="text-start">
-        <ListItemTagsColumn tags={tags} />
-      </Td>
 
       {/* Custodian */}
       <When truthy={!isUserPage}>

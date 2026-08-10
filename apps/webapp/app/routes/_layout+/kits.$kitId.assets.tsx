@@ -10,7 +10,6 @@ import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { AssetImage } from "~/components/assets/asset-image";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
 import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
-import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import AssetRowActionsDropdown from "~/components/kits/asset-row-actions-dropdown";
 import ContextualModal from "~/components/layout/contextual-modal";
@@ -168,7 +167,6 @@ export default function KitAssets() {
             <>
               <Th>{t("assets.category")}</Th>
               <Th>{t("assets.location")}</Th>
-              <Th>{t("nav.tags")}</Th>
             </>
           }
         />
@@ -178,7 +176,7 @@ export default function KitAssets() {
 }
 
 function ListContent({ item }: { item: ListItemForKitPage }) {
-  const { category, tags } = item;
+  const { category } = item;
   // Render only the single primary-location badge — a qty-tracked asset
   // can sit at multiple locations via AssetLocation.
   const location = getPrimaryLocation(item);
@@ -281,10 +279,6 @@ function ListContent({ item }: { item: ListItemForKitPage }) {
             }}
           />
         ) : null}
-      </Td>
-      {/* Tags */}
-      <Td className="text-start">
-        <ListItemTagsColumn tags={tags} />
       </Td>
 
       <When

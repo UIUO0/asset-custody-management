@@ -58,7 +58,6 @@ import { SamIdCell } from "./advanced-columns/sam-id-cell";
 import { Td } from "./advanced-columns/td";
 import AssetQuickActions from "./asset-quick-actions";
 import { freezeColumnClassNames } from "./freeze-column-classes";
-import { ListItemTagsColumn } from "./list-item-tags-column";
 import { CodePreviewDialog } from "../../code-preview/code-preview-dialog";
 import { AssetImage } from "../asset-image/component";
 import { AssetStatusBadge } from "../asset-status-badge";
@@ -257,9 +256,6 @@ export function AdvancedIndexColumn({
 
     case "category":
       return <CategoryColumn category={item.category} />;
-
-    case "tags":
-      return <TagsColumn tags={item.tags} />;
 
     case "location":
       return <LocationColumn locations={item.locations} />;
@@ -460,14 +456,6 @@ function CategoryColumn({
   return (
     <Td className="w-full max-w-none whitespace-nowrap">
       <CategoryBadge category={category} />
-    </Td>
-  );
-}
-
-function TagsColumn({ tags }: { tags: AdvancedIndexAsset["tags"] }) {
-  return (
-    <Td className="text-start">
-      <ListItemTagsColumn tags={tags} />
     </Td>
   );
 }

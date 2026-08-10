@@ -17,7 +17,6 @@ import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { AssetImage } from "~/components/assets/asset-image";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
 import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
-import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
 import { ChevronRight } from "~/components/icons/library";
@@ -359,7 +358,6 @@ export default function LocationAssets() {
           headerChildren={
             <>
               <Th>{t("assets.category")}</Th>
-              <Th>{t("nav.tags")}</Th>
               <Th className="flex items-center gap-1 whitespace-nowrap md:border-b-0">
                 Custodian{" "}
                 <InfoTooltip
@@ -399,7 +397,6 @@ const ListAssetContent = ({
 }: {
   item: Asset & {
     category: Pick<Category, "id" | "name" | "color"> | null;
-    tags?: Tag[];
     location?: Location;
     /**
      * The pivot row for the current location, included by `getLocation`'s
@@ -433,7 +430,7 @@ const ListAssetContent = ({
   extraProps: { canReadCustody: boolean; userRoleCanManageAssets: boolean };
 }) => {
   const { t } = useTranslation();
-  const { category, tags, custody } = item;
+  const { category, custody } = item;
   // The location whose detail page we're on — used to pick this asset's
   // pivot row out of `item.assetLocations`. Mirrors the kit-page
   // `useParams<{ kitId }>` pattern at `kits.$kitId.assets.tsx:179`.
@@ -605,9 +602,6 @@ const ListAssetContent = ({
 
       <Td>
         <CategoryBadge category={category} />
-      </Td>
-      <Td className="text-start">
-        <ListItemTagsColumn tags={tags} />
       </Td>
       {/* Custodian */}
       <When truthy={extraProps.canReadCustody}>

@@ -55,8 +55,6 @@ import {
   ScanIcon,
   MapIcon,
   ToolIcon,
-  AddTagsIcon,
-  RemoveTagsIcon,
   InstallIcon,
   ColumnsIcon,
   LockIcon,
@@ -89,8 +87,6 @@ export type IconType =
   | "question"
   | "write"
   | "tag"
-  | "tag-remove"
-  | "tag-add"
   | "category"
   | "location"
   | "gps"
@@ -165,8 +161,6 @@ export const iconsMap: IconsMap = {
   question: <QuestionsIcon />,
   write: <WriteIcon />,
   tag: <TagsIcon />,
-  "tag-add": <AddTagsIcon />,
-  "tag-remove": <RemoveTagsIcon />,
   category: <CategoriesIcon />,
   location: <MapPinIcon />,
   gps: <GpsMarkerIcon />,

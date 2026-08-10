@@ -26,7 +26,6 @@ import {
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
 import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
-import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import { Form } from "~/components/custom-form";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
@@ -148,8 +147,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         totalAssets,
         categories,
         totalCategories,
-        tags,
-        totalTags,
         locations,
         totalLocations,
         search,
@@ -238,11 +235,9 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       items: itemsWithPickerMeta,
       totalItems: totalAssets,
       categories,
-      tags,
       search,
       page,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
       totalPages,
@@ -461,28 +456,6 @@ export default function ManageAssetsInKit() {
         <DynamicDropdown
           trigger={
             <div className="flex h-6 cursor-pointer items-center gap-2">
-              Categories <ChevronRight className="hidden rotate-90 md:inline" />
-            </div>
-          }
-          model={{ name: "category", queryKey: "name" }}
-          label={t("list.filterByCategory")}
-          initialDataKey="categories"
-          countKey="totalCategories"
-        />
-        <DynamicDropdown
-          trigger={
-            <div className="flex h-6 cursor-pointer items-center gap-2">
-              Tags <ChevronRight className="hidden rotate-90 md:inline" />
-            </div>
-          }
-          model={{ name: "tag", queryKey: "name" }}
-          label={t("list.filterByTags")}
-          initialDataKey="tags"
-          countKey="totalTags"
-        />
-        <DynamicDropdown
-          trigger={
-            <div className="flex h-6 cursor-pointer items-center gap-2">
               Locations <ChevronRight className="hidden rotate-90 md:inline" />
             </div>
           }
@@ -559,7 +532,6 @@ export default function ManageAssetsInKit() {
             <>
               <Th>{t("reports.colKit")}</Th>
               <Th>{t("assets.category")}</Th>
-              <Th>{t("nav.tags")}</Th>
               <Th>{t("assets.location")}</Th>
             </>
           }
@@ -700,7 +672,7 @@ const RowComponent = ({
   };
 }) => {
   const { t } = useTranslation();
-  const { category, tags } = item;
+  const { category } = item;
   const location = getPrimaryLocation(item);
   const isQty = isQuantityTracked(item);
   // QUANTITY_TRACKED rows behave as "available" for the picker regardless
@@ -972,10 +944,6 @@ const RowComponent = ({
         <CategoryBadge category={category} />
       </Td>
 
-      {/* Tags */}
-      <Td className={tw("text-start", allowCursor)}>
-        <ListItemTagsColumn tags={tags} />
-      </Td>
 
       {/* Location */}
       <Td className={allowCursor}>

@@ -16,7 +16,6 @@ import { useLoaderData } from "react-router";
 
 import { AssetCodeBadge } from "~/components/assets/asset-code-badge";
 import { AssetImage } from "~/components/assets/asset-image";
-import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import { AuditAssetRowActionsDropdown } from "~/components/audit/audit-asset-row-actions-dropdown";
 import { AuditAssetStatusBadge } from "~/components/audit/audit-asset-status-badge";
@@ -163,9 +162,6 @@ export function AuditAssetListItem({ item }: { item: AuditAssetItem }) {
       )}
       <Td>
         {category ? <CategoryBadge category={category} /> : <EmptyTableValue />}
-      </Td>
-      <Td>
-        <ListItemTagsColumn tags={item.tags} />
       </Td>
       {canRemoveAssets && (
         <Td className="text-end">

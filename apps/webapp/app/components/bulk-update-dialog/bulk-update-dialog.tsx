@@ -38,8 +38,6 @@ type BulkDialogType =
   | "activate"
   | "deactivate"
   | "archive"
-  | "tag-add"
-  | "tag-remove"
   | "cancel"
   | "available"
   | "unavailable"

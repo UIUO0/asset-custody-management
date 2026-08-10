@@ -25,7 +25,6 @@ import {
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
 import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
-import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import { Form } from "~/components/custom-form";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
@@ -137,11 +136,9 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     } = paginatedAssets;
@@ -182,7 +179,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       noScroll: true,
       items: itemsWithPickerMeta,
       categories,
-      tags,
       search,
       page,
       totalItems: totalAssets,
@@ -191,7 +187,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       modelName,
       location,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     });
@@ -407,29 +402,6 @@ export default function AddAssetsToLocation() {
         <DynamicDropdown
           trigger={
             <div className="flex h-6 cursor-pointer items-center gap-2">
-              Categories <ChevronRight className="hidden rotate-90 md:inline" />
-            </div>
-          }
-          model={{ name: "category", queryKey: "name" }}
-          label={t("list.filterByCategory")}
-          placeholder={t("list.searchCategories")}
-          initialDataKey="categories"
-          countKey="totalCategories"
-        />
-        <DynamicDropdown
-          trigger={
-            <div className="flex h-6 cursor-pointer items-center gap-2">
-              Tags <ChevronRight className="hidden rotate-90 md:inline" />
-            </div>
-          }
-          model={{ name: "tag", queryKey: "name" }}
-          label={t("list.filterByTag")}
-          initialDataKey="tags"
-          countKey="totalTags"
-        />
-        <DynamicDropdown
-          trigger={
-            <div className="flex h-6 cursor-pointer items-center gap-2">
               Locations <ChevronRight className="hidden rotate-90 md:inline" />
             </div>
           }
@@ -487,7 +459,6 @@ export default function AddAssetsToLocation() {
             <>
               <Th>{t("assets.location")}</Th>
               <Th>{t("assets.category")}</Th>
-              <Th>{t("nav.tags")}</Th>
             </>
           }
           extraItemComponentProps={{
@@ -572,7 +543,6 @@ type LocationRowItem = Prisma.AssetGetPayload<{
       select: { location: typeof LOCATION_WITH_HIERARCHY };
     };
     category: true;
-    tags: true;
   };
 }> & {
   /** Attached by the loader. Null for INDIVIDUAL rows or when the
@@ -592,7 +562,7 @@ const RowComponent = ({
     initialLocationQuantities: Record<string, number>;
   };
 }) => {
-  const { tags, category } = item;
+  const { category } = item;
   const selectedBulkItems = useAtomValue(selectedBulkItemsAtom);
   const isSelected = selectedBulkItems.some((a) => a.id === item.id);
   const isQty = isQuantityTracked(item);
@@ -768,10 +738,6 @@ const RowComponent = ({
         <CategoryBadge category={category} />
       </Td>
 
-      {/* Tags */}
-      <Td className="text-start">
-        <ListItemTagsColumn tags={tags} />
-      </Td>
     </>
   );
 };

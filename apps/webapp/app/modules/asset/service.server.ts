@@ -62,7 +62,6 @@ import {
 } from "~/modules/location/service.server";
 import { createLoadUserForNotes } from "~/modules/note/load-user-for-notes.server";
 import { getQr, parseQrCodesFromImportData } from "~/modules/qr/service.server";
-import { createTagsIfNotExists } from "~/modules/tag/service.server";
 import {
   createTeamMemberIfNotExists,
   getTeamMemberForCustodianFilter,
@@ -207,12 +206,6 @@ const ASSET_BEFORE_UPDATE_SELECT = Prisma.validator<Prisma.AssetSelect>()({
   organization: {
     select: {
       currency: true,
-    },
-  },
-  tags: {
-    select: {
-      id: true,
-      name: true,
     },
   },
 });
@@ -597,7 +590,6 @@ export async function getAssets(params: {
   search?: string | null;
   categoriesIds?: Category["id"][] | null;
   locationIds?: Location["id"][] | null;
-  tagsIds?: Tag["id"][] | null;
   status?: Asset["status"] | null;
   teamMemberIds?: TeamMember["id"][] | null;
   extraInclude?: Prisma.AssetInclude;
@@ -630,7 +622,6 @@ export async function getAssets(params: {
     search,
     categoriesIds,
     locationIds,
-    tagsIds,
     status,
     teamMemberIds,
     extraInclude,
@@ -753,12 +744,6 @@ export async function getAssets(params: {
                       name: { contains: term, mode: "insensitive" },
                     },
                   },
-                },
-              },
-              // Search in related tags
-              {
-                tags: {
-                  some: { name: { contains: term, mode: "insensitive" } },
                 },
               },
               // Search in custodian names — custody is a list relation, so
@@ -908,28 +893,6 @@ export async function getAssets(params: {
         ];
       } else {
         where.categoryId = { in: categoriesIds };
-      }
-    }
-
-    if (tagsIds && tagsIds.length) {
-      // Check if 'untagged' is part of the selected tag IDs
-      if (tagsIds.includes("untagged")) {
-        // Remove 'untagged' from the list of tags
-        tagsIds = tagsIds.filter((id) => id !== "untagged");
-
-        // Filter for assets that are untagged only
-        where.OR = [
-          ...(where.OR || []), // Preserve existing AND conditions if any
-          { tags: { none: {} } }, // Include assets with no tags
-        ];
-      }
-
-      // If there are other tags specified, apply AND condition
-      if (tagsIds.length > 0) {
-        where.OR = [
-          ...(where.OR || []), // Preserve existing AND conditions if any
-          { tags: { some: { id: { in: tagsIds } } } }, // Filter by remaining tags
-        ];
       }
     }
 
@@ -1215,7 +1178,6 @@ export async function createAsset({
   categoryId,
   locationId,
   qrId,
-  tags,
   custodian,
   customFieldsValues,
   organizationId,
@@ -1239,7 +1201,6 @@ export async function createAsset({
   kitId?: Kit["id"];
   qrId?: Qr["id"];
   locationId?: Location["id"];
-  tags?: { set: { id: string }[] };
   custodian?: TeamMember["id"];
   customFieldsValues?: ShelfAssetCustomFieldValueType[];
   barcodes?: { type: BarcodeType; value: string; existingId?: string }[];
@@ -1422,15 +1383,6 @@ export async function createAsset({
       // Placement can't be set inline in the asset create (the AssetLocation
       // pivot needs the assetId), so it's created in the tx below right
       // after the asset row.
-
-      /** If a tags is passed, link the category to the asset. */
-      if (tags && tags?.set?.length > 0) {
-        Object.assign(data, {
-          tags: {
-            connect: tags?.set,
-          },
-        });
-      }
 
       /** If a custodian is passed, create a Custody relation with that asset
        * `custodian` represents the id of a {@link TeamMember}. */
@@ -1686,7 +1638,7 @@ export function renderBulkAssetTitle(
  * each asset gets its own row, QR code, sequential ID, and (if SAM
  * barcodes are enabled at the workspace level) auto-allocated barcode.
  * All N assets share the same model-derived defaults (category +
- * valuation) and any caller-supplied overrides (location, kit, tags,
+ * valuation) and any caller-supplied overrides (location, kit,
  * custom fields, description, valuation override, image) — values are
  * applied uniformly across the batch.
  *
@@ -1716,7 +1668,6 @@ export function renderBulkAssetTitle(
  *   `defaultValuation`
  * @param params.locationId - Optional shared primary location
  * @param params.kitId - Optional shared kit membership
- * @param params.tags - Optional shared tag set
  * @param params.customFieldsValues - Optional shared custom-field values
  * @param params.description - Optional shared description
  * @param params.mainImage / mainImageExpiration - Optional shared cover image
@@ -1740,7 +1691,6 @@ export async function bulkCreateAssetsFromModel({
   description,
   locationId,
   kitId,
-  tags,
   customFieldsValues,
   mainImage,
   mainImageExpiration,
@@ -1758,7 +1708,6 @@ export async function bulkCreateAssetsFromModel({
   description?: string | null;
   locationId?: Location["id"];
   kitId?: Kit["id"];
-  tags?: { set: { id: string }[] };
   customFieldsValues?: ShelfAssetCustomFieldValueType[];
   mainImage?: Asset["mainImage"];
   mainImageExpiration?: Asset["mainImageExpiration"];
@@ -1870,12 +1819,6 @@ export async function bulkCreateAssetsFromModel({
     await assertLocationBelongsToOrg({ locationId, organizationId });
   }
 
-  if (tags?.set && tags.set.length > 0) {
-    await assertTagsBelongToOrg({
-      tagIds: tags.set.map((t) => t.id),
-      organizationId,
-    });
-  }
   // kitId + customFieldsValues + categoryId — createAsset's connect will
   // throw a 400 on cross-org id (Prisma surfaces a foreign-key violation).
   // Could harden with explicit asserts in a future polish.
@@ -1907,7 +1850,6 @@ export async function bulkCreateAssetsFromModel({
         valuation: resolvedValuation,
         kitId,
         locationId,
-        tags,
         customFieldsValues,
         mainImage,
         mainImageExpiration,
@@ -1965,7 +1907,6 @@ export async function updateAsset({
   thumbnailImage,
   categoryId,
   assetModelId,
-  tags,
   id,
   newLocationId,
   currentLocationId,
@@ -2072,8 +2013,6 @@ export async function updateAsset({
       }
     }
 
-    const isTagUpdate = Boolean(tags?.set);
-
     const trackedFieldUpdates = Boolean(
       typeof title !== "undefined" ||
         typeof description !== "undefined" ||
@@ -2089,15 +2028,8 @@ export async function updateAsset({
     const assetBeforeUpdate = await fetchAssetBeforeUpdate({
       id,
       organizationId,
-      shouldFetch: trackedFieldUpdates || isTagUpdate,
+      shouldFetch: trackedFieldUpdates,
     });
-
-    const previousTags: TagSummary[] = isTagUpdate
-      ? (assetBeforeUpdate?.tags ?? []).map((tag) => ({
-          id: tag.id,
-          name: tag.name ?? "",
-        }))
-      : [];
 
     const loadUserForNotes = createLoadUserForNotes(userId);
 
@@ -2218,13 +2150,6 @@ export async function updateAsset({
 
     /** disconnecting location relation if a user clears locations */
     // (no-op here too; the pivot deleteMany happens in the tx below.)
-
-    /** If a tags is passed, link the category to the asset. */
-    if (isTagUpdate) {
-      Object.assign(data, {
-        tags,
-      });
-    }
 
     /** If custom fields are passed, create/update them */
     let currentCustomFieldsValuesWithFields: {
@@ -2468,7 +2393,6 @@ export async function updateAsset({
         data,
         include: {
           assetLocations: { include: { location: true } },
-          tags: true,
           category: true,
           organization: true,
         },
@@ -2522,7 +2446,6 @@ export async function updateAsset({
             where: { id, organizationId },
             include: {
               assetLocations: { include: { location: true } },
-              tags: true,
               category: true,
               organization: true,
             },
@@ -2894,36 +2817,6 @@ export async function updateAsset({
       }
     }
 
-    if (isTagUpdate) {
-      await createTagChangeNoteIfNeeded({
-        assetId: asset.id,
-        organizationId,
-        userId,
-        previousTags,
-        currentTags: asset.tags ?? [],
-        loadUserForNotes,
-      });
-
-      // Activity event for tag changes — compare the before/after tag-id sets.
-      const previousTagIds = new Set(previousTags.map((t) => t.id));
-      const currentTagIds = new Set((asset.tags ?? []).map((t) => t.id));
-      const setsDiffer =
-        previousTagIds.size !== currentTagIds.size ||
-        [...previousTagIds].some((t) => !currentTagIds.has(t));
-      if (setsDiffer) {
-        await recordEvent({
-          organizationId,
-          actorUserId: userId,
-          action: "ASSET_TAGS_CHANGED",
-          entityType: "ASSET",
-          entityId: asset.id,
-          assetId: asset.id,
-          field: "tags",
-          fromValue: [...previousTagIds],
-          toValue: [...currentTagIds],
-        });
-      }
-    }
 
     /** If custom fields were processed, create notes for any changes */
     if (customFieldsValuesFromForm && customFieldsValuesFromForm.length > 0) {
@@ -3785,13 +3678,6 @@ export async function duplicateAsset({
   try {
     const duplicatedAssets: Awaited<ReturnType<typeof createAsset>>[] = [];
 
-    // why: defense-in-depth cross-org guard. The source `asset` is loaded
-    // org-scoped by the caller, but we re-validate the tag ids against the
-    // target `organizationId` before copying them onto the new assets so a
-    // tampered/stale payload can never connect tags from another workspace.
-    const copiedTagIds = asset.tags.map((tag) => tag.id);
-    await assertTagsBelongToOrg({ tagIds: copiedTagIds, organizationId });
-
     //irrespective category it has to copy all the custom fields;
     const customFields = await getActiveCustomFields({
       organizationId,
@@ -3877,16 +3763,13 @@ export async function getAllEntriesForCreateAndEdit({
   organizationId,
   request,
   defaults,
-  tagUseFor,
 }: {
   organizationId: Organization["id"];
   request: LoaderFunctionArgs["request"];
   defaults?: {
     category?: string | string[] | null;
-    tag?: string | null;
     location?: string | null;
   };
-  tagUseFor?: TagUseFor;
 }) {
   const searchParams = getCurrentSearchParams(request);
   const categorySelected =
@@ -3896,27 +3779,12 @@ export async function getAllEntriesForCreateAndEdit({
   const getAllEntries = searchParams.getAll("getAll") as AllowedModelNames[];
 
   try {
-    const [
-      { categories, totalCategories },
-      tags,
-      { locations, totalLocations },
-    ] = await Promise.all([
+    const [{ categories, totalCategories }, { locations, totalLocations }] =
+      await Promise.all([
       getCategoriesForCreateAndEdit({
         request,
         organizationId,
         defaultCategory: defaults?.category,
-      }),
-
-      /** Get the tags */
-      db.tag.findMany({
-        where: {
-          organizationId,
-          OR: [
-            { useFor: { isEmpty: true } },
-            ...(tagUseFor ? [{ useFor: { has: tagUseFor } }] : []),
-          ],
-        },
-        orderBy: { name: "asc" },
       }),
 
       /** Get the locations */
@@ -3930,7 +3798,6 @@ export async function getAllEntriesForCreateAndEdit({
     return {
       categories,
       totalCategories,
-      tags,
       locations,
       totalLocations,
     };
@@ -4003,7 +3870,6 @@ export async function getPaginatedAndFilterableAssets({
     orderDirection,
     search,
     categoriesIds,
-    tagsIds,
     locationIds,
     teamMemberIds,
     assetKitFilter,
@@ -4018,14 +3884,7 @@ export async function getPaginatedAndFilterableAssets({
      * so we run them in parallel to reduce total loader latency.
      */
     const [
-      {
-        tags,
-        totalTags,
-        categories,
-        totalCategories,
-        locations,
-        totalLocations,
-      },
+      { categories, totalCategories, locations, totalLocations },
       teamMembersData,
       { assets, totalAssets },
     ] = await Promise.all([
@@ -4033,7 +3892,6 @@ export async function getPaginatedAndFilterableAssets({
         organizationId,
         allSelectedEntries: getAllEntries,
         selectedCategoryIds: categoriesIds,
-        selectedTagIds: tagsIds,
         selectedLocationIds: locationIds,
       }),
       getTeamMemberForCustodianFilter({
@@ -4051,7 +3909,6 @@ export async function getPaginatedAndFilterableAssets({
         orderDirection,
         search,
         categoriesIds,
-        tagsIds,
         status,
         locationIds,
         teamMemberIds,
@@ -4183,7 +4040,6 @@ export async function fetchAssetsForExport({
             custodian: true,
           },
         },
-        tags: true,
         customFields: {
           include: {
             customField: true,
@@ -6470,173 +6326,6 @@ export async function bulkUpdateAssetCategory({
   }
 }
 
-export async function bulkAssignAssetTags({
-  userId,
-  assetIds,
-  organizationId,
-  tagsIds,
-  currentSearchParams,
-  remove,
-  settings,
-}: {
-  userId: string;
-  assetIds: Asset["id"][];
-  organizationId: Asset["organizationId"];
-  tagsIds: string[];
-  currentSearchParams?: string | null;
-  remove: boolean;
-  settings: AssetIndexSettings;
-}) {
-  try {
-    // Resolve IDs (works for both simple and advanced mode)
-    const resolvedIds = await resolveAssetIdsForBulkOperation({
-      assetIds,
-      organizationId,
-      currentSearchParams,
-      settings,
-    });
-
-    if (resolvedIds.length === 0) {
-      return true;
-    }
-
-    // Validate that every tag id belongs to this organization before
-    // wiring it into the `connect`/`disconnect` payload. Prisma's nested
-    // `connect: { id }` operation has no org scoping on its own, so a
-    // crafted foreign-org tag id would otherwise be attached/detached.
-    if (tagsIds.length > 0) {
-      const orgTags = await db.tag.findMany({
-        where: { id: { in: tagsIds }, organizationId },
-        select: { id: true },
-      });
-      if (orgTags.length !== new Set(tagsIds).size) {
-        throw new ShelfError({
-          cause: null,
-          title: "Tag not found",
-          message:
-            "One or more selected tags do not exist or you do not have permission to access them.",
-          additionalData: { tagsIds, organizationId, userId },
-          label,
-          status: 404,
-          shouldBeCaptured: false,
-        });
-      }
-    }
-
-    const loadUserForNotes = createLoadUserForNotes(userId);
-
-    const previousTagsByAssetId = await db.asset
-      .findMany({
-        where: {
-          id: { in: resolvedIds },
-          organizationId,
-        },
-        select: {
-          id: true,
-          tags: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      })
-      .then((assets) =>
-        assets.reduce<Map<string, TagSummary[]>>((acc, asset) => {
-          acc.set(asset.id, asset.tags);
-          return acc;
-        }, new Map()),
-      );
-
-    // Defense-in-depth: this issues one `asset.update` per selected asset
-    // inside the interactive tx (needed to diff each asset's tag set), so a
-    // large selection serially exhausts Prisma's 5s default and aborts with
-    // P2028 (Sentry SHELF-WEBAPP-1MH). Bump the ceiling to 15s.
-    const updatedAssets = await db.$transaction(
-      async (tx) => {
-        const results = await Promise.all(
-          resolvedIds.map((id) =>
-            tx.asset.update({
-              where: { id, organizationId },
-              data: {
-                tags: {
-                  [remove ? "disconnect" : "connect"]: tagsIds.map((tagId) => ({
-                    id: tagId,
-                  })),
-                },
-              },
-              include: {
-                tags: { select: { id: true, name: true } },
-              },
-            }),
-          ),
-        );
-
-        // Activity events — one ASSET_TAGS_CHANGED per asset whose tag set
-        // actually changed. Same shape as the singular `updateAsset` flow.
-        const tagChangeEvents: Parameters<typeof recordEvents>[0] = [];
-        for (const asset of results) {
-          const previousTags = previousTagsByAssetId.get(asset.id) ?? [];
-          const previousTagIds = new Set(previousTags.map((t) => t.id));
-          const currentTagIds = new Set(asset.tags.map((t) => t.id));
-          const setsDiffer =
-            previousTagIds.size !== currentTagIds.size ||
-            [...previousTagIds].some((t) => !currentTagIds.has(t));
-          if (setsDiffer) {
-            tagChangeEvents.push({
-              organizationId,
-              actorUserId: userId,
-              action: "ASSET_TAGS_CHANGED",
-              entityType: "ASSET",
-              entityId: asset.id,
-              assetId: asset.id,
-              field: "tags",
-              fromValue: [...previousTagIds],
-              toValue: [...currentTagIds],
-            });
-          }
-        }
-        if (tagChangeEvents.length > 0) {
-          await recordEvents(tagChangeEvents, tx);
-        }
-
-        return results;
-      },
-      { timeout: 15000 },
-    );
-
-    await Promise.all(
-      updatedAssets.map((asset) =>
-        createTagChangeNoteIfNeeded({
-          assetId: asset.id,
-          organizationId,
-          userId,
-          previousTags: previousTagsByAssetId.get(asset.id) ?? [],
-          currentTags: asset.tags,
-          loadUserForNotes,
-        }),
-      ),
-    );
-
-    // ASSET_TAGS_CHANGED events are emitted inside the $transaction above
-    // (per the use-record-event rule — the tx-wrapped emission is the
-    // authoritative one). Pre-merge HEAD had a second post-tx emission for
-    // the same events; that was a duplicate left over from before PR
-    // #2495 wrapped the tag updates in a transaction. Dropped here.
-    return true;
-  } catch (cause) {
-    const isShelfError = isLikeShelfError(cause);
-
-    throw new ShelfError({
-      cause,
-      message: isShelfError
-        ? cause.message
-        : "Something went wrong while bulk updating tags.",
-      additionalData: { userId, assetIds, organizationId, tagsIds },
-      label,
-    });
-  }
-}
 
 /**
  * Moves many assets to `READY` in one pass — the bulk twin of
