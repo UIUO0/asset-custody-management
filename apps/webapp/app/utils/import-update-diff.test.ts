@@ -31,7 +31,6 @@ function makeAsset(overrides: Partial<AssetForUpdate> = {}): AssetForUpdate {
     availableToBook: true,
     category: null,
     location: null,
-    tags: [],
     customFields: [],
     ...overrides,
   };
@@ -179,7 +178,6 @@ describe("analyzeUpdateHeaders", () => {
     expect(updatableKeys).toContain("name");
     expect(updatableKeys).toContain("category");
     expect(updatableKeys).toContain("location");
-    expect(updatableKeys).toContain("tags");
     expect(updatableKeys).toContain("valuation");
   });
 
@@ -313,30 +311,6 @@ describe("compareCoreField", () => {
     });
   });
 
-  describe("tags", () => {
-    it("detects tag additions", () => {
-      const asset = makeAsset({ tags: [{ id: "t1", name: "TagA" }] });
-      const result = compareCoreField("tags", "TagA, TagB", asset, "Tags");
-      expect(result).not.toBeNull();
-      expect(result?.newValue).toBe("TagA, TagB");
-    });
-
-    it("ignores tag reordering (case-insensitive)", () => {
-      const asset = makeAsset({
-        tags: [
-          { id: "t1", name: "Alpha" },
-          { id: "t2", name: "Beta" },
-        ],
-      });
-      expect(compareCoreField("tags", "beta, alpha", asset, "Tags")).toBeNull();
-    });
-
-    it('shows "(none)" when asset has no tags', () => {
-      const asset = makeAsset({ tags: [] });
-      const result = compareCoreField("tags", "NewTag", asset, "Tags");
-      expect(result?.currentValue).toBe("(none)");
-    });
-  });
 
   describe("valuation", () => {
     it("detects valuation change with currency normalization", () => {

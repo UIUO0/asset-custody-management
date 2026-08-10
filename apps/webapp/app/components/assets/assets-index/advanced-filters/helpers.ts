@@ -80,9 +80,6 @@ export function getUIFieldType({
     case "updatedAt":
       fieldType = "date";
       break;
-    case "tags":
-      fieldType = "array";
-      break;
     default:
       // Handle custom fields
       if (column.name.startsWith("cf_")) {

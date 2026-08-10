@@ -88,7 +88,6 @@ function makeDbAsset(overrides: Record<string, unknown> = {}) {
     assetModelId: null,
     category: null,
     assetLocations: [],
-    tags: [],
     customFields: [],
     ...overrides,
   };

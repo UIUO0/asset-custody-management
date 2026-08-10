@@ -61,7 +61,6 @@ export const UPDATABLE_FIELDS = new Set<string>([
   "name",
   "category",
   "location",
-  "tags",
   "valuation",
   "availableToBook",
   // Wave-1 extension: qty-tracked + AssetModel round-trip.
@@ -146,11 +145,10 @@ export interface UpdatePreview {
   totalFieldChanges: number;
   /** Total fields that will remain unchanged (for reassurance message) */
   totalUnchangedFields: number;
-  /** Entities (categories, locations, tags) that don't exist yet and will be created */
+  /** Entities (categories, locations) that don't exist yet and will be created */
   newEntities: {
     categories: string[];
     locations: string[];
-    tags: string[];
   };
 }
 
@@ -260,7 +258,6 @@ export type AssetForUpdate = {
   assetModelId?: string | null;
   category: { name: string } | null;
   location: { id: string; name: string } | null;
-  tags: { id: string; name: string }[];
   customFields: {
     id: string;
     value: unknown;

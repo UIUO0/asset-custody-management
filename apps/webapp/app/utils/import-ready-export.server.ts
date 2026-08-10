@@ -37,7 +37,6 @@ export type CoreImportField =
   | "description"
   | "category"
   | "kit"
-  | "tags"
   | "location"
   | "custodian"
   | "bookable"
@@ -73,7 +72,6 @@ const CORE_IMPORT_FIELDS: Array<{
   { header: "description", field: "description", columnName: "description" },
   { header: "category", field: "category", columnName: "category" },
   { header: "kit", field: "kit", columnName: "kit" },
-  { header: "tags", field: "tags", columnName: "tags" },
   { header: "location", field: "location", columnName: "location" },
   { header: "custodian", field: "custodian", columnName: "custody" },
   { header: "bookable", field: "bookable", columnName: "availableToBook" },
@@ -254,8 +252,6 @@ function resolveCoreField(
       return asset.category?.name ?? ""; // NOT "Uncategorized" — importer needs a real name or blank
     case "kit":
       return asset.kit?.name ?? "";
-    case "tags":
-      return (asset.tags ?? []).map((t) => t.name).join(",");
     case "location":
       return asset.location?.name ?? "";
     case "custodian": {

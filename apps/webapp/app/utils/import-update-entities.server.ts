@@ -1,6 +1,6 @@
 /**
  * @file Entity resolution and asset fetching for bulk update via CSV import.
- * Handles batch database queries for categories, locations, tags, and
+ * Handles batch database queries for categories, locations, and
  * asset lookup by identifier. All functions here make database calls.
  *
  * @see {@link file://./import-update-types.ts} Types and constants
@@ -43,7 +43,6 @@ export async function fetchAssetsForUpdate(
       assetLocations: {
         select: { location: { select: { id: true, name: true } } },
       },
-      tags: { select: { id: true, name: true } },
       customFields: { include: { customField: true } },
     },
   });
@@ -54,7 +53,6 @@ export async function fetchAssetsForUpdate(
       const raw = a as Asset & {
         category: { name: string } | null;
         assetLocations: { location: { id: string; name: string } }[];
-        tags: { id: string; name: string }[];
         customFields: {
           id: string;
           value: unknown;
@@ -77,7 +75,7 @@ export async function fetchAssetsForUpdate(
 // ---------------------------------------------------------------------------
 
 /**
- * Checks which categories, locations, and tags referenced in the changes
+ * Checks which categories and locations referenced in the changes
  * don't exist yet in the organization. These will be created on apply.
  *
  * @param assetsToUpdate - Assets with detected changes
@@ -89,10 +87,9 @@ export async function detectNewEntities(
   assetsToUpdate: AssetChangePreview[],
   headerAnalysis: HeaderAnalysis,
   organizationId: string,
-): Promise<{ categories: string[]; locations: string[]; tags: string[] }> {
+): Promise<{ categories: string[]; locations: string[] }> {
   const categoryNames = new Set<string>();
   const locationNames = new Set<string>();
-  const tagNames = new Set<string>();
 
   for (const asset of assetsToUpdate) {
     for (const change of asset.changes) {
@@ -107,11 +104,6 @@ export async function detectNewEntities(
         }
       } else if (col.internalKey === "location") {
         locationNames.add(change.newValue.trim());
-      } else if (col.internalKey === "tags") {
-        for (const tag of change.newValue.split(",")) {
-          const t = tag.trim();
-          if (t) tagNames.add(t);
-        }
       }
     }
   }
@@ -154,29 +146,9 @@ export async function detectNewEntities(
     (n) => !existingLocNamesLc.has(n.toLowerCase()),
   );
 
-  // Batch check tags
-  const tagNamesArr = Array.from(tagNames);
-  const existingTags =
-    tagNamesArr.length > 0
-      ? await db.tag.findMany({
-          where: {
-            organizationId,
-            name: { in: tagNamesArr, mode: "insensitive" },
-          },
-          select: { name: true },
-        })
-      : [];
-  const existingTagNamesLc = new Set(
-    existingTags.map((t) => t.name.toLowerCase()),
-  );
-  const newTags = tagNamesArr.filter(
-    (n) => !existingTagNamesLc.has(n.toLowerCase()),
-  );
-
   return {
     categories: newCategories,
     locations: newLocations,
-    tags: newTags,
   };
 }
 
@@ -427,78 +399,3 @@ export async function batchResolveAssetModelNames(
   return result;
 }
 
-/**
- * Resolves an array of tag names to their IDs, creating any that don't exist.
- * Uses batched queries to avoid N+1 round-trips.
- *
- * @param names - Tag names from CSV changes
- * @param userId - User performing the import
- * @param organizationId - Organization scope
- * @returns Array of `{ id }` objects preserving original order
- */
-export async function resolveTagNamesToIds(
-  names: string[],
-  userId: string,
-  organizationId: string,
-): Promise<{ id: string }[]> {
-  const trimmedNames = names.map((n) => n.trim()).filter((n) => n.length > 0);
-  if (trimmedNames.length === 0) return [];
-
-  // Deduplicate (case-insensitive) while keeping first occurrence
-  const seenLc = new Set<string>();
-  const uniqueNames: string[] = [];
-  for (const name of trimmedNames) {
-    const lc = name.toLowerCase();
-    if (!seenLc.has(lc)) {
-      seenLc.add(lc);
-      uniqueNames.push(name);
-    }
-  }
-
-  // Batch fetch existing tags
-  const existingTags = await db.tag.findMany({
-    where: {
-      organizationId,
-      name: { in: uniqueNames, mode: "insensitive" },
-    },
-    select: { id: true, name: true },
-  });
-
-  const nameToId = new Map<string, string>();
-  for (const tag of existingTags) {
-    nameToId.set(tag.name.toLowerCase(), tag.id);
-  }
-
-  // Create missing tags
-  const toCreate = uniqueNames.filter((n) => !nameToId.has(n.toLowerCase()));
-  if (toCreate.length > 0) {
-    await db.tag.createMany({
-      data: toCreate.map((name) => ({
-        name,
-        userId,
-        organizationId,
-      })),
-      skipDuplicates: true,
-    });
-
-    // Re-fetch to get IDs of newly created tags
-    const newTags = await db.tag.findMany({
-      where: {
-        organizationId,
-        name: { in: toCreate, mode: "insensitive" },
-      },
-      select: { id: true, name: true },
-    });
-    for (const tag of newTags) {
-      nameToId.set(tag.name.toLowerCase(), tag.id);
-    }
-  }
-
-  // Build result preserving original order (including duplicates)
-  const result: { id: string }[] = [];
-  for (const name of trimmedNames) {
-    const id = nameToId.get(name.toLowerCase());
-    if (id) result.push({ id });
-  }
-  return result;
-}

@@ -197,7 +197,6 @@ export const buildCsvBackupDataFromAssets = ({
         case "location":
         case "category":
         case "notes":
-        case "tags":
         case "custody":
         case "organization":
         case "valuation":
@@ -575,9 +574,6 @@ export const buildCsvExportDataFromAssets = ({
               : "";
             break;
           }
-          case "tags":
-            value = asset.tags?.map((t) => t.name).join(", ") ?? "";
-            break;
           case "status":
             value = asset.status;
             break;

@@ -19,7 +19,6 @@ export const fixedFields = [
   "createdAt",
   "updatedAt",
   "category",
-  "tags",
   "location",
   "kit",
   "custody",
@@ -77,7 +76,6 @@ export const columnsLabelsMap: { [key in ColumnLabelKey]: string } = {
   createdAt: "Created at",
   updatedAt: "Updated at",
   category: "Category",
-  tags: "Tags",
   location: "Location",
   kit: "Kit",
   custody: "Custody",
@@ -105,22 +103,21 @@ export const defaultFields: Column[] = [
   { name: "createdAt", visible: true, position: 7 },
   { name: "updatedAt", visible: true, position: 8 },
   { name: "category", visible: true, position: 9 },
-  { name: "tags", visible: true, position: 10 },
-  { name: "location", visible: true, position: 11 },
-  { name: "kit", visible: true, position: 12 },
-  { name: "custody", visible: true, position: 13 },
-  { name: "upcomingReminder", visible: true, position: 14 },
-  { name: "actions", visible: true, position: 15 },
-  { name: "quantity", visible: false, position: 16 },
-  { name: "type", visible: false, position: 17 },
-  { name: "assetModel", visible: false, position: 18 },
+  { name: "location", visible: true, position: 10 },
+  { name: "kit", visible: true, position: 11 },
+  { name: "custody", visible: true, position: 12 },
+  { name: "upcomingReminder", visible: true, position: 13 },
+  { name: "actions", visible: true, position: 14 },
+  { name: "quantity", visible: false, position: 15 },
+  { name: "type", visible: false, position: 16 },
+  { name: "assetModel", visible: false, position: 17 },
   /**
    * Hidden by default: only المستودعات / المالية act on the intake queue, and
    * for everyone else every visible asset is READY anyway, so the column would
    * be a constant. Existing users pick it up via the self-healing merge in
    * `service.server.ts` (`validateAndUpdateColumns`).
    */
-  { name: "lifecycleStage", visible: false, position: 19 },
+  { name: "lifecycleStage", visible: false, position: 18 },
 ];
 
 // Generate barcode columns when barcodes are enabled

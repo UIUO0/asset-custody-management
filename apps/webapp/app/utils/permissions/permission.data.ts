@@ -41,7 +41,6 @@ export enum PermissionEntity {
   asset = "asset",
   assetIndexSettings = "assetIndexSettings",
   qr = "qr",
-  tag = "tag",
   category = "category",
   location = "location",
   locationNote = "locationNote",
@@ -119,7 +118,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.customField]: [],
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [],
     [PermissionEntity.teamMember]: [],
     [PermissionEntity.teamMemberProfile]: [],
     [PermissionEntity.workspace]: [],
@@ -156,7 +154,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.customField]: [],
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [],
     [PermissionEntity.teamMember]: [],
     [PermissionEntity.teamMemberProfile]: [],
     [PermissionEntity.workspace]: [],
@@ -227,12 +224,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.locationNote]: [
       PermissionAction.read,
       PermissionAction.create,
-      PermissionAction.delete,
-    ],
-    [PermissionEntity.tag]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
       PermissionAction.delete,
     ],
     [PermissionEntity.teamMember]: [
@@ -358,12 +349,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.locationNote]: [
       PermissionAction.read,
       PermissionAction.create,
-      PermissionAction.delete,
-    ],
-    [PermissionEntity.tag]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
       PermissionAction.delete,
     ],
     [PermissionEntity.teamMember]: [
@@ -508,12 +493,6 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.delete,
     ],
-    [PermissionEntity.tag]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-    ],
     // Matrix: رؤية المستخدمين = عرض only. No create/update/delete/changeRole.
     [PermissionEntity.teamMember]: [PermissionAction.read],
     [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
@@ -615,7 +594,6 @@ export const Role2PermissionMap: {
     // Matrix marks المواقع as "—" for المالية.
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [PermissionAction.read],
     [PermissionEntity.teamMember]: [PermissionAction.read],
     [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
     [PermissionEntity.workspace]: [],
@@ -681,7 +659,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.customField]: [],
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [],
     // Read-only, and only so the desk can name the employee it is handing an
     // asset to. No create/update — a department does not manage the roster.
     [PermissionEntity.teamMember]: [PermissionAction.read],
@@ -742,7 +719,6 @@ export const Role2PermissionMap: {
     ],
     [PermissionEntity.location]: [PermissionAction.read],
     [PermissionEntity.locationNote]: [PermissionAction.read],
-    [PermissionEntity.tag]: [PermissionAction.read],
     [PermissionEntity.teamMember]: [PermissionAction.read],
     [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
     [PermissionEntity.workspace]: [],

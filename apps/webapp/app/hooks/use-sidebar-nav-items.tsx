@@ -17,7 +17,6 @@ import {
   ScanBarcodeIcon,
   SettingsIcon,
   SignatureIcon,
-  TagsIcon,
   UsersRoundIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -262,13 +261,6 @@ export function useSidebarNavItems() {
       to: "/categories",
       Icon: BoxesIcon,
       hidden: !can(PermissionEntity.category, PermissionAction.read),
-    },
-    {
-      type: "child",
-      title: t("nav.tags"),
-      to: "/tags",
-      Icon: TagsIcon,
-      hidden: !can(PermissionEntity.tag, PermissionAction.read),
     },
 
     {

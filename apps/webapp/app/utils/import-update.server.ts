@@ -39,7 +39,6 @@ import {
   batchResolveLocationNames,
   detectNewEntities,
   fetchAssetsForUpdate,
-  resolveTagNamesToIds,
 } from "./import-update-entities.server";
 import type {
   AssetForUpdate,
@@ -280,11 +279,9 @@ export async function applyBulkUpdatesFromImport({
   // Pre-resolve all entity names in batch to avoid N+1 queries in the loop
   const categoryNameMap = new Map<string, string>();
   const locationNameMap = new Map<string, string>();
-  const tagNameMap = new Map<string, string>();
 
   const allCategoryNames = new Set<string>();
   const allLocationNames = new Set<string>();
-  const allTagNames = new Set<string>();
 
   for (const asset of diffs.assetsToUpdate) {
     for (const change of asset.changes) {
@@ -295,37 +292,16 @@ export async function applyBulkUpdatesFromImport({
       if (!col) continue;
       if (col.internalKey === "category") allCategoryNames.add(change.newValue);
       if (col.internalKey === "location") allLocationNames.add(change.newValue);
-      if (col.internalKey === "tags") {
-        change.newValue
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean)
-          .forEach((t) => allTagNames.add(t));
-      }
     }
   }
 
-  // Resolve categories, locations, and tags in parallel using batch queries
+  // Resolve categories and locations in parallel using batch queries
   const [batchedCategories, batchedLocations] = await Promise.all([
     batchResolveCategoryNames([...allCategoryNames], userId, organizationId),
     batchResolveLocationNames([...allLocationNames], userId, organizationId),
   ]);
   for (const [name, id] of batchedCategories) categoryNameMap.set(name, id);
   for (const [name, id] of batchedLocations) locationNameMap.set(name, id);
-
-  // Batch resolve tags
-  if (allTagNames.size > 0) {
-    // Ensure all tags exist (creates missing ones)
-    await resolveTagNamesToIds([...allTagNames], userId, organizationId);
-    // Fetch all org tags to build the name → id map
-    const allOrgTags = await db.tag.findMany({
-      where: { organizationId },
-      select: { id: true, name: true },
-    });
-    for (const tag of allOrgTags) {
-      tagNameMap.set(tag.name.toLowerCase(), tag.id);
-    }
-  }
 
   // Process updates
   const updated: BulkUpdateResult["updated"] = [];
@@ -538,7 +514,6 @@ export async function applyBulkUpdatesFromImport({
       // Build update payload fields from non-location, non-availableToBook changes
       let title: UpdateAssetPayload["title"];
       let categoryId: UpdateAssetPayload["categoryId"];
-      let tags: UpdateAssetPayload["tags"];
       let valuation: UpdateAssetPayload["valuation"];
       // Wave-1 update-path extension — qty-tracked + AssetModel fields.
       // Populated from `qtyPatchesByAssetDbId` (parsed in the pre-pass)
@@ -618,24 +593,6 @@ export async function applyBulkUpdatesFromImport({
             break;
           }
 
-          case "tags": {
-            if (change.clearing) {
-              // Clear all tags
-              tags = { set: [] };
-            } else {
-              const tagNames = change.newValue
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean);
-              const tagIds = tagNames
-                .map((n) => tagNameMap.get(n.toLowerCase()))
-                .filter((id): id is string => !!id)
-                .map((id) => ({ id }));
-              tags = { set: tagIds };
-            }
-            break;
-          }
-
           case "valuation": {
             if (change.clearing) {
               // Clear valuation by setting to 0
@@ -709,7 +666,6 @@ export async function applyBulkUpdatesFromImport({
       let changesApplied = 0;
       if (title !== undefined) changesApplied++;
       if (categoryId !== undefined) changesApplied++;
-      if (tags !== undefined) changesApplied++;
       if (valuation !== undefined) changesApplied++;
       if (quantityPatch !== undefined) changesApplied++;
       if (minQuantityPatch !== undefined) changesApplied++;
@@ -721,7 +677,6 @@ export async function applyBulkUpdatesFromImport({
       const hasMainChanges =
         title !== undefined ||
         categoryId !== undefined ||
-        tags !== undefined ||
         valuation !== undefined ||
         quantityPatch !== undefined ||
         minQuantityPatch !== undefined ||
@@ -738,7 +693,6 @@ export async function applyBulkUpdatesFromImport({
           request,
           title,
           categoryId,
-          tags,
           valuation,
           // Wave-1 qty-tracked + AssetModel patches. `updateAsset`
           // already accepts these (see `UpdateAssetPayload`); the

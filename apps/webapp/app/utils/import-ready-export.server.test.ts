@@ -42,7 +42,6 @@ describe("buildImportReadyColumns", () => {
       "description",
       "category",
       "kit",
-      "tags",
       "location",
       "custodian",
       "bookable",
@@ -146,10 +145,6 @@ function makeAsset(
     assetModelName: "Ryzen 9 7950X",
     category: { id: "c1", name: "CPU", color: "#fff" },
     kit: { id: "k1", name: "Home PC" },
-    tags: [
-      { id: "t1", name: "High priority", color: "#f00" },
-      { id: "t2", name: "small", color: "#0f0" },
-    ],
     location: { id: "l1", name: "Sofia office" },
     custody: null,
     customFields: [],
@@ -179,7 +174,6 @@ describe("resolveImportReadyCell / value encoding", () => {
 
     expect(row[headerIndex("title")]).toBe("AMD Ryzen");
     expect(row[headerIndex("category")]).toBe("CPU");
-    expect(row[headerIndex("tags")]).toBe("High priority,small");
     expect(row[headerIndex("bookable")]).toBe("yes");
     expect(row[headerIndex("valuation")]).toBe("100"); // plain number, no "$"
     expect(row[headerIndex("type")]).toBe("INDIVIDUAL"); // enum, not "Individual"
