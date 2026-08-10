@@ -1583,111 +1583,11 @@ export default function AssetOverview() {
 
           <AssetReminderCards className="my-2" />
 
-          {(() => {
-            /**
-             * A QUANTITY_TRACKED asset can belong to multiple kits at
-             * distinct slices. Render one row per membership with the
-             * per-kit quantity badge on qty-tracked assets; INDIVIDUAL
-             * assets keep the single-name layout since they're DB-locked
-             * to one kit and have no meaningful "quantity per kit" to
-             * surface.
-             */
-            type KitMembership = {
-              quantity: number;
-              kit: { id: string; name: string } | null;
-            };
-            const memberships = ((asset.assetKits ?? []) as KitMembership[])
-              .filter((ak) => ak.kit?.id && ak.kit.name)
-              .map((ak) => ({
-                kitId: ak.kit!.id,
-                kitName: ak.kit!.name,
-                quantity: ak.quantity ?? 0,
-              }));
-            if (memberships.length === 0) return null;
-            const isQty = isQuantityTracked(asset);
-            const unit = asset.unitOfMeasure || "units";
-            return (
-              <Card className="my-3 py-3 md:border">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gray-100/50">
-                    <div className="flex size-7 items-center justify-center rounded-full bg-gray-200">
-                      <Icon icon="kit" />
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="mb-1 text-sm font-semibold">
-                      {memberships.length > 1
-                        ? t("assetOverview.includedInKits")
-                        : t("assetOverview.includedInKit")}
-                    </h3>
-                    <ul className="space-y-1">
-                      {memberships.map((m) => (
-                        <li
-                          key={m.kitId}
-                          className="flex items-center justify-between gap-2"
-                        >
-                          <Button
-                            to={`/kits/${m.kitId}`}
-                            role="link"
-                            variant="link"
-                            className="min-w-0 justify-start truncate text-sm font-normal text-gray-700 underline hover:text-gray-700"
-                            target="_blank"
-                          >
-                            <span className="truncate">{m.kitName}</span>
-                          </Button>
-                          <div className="flex shrink-0 items-center gap-2">
-                            {isQty ? (
-                              <span className="text-xs tabular-nums text-gray-500">
-                                {m.quantity} {unit}
-                              </span>
-                            ) : null}
-                            {/*
-                             * Move-units affordance for kit allocations.
-                             * QUANTITY_TRACKED-only — INDIVIDUAL assets are
-                             * DB-locked to a single kit so the "move between
-                             * kits" flow is not meaningful for them.
-                             */}
-                            {isQty && canEditAsset ? (
-                              <MoveUnitsDialog
-                                axis="kit"
-                                assetId={asset.id}
-                                assetTitle={asset.title}
-                                unitOfMeasure={asset.unitOfMeasure}
-                                fromKit={{
-                                  id: m.kitId,
-                                  name: m.kitName,
-                                  quantity: m.quantity,
-                                }}
-                                destinations={moveDestinations.kits.filter(
-                                  (k) => k.id !== m.kitId,
-                                )}
-                                actionUrl={moveUnitsActionUrl}
-                                trigger={
-                                  <Button
-                                    type="button"
-                                    variant="link"
-                                    className="text-xs font-normal text-gray-500 underline hover:text-gray-700"
-                                  >
-                                    Move
-                                  </Button>
-                                }
-                              />
-                            ) : null}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            );
-          })()}
 
           {(() => {
             /**
              * t("assetOverview.placedAtLocations") sidebar card — mirrors the
-             * t("assetOverview.includedInKits") card above. A QUANTITY_TRACKED asset
+             * A QUANTITY_TRACKED asset
              * can sit at multiple locations at distinct per-location
              * slices; an INDIVIDUAL asset sits at exactly one. Render
              * one row per placement with the per-location quantity
