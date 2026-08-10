@@ -5,7 +5,6 @@ import type {
   Qr,
   Asset,
   User,
-  Tag,
   Organization,
   TeamMember,
   Booking,
@@ -23,7 +22,6 @@ import {
   ErrorCorrection,
   OrganizationRoles,
   Prisma,
-  TagUseFor,
 } from "@prisma/client";
 import { LRUCache } from "lru-cache";
 import type { LoaderFunctionArgs } from "react-router";
@@ -120,7 +118,6 @@ import {
   assertCustomFieldsBelongToOrg,
   assertKitsBelongToOrg,
   assertLocationBelongsToOrg,
-  assertTagsBelongToOrg,
   assertTeamMemberBelongsToOrg,
 } from "~/utils/org-validation.server";
 import {
@@ -180,8 +177,6 @@ import {
   createAssetValuationChangeNote,
   createNote,
   createNotes,
-  createTagChangeNoteIfNeeded,
-  type TagSummary,
 } from "../note/service.server";
 import { getUserByID } from "../user/service.server";
 
@@ -3691,7 +3686,6 @@ export async function duplicateAsset({
       userId,
       categoryId: asset.categoryId,
       locationId: getPrimaryLocation(asset)?.id ?? undefined,
-      tags: { set: copiedTagIds.map((id) => ({ id })) },
       valuation: asset.valuation,
     };
 
@@ -3822,7 +3816,6 @@ export async function getPaginatedAndFilterableAssets({
   organizationId,
   extraInclude,
   excludeCategoriesQuery = false,
-  excludeTagsQuery = false,
   excludeLocationQuery = false,
   filters = "",
   isSelfService,
@@ -3836,7 +3829,6 @@ export async function getPaginatedAndFilterableAssets({
   kitId?: string | null;
   extraInclude?: Prisma.AssetInclude;
   excludeCategoriesQuery?: boolean;
-  excludeTagsQuery?: boolean;
   excludeLocationQuery?: boolean;
   filters?: string;
 
@@ -3926,9 +3918,7 @@ export async function getPaginatedAndFilterableAssets({
       search,
       totalAssets,
       totalCategories,
-      totalTags,
       categories: excludeCategoriesQuery ? [] : categories,
-      tags: excludeTagsQuery ? [] : tags,
       assets,
       totalPages,
       cookie,
@@ -3943,7 +3933,6 @@ export async function getPaginatedAndFilterableAssets({
       additionalData: {
         organizationId,
         excludeCategoriesQuery,
-        excludeTagsQuery,
         paramsValues,
         getAllEntries,
       },
@@ -4180,7 +4169,6 @@ export async function createAssetsFromContentImport({
       categories,
       locations,
       teamMembers,
-      tags,
       { customFields },
       assetModels,
     ] = await Promise.all([
@@ -4201,11 +4189,6 @@ export async function createAssetsFromContentImport({
       }),
       createTeamMemberIfNotExists({
         data,
-        organizationId,
-      }),
-      createTagsIfNotExists({
-        data,
-        userId,
         organizationId,
       }),
       createCustomFieldsIfNotExists({
@@ -4476,14 +4459,6 @@ export async function createAssetsFromContentImport({
         // custody on the asset, or it'd be IN_CUSTODY before the kit assignment
         // (double-holding + tripping bulkAssignKitCustody's availability guard).
         custodian: kitId ? undefined : custodianId,
-        tags:
-          asset?.tags && asset.tags.length > 0
-            ? {
-                set: asset.tags
-                  .filter((t) => tags[t])
-                  .map((t) => ({ id: tags[t] })),
-              }
-            : undefined,
         valuation: asset.valuation ? +asset.valuation : null,
         customFieldsValues,
         availableToBook: asset?.bookable !== "no",
@@ -6613,12 +6588,10 @@ export async function getUserAssetsTabLoaderData({
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     } = await getPaginatedAndFilterableAssets({
@@ -6641,12 +6614,10 @@ export async function getUserAssetsTabLoaderData({
       perPage,
       page,
       categories,
-      tags,
       items: assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
       modelName,
@@ -6691,7 +6662,6 @@ export async function getEntitiesWithSelectedValues({
     // Tags
     tagsExcludedSelected,
     selectedTags,
-    totalTags,
 
     // Locations
     locationExcludedSelected,
@@ -6783,7 +6753,6 @@ export async function getEntitiesWithSelectedValues({
     categories: [...selectedCategories, ...categoryExcludedSelected],
     totalCategories,
     tags: [...selectedTags, ...tagsExcludedSelected],
-    totalTags,
     locations: [...selectedLocations, ...locationExcludedSelected],
     totalLocations,
     assetModels: [...selectedAssetModels, ...assetModelExcludedSelected],
