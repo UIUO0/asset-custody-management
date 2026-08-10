@@ -171,6 +171,17 @@ function handleBotRequest(
           pipe(body);
         },
         onShellError(error: unknown) {
+          /**
+           * why: a shell-render crash reaches nothing that logs it. The rejection
+           * goes back to React Router, which renders the route `ErrorBoundary` and
+           * treats the error as handled, so `handleError` never sees it either —
+           * leaving a bare `500` in the request log and no stack anywhere.
+           * Dev-only; Sentry is the sink in production.
+           */
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("\n[SSR shell render error]\n", error);
+          }
           reject(error);
         },
         onError(error: unknown) {
@@ -220,6 +231,17 @@ function handleBrowserRequest(
           pipe(body);
         },
         onShellError(error: unknown) {
+          /**
+           * why: a shell-render crash reaches nothing that logs it. The rejection
+           * goes back to React Router, which renders the route `ErrorBoundary` and
+           * treats the error as handled, so `handleError` never sees it either —
+           * leaving a bare `500` in the request log and no stack anywhere.
+           * Dev-only; Sentry is the sink in production.
+           */
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error("\n[SSR shell render error]\n", error);
+          }
           reject(error);
         },
         onError(error: unknown) {

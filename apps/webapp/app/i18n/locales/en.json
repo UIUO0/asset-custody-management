@@ -338,6 +338,7 @@
     "assetModel": "Asset Model",
     "availableForBookings": "Available for bookings",
     "availableForBookingsDesc": "Asset is available for being used in bookings",
+    "barcodesCount": "Barcodes ({{count}})",
     "barcodesSupport": "Barcodes support",
     "book": "Book",
     "bookings": "Bookings",

@@ -240,9 +240,28 @@ async function main() {
         currency: "SAR",
         userId: admin.id,
         hasSequentialIdsMigrated: true,
+        /**
+         * Barcodes are a paid add-on upstream, so `Organization.barcodesEnabled`
+         * defaults to `false` and is normally flipped by the Stripe webhook. This
+         * deployment runs with `ENABLE_PREMIUM_FEATURES=false` and no billing, so
+         * nothing would ever flip it: the asset label panel would offer the QR
+         * code only, and the "+" button would open the upgrade dialog instead of
+         * the add-barcode form.
+         */
+        barcodesEnabled: true,
+        barcodesEnabledAt: new Date(),
       },
     });
     console.log(`+ created workspace "${WORKSPACE_NAME}"`);
+  }
+
+  /** Idempotent repair for workspaces seeded before the flag above existed. */
+  if (!org.barcodesEnabled) {
+    org = await db.organization.update({
+      where: { id: org.id },
+      data: { barcodesEnabled: true, barcodesEnabledAt: new Date() },
+    });
+    console.log(`= enabled barcodes for "${WORKSPACE_NAME}"`);
   }
 
   // 4. Department desks. Created before the accounts below because a

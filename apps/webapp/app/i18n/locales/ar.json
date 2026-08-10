@@ -350,6 +350,7 @@
     "assetModel": "طراز الصنف",
     "availableForBookings": "متاح للحجز",
     "availableForBookingsDesc": "الصنف متاح للاستخدام في الحجوزات",
+    "barcodesCount": "الباركود ({{count}})",
     "barcodesSupport": "دعم الباركود",
     "book": "حجز",
     "bookings": "الحجوزات",
