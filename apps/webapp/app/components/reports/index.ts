@@ -36,7 +36,6 @@ export {
   NumberCell,
   BooleanCell,
   AssetCell,
-  KitCell,
 } from "./report-table";
 export type { ReportTableProps } from "./report-table";
 
