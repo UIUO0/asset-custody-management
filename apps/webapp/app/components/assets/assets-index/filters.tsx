@@ -45,7 +45,7 @@ export function AssetIndexFilters({
   disableTeamMemberFilter?: boolean;
 }) {
   /** Used for filtering based on user type */
-  const filterParams: string[] = ["category", "tag", "location"];
+  const filterParams: string[] = ["category", "location"];
   if (!disableTeamMemberFilter) {
     filterParams.push("teamMember");
   }
@@ -110,22 +110,6 @@ export function AssetIndexFilters({
               withoutValueItem={{
                 id: "uncategorized",
                 name: t("list.uncategorized"),
-              }}
-            />
-            <DynamicDropdown
-              trigger={
-                <div className="flex cursor-pointer items-center gap-2">
-                  {t("assets.tags")}{" "}
-                  <ChevronRight className="hidden rotate-90 md:inline" />
-                </div>
-              }
-              model={{ name: "tag", queryKey: "name" }}
-              label={t("list.filterByTag")}
-              initialDataKey="tags"
-              countKey="totalTags"
-              withoutValueItem={{
-                id: "untagged",
-                name: t("list.withoutTag"),
               }}
             />
             <DynamicDropdown

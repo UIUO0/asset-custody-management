@@ -109,32 +109,6 @@ export const assetLabelPresets = {
     priority: 90,
   }),
 
-  /**
-   * "Part of kit" badge. Copy differs by asset type:
-   *
-   *   - INDIVIDUAL — whole asset is committed to the kit; user must
-   *     remove it from the kit (or scan the kit QR) to act on it
-   *     directly.
-   *   - QUANTITY_TRACKED — only a slice (`AssetKit.quantity`) is in
-   *     the kit; the rest of the pool is free and the action is
-   *     still allowed. The booking + custody drawer blocker is scoped
-   *     to INDIVIDUAL only, so this label needs matching copy so the
-   *     tooltip doesn't contradict the allowed qty-tracked action.
-   */
-  partOfKit: (
-    t: TFunction,
-    isPartOfKit: boolean = false,
-    isQuantityTracked: boolean = false,
-  ): AvailabilityLabelConfig => ({
-    condition: isPartOfKit,
-    badgeText: t("scanAvailability.partOfKit"),
-    tooltipTitle: t("scanAvailability.partOfKitTitle"),
-    tooltipContent: isQuantityTracked
-      ? t("scanAvailability.partialKitAllocation")
-      : t("scanAvailability.partOfKitContent"),
-    priority: 80,
-  }),
-
   unavailable: (
     t: TFunction,
     isUnavailable: boolean = false,
@@ -143,57 +117,6 @@ export const assetLabelPresets = {
     badgeText: t("availability.unavailableBadge"),
     tooltipTitle: t("scanAvailability.assetUnavailableTitle"),
     tooltipContent: t("scanAvailability.assetUnavailableContent"),
-    priority: 110,
-  }),
-};
-
-/**
- * Predefined label configurations for common kit states.
- *
- * Same `t`-first convention as {@link assetLabelPresets}.
- */
-export const kitLabelPresets = {
-  inCustody: (
-    t: TFunction,
-    isInCustody: boolean = false,
-  ): AvailabilityLabelConfig => ({
-    condition: isInCustody,
-    badgeText: t("availability.inCustodyBadge"),
-    tooltipTitle: t("scanAvailability.kitInCustodyTitle"),
-    tooltipContent: t("scanAvailability.kitInCustodyContent"),
-    priority: 100,
-  }),
-
-  checkedOut: (
-    t: TFunction,
-    isCheckedOut: boolean = false,
-  ): AvailabilityLabelConfig => ({
-    condition: isCheckedOut,
-    badgeText: t("scanAvailability.checkedOut"),
-    tooltipTitle: t("scanAvailability.kitCheckedOutTitle"),
-    tooltipContent: t("scanAvailability.kitCheckedOutContent"),
-    priority: 90,
-  }),
-
-  hasAssetsInCustody: (
-    t: TFunction,
-    hasInCustody: boolean = false,
-  ): AvailabilityLabelConfig => ({
-    condition: hasInCustody,
-    badgeText: t("scanAvailability.containsInCustody"),
-    tooltipTitle: t("scanAvailability.containsInCustody"),
-    tooltipContent: t("scanAvailability.containsInCustodyContent"),
-    priority: 85,
-  }),
-
-  containsUnavailableAssets: (
-    t: TFunction,
-    hasUnavailable: boolean = false,
-  ): AvailabilityLabelConfig => ({
-    condition: hasUnavailable,
-    badgeText: t("scanAvailability.containsUnavailable"),
-    tooltipTitle: t("scanAvailability.containsUnavailable"),
-    tooltipContent: t("scanAvailability.containsUnavailableContent"),
     priority: 110,
   }),
 };

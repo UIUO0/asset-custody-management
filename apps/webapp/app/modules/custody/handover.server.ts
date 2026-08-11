@@ -1157,7 +1157,6 @@ export async function applyHandoverEffect(
         where: {
           assetId,
           teamMemberId: handover.counterpartyTeamMemberId,
-          kitCustodyId: null,
         },
         select: { id: true },
       });

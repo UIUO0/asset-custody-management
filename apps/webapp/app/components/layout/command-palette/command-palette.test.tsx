@@ -2,12 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   getAssetCommandValue,
-  getKitCommandValue,
   getLocationCommandValue,
   getTeamMemberCommandValue,
   getTeamMemberHref,
   type AssetSearchResult,
-  type KitSearchResult,
   type LocationSearchResult,
   type TeamMemberSearchResult,
 } from "./command-palette";
@@ -48,35 +46,6 @@ describe("getAssetCommandValue", () => {
 
     expect(value).toContain("asset-123");
     expect(value).toContain("4K Camera");
-    expect(value).not.toContain("null");
-  });
-});
-
-describe("getKitCommandValue", () => {
-  const baseKit: KitSearchResult = {
-    id: "kit-456",
-    name: "Camera Kit",
-    description: "Professional camera equipment",
-    status: "AVAILABLE",
-    assetCount: 5,
-  };
-
-  it("includes the primary searchable fields", () => {
-    const value = getKitCommandValue(baseKit);
-
-    expect(value).toContain("kit-456");
-    expect(value).toContain("Camera Kit");
-    expect(value).toContain("Professional camera equipment");
-  });
-
-  it("falls back gracefully when optional fields are missing", () => {
-    const value = getKitCommandValue({
-      ...baseKit,
-      description: null,
-    });
-
-    expect(value).toContain("kit-456");
-    expect(value).toContain("Camera Kit");
     expect(value).not.toContain("null");
   });
 });

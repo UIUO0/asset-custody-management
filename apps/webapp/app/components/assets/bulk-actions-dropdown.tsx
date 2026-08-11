@@ -17,18 +17,14 @@ import {
 import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { tw } from "~/utils/tw";
 import BulkAddToAuditDialog from "./bulk-add-to-audit-dialog";
-import BulkAddToKitDialog from "./bulk-add-to-kit-dialog";
 import BulkApproveDialog from "./bulk-approve-dialog";
 import BulkAssignCustodyDialog from "./bulk-assign-custody-dialog";
-import BulkAssignTagsDialog from "./bulk-assign-tags-dialog";
 import BulkCategoryUpdateDialog from "./bulk-category-update-dialog";
 import BulkDeleteDialog from "./bulk-delete-dialog";
 import BulkDownloadQrDialog from "./bulk-download-qr-dialog";
 import BulkLocationUpdateDialog from "./bulk-location-update-dialog";
 import BulkMarkAvailabilityDialog from "./bulk-mark-availability-dialog";
 import BulkReleaseCustodyDialog from "./bulk-release-custody-dialog";
-import BulkRemoveFromKits from "./bulk-remove-from-kits";
-import BulkRemoveTagsDialog from "./bulk-remove-tags-dialog";
 import BulkStartAuditDialog from "./bulk-start-audit-dialog";
 import { BulkUpdateDialogTrigger } from "../bulk-update-dialog/bulk-update-dialog";
 import Icon from "../icons/icon";
@@ -104,10 +100,6 @@ function ConditionalDropdown() {
     (asset) => asset.status === "CHECKED_OUT",
   );
 
-  const someAssetPartOfUnavailableKit = selectedAssets.some(
-    (asset) => asset?.kit && asset.kit.status !== "AVAILABLE",
-  );
-
   const selfUserCustody = selectedAssets.some((a) => {
     const primary = getPrimaryCustody(
       a?.custody as Record<string, unknown>[] | undefined,
@@ -155,13 +147,9 @@ function ConditionalDropdown() {
           <BulkAddToAuditDialog />
         </When>
         <BulkLocationUpdateDialog />
-        <BulkAssignTagsDialog />
-        <BulkRemoveTagsDialog />
         <BulkCategoryUpdateDialog />
         <BulkMarkAvailabilityDialog type="available" />
         <BulkMarkAvailabilityDialog type="unavailable" />
-        <BulkAddToKitDialog />
-        <BulkRemoveFromKits />
       </When>
 
       <When
@@ -314,13 +302,9 @@ function ConditionalDropdown() {
                   label={t("bulkActions.releaseCustody")}
                   onClick={closeMenu}
                   disabled={
-                    !allAssetsAreInCustody ||
-                    someAssetPartOfUnavailableKit ||
-                    disableReleaseCustody
+                    !allAssetsAreInCustody || disableReleaseCustody
                       ? {
-                          reason: someAssetPartOfUnavailableKit
-                            ? t("bulkActions.custodyViaKitReason")
-                            : disableReleaseCustody
+                          reason: disableReleaseCustody
                             ? t("bulkActions.selfServiceReleaseReason")
                             : t("bulkActions.notInCustodyReason"),
                         }
@@ -338,12 +322,8 @@ function ConditionalDropdown() {
                   }
                   onClick={closeMenu}
                   disabled={
-                    !allAssetsAreAvailable || someAssetPartOfUnavailableKit
-                      ? {
-                          reason: someAssetPartOfUnavailableKit
-                            ? t("bulkActions.custodyViaKitReason")
-                            : t("bulkActions.notAvailableReason"),
-                        }
+                    !allAssetsAreAvailable
+                      ? { reason: t("bulkActions.notAvailableReason") }
                       : isLoading
                   }
                 />
@@ -376,22 +356,6 @@ function ConditionalDropdown() {
             >
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
-                  type="tag-add"
-                  onClick={closeMenu}
-                  disabled={isLoading}
-                  label={t("bulkActions.assignTags")}
-                />
-              </DropdownMenuItem>
-              <DropdownMenuItem className="py-1 lg:p-0">
-                <BulkUpdateDialogTrigger
-                  type="tag-remove"
-                  onClick={closeMenu}
-                  disabled={isLoading}
-                  label={t("bulkActions.removeTags")}
-                />
-              </DropdownMenuItem>
-              <DropdownMenuItem className="border-t py-1 lg:p-0">
-                <BulkUpdateDialogTrigger
                   type="location"
                   onClick={closeMenu}
                   disabled={isLoading}
@@ -400,28 +364,6 @@ function ConditionalDropdown() {
               <DropdownMenuItem className="py-1 lg:p-0">
                 <BulkUpdateDialogTrigger
                   type="category"
-                  onClick={closeMenu}
-                  disabled={isLoading}
-                />
-              </DropdownMenuItem>
-              <DropdownMenuItem className="border-t py-1 lg:p-0">
-                <BulkUpdateDialogTrigger
-                  label={t("bulkActions.addToKit")}
-                  type="add-to-kit"
-                  onClick={closeMenu}
-                  disabled={
-                    someAssetCheckedOut
-                      ? {
-                          reason: t("bulkActions.checkedOutAddToKitReason"),
-                        }
-                      : isLoading
-                  }
-                />
-              </DropdownMenuItem>
-              <DropdownMenuItem className=" py-1 lg:p-0">
-                <BulkUpdateDialogTrigger
-                  label={t("bulkActions.removeFromKit")}
-                  type="remove-from-kit"
                   onClick={closeMenu}
                   disabled={isLoading}
                 />

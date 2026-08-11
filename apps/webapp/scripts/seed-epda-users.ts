@@ -148,7 +148,21 @@ const ACCOUNTS = [
   // account carries `DEPARTMENT` and points at the IT desk above.
 ] as const;
 
-/** Creates (or finds) the Supabase auth account and returns its id. */
+/**
+ * Creates (or finds) the Supabase auth account and returns its id.
+ *
+ * ⚠️ The "already exists" fallback must look in `auth.users`, NOT in
+ * `public.User`. The two live in different schemas and can fall out of sync:
+ * resetting the public schema (`pnpm db:reset`, a manual `DROP SCHEMA`)
+ * leaves `auth.users` untouched, so every account exists in auth and none
+ * exists in public. That is exactly the state this fallback has to recover
+ * from — and querying `db.user` there finds nothing and throws, so the seed
+ * cannot repair the very situation it is for.
+ *
+ * Symptom when this is wrong: the app renders "User not found" on every
+ * authenticated page (the session cookie is valid, the `public.User` row is
+ * missing), and re-seeding fails with "Failed to create auth account".
+ */
 async function ensureAuthAccount(email: string, password: string) {
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email,
@@ -158,9 +172,24 @@ async function ensureAuthAccount(email: string, password: string) {
 
   if (!error) return data.user.id;
 
-  // Already exists → look it up so the script stays idempotent
-  const existing = await db.user.findUnique({ where: { email } });
-  if (existing) return existing.id;
+  // Already registered in `auth.users` → find its id so the script stays
+  // idempotent. `listUsers` is paginated; the seed set is small, but page
+  // through anyway so this keeps working as accounts are added.
+  for (let page = 1; page <= 10; page++) {
+    const { data: list, error: listError } =
+      await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+
+    if (listError) break;
+    if (list.users.length === 0) break;
+
+    const match = list.users.find((u) => u.email === email);
+    if (match) {
+      // Re-assert the seed password so a known-good credential always works,
+      // even for an account created by an earlier run with a different one.
+      await supabaseAdmin.auth.admin.updateUserById(match.id, { password });
+      return match.id;
+    }
+  }
 
   throw new Error(
     `Failed to create auth account for ${email}: ${error.message}`,

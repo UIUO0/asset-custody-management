@@ -11,7 +11,6 @@ import { BookingStatusComponent } from "./booking-status-component";
 import { CategoryBadgeComponent } from "./category-badge-component";
 import { DateComponent } from "./date-component";
 import { DescriptionComponent } from "./description-component";
-import { KitsListComponent } from "./kits-list-component";
 import { LinkComponent } from "./link-component";
 import { TagComponent } from "./tag-component";
 
@@ -44,7 +43,6 @@ const defaultComponents = {
   DateComponent,
   AssetsListComponent,
   AuditImagesComponent,
-  KitsListComponent,
   LinkComponent,
   BookingStatusComponent,
   DescriptionComponent,

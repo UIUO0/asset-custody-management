@@ -27,22 +27,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       .findMany({
         where: {
           organizationId,
-          ...(onlyOrphaned
-            ? { assetId: null, kitId: null }
-            : {
-                OR: [
-                  {
-                    assetId: {
-                      not: null,
-                    },
-                  },
-                  {
-                    kitId: {
-                      not: null,
-                    },
-                  },
-                ],
-              }),
+          ...(onlyOrphaned ? { assetId: null } : { assetId: { not: null } }),
         },
       })
       .catch((cause) => {

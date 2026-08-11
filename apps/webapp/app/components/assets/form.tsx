@@ -36,7 +36,6 @@ import {
   useNavigate,
   useNavigation,
 } from "react-router";
-import type { Tag } from "react-tag-autocomplete";
 import { useZorm } from "react-zorm";
 import { z } from "zod";
 import { updateDynamicTitleAtom } from "~/atoms/dynamic-title-atom";
@@ -44,7 +43,7 @@ import { fileErrorAtom, assetImageValidateFileAtom } from "~/atoms/file";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
-import { getPrimaryKit, isQuantityTracked } from "~/modules/asset/utils";
+import { isQuantityTracked } from "~/modules/asset/utils";
 import type {
   AssetEditLoaderData,
   loader,
@@ -93,7 +92,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../shared/tooltip";
-import { TagsAutocomplete } from "../tag/tags-autocomplete";
 import When from "../when/when";
 
 export const NewAssetFormSchema = z.object({
@@ -124,7 +122,6 @@ export const NewAssetFormSchema = z.object({
    */
   currentLocationId: z.string().optional(),
   qrId: z.string().optional(),
-  tags: z.string().optional(),
   /**
    * Per-asset override of which Barcode to display in list views. Empty
    * string means "use workspace default" (resolver follows
@@ -254,7 +251,6 @@ type Props = Partial<
   >
 > & {
   qrId?: Qr["id"] | null;
-  tags?: Tag[];
   barcodes?: Pick<Barcode, "id" | "value" | "type">[];
   referer?: string | null;
   /**
@@ -299,7 +295,6 @@ export const AssetForm = ({
   consumptionType,
   unitOfMeasure,
   qrId,
-  tags,
   barcodes,
   preferredBarcodeId,
   referer,
@@ -416,10 +411,7 @@ export const AssetForm = ({
   const [, validateFile] = useAtom(assetImageValidateFileAtom);
   const [, updateDynamicTitle] = useAtom(updateDynamicTitleAtom);
 
-  const { currency, asset } = useLoaderData<AssetEditLoaderData>();
-  const kitMembership = getPrimaryKit<{ id: string; name: string }>(asset);
-  const isKitAsset = Boolean(kitMembership);
-  const locationDisabled = disabled || isKitAsset;
+  const { currency } = useLoaderData<AssetEditLoaderData>();
 
   /** Whether we are in edit mode (asset already exists). */
   const isEditMode = Boolean(id);
@@ -540,12 +532,6 @@ export const AssetForm = ({
       ? actionData?.error?.message
       : undefined) ??
     fileError;
-  /** Get the tags from the loader */
-  const tagsSuggestions = useLoaderData<typeof loader>().tags.map((tag) => ({
-    label: tag.name,
-    value: tag.id,
-  }));
-
   /**
    * Asset Model selector — rendered in two positions depending on mode
    * (see the two render sites in the JSX below). Hidden entirely for
@@ -1060,31 +1046,6 @@ export const AssetForm = ({
         </FormRow>
 
         <FormRow
-          rowLabel={t("assets.tags")}
-          subHeading={
-            <p>
-              {t("assetForm.tagsHint")}{" "}
-              <Button
-                to="/tags/new"
-                className="text-gray-600 underline"
-                target="_blank"
-                variant="link-gray"
-              >
-                {t("assetForm.createTags")}
-              </Button>
-            </p>
-          }
-          className="border-b-0 py-[10px]"
-          // required={zodFieldIsRequired(FormSchema.shape.tags)}
-        >
-          <TagsAutocomplete
-            existingTags={tags ?? []}
-            suggestions={tagsSuggestions}
-            hideLabel
-          />
-        </FormRow>
-
-        <FormRow
           rowLabel={t("assets.location")}
           subHeading={
             <p>
@@ -1106,84 +1067,50 @@ export const AssetForm = ({
             name="currentLocationId"
             value={locationId || ""}
           />
-          {isKitAsset ? (
-            <HoverCard openDelay={50} closeDelay={50}>
-              <HoverCardTrigger className="disabled w-full cursor-not-allowed">
-                <DynamicSelect
-                  disabled={locationDisabled}
-                  selectionMode="set"
-                  fieldName="newLocationId"
-                  triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
-                  defaultValue={locationId || undefined}
-                  model={{ name: "location", queryKey: "name" }}
-                  contentLabel={t("nav.locations")}
-                  label={t("assets.location")}
-                  hideLabel
-                  initialDataKey="locations"
-                  countKey="totalLocations"
-                  closeOnSelect
-                  allowClear
-                />
-              </HoverCardTrigger>
-              <HoverCardContent side="left">
-                <h5 className="text-start text-[14px]">
-                  {t("bulkActions.actionDisabled")}
-                </h5>
-                <p className="text-start text-[14px]">
-                  <Trans
-                    i18nKey="assetForm.locationManagedByKit"
-                    values={{ name: kitMembership?.name }}
-                    components={{ 1: <strong /> }}
+          <DynamicSelect
+            disabled={disabled}
+            selectionMode="set"
+            fieldName="newLocationId"
+            triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
+            defaultValue={locationId || undefined}
+            model={{ name: "location", queryKey: "name" }}
+            contentLabel={t("nav.locations")}
+            label={t("assets.location")}
+            hideLabel
+            initialDataKey="locations"
+            countKey="totalLocations"
+            closeOnSelect
+            allowClear
+            extraContent={({ onItemCreated, closePopover }) => (
+              <InlineEntityCreationDialog
+                type="location"
+                title={t("assetForm.createNewLocation")}
+                buttonLabel={t("assetForm.createNewLocation")}
+                onCreated={(created) => {
+                  if (created?.type !== "location") return;
+                  const location = created.entity;
+                  onItemCreated({
+                    id: location.id,
+                    name: location.name,
+                    metadata: { ...location },
+                  });
+                  closePopover();
+                }}
+              />
+            )}
+            renderItem={({ name, metadata }) => (
+              <div className="flex items-center gap-2">
+                {metadata?.thumbnailUrl ? (
+                  <ImageWithPreview
+                    thumbnailUrl={metadata.thumbnailUrl}
+                    alt={metadata.name}
+                    className="size-6 rounded-[2px]"
                   />
-                </p>
-              </HoverCardContent>
-            </HoverCard>
-          ) : (
-            <DynamicSelect
-              disabled={disabled}
-              selectionMode="set"
-              fieldName="newLocationId"
-              triggerWrapperClassName="flex flex-col !gap-0 justify-start items-start [&_.inner-label]:w-full [&_.inner-label]:text-start "
-              defaultValue={locationId || undefined}
-              model={{ name: "location", queryKey: "name" }}
-              contentLabel={t("nav.locations")}
-              label={t("assets.location")}
-              hideLabel
-              initialDataKey="locations"
-              countKey="totalLocations"
-              closeOnSelect
-              allowClear
-              extraContent={({ onItemCreated, closePopover }) => (
-                <InlineEntityCreationDialog
-                  type="location"
-                  title={t("assetForm.createNewLocation")}
-                  buttonLabel={t("assetForm.createNewLocation")}
-                  onCreated={(created) => {
-                    if (created?.type !== "location") return;
-                    const location = created.entity;
-                    onItemCreated({
-                      id: location.id,
-                      name: location.name,
-                      metadata: { ...location },
-                    });
-                    closePopover();
-                  }}
-                />
-              )}
-              renderItem={({ name, metadata }) => (
-                <div className="flex items-center gap-2">
-                  {metadata?.thumbnailUrl ? (
-                    <ImageWithPreview
-                      thumbnailUrl={metadata.thumbnailUrl}
-                      alt={metadata.name}
-                      className="size-6 rounded-[2px]"
-                    />
-                  ) : null}
-                  <div>{name}</div>
-                </div>
-              )}
-            />
-          )}
+                ) : null}
+                <div>{name}</div>
+              </div>
+            )}
+          />
         </FormRow>
 
         <FormRow

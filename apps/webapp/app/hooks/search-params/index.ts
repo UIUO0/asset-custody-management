@@ -47,7 +47,6 @@ export function cleanParamsForCookie(params: URLSearchParams | string): string {
 export const ALLOWED_FILTER_PATHNAMES = {
   assets: "assetFilter_v2",
   bookings: "bookingFilter_v2",
-  kits: "kitFilter_v2",
 } as const;
 
 export type AllowedPathname = keyof typeof ALLOWED_FILTER_PATHNAMES;
@@ -300,7 +299,6 @@ export function destroyCookieValues(
     // Also remove any legacy cookies at old paths to ensure complete cleanup
     Cookies.remove(cookieName, { path: "/assets", ...cookieOptions });
     Cookies.remove(cookieName, { path: "/bookings", ...cookieOptions });
-    Cookies.remove(cookieName, { path: "/kits", ...cookieOptions });
   } else {
     Cookies.set(cookieName, finalCookieValue, {
       path,

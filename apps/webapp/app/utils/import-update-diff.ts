@@ -229,7 +229,7 @@ export function analyzeUpdateHeaders(
 /**
  * Compares a core field value between the CSV cell and the existing asset.
  *
- * @param fieldKey - Internal field key (e.g. "name", "category", "tags")
+ * @param fieldKey - Internal field key (e.g. "name", "category")
  * @param csvValue - Trimmed value from the CSV cell
  * @param asset - Existing asset loaded from the database
  * @param displayName - Human-readable column name for the change record
@@ -273,36 +273,6 @@ export function compareCoreField(
           field: displayName,
           currentValue: current || "(none)",
           newValue: csvValue,
-        };
-      }
-      return null;
-    }
-
-    case "tags": {
-      const currentTags = asset.tags
-        .map((t) => t.name)
-        .sort((a, b) => a.localeCompare(b));
-      const csvTags = csvValue
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b));
-
-      const currentStr = currentTags.join(", ");
-      const csvStr = csvTags.join(", ");
-
-      // Case-insensitive set comparison
-      const currentSet = new Set(currentTags.map((t) => t.toLowerCase()));
-      const csvSet = new Set(csvTags.map((t) => t.toLowerCase()));
-
-      if (
-        currentSet.size !== csvSet.size ||
-        ![...currentSet].every((t) => csvSet.has(t))
-      ) {
-        return {
-          field: displayName,
-          currentValue: currentStr || "(none)",
-          newValue: csvStr,
         };
       }
       return null;
@@ -680,21 +650,6 @@ export function detectClearing(
           return {
             field: displayName,
             currentValue: asset.location.name,
-            newValue: "(empty)",
-            clearing: true,
-          };
-        }
-        return null;
-      }
-      case "tags": {
-        if (asset.tags.length > 0) {
-          const currentStr = asset.tags
-            .map((t) => t.name)
-            .sort((a, b) => a.localeCompare(b))
-            .join(", ");
-          return {
-            field: displayName,
-            currentValue: currentStr,
             newValue: "(empty)",
             clearing: true,
           };

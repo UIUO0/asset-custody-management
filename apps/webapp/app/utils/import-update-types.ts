@@ -47,7 +47,7 @@ export const EXPORT_HEADER_TO_FIELD_MAP: Record<string, string> = {
 /**
  * Fields supported by the bulk-update-from-import flow.
  *
- * v1 covered core metadata (name, category, location, tags, valuation,
+ * v1 covered core metadata (name, category, location, valuation,
  * availableToBook). The Wave-1 update-path extension adds the
  * qty-tracked + AssetModel columns so a customer's
  * `export → tweak → re-import` round-trip preserves those values
@@ -61,7 +61,6 @@ export const UPDATABLE_FIELDS = new Set<string>([
   "name",
   "category",
   "location",
-  "tags",
   "valuation",
   "availableToBook",
   // Wave-1 extension: qty-tracked + AssetModel round-trip.
@@ -146,11 +145,10 @@ export interface UpdatePreview {
   totalFieldChanges: number;
   /** Total fields that will remain unchanged (for reassurance message) */
   totalUnchangedFields: number;
-  /** Entities (categories, locations, tags) that don't exist yet and will be created */
+  /** Entities (categories, locations) that don't exist yet and will be created */
   newEntities: {
     categories: string[];
     locations: string[];
-    tags: string[];
   };
 }
 
@@ -260,7 +258,6 @@ export type AssetForUpdate = {
   assetModelId?: string | null;
   category: { name: string } | null;
   location: { id: string; name: string } | null;
-  tags: { id: string; name: string }[];
   customFields: {
     id: string;
     value: unknown;

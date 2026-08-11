@@ -2,7 +2,7 @@
  * Phase 3 — Assets with change history.
  *
  * Creates 300 `Asset` rows spread across the 12-month history window,
- * each attached to the seed marker tag + 0–2 random content tags. Every
+ * each carrying the `NAME_SUFFIX` marker in its title. Every
  * asset produces one `ASSET_CREATED` event at its own `createdAt`.
  *
  * For ~40% of assets, also emits 1–4 `ASSET_*_CHANGED` events over the
@@ -26,6 +26,7 @@ import {
   assetFieldChangedEvent,
   type AssetFieldChangeAction,
 } from "../event-shapes";
+import { NAME_SUFFIX } from "../markers";
 
 /** Target number of assets; matches the medium-scale plan. */
 const TARGET_ASSETS = 300;
@@ -51,19 +52,10 @@ export async function runAssetsPhase(
   ctx: SeederContext,
   state: SeederState,
 ): Promise<void> {
-  if (!state.markerTagId) {
-    throw new Error(
-      "runAssetsPhase: state.markerTagId is missing — Phase 2 must run first.",
-    );
-  }
-
   const createWindow = {
     start: new Date(ctx.historyStart.getTime() + ASSET_CREATE_START_OFFSET_MS),
     end: new Date(ctx.now.getTime() - ASSET_CREATE_END_OFFSET_MS),
   };
-
-  // Content tags = all tags except the marker, for the 0–2 random attachments.
-  const contentTagIds = state.tagIds.filter((id) => id !== state.markerTagId);
 
   const allEvents: ActivityEventInput[] = [];
 
@@ -83,16 +75,8 @@ export async function runAssetsPhase(
     const valuation =
       ctx.rng() < 0.7 ? randomIntInRange(50, 5000, ctx.rng) : null;
 
-    // 0–2 random content tags, no repeats. Marker tag always attached on top.
-    const extraTagCount = ctx.rng() < 0.6 ? randomIntInRange(0, 2, ctx.rng) : 0;
-    const extraTagIds = sampleWithoutReplacement(
-      contentTagIds,
-      extraTagCount,
-      ctx.rng,
-    );
-    const tagIdsToConnect = [state.markerTagId, ...extraTagIds];
-
-    const initialTitle = faker.commerce.productName();
+    // The name suffix is the seed marker the cleanup command matches on.
+    const initialTitle = `${faker.commerce.productName()}${NAME_SUFFIX}`;
     const initialDescription = faker.commerce.productDescription();
 
     const asset = await ctx.db.asset.create({
@@ -105,7 +89,6 @@ export async function runAssetsPhase(
         organizationId: ctx.orgId,
         status: "AVAILABLE",
         createdAt,
-        tags: { connect: tagIdsToConnect.map((id) => ({ id })) },
         // location is now a pivot. Seed assets are INDIVIDUAL
         // (quantity 1), so create at most one pivot row.
         ...(locationId
@@ -158,8 +141,7 @@ export async function runAssetsPhase(
  * row in the DB keeps its original values — events are the report-facing
  * history; the asset's "current state" is whatever we wrote at create-time.
  *
- * Supported fields: name, description, valuation, category, location. Kit
- * changes are deferred to Phase 4 (which attaches assets to kits).
+ * Supported fields: name, description, valuation, category, location.
  */
 function buildChangeTrail(
   ctx: SeederContext,
@@ -297,7 +279,7 @@ function buildChangeTrail(
   return events;
 }
 
-/** Pick one of the asset-level `*_CHANGED` actions, skipping `KIT_CHANGED`. */
+/** Pick one of the asset-level `*_CHANGED` actions. */
 function pickChangeAction(ctx: SeederContext): AssetFieldChangeAction {
   const pool: AssetFieldChangeAction[] = [
     "ASSET_NAME_CHANGED",
@@ -314,30 +296,6 @@ function pickRandom<T>(arr: readonly T[], rng: () => number): T {
   if (arr.length === 0) throw new Error("pickRandom: empty array");
   return arr[Math.floor(rng() * arr.length)];
 }
-
-/**
- * Draw `n` distinct items from `arr` without replacement.
- *
- * Uses a partial Fisher-Yates shuffle — O(n) work, no allocations per
- * swap beyond the output array, handles `n > arr.length` by capping.
- */
-function sampleWithoutReplacement<T>(
-  arr: readonly T[],
-  n: number,
-  rng: () => number,
-): T[] {
-  const size = Math.min(n, arr.length);
-  if (size === 0) return [];
-  const pool = arr.slice();
-  const out: T[] = [];
-  for (let i = 0; i < size; i++) {
-    const j = i + Math.floor(rng() * (pool.length - i));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-    out.push(pool[i]);
-  }
-  return out;
-}
-
 /**
  * Produce `count` sorted dates between `start` (exclusive) and `end`
  * (exclusive), roughly evenly spread with jitter.

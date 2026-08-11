@@ -28,7 +28,6 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 
 import { useTranslation } from "react-i18next";
 import { AssetImage } from "~/components/assets/asset-image";
-import KitImage from "~/components/kits/kit-image";
 import { DateS } from "~/components/shared/date";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
 import {
@@ -524,40 +523,4 @@ export function AssetCell({
     </div>
   );
 }
-
-/**
- * Kit name cell with thumbnail image.
- * The kit counterpart to {@link AssetCell}, used by the Top Booked Kits report.
- *
- * Uses KitImage for placeholder handling and client-side token refresh (the
- * report loader pre-refreshes expired URLs server-side, so the fetcher inside
- * KitImage stays dormant in practice — see `refreshExpiredKitImages`).
- */
-export function KitCell({
-  name,
-  image,
-  imageExpiration,
-  kitId,
-}: {
-  name: string;
-  image: string | null;
-  imageExpiration: Date | string | null;
-  kitId: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <KitImage
-        kit={{
-          kitId,
-          image,
-          imageExpiration,
-          alt: "", // Decorative - kit name is displayed in adjacent text
-        }}
-        className="size-8 shrink-0 rounded object-cover"
-      />
-      <span className="font-medium">{name}</span>
-    </div>
-  );
-}
-
 export default ReportTable;

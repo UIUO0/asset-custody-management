@@ -43,9 +43,7 @@ vi.mock("~/utils/cookies.server", () => ({
 
 vi.mock("~/utils/markdoc-wrappers", () => ({
   // why: These are formatting utilities, we just need them to return formatted strings
-  wrapKitsWithDataForNote: vi.fn((kit) => `kit:${kit?.name || "unknown"}`),
   wrapUserLinkForNote: vi.fn((user) => `@${user.firstName}`),
-  wrapTagForNote: vi.fn((tag) => `#${tag.name}`),
   wrapLinkForNote: vi.fn((to, text) => `[${text}](${to})`),
 }));
 
@@ -66,7 +64,6 @@ import {
   createAssetNotesForAuditAddition,
   createAssetNotesForAuditRemoval,
   createAssetValuationChangeNote,
-  createBulkKitChangeNotes,
   createNote,
   createNotes,
   deleteNote,
@@ -340,167 +337,6 @@ describe("note service", () => {
           userId: "user-1",
         }),
       ).rejects.toThrow("Something went wrong while deleting the note");
-    });
-  });
-
-  describe("createBulkKitChangeNotes", () => {
-    it("creates notes for newly added assets to kit", async () => {
-      vi.mocked(db.user.findFirstOrThrow).mockResolvedValue({
-        firstName: "John",
-        lastName: "Doe",
-      } as any);
-      vi.mocked(db.note.createMany).mockResolvedValue({ count: 2 });
-
-      const kit = {
-        id: "kit-1",
-        name: "Camera Kit",
-      };
-
-      const result = await createBulkKitChangeNotes({
-        newlyAddedAssets: [
-          { id: "asset-1", title: "Camera", type: "INDIVIDUAL", kit: null },
-          { id: "asset-2", title: "Lens", type: "INDIVIDUAL", kit: null },
-        ],
-        removedAssets: [],
-        userId: "user-1",
-        kit: kit as any,
-        organizationId: "org-1",
-      });
-
-      // Expect db.note.create to be called twice (once for each asset)
-      expect(db.note.create).toHaveBeenCalledTimes(2);
-
-      // Verify the first call has correct structure
-      const firstCall = vi.mocked(db.note.create).mock.calls[0][0];
-      expect(firstCall.data.type).toBe("UPDATE");
-      // INDIVIDUAL assets keep the countless "added asset to ..." phrasing.
-      expect(firstCall.data.content).toContain("added asset to");
-      expect(firstCall.data.asset?.connect?.id).toBe("asset-1");
-      expect(firstCall.data.user?.connect?.id).toBe("user-1");
-
-      expect(result).toBeUndefined();
-    });
-
-    it("names the per-kit unit count when a QUANTITY_TRACKED asset is added", async () => {
-      vi.mocked(db.user.findFirstOrThrow).mockResolvedValue({
-        firstName: "John",
-        lastName: "Doe",
-      } as any);
-
-      const kit = {
-        id: "kit-1",
-        name: "Camera Kit",
-      };
-
-      await createBulkKitChangeNotes({
-        newlyAddedAssets: [
-          {
-            id: "asset-1",
-            title: "Batteries",
-            type: "QUANTITY_TRACKED",
-            unitOfMeasure: null,
-            // Per-row AssetKit.quantity for THIS kit (not Asset.quantity).
-            quantity: 50,
-            kit: null,
-          },
-        ],
-        removedAssets: [],
-        userId: "user-1",
-        kit: kit as any,
-        organizationId: "org-1",
-      });
-
-      expect(db.note.create).toHaveBeenCalledTimes(1);
-      const call = vi.mocked(db.note.create).mock.calls[0][0];
-      // Qty-tracked add note surfaces the per-kit count and drops "asset".
-      expect(call.data.content).toContain("50 units");
-      expect(call.data.content).toContain("added 50 units to");
-      expect(call.data.content).not.toContain("added asset to");
-    });
-
-    it("creates notes for assets removed from kit", async () => {
-      vi.mocked(db.user.findFirstOrThrow).mockResolvedValue({
-        firstName: "John",
-        lastName: "Doe",
-      } as any);
-      vi.mocked(db.note.createMany).mockResolvedValue({ count: 1 });
-
-      const kit = {
-        id: "kit-1",
-        name: "Camera Kit",
-      };
-
-      await createBulkKitChangeNotes({
-        newlyAddedAssets: [],
-        removedAssets: [
-          { id: "asset-3", title: "Tripod", type: "INDIVIDUAL", kit },
-        ],
-        userId: "user-1",
-        kit: kit as any,
-        organizationId: "org-1",
-      });
-
-      // Expect db.note.create to be called once for the removed asset
-      expect(db.note.create).toHaveBeenCalledTimes(1);
-
-      // Verify the call has correct structure
-      const call = vi.mocked(db.note.create).mock.calls[0][0];
-      expect(call.data.type).toBe("UPDATE");
-      // INDIVIDUAL keeps the countless "removed asset from ..." phrasing.
-      expect(call.data.content).toContain("removed asset from");
-      expect(call.data.asset?.connect?.id).toBe("asset-3");
-      expect(call.data.user?.connect?.id).toBe("user-1");
-    });
-
-    it("creates notes for both added and removed assets", async () => {
-      vi.mocked(db.user.findFirstOrThrow).mockResolvedValue({
-        firstName: "John",
-        lastName: "Doe",
-      } as any);
-      vi.mocked(db.note.createMany).mockResolvedValue({ count: 3 });
-
-      const kit = {
-        id: "kit-1",
-        name: "Camera Kit",
-      };
-
-      await createBulkKitChangeNotes({
-        newlyAddedAssets: [
-          { id: "asset-1", title: "Camera", type: "INDIVIDUAL", kit: null },
-          { id: "asset-2", title: "Lens", type: "INDIVIDUAL", kit: null },
-        ],
-        removedAssets: [
-          { id: "asset-3", title: "Tripod", type: "INDIVIDUAL", kit },
-        ],
-        userId: "user-1",
-        kit: kit as any,
-        organizationId: "org-1",
-      });
-
-      // Expect db.note.create to be called 3 times (2 added + 1 removed)
-      expect(db.note.create).toHaveBeenCalledTimes(3);
-    });
-
-    it("does nothing when no assets are added or removed", async () => {
-      vi.mocked(db.user.findFirstOrThrow).mockResolvedValue({
-        firstName: "John",
-        lastName: "Doe",
-      } as any);
-      const kit = {
-        id: "kit-1",
-        name: "Camera Kit",
-      };
-
-      await createBulkKitChangeNotes({
-        newlyAddedAssets: [],
-        removedAssets: [],
-        userId: "user-1",
-        kit: kit as any,
-        organizationId: "org-1",
-      });
-
-      // Should not create any notes
-      expect(db.note.create).not.toHaveBeenCalled();
     });
   });
 

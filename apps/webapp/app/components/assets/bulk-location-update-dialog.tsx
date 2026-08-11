@@ -11,7 +11,6 @@ import { WarningBox } from "../shared/warning-box";
 
 export const BulkLocationUpdateSchema = z.object({
   assetIds: z.array(z.string()).optional().default([]),
-  kitIds: z.array(z.string()).optional().default([]),
   newLocationId: z.string({ required_error: "Please select a location" }),
 });
 

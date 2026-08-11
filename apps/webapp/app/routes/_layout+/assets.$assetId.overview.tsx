@@ -39,14 +39,8 @@ import { Card } from "~/components/shared/card";
 import { DateS } from "~/components/shared/date";
 import { InfoTooltip } from "~/components/shared/info-tooltip";
 import { InlineEditableField } from "~/components/shared/inline-editable-field";
-import { Tag } from "~/components/shared/tag";
 import TextualDivider from "~/components/shared/textual-divider";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/shared/tooltip";
+import {} from "~/components/shared/tooltip";
 import When from "~/components/when/when";
 import { db } from "~/database/db.server";
 import { usePosition } from "~/hooks/use-position";
@@ -71,15 +65,10 @@ import {
   updateAssetBookingAvailability,
 } from "~/modules/asset/service.server";
 import type { ShelfAssetCustomFieldValueType } from "~/modules/asset/types";
-import {
-  getPrimaryKit,
-  getPrimaryLocation,
-  isQuantityTracked,
-} from "~/modules/asset/utils";
+import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
 import { getRemindersForOverviewPage } from "~/modules/asset-reminder/service.server";
 import { getPrimaryCustody } from "~/modules/custody/utils";
 import { getActiveCustomFields } from "~/modules/custom-field/service.server";
-import { moveAssetKitUnits } from "~/modules/kit/service.server";
 import { generateQrObj } from "~/modules/qr/utils.server";
 import { getScanByQrId } from "~/modules/scan/service.server";
 import { parseScanData } from "~/modules/scan/utils.server";
@@ -162,7 +151,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       organizationId,
       userOrganizations,
       request,
-      include: getAssetOverviewFields(id, canUseBarcodes),
+      include: getAssetOverviewFields(canUseBarcodes),
     });
 
     /**
@@ -209,27 +198,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     /**
      * Compute quantity availability for QUANTITY_TRACKED assets.
      *
-     * Custody and kit allocation are the only consumers of the pool: EPDA
-     * hands assets over on custody records, so a unit is either free, held
-     * by a custodian, or earmarked for a kit.
+     * Custody is the only consumer of the pool: EPDA hands assets over on
+     * custody records, so a unit is either free or held by a custodian.
      */
     let quantityData: {
       total: number;
-      /**
-       * Operator-only custody — sum of `Custody.quantity` where
-       * `kitCustodyId IS NULL`. Kit-allocated custody rows mirror
-       * `AssetKit.quantity` and are already counted via `inKits`;
-       * including them here would double-count.
-       */
+      /** Sum of `Custody.quantity` across every custodian holding units. */
       inCustody: number;
-      /**
-       * Sum of `AssetKit.quantity` across every kit this asset
-       * participates in. Surfaced on the sidebar so users can see how
-       * many units are earmarked for kit use, and used in the
-       * `available` / `custodyAvailable` formulas so kit-earmarked
-       * units don't masquerade as free stock.
-       */
-      inKits: number;
       /**
        * Sum of `AssetLocation.quantity` across every location this
        * asset is placed at. Surfaced on the sidebar Quantity Overview
@@ -241,24 +216,19 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       inLocations: number;
       /**
        * How many units are free to hand out — the pool minus everything
-       * already spoken for (kits + operator custody).
+       * already spoken for (operator custody).
        */
       available: number;
       /**
        * Physical availability: how many units are *actually* on the shelf
-       * right now — not in a kit and not held by a custodian. Used to cap
-       * custody assignment and total-quantity adjustments.
+       * right now — not held by a custodian. Used to cap custody
+       * assignment and total-quantity adjustments.
        */
       custodyAvailable: number;
     } | null = null;
 
     if (isQuantityTracked(asset)) {
       const total = asset.quantity ?? 0;
-      // Sum each kit's slice — the asset's pool earmarked for kit use.
-      const inKits = (asset.assetKits ?? []).reduce(
-        (sum: number, ak) => sum + (ak.quantity ?? 0),
-        0,
-      );
       // Sum each location's slice — the asset's pool that has a
       // physical placement. The remainder (`total − inLocations`) is
       // the "unplaced" pool: units the org owns but haven't been put
@@ -269,22 +239,18 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       );
       // Operator-only custody (see field comment above).
       const operatorCustody = (asset.custody ?? []).reduce(
-        (sum: number, c) =>
-          c.kitCustodyId == null ? sum + (c.quantity ?? 0) : sum,
+        (sum: number, c) => sum + (c.quantity ?? 0),
         0,
       );
 
       quantityData = {
         total,
         inCustody: operatorCustody,
-        inKits,
         inLocations,
-        // Kits and operator custody are separate consumers of the same
-        // pool; what's left is truly free. `custodyAvailable` matches
-        // because `inKits` must still subtract — dropping below it would
-        // violate the sum-within-total DB trigger.
-        available: total - inKits - operatorCustody,
-        custodyAvailable: total - inKits - operatorCustody,
+        // Custody is the only consumer of the pool; what's left is truly
+        // free. `custodyAvailable` matches for the same reason.
+        available: total - operatorCustody,
+        custodyAvailable: total - operatorCustody,
       };
     }
 
@@ -354,35 +320,25 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
      * Returned unfiltered — render-time logic filters out the current source
      * row per dialog instance so the picker never offers the source as a
      * destination. Tight `select` keeps payload small even on orgs with
-     * thousands of locations or kits.
+     * thousands of locations.
      *
      * Only meaningful for QUANTITY_TRACKED assets; the dialogs themselves
      * are gated by `isQuantityTracked(asset)` in the JSX below.
      */
-    const [allOrgLocations, allOrgKits] = isQuantityTracked(asset)
-      ? await Promise.all([
-          db.location.findMany({
-            where: { organizationId },
-            select: { id: true, name: true },
-            orderBy: { name: "asc" },
-          }),
-          db.kit.findMany({
-            where: { organizationId },
-            select: { id: true, name: true },
-            orderBy: { name: "asc" },
-          }),
-        ])
-      : [[], []];
+    const allOrgLocations = isQuantityTracked(asset)
+      ? await db.location.findMany({
+          where: { organizationId },
+          select: { id: true, name: true },
+          orderBy: { name: "asc" },
+        })
+      : [];
 
     const moveDestinations = {
       locations: allOrgLocations,
-      kits: allOrgKits,
     };
 
     /**
-     * Unplaced quantity = `Asset.quantity` − Σ `AssetLocation.quantity` for
-     * MANUAL pivot rows (`assetKitId IS NULL`). Kit-driven AssetLocation
-     * rows are derived from `AssetKit.quantity` and would double-count.
+     * Unplaced quantity = `Asset.quantity` − Σ `AssetLocation.quantity`.
      * Always `0` for INDIVIDUAL assets.
      */
     const unplacedQuantity = isQuantityTracked(asset)
@@ -390,8 +346,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
           0,
           (asset.quantity ?? 0) -
             (asset.assetLocations ?? []).reduce(
-              (sum: number, al) =>
-                al.assetKitId == null ? sum + (al.quantity ?? 0) : sum,
+              (sum: number, al) => sum + (al.quantity ?? 0),
               0,
             ),
         )
@@ -718,26 +673,15 @@ export const UpdateLifecycleStageFormSchema = z.object({
  * Zod schemas for the three move-units intents. Each schema carries the
  * discriminator literal so we can narrow off it after parse.
  *
- * - `location`       — manual AssetLocation → AssetLocation move
- * - `kit`            — AssetKit → AssetKit move (cascades to bookings)
+ * - `location`       — AssetLocation → AssetLocation move
  * - `place-unplaced` — one-sided placement of unplaced units
  *
  * `toId` is the destination row id submitted by the dialog's hidden mirror
- * (axis-agnostic). The server maps it to `toLocationId` / `toKitId` per axis.
+ * (axis-agnostic). The server maps it to `toLocationId` per axis.
  */
 const moveUnitsLocationSchema = z.object({
   [MOVE_UNITS_INTENT_FIELD]: z.literal("location"),
   fromLocationId: z.string().cuid("Invalid source location."),
-  toId: z.string().cuid("Please pick a destination."),
-  quantity: z.coerce
-    .number()
-    .int("Quantity must be a whole number.")
-    .positive("Quantity must be greater than zero."),
-});
-
-const moveUnitsKitSchema = z.object({
-  [MOVE_UNITS_INTENT_FIELD]: z.literal("kit"),
-  fromKitId: z.string().cuid("Invalid source kit."),
   toId: z.string().cuid("Please pick a destination."),
   quantity: z.coerce
     .number()
@@ -784,7 +728,6 @@ async function handleMoveUnitsIntent({
    */
   const moveAxisEnum: z.ZodType<MoveAxis> = z.enum([
     "location",
-    "kit",
     "place-unplaced",
   ]);
   const { [MOVE_UNITS_INTENT_FIELD]: axis } = parseData(
@@ -804,18 +747,6 @@ async function handleMoveUnitsIntent({
           userId,
           fromLocationId: parsed.fromLocationId,
           toLocationId: parsed.toId,
-          quantity: parsed.quantity,
-        });
-        return payload({ success: true });
-      }
-      case "kit": {
-        const parsed = parseData(formData, moveUnitsKitSchema);
-        await moveAssetKitUnits({
-          assetId,
-          organizationId,
-          userId,
-          fromKitId: parsed.fromKitId,
-          toKitId: parsed.toId,
           quantity: parsed.quantity,
         });
         return payload({ success: true });
@@ -1025,61 +956,24 @@ export default function AssetOverview() {
                     <div className="min-w-0 flex-1">
                       {asset.assetLocations.length > 0 ? (
                         <ul className="-ms-2 flex flex-col gap-1">
-                          {asset.assetLocations.map((al) => {
-                            const viaKit = al.assetKit?.kit ?? null;
-                            return (
-                              <li
-                                key={`${al.location.id}-${
-                                  al.assetKitId ?? "manual"
-                                }`}
-                                className="flex items-center gap-2"
-                              >
-                                <LocationBadge
-                                  location={{
-                                    id: al.location.id,
-                                    name: al.location.name,
-                                    parentId: al.location.parentId,
-                                    childCount:
-                                      al.location._count?.children ?? 0,
-                                  }}
-                                />
-                                {viaKit ? (
-                                  <TooltipProvider delayDuration={150}>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          to={`/kits/${viaKit.id}`}
-                                          role="link"
-                                          variant="link"
-                                          target="_blank"
-                                          className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 no-underline hover:bg-blue-100 hover:text-blue-800"
-                                        >
-                                          {t("quantity.viaKit")}
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent
-                                        side="top"
-                                        className="max-w-xs"
-                                      >
-                                        <p className="text-xs font-semibold text-gray-700">
-                                          {viaKit.name}
-                                        </p>
-                                        <p className="mt-1 text-xs text-gray-500">
-                                          These units are at this location
-                                          because the asset is in this kit.
-                                          Change the kit&apos;s location to move
-                                          them.
-                                        </p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                ) : null}
-                                <span className="shrink-0 text-xs tabular-nums text-gray-500">
-                                  {al.quantity} {asset.unitOfMeasure || "units"}
-                                </span>
-                              </li>
-                            );
-                          })}
+                          {asset.assetLocations.map((al) => (
+                            <li
+                              key={al.location.id}
+                              className="flex items-center gap-2"
+                            >
+                              <LocationBadge
+                                location={{
+                                  id: al.location.id,
+                                  name: al.location.name,
+                                  parentId: al.location.parentId,
+                                  childCount: al.location._count?.children ?? 0,
+                                }}
+                              />
+                              <span className="shrink-0 text-xs tabular-nums text-gray-500">
+                                {al.quantity} {asset.unitOfMeasure || "units"}
+                              </span>
+                            </li>
+                          ))}
                         </ul>
                       ) : (
                         <span className="text-gray-600">
@@ -1169,35 +1063,6 @@ export default function AssetOverview() {
                   </div>
                 )}
               />
-
-              {/* Tags — read-only display. Inline editing deferred to a
-                  follow-up PR (TagsAutocomplete needs a multi-select
-                  DynamicSelect variant for compact inline contexts). */}
-              <li className="w-full border-b-[1.1px] border-b-gray-100 p-4 last:border-b-0 md:flex">
-                <span className="w-1/4 text-[14px] font-medium text-gray-900">
-                  {t("assetOverview.tags")}
-                </span>
-                <div className="mt-1 text-gray-600 md:mt-0 md:w-3/5">
-                  {asset.tags?.length > 0 ? (
-                    <div className="-ms-2">
-                      {asset.tags.map((tag) => (
-                        <Tag
-                          key={tag.id}
-                          className="ms-2"
-                          color={tag.color ?? undefined}
-                          withDot={false}
-                        >
-                          {tag.name}
-                        </Tag>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-gray-600">
-                      {t("assetOverview.noTags")}
-                    </span>
-                  )}
-                </div>
-              </li>
 
               {/*
                * EPDA: the finance coding number.
@@ -1607,109 +1472,8 @@ export default function AssetOverview() {
 
           {(() => {
             /**
-             * A QUANTITY_TRACKED asset can belong to multiple kits at
-             * distinct slices. Render one row per membership with the
-             * per-kit quantity badge on qty-tracked assets; INDIVIDUAL
-             * assets keep the single-name layout since they're DB-locked
-             * to one kit and have no meaningful "quantity per kit" to
-             * surface.
-             */
-            type KitMembership = {
-              quantity: number;
-              kit: { id: string; name: string } | null;
-            };
-            const memberships = ((asset.assetKits ?? []) as KitMembership[])
-              .filter((ak) => ak.kit?.id && ak.kit.name)
-              .map((ak) => ({
-                kitId: ak.kit!.id,
-                kitName: ak.kit!.name,
-                quantity: ak.quantity ?? 0,
-              }));
-            if (memberships.length === 0) return null;
-            const isQty = isQuantityTracked(asset);
-            const unit = asset.unitOfMeasure || "units";
-            return (
-              <Card className="my-3 py-3 md:border">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gray-100/50">
-                    <div className="flex size-7 items-center justify-center rounded-full bg-gray-200">
-                      <Icon icon="kit" />
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="mb-1 text-sm font-semibold">
-                      {memberships.length > 1
-                        ? t("assetOverview.includedInKits")
-                        : t("assetOverview.includedInKit")}
-                    </h3>
-                    <ul className="space-y-1">
-                      {memberships.map((m) => (
-                        <li
-                          key={m.kitId}
-                          className="flex items-center justify-between gap-2"
-                        >
-                          <Button
-                            to={`/kits/${m.kitId}`}
-                            role="link"
-                            variant="link"
-                            className="min-w-0 justify-start truncate text-sm font-normal text-gray-700 underline hover:text-gray-700"
-                            target="_blank"
-                          >
-                            <span className="truncate">{m.kitName}</span>
-                          </Button>
-                          <div className="flex shrink-0 items-center gap-2">
-                            {isQty ? (
-                              <span className="text-xs tabular-nums text-gray-500">
-                                {m.quantity} {unit}
-                              </span>
-                            ) : null}
-                            {/*
-                             * Move-units affordance for kit allocations.
-                             * QUANTITY_TRACKED-only — INDIVIDUAL assets are
-                             * DB-locked to a single kit so the "move between
-                             * kits" flow is not meaningful for them.
-                             */}
-                            {isQty && canEditAsset ? (
-                              <MoveUnitsDialog
-                                axis="kit"
-                                assetId={asset.id}
-                                assetTitle={asset.title}
-                                unitOfMeasure={asset.unitOfMeasure}
-                                fromKit={{
-                                  id: m.kitId,
-                                  name: m.kitName,
-                                  quantity: m.quantity,
-                                }}
-                                destinations={moveDestinations.kits.filter(
-                                  (k) => k.id !== m.kitId,
-                                )}
-                                actionUrl={moveUnitsActionUrl}
-                                trigger={
-                                  <Button
-                                    type="button"
-                                    variant="link"
-                                    className="text-xs font-normal text-gray-500 underline hover:text-gray-700"
-                                  >
-                                    Move
-                                  </Button>
-                                }
-                              />
-                            ) : null}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            );
-          })()}
-
-          {(() => {
-            /**
-             * t("assetOverview.placedAtLocations") sidebar card — mirrors the
-             * t("assetOverview.includedInKits") card above. A QUANTITY_TRACKED asset
+             * t("assetOverview.placedAtLocations") sidebar card. A
+             * QUANTITY_TRACKED asset
              * can sit at multiple locations at distinct per-location
              * slices; an INDIVIDUAL asset sits at exactly one. Render
              * one row per placement with the per-location quantity
@@ -1728,11 +1492,6 @@ export default function AssetOverview() {
                 parentId: string | null;
                 _count?: { children?: number };
               } | null;
-              assetKitId: string | null;
-              assetKit: {
-                id: string;
-                kit: { id: string; name: string };
-              } | null;
             };
             const placements = ((asset.assetLocations ?? []) as Placement[])
               .filter((al) => al.location?.id && al.location?.name)
@@ -1742,11 +1501,6 @@ export default function AssetOverview() {
                 parentId: al.location!.parentId,
                 childCount: al.location!._count?.children ?? 0,
                 quantity: al.quantity ?? 0,
-                // Kit-driven rows render a "via {kit}" badge and are
-                // NOT editable from the manage-placements dialog. The
-                // kit info comes from the nested AssetKit → Kit
-                // relation pulled by `getAssetOverviewFields`.
-                viaKit: al.assetKit?.kit ?? null,
               }));
             if (placements.length === 0) return null;
             const isQty = isQuantityTracked(asset);
@@ -1780,7 +1534,7 @@ export default function AssetOverview() {
                     <ul className="space-y-1">
                       {placements.map((p) => (
                         <li
-                          key={`${p.locationId}-${p.viaKit?.id ?? "manual"}`}
+                          key={p.locationId}
                           className="flex items-center justify-between gap-2"
                         >
                           <div className="flex min-w-0 items-center gap-2">
@@ -1793,36 +1547,6 @@ export default function AssetOverview() {
                             >
                               <span className="truncate">{p.locationName}</span>
                             </Button>
-                            {p.viaKit ? (
-                              <TooltipProvider delayDuration={150}>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      to={`/kits/${p.viaKit.id}`}
-                                      role="link"
-                                      variant="link"
-                                      target="_blank"
-                                      className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 no-underline hover:bg-blue-100 hover:text-blue-800"
-                                    >
-                                      {t("quantity.viaKit")}
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent
-                                    side="top"
-                                    className="max-w-xs"
-                                  >
-                                    <p className="text-xs font-semibold text-gray-700">
-                                      {p.viaKit.name}
-                                    </p>
-                                    <p className="mt-1 text-xs text-gray-500">
-                                      These units are at this location because
-                                      the asset is in this kit. Change the
-                                      kit&apos;s location to move them.
-                                    </p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                            ) : null}
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
                             {isQty ? (
@@ -1831,13 +1555,10 @@ export default function AssetOverview() {
                               </span>
                             ) : null}
                             {/*
-                             * Move-units affordance — manual rows only. Kit-driven
-                             * rows (`viaKit`) must be moved via the `kit` axis
-                             * because their quantity is derived from `AssetKit`,
-                             * not editable directly. Gated on edit permission +
+                             * Move-units affordance. Gated on edit permission +
                              * QUANTITY_TRACKED so INDIVIDUAL assets don't see it.
                              */}
-                            {isQty && canEditAsset && !p.viaKit ? (
+                            {isQty && canEditAsset ? (
                               <MoveUnitsDialog
                                 axis="location"
                                 assetId={asset.id}
@@ -1896,7 +1617,6 @@ export default function AssetOverview() {
               availableQuantity={quantityData?.available}
               custodyAvailableQuantity={quantityData?.custodyAvailable}
               inCustodyQuantity={quantityData?.inCustody}
-              inKitsQuantity={quantityData?.inKits}
               inLocationsQuantity={quantityData?.inLocations}
               canUpdate={canUpdateAvailability}
             />
@@ -1949,7 +1669,6 @@ export default function AssetOverview() {
               currentUserId={userId}
               canViewAllCustody={canViewAllCustody}
               canCustody={canCustody}
-              inKit={getPrimaryKit<{ id: string; name: string }>(asset)}
             />
           ) : null}
 

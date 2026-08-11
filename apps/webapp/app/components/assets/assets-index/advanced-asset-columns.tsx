@@ -58,7 +58,6 @@ import { SamIdCell } from "./advanced-columns/sam-id-cell";
 import { Td } from "./advanced-columns/td";
 import AssetQuickActions from "./asset-quick-actions";
 import { freezeColumnClassNames } from "./freeze-column-classes";
-import { ListItemTagsColumn } from "./list-item-tags-column";
 import { CodePreviewDialog } from "../../code-preview/code-preview-dialog";
 import { AssetImage } from "../asset-image/component";
 import { AssetStatusBadge } from "../asset-status-badge";
@@ -257,16 +256,8 @@ export function AdvancedIndexColumn({
 
     case "category":
       return <CategoryColumn category={item.category} />;
-
-    case "tags":
-      return <TagsColumn tags={item.tags} />;
-
     case "location":
       return <LocationColumn locations={item.locations} />;
-
-    case "kit":
-      return <KitColumn kits={item.kits} />;
-
     case "custody":
       return <CustodyColumn custody={item.custody} />;
 
@@ -385,7 +376,7 @@ function TextColumn({
 function StatusColumn({
   id,
   status,
-  availableToBook,
+  availableToBook: _availableToBook,
   asset,
 }: {
   id: string;
@@ -463,15 +454,6 @@ function CategoryColumn({
     </Td>
   );
 }
-
-function TagsColumn({ tags }: { tags: AdvancedIndexAsset["tags"] }) {
-  return (
-    <Td className="text-start">
-      <ListItemTagsColumn tags={tags} />
-    </Td>
-  );
-}
-
 /**
  * Renders the custody column for the advanced asset index.
  *
@@ -580,79 +562,6 @@ function CustodyColumnContent({
     </span>
   );
 }
-
-/**
- * Renders the kit column for the advanced asset index.
- *
- * Single kit: renders the primary kit name as a link to the kit page.
- * Multiple kits (qty-tracked split across kits): renders the primary
- * kit link plus a "+N more" chip; hovering the chip reveals a tooltip
- * listing every kit name on its own line. Mirrors `CustodyColumn` so
- * the asset-index never silently hides kit membership 2..N.
- */
-export function KitColumn({ kits }: { kits: AdvancedIndexAsset["kits"] }) {
-  const { primary, others } = formatCustodyList(kits);
-
-  return (
-    <Td>
-      {!primary ? (
-        <EmptyTableValue />
-      ) : (
-        <KitColumnContent primary={primary} others={others} />
-      )}
-    </Td>
-  );
-}
-
-function KitColumnContent({
-  primary,
-  others,
-}: {
-  primary: AdvancedIndexAsset["kits"][number];
-  others: AdvancedIndexAsset["kits"][number][];
-}) {
-  const hasOthers = others.length > 0;
-
-  const primaryLink = (
-    <Link
-      to={`/kits/${primary.id}`}
-      className="block max-w-[220px] truncate font-medium underline hover:text-gray-600"
-      title={primary.name}
-    >
-      {primary.name}
-    </Link>
-  );
-
-  if (!hasOthers) {
-    return primaryLink;
-  }
-
-  return (
-    <span className="flex min-w-0 items-center gap-x-1.5 whitespace-nowrap">
-      {primaryLink}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              className="shrink-0 cursor-help whitespace-nowrap rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"
-              data-testid="kit-more-chip"
-            >
-              +{others.length} more
-            </span>
-          </TooltipTrigger>
-          <TooltipContent className="max-w-xs" data-testid="kit-more-tooltip">
-            <ul className="flex flex-col gap-1 text-sm">
-              {[primary, ...others].map((entry) => (
-                <li key={entry.id}>{entry.name}</li>
-              ))}
-            </ul>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    </span>
-  );
-}
-
 /**
  * Renders the location column for the advanced asset index.
  *

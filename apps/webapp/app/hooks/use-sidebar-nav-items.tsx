@@ -12,12 +12,10 @@ import {
   HomeIcon,
   MapPinIcon,
   MessageCircleIcon,
-  Package,
   PackageOpenIcon,
   ScanBarcodeIcon,
   SettingsIcon,
   SignatureIcon,
-  TagsIcon,
   UsersRoundIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -42,7 +40,16 @@ type BaseNavItem = {
     show: boolean;
     /** Number rendered inside the pill. Omitted badges render nothing. */
     count?: number;
-    variant?: "unread";
+    variant?: "unread" | "action";
+    /**
+     * The sentence the number stands for, e.g. "لديك ٣ أصول لم تُرمَّز بعد".
+     *
+     * A bare pill says how many but never what of — fine for a queue whose
+     * name is the nav item itself ("Handovers: 3"), useless for a count that
+     * is *about* something inside the page. Rendered as the pill's tooltip and
+     * as its accessible name, so the number is never the only thing said.
+     */
+    label?: string;
   };
 };
 
@@ -74,8 +81,12 @@ export type NavItem =
 
 export function useSidebarNavItems() {
   const { t } = useTranslation();
-  const { isAdmin, unreadUpdatesCount, pendingHandoverCount } =
-    useLoaderData<typeof loader>();
+  const {
+    isAdmin,
+    unreadUpdatesCount,
+    pendingHandoverCount,
+    assetActionQueue,
+  } = useLoaderData<typeof loader>();
   const { roles, isScopedToOwnRecords } = useUserRoleHelper();
   const currentOrganization = useCurrentOrganization();
   const isPersonalOrganization = isPersonalOrg(currentOrganization);
@@ -90,6 +101,42 @@ export function useSidebarNavItems() {
    */
   const can = (entity: PermissionEntity, action: PermissionAction) =>
     userHasPermission({ roles, entity, action });
+
+  /**
+   * The coding/approval relay badge, shown on both screens the relay runs
+   * through — the asset index and purchase orders.
+   *
+   * One badge, not two: a viewer is on one side of the relay or the other, and
+   * the loader has already decided which by zeroing the count they cannot act
+   * on. Rendering the same object on both entries keeps them from drifting into
+   * two different sentences for one number.
+   *
+   * `undefined` (not a hidden badge) when there is nothing waiting, so items
+   * without work keep their exact markup.
+   */
+  const relayBadge = (() => {
+    const { awaitingFinanceCode, awaitingApproval } = assetActionQueue;
+
+    if (awaitingFinanceCode > 0) {
+      return {
+        show: true,
+        count: awaitingFinanceCode,
+        variant: "action" as const,
+        label: t("nav.awaitingFinanceCode", { count: awaitingFinanceCode }),
+      };
+    }
+
+    if (awaitingApproval > 0) {
+      return {
+        show: true,
+        count: awaitingApproval,
+        variant: "action" as const,
+        label: t("nav.awaitingApproval", { count: awaitingApproval }),
+      };
+    }
+
+    return undefined;
+  })();
 
   const canReadDashboard = can(
     PermissionEntity.dashboard,
@@ -146,10 +193,10 @@ export function useSidebarNavItems() {
    * - **خدماتي** — everyone. What I am holding, and what awaits my signature.
    * - **المخزون** — the catalogue itself. Browsing and editing inventory is an
    *   operational job, so this whole section is hidden from roles scoped to
-   *   their own records: `/assets` and `/kits` are inventory tools they cannot
-   *   act in, and "الأصناف المتاحة" already answers the question they actually
-   *   have. (Both routes stay reachable by link — a scanned QR or a row link
-   *   still opens an asset.)
+   *   their own records: `/assets` is an inventory tool they cannot act in,
+   *   and "الأصناف المتاحة" already answers the question they actually have.
+   *   (The route stays reachable by link — a scanned QR or a row link still
+   *   opens an asset.)
    * - **العمليات** — running the workflow: the requests queue, audits,
    *   reminders, reports.
    * - **المنظمة** — people and workspace configuration.
@@ -234,6 +281,7 @@ export function useSidebarNavItems() {
       to: "/purchase-orders",
       Icon: FileTextIcon,
       hidden: !canReadReceipts,
+      badge: relayBadge,
     },
     {
       type: "child",
@@ -241,13 +289,7 @@ export function useSidebarNavItems() {
       to: "/assets",
       Icon: PackageOpenIcon,
       hidden: !showInventorySection,
-    },
-    {
-      type: "child",
-      title: t("nav.kits"),
-      to: "/kits",
-      Icon: Package,
-      hidden: !showInventorySection,
+      badge: relayBadge,
     },
     {
       type: "child",
@@ -263,14 +305,6 @@ export function useSidebarNavItems() {
       Icon: BoxesIcon,
       hidden: !can(PermissionEntity.category, PermissionAction.read),
     },
-    {
-      type: "child",
-      title: t("nav.tags"),
-      to: "/tags",
-      Icon: TagsIcon,
-      hidden: !can(PermissionEntity.tag, PermissionAction.read),
-    },
-
     {
       type: "label",
       title: t("nav.operations"),

@@ -1,5 +1,5 @@
 /**
- * The shared list handler behind `/api/v1/kits`, `/locations` and `/categories`.
+ * The shared list handler behind `/api/v1/locations` and `/categories`.
  *
  * All three answer the same question — "what reference records exist in this
  * workspace?" — and differ only in which table they read. Written as three
@@ -18,7 +18,7 @@ import { requireApiKey } from "../api-key/auth.server";
 import type { ApiKeyScope } from "../api-key/scopes";
 
 /** Which reference collection a route is serving. */
-export type ReferenceCollection = "kit" | "location" | "category";
+export type ReferenceCollection = "location" | "category";
 
 /** Columns the shared serializer needs. Identical across the three tables. */
 const REFERENCE_SELECT = {
@@ -83,9 +83,7 @@ export async function handleReferenceList({
 /** Dispatches the read to the right Prisma delegate. */
 function findMany(
   collection: ReferenceCollection,
-  where: Prisma.KitWhereInput &
-    Prisma.LocationWhereInput &
-    Prisma.CategoryWhereInput,
+  where: Prisma.LocationWhereInput & Prisma.CategoryWhereInput,
   skip: number,
   take: number,
 ) {
@@ -98,8 +96,6 @@ function findMany(
   };
 
   switch (collection) {
-    case "kit":
-      return db.kit.findMany(args);
     case "location":
       return db.location.findMany(args);
     case "category":
@@ -110,13 +106,9 @@ function findMany(
 /** Dispatches the count to the right Prisma delegate. */
 function count(
   collection: ReferenceCollection,
-  where: Prisma.KitWhereInput &
-    Prisma.LocationWhereInput &
-    Prisma.CategoryWhereInput,
+  where: Prisma.LocationWhereInput & Prisma.CategoryWhereInput,
 ) {
   switch (collection) {
-    case "kit":
-      return db.kit.count({ where });
     case "location":
       return db.location.count({ where });
     case "category":

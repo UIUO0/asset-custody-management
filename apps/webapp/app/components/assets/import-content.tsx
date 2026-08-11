@@ -193,50 +193,6 @@ export const FileForm = ({ intent, url }: { intent: string; url?: string }) => {
                 />
               ) : null}
 
-              {data?.error?.additionalData?.kitCustodyConflicts ? (
-                <table className="mt-4 w-full rounded-md border text-start text-sm">
-                  <thead className="bg-error-100 text-xs">
-                    <tr>
-                      <th scope="col" className="px-2 py-1">
-                        {t("assetImport.colAsset")}
-                      </th>
-                      <th scope="col" className="px-2 py-1">
-                        {t("assetImport.colCustodian")}
-                      </th>
-                      <th scope="col" className="px-2 py-1">
-                        {t("assetImport.colKit")}
-                      </th>
-                      <th scope="col" className="px-2 py-1">
-                        {t("assetImport.colIssue")}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(
-                      data.error.additionalData.kitCustodyConflicts as Array<{
-                        asset: string;
-                        custodian: string;
-                        kit: string;
-                        issue: string;
-                      }>
-                    ).map((conflict) => (
-                      <tr
-                        // Compose a stable key from the conflict fields —
-                        // the backend can surface the same asset twice
-                        // for different issues, so include `issue` too.
-                        key={`${conflict.asset}-${conflict.kit}-${conflict.custodian}-${conflict.issue}`}
-                        className="border-b"
-                      >
-                        <td className="px-2 py-1">{conflict.asset}</td>
-                        <td className="px-2 py-1">{conflict.custodian}</td>
-                        <td className="px-2 py-1">{conflict.kit}</td>
-                        <td className="px-2 py-1">{conflict.issue}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : null}
-
               {Array.isArray(data?.error?.additionalData?.defectedHeaders) ? (
                 <table className="mt-4 w-full rounded-md border text-start text-sm">
                   <thead className="bg-error-100 text-xs">

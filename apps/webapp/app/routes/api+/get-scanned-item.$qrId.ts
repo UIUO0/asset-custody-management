@@ -22,24 +22,13 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-import {
-  sanitizeAssetExtraInclude,
-  sanitizeKitExtraInclude,
-} from "~/utils/scanner-extra-include.server";
-import type {
-  AssetFromScanner,
-  KitFromScanner,
-} from "~/utils/scanner-includes.server";
-import {
-  ASSET_INCLUDE,
-  KIT_INCLUDE,
-  QR_INCLUDE,
-} from "~/utils/scanner-includes.server";
+import { sanitizeAssetExtraInclude } from "~/utils/scanner-extra-include.server";
+import type { AssetFromScanner } from "~/utils/scanner-includes.server";
+import { ASSET_INCLUDE, QR_INCLUDE } from "~/utils/scanner-includes.server";
 import { parseSequentialId } from "~/utils/sequential-id";
 
 // Re-export types for backward compatibility
 export type AssetFromQr = AssetFromScanner;
-export type KitFromQr = KitFromScanner;
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const authSession = context.getSession();
@@ -60,12 +49,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       },
     });
 
-    const {
-      assetExtraInclude,
-      kitExtraInclude,
-      auditSessionId,
-      pickerContext,
-    } = parseData(
+    const { assetExtraInclude, auditSessionId, pickerContext } = parseData(
       searchParams,
       z.object({
         assetExtraInclude: z
@@ -79,20 +63,9 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               throw new Error("Invalid JSON input for assetExtraInclude");
             }
           }),
-        kitExtraInclude: z
-          .string()
-          .optional()
-          .transform((val) => {
-            if (!val) return undefined;
-            try {
-              return JSON.parse(val);
-            } catch (_error) {
-              throw new Error("Invalid JSON input for kitExtraInclude");
-            }
-          }),
         auditSessionId: z.string().optional(),
         /**
-         * JSON-encoded `{ type: "location" | "kit" | "booking", id }`.
+         * JSON-encoded `{ type: "location" | "booking", id }`.
          * When present, the loader attaches a normalised picker MAX
          * to the asset response (`pickerMeta`) so the scanner drawer
          * can show "· X available" and bound its qty input — matching
@@ -118,22 +91,16 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       }),
     ) as {
       assetExtraInclude: Prisma.AssetInclude | undefined;
-      kitExtraInclude: Prisma.KitInclude | undefined;
       auditSessionId?: string;
       pickerContext?: ReturnType<typeof ScannerPickerContextSchema.parse>;
     };
 
-    // SECURITY (CWE-94 / overfetch): assetExtraInclude/kitExtraInclude are
-    // user-controlled JSON. Allowlist them before merging into the Prisma
-    // include so relation traversal / deep nesting cannot be injected.
+    // SECURITY (CWE-94 / overfetch): assetExtraInclude is user-controlled
+    // JSON. Allowlist it before merging into the Prisma include so relation
+    // traversal / deep nesting cannot be injected.
     const assetInclude: Prisma.AssetInclude = {
       ...ASSET_INCLUDE,
       ...(sanitizeAssetExtraInclude(assetExtraInclude) ?? {}),
-    };
-
-    const kitInclude: Prisma.KitInclude = {
-      ...KIT_INCLUDE,
-      ...(sanitizeKitExtraInclude(kitExtraInclude) ?? {}),
     };
 
     const sequentialId = parseSequentialId(qrId);
@@ -192,7 +159,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
         }
       }
 
-      // When the scanner provides a destination (location / kit /
+      // When the scanner provides a destination (location /
       // booking), attach the same strict-available pool the
       // manage-assets picker shows so the row label + qty input bound
       // are consistent across both UX surfaces.
@@ -224,7 +191,6 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     const include = {
       ...QR_INCLUDE,
       asset: { include: assetInclude },
-      kit: { include: kitInclude },
     };
 
     const qr = await getQr({
@@ -243,10 +209,10 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       });
     }
 
-    if (!qr.assetId && !qr.kitId) {
+    if (!qr.assetId) {
       throw new ShelfError({
         cause: null,
-        message: "QR code is not linked to any asset or kit",
+        message: "QR code is not linked to any asset",
         additionalData: { qrId, shouldSendNotification: false },
         shouldBeCaptured: false,
         label: "QR",
@@ -302,7 +268,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       payload({
         qr: {
           ...qr,
-          type: qr.asset ? "asset" : qr.kit ? "kit" : undefined,
+          type: qr.asset ? ("asset" as const) : undefined,
           asset: qr.asset
             ? {
                 ...qr.asset,

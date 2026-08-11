@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { useMemo } from "react";
 import { m } from "framer-motion";
-import { Package } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { useFetcher, useFetchers } from "react-router";
 import { List, type ListProps } from "~/components/list";
@@ -47,7 +46,6 @@ import { AdvancedTableHeader } from "./advanced-table-header";
 import { AssetIndexPagination } from "./asset-index-pagination";
 import AssetQuickActions from "./asset-quick-actions";
 import { AssetIndexFilters } from "./filters";
-import { ListItemTagsColumn } from "./list-item-tags-column";
 import { CategoryBadge } from "../category-badge";
 
 export const AssetsList = ({
@@ -95,7 +93,6 @@ export const AssetsList = ({
   const headerChildren = modeIsSimple ? (
     <>
       <Th>{t("assets.category")}</Th>
-      <Th>{t("assets.tags")}</Th>
       <When truthy={!isUserPage}>
         <Th className="flex items-center gap-1 whitespace-nowrap">
           {t("assets.custodian")}{" "}
@@ -184,11 +181,10 @@ export const ListAssetContent = ({
   bulkActions?: ReactNode;
   isUserPage?: boolean;
 }) => {
-  const { category, tags, custody: custodyArray } = item;
+  const { category, custody: custodyArray } = item;
   // Render only the single primary-location badge in the list column —
   // a qty-tracked asset can sit at multiple locations via AssetLocation.
   const location = getPrimaryLocation(item);
-  const kit = item.assetKits?.[0]?.kit ?? null;
   const {
     primary: primaryCustody,
     others: otherCustodians,
@@ -221,22 +217,6 @@ export const ListAssetContent = ({
                 className="size-full rounded-[4px] border object-cover"
                 withPreview
               />
-
-              {kit?.id ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full border-2 border-static-white bg-gray-200">
-                        <Package className="size-2" />
-                      </div>
-                    </TooltipTrigger>
-
-                    <TooltipContent side="top">
-                      <p className="text-sm">{kit.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : null}
             </div>
             <div className="min-w-[130px]">
               <span className="word-break mb-1 block ">
@@ -271,11 +251,6 @@ export const ListAssetContent = ({
       {/* Category */}
       <Td>
         <CategoryBadge category={category} />
-      </Td>
-
-      {/* Tags */}
-      <Td className="text-start">
-        <ListItemTagsColumn tags={tags} />
       </Td>
 
       {/* Custodian */}

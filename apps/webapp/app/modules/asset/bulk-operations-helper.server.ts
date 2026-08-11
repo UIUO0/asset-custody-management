@@ -56,15 +56,35 @@ async function getAdvancedFilteredAssetIds({
       availableToBookOnly,
     );
 
-    // Minimal query: only SELECT id, but include necessary joins
-    // Joins are needed because WHERE clause may reference: c.name, l.name, t.id, tm.name, etc.
+    /*
+     * Minimal query: only SELECT id, but carry the joins the WHERE clause may
+     * reference (`c.name`, `l.name`, `tm.name`, …).
+     *
+     * ⚠️ Two joins here were stale and made this 500 on every "select all"
+     * bulk operation, invisibly to `tsc` (it cannot see inside `Prisma.sql`):
+     *
+     *   - `LEFT JOIN "Location" l ON a."locationId"` — `Asset.locationId` was
+     *     replaced by the `AssetLocation` pivot. It is now a LATERAL
+     *     primary-pick, mirroring `assetQueryJoins` in `query.server.ts`, so
+     *     `l.name` still resolves and the join cannot fan out.
+     *   - `_AssetToTag` / `Tag` — dropped with the tag model.
+     *
+     * Keep this list in step with `generateWhereClause`: it is the only other
+     * consumer of that clause, and a predicate it can emit but this query
+     * cannot resolve fails here and nowhere else.
+     */
     const query = Prisma.sql`
       SELECT DISTINCT a.id
       FROM public."Asset" a
       LEFT JOIN public."Category" c ON a."categoryId" = c.id
-      LEFT JOIN public."Location" l ON a."locationId" = l.id
-      LEFT JOIN public."_AssetToTag" att ON a.id = att."A"
-      LEFT JOIN public."Tag" t ON att."B" = t.id
+      LEFT JOIN LATERAL (
+        SELECT l.id, l.name, l."parentId"
+        FROM public."AssetLocation" al
+        JOIN public."Location" l ON al."locationId" = l.id
+        WHERE al."assetId" = a.id
+        ORDER BY al."createdAt" ASC, al.id ASC
+        LIMIT 1
+      ) l ON TRUE
       LEFT JOIN public."Custody" cu ON cu."assetId" = a.id
       LEFT JOIN public."TeamMember" tm ON cu."teamMemberId" = tm.id
       LEFT JOIN public."User" u ON tm."userId" = u.id
@@ -90,7 +110,7 @@ async function getAdvancedFilteredAssetIds({
  * when performing bulk operations. It handles three scenarios:
  *
  * 1. Specific selection: Returns provided IDs as-is
- * 2. Select all (simple mode): Queries with simple filters (status, category, tags, etc.)
+ * 2. Select all (simple mode): Queries with simple filters (status, category, etc.)
  * 3. Select all (advanced mode): Queries with advanced filters (custom fields, operators)
  *
  * @param assetIds - Array of asset IDs (may contain ALL_SELECTED_KEY)

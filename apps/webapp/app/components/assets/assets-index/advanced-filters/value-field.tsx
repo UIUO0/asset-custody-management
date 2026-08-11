@@ -530,22 +530,6 @@ export function ValueField({
       );
 
     case "array":
-      if (filter.name === "tags") {
-        return (
-          <>
-            <ValueEnumField
-              fieldName={filter.name}
-              value={filter.value as string}
-              handleChange={setFilter}
-              multiSelect={filter.operator !== "contains"}
-              name={fieldName}
-              disabled={disabled}
-            />
-            <ErrorDisplay error={error} />
-          </>
-        );
-      }
-
       return (
         <Input
           {...commonInputProps}
@@ -1461,140 +1445,6 @@ function LocationEnumField({
     />
   );
 }
-
-/** Component that handles kit selection for both single and multi-select scenarios */
-function KitEnumField({
-  value,
-  handleChange,
-  multiSelect,
-  name,
-  disabled,
-}: Omit<EnumFieldProps, "options">) {
-  const { t } = useTranslation();
-  const data = useLoaderData<AssetIndexLoaderData>();
-
-  // Parse the existing value to get selected Category IDs
-  const selectedIds = useMemo(() => {
-    if (!value) return [];
-    // Handle multi-select values
-    if (multiSelect && typeof value === "string") {
-      return value.split(",").map((v) => v.trim());
-    }
-    return [value];
-  }, [value, multiSelect]);
-
-  /** Common props for both DynamicSelect and DynamicDropdown */
-  const commonProps = {
-    model: {
-      name: "kit" as const,
-      queryKey: "name",
-    },
-    transformItem: (item: any) => ({
-      ...item,
-      id: item.id === "without-kit" ? "without-kit" : item.id,
-    }),
-    renderItem: (item: any) =>
-      item.name ? item.name : t("advancedFilters.withoutKit"),
-    initialDataKey: "kits",
-    countKey: "totalKits",
-    label: t("advancedFilters.filterByKit"),
-    hideLabel: true,
-    hideCounter: true,
-    placeholder: t("advancedFilters.searchKits"),
-    withValueItem: {
-      id: "in-kit",
-      name: t("advancedFilters.inAKit"),
-    },
-    withoutValueItem: {
-      id: "without-kit",
-      name: t("advancedFilters.withoutKit"),
-    },
-    disabled,
-  };
-
-  // For multi-select (containsAny operator), use DynamicDropdown
-  if (multiSelect) {
-    return (
-      <DynamicDropdown
-        {...commonProps}
-        name={name}
-        trigger={
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full justify-start font-normal [&_span]:w-full [&_span]:max-w-full [&_span]:truncate"
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={tw(
-                  "text-start",
-                  selectedIds.length <= 0 && "text-gray-500",
-                )}
-              >
-                {disabled
-                  ? t("advancedFilters.selectAColumnFirst")
-                  : selectedIds.length > 0 && data.kits && data.kits.length > 0
-                  ? selectedIds
-                      .map((id) => {
-                        if (id === "in-kit") {
-                          return t("advancedFilters.inAKit");
-                        }
-                        if (id === "without-kit") {
-                          return t("advancedFilters.withoutKit");
-                        }
-                        const kit = data.kits?.find((kit) => kit.id === id);
-                        return kit?.name || "";
-                      })
-                      .join(", ")
-                  : t("advancedFilters.selectKit")}
-              </span>
-              <ChevronRight className="me-1 inline-block rotate-90" />
-            </div>
-          </Button>
-        }
-        triggerWrapperClassName="w-full"
-        className="z-[999999]"
-        selectionMode="none"
-        defaultValues={selectedIds}
-        filterSelection={(newSelection, previousSelection) =>
-          filterConflictingSelections(
-            newSelection,
-            previousSelection,
-            "in-kit",
-            "without-kit",
-          )
-        }
-        onSelectionChange={(filteredIds) => {
-          handleChange(filteredIds.join(","));
-        }}
-      />
-    );
-  }
-
-  // For single select (is/isNot operators), use DynamicSelect
-  return (
-    <DynamicSelect
-      {...commonProps}
-      fieldName={name}
-      placeholder={
-        disabled
-          ? t("advancedFilters.selectAColumnFirst")
-          : t("advancedFilters.selectKit")
-      }
-      defaultValue={value as string}
-      onChange={(selectedId) => {
-        if (selectedId !== undefined) {
-          handleChange(selectedId);
-        }
-      }}
-      closeOnSelect={true}
-      triggerWrapperClassName="w-full text-gray-700"
-      className="z-[999999]"
-      contentLabel={t("reports.colKit")}
-    />
-  );
-}
-
 /** Component that handles upcoming bookings selection for both single and multi-select scenarios */
 function UpcomingBookingsEnumField({
   value,
@@ -1728,122 +1578,6 @@ function UpcomingBookingsEnumField({
     />
   );
 }
-
-/** Component that handles tag selection for multi-select scenario  */
-function TagsField({
-  handleChange,
-  value,
-  disabled,
-  multiSelect,
-  name,
-}: Omit<EnumFieldProps, "options">) {
-  const { t } = useTranslation();
-  const data = useLoaderData<AssetIndexLoaderData>();
-
-  // Parsing the existing value to get selected Tag Ids
-  const selectedIds = useMemo(() => {
-    if (!value) {
-      return [];
-    }
-
-    if (multiSelect && typeof value === "string") {
-      return value.split(",").map((v) => v.trim());
-    }
-
-    return [value];
-  }, [multiSelect, value]);
-
-  const commonProps = {
-    model: {
-      name: "tag" as const,
-      queryKey: "name",
-    },
-    initialDataKey: "tags",
-    countKey: "totalTags",
-    label: t("list.filterByTag"),
-    hideLabel: true,
-    hideCounter: true,
-    withoutValueItem: {
-      id: "untagged",
-      name: t("advancedFilters.untagged"),
-    },
-    disabled,
-  };
-
-  if (multiSelect) {
-    return (
-      <DynamicDropdown
-        {...commonProps}
-        name={name}
-        trigger={
-          <Button
-            type="button"
-            variant="secondary"
-            className="w-full justify-start font-normal [&_span]:w-full [&_span]:max-w-full [&_span]:truncate"
-            disabled={disabled}
-          >
-            <div className="flex items-center justify-between">
-              <span
-                className={tw(
-                  "text-start",
-                  selectedIds.length <= 0 && "text-gray-500",
-                )}
-              >
-                {disabled
-                  ? t("advancedFilters.selectAColumnFirst")
-                  : selectedIds.length > 0
-                  ? selectedIds
-                      .map((id) => {
-                        if (id === "untagged") {
-                          return t("advancedFilters.untagged");
-                        }
-                        const tag = data.tags?.find(
-                          (tagOption) => tagOption.id === id,
-                        );
-                        return tag?.name || "";
-                      })
-                      .join(", ")
-                  : t("advancedFilters.selectTag")}
-              </span>
-              <ChevronRight className="me-1 inline-block rotate-90" />
-            </div>
-          </Button>
-        }
-        triggerWrapperClassName="w-full"
-        className="z-[999999]"
-        selectionMode="none"
-        defaultValues={selectedIds}
-        placeholder={t("advancedFilters.selectTags")}
-        onSelectionChange={(selectedTagIds) => {
-          handleChange(selectedTagIds.join(","));
-        }}
-      />
-    );
-  }
-
-  return (
-    <DynamicSelect
-      {...commonProps}
-      fieldName={name}
-      placeholder={
-        disabled
-          ? t("advancedFilters.selectAColumnFirst")
-          : t("advancedFilters.selectTag")
-      }
-      defaultValue={value}
-      onChange={(selectedId) => {
-        if (selectedId) {
-          handleChange(selectedId);
-        }
-      }}
-      closeOnSelect
-      triggerWrapperClassName="w-full text-gray-700"
-      className="z-[999999]"
-      contentLabel="tags"
-    />
-  );
-}
-
 /**
  * Fixed enum field for the asset tracking type (INDIVIDUAL vs QUANTITY_TRACKED).
  * Uses a simple Popover-based select with two hardcoded options.
@@ -2120,13 +1854,6 @@ function ValueEnumField({
   if (fieldName === "kit") {
     return (
       <>
-        <KitEnumField
-          value={value}
-          handleChange={handleChange}
-          multiSelect={multiSelect}
-          name={name}
-          disabled={disabled}
-        />
         {error && <div className="mt-1 text-[12px] text-red-500">{error}</div>}
       </>
     );
@@ -2187,21 +1914,6 @@ function ValueEnumField({
           disabled={disabled}
         />
         {error && <div className="mt-1 text-[12px] text-red-500">{error}</div>}
-      </>
-    );
-  }
-
-  if (fieldName === "tags") {
-    return (
-      <>
-        <TagsField
-          value={value}
-          handleChange={handleChange}
-          name={name}
-          multiSelect={multiSelect}
-          disabled={disabled}
-        />
-        {error && <div className="mt-1 text-xs text-red-500">{error}</div>}
       </>
     );
   }

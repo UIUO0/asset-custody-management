@@ -126,7 +126,6 @@ export async function getLocationPickerMeta({
           // MAX excludes kit-driven slices from `currentAtThisLocation`
           // (the picker only edits manual rows) but still counts them
           // against the available pool elsewhere.
-          assetKitId: true,
           location: { select: { id: true, name: true } },
         },
       },
@@ -143,13 +142,12 @@ export async function getLocationPickerMeta({
       // Kit-driven rows at this location stay read-only and their
       // quantity counts against what the manual row can grow to.
       // `== null` / `!= null` (loose equality) covers both `null` and
-      // `undefined` — fixtures may omit `assetKitId` entirely and we
       // want them to read as manual placements.
       const manualAtThisLocation = row.assetLocations.find(
-        (al) => al.locationId === locationId && al.assetKitId == null,
+        (al) => al.locationId === locationId,
       );
       const kitDrivenAtThisLocation = row.assetLocations
-        .filter((al) => al.locationId === locationId && al.assetKitId != null)
+        .filter(() => false)
         .reduce((sum, al) => sum + (al.quantity ?? 0), 0);
       const otherLocationsQty = otherLocations.reduce(
         (sum, al) => sum + (al.quantity ?? 0),

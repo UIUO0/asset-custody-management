@@ -4,10 +4,8 @@ This guide explains how to create and maintain scanner drawers in Shelf.nu, ensu
 
 ## Overview
 
-Scanner drawers are specialized UI components that manage scanned QR code items (assets and kits) for various operations like:
+Scanner drawers are specialized UI components that manage scanned QR code items (assets) for various operations like:
 
-- Adding assets to bookings
-- Adding assets to kits
 - Adding assets to locations
 - Assigning/releasing custody
 - Checking in/out assets
@@ -21,13 +19,13 @@ All scanner drawers should use the centralized atoms in `app/atoms/qr-scanner.ts
 #### Core Atoms
 
 - **`scannedItemsAtom`**: Main state containing all scanned items keyed by QR ID
-- **`scannedItemIdsAtom`**: ⭐ **Derived atom** that efficiently extracts asset and kit IDs from scanned items
+- **`scannedItemIdsAtom`**: ⭐ **Derived atom** that efficiently extracts asset IDs from scanned items
 - **`addScannedItemAtom`**: Adds a new scanned item to the state
 - **`updateScannedItemAtom`**: Updates an existing scanned item with data
 - **`clearScannedItemsAtom`**: Clears all scanned items
 - **`removeScannedItemAtom`**: Removes a single item by QR ID
 - **`removeMultipleScannedItemsAtom`**: Removes multiple items by QR IDs
-- **`removeScannedItemsByAssetIdAtom`**: Removes items by asset/kit IDs
+- **`removeScannedItemsByAssetIdAtom`**: Removes items by asset ID
 
 #### Data Structure
 
@@ -38,10 +36,10 @@ type ScanListItems = {
 
 type ScanListItem =
   | {
-      data?: KitFromQr | AssetFromQr;
+      data?: AssetFromQr;
       error?: string;
-      type?: "asset" | "kit";
-      codeType?: "qr" | "barcode";
+      type?: "asset";
+      codeType?: "qr" | "barcode" | "samId";
     }
   | undefined;
 ```
@@ -51,8 +49,7 @@ The `scannedItemIdsAtom` returns:
 ```typescript
 {
   assetIds: string[];    // Array of asset IDs
-  kitIds: string[];      // Array of kit IDs
-  idsTotalCount: number; // Total count of both assets and kits
+  idsTotalCount: number; // Total scanned asset count
 }
 ```
 
@@ -71,17 +68,13 @@ The `scannedItemIdsAtom` returns:
 const assetIds = Object.values(items)
   .filter((item) => !!item && item.data && item.type === "asset")
   .map((item) => item?.data?.id);
-
-const kitIds = Object.values(items)
-  .filter((item) => !!item && item.data && item.type === "kit")
-  .map((item) => item?.data?.id);
 ```
 
 **✅ DO** use the purpose-built atom:
 
 ```typescript
 // GOOD - Use the efficient derived atom
-const { assetIds, kitIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
+const { assetIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
 ```
 
 ### Required Imports
@@ -144,7 +137,7 @@ export default function YourDrawer({
 }) {
   // 1. Get scanned data using atoms
   const items = useAtomValue(scannedItemsAtom);
-  const { assetIds, kitIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
+  const { assetIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
 
   // 2. Get atom setters for clearing/removing items
   const clearList = useSetAtom(clearScannedItemsAtom);
@@ -156,10 +149,6 @@ export default function YourDrawer({
   const assets = Object.values(items)
     .filter((item) => !!item && item.data && item.type === "asset")
     .map((item) => item?.data as AssetFromQr);
-
-  const kits = Object.values(items)
-    .filter((item) => !!item && item.data && item.type === "kit")
-    .map((item) => item?.data as KitFromQr);
 
   // 4. Set up error filtering
   const errors = Object.entries(items).filter(([, item]) => !!item?.error);
@@ -203,20 +192,15 @@ export default function YourDrawer({
 
 ## Common Patterns
 
-### Asset/Kit Filtering for Different Purposes
+### Asset Filtering for Different Purposes
 
 ```typescript
 // For form submission - use the atom
-const { assetIds, kitIds } = useAtomValue(scannedItemIdsAtom);
+const { assetIds } = useAtomValue(scannedItemIdsAtom);
 
 // For complex business logic - filter full objects when needed
 const availableAssets = assets.filter(
   (asset) => asset.status === AssetStatus.AVAILABLE,
-);
-
-// For kit asset expansion
-const allAssetIds = Array.from(
-  new Set([...assetIds, ...kits.flatMap((k) => k.assets.map((a) => a.id))]),
 );
 ```
 
@@ -233,19 +217,6 @@ const allAssetIds = Array.from(
     </>
   ),
   onResolve: () => removeItemsFromList(errors.map(([qrId]) => qrId)),
-}
-
-// Kit blocker (when kits not allowed)
-{
-  condition: kitQrIds.length > 0,
-  count: kitQrIds.length,
-  message: (count: number) => (
-    <>
-      <strong>{`${count} kit${count > 1 ? "s" : ""}`}</strong> detected.
-      Kits cannot be added to this context.
-    </>
-  ),
-  onResolve: () => removeItemsFromList(kitQrIds),
 }
 
 // Status-based blockers
@@ -304,7 +275,6 @@ const labels = createAvailabilityLabels(assetLabelPresets.booking);
 2. **Blocker Testing**:
 
    - [ ] Invalid QR codes show error blockers
-   - [ ] Wrong item types (kits when not allowed) show blockers
    - [ ] Wrong status items show appropriate blockers
    - [ ] "Resolve All" button works correctly
 
@@ -340,16 +310,14 @@ const labels = createAvailabilityLabels(assetLabelPresets.booking);
 2. **Inconsistent imports**: Follow the standard import pattern
 3. **Missing blockers**: Always handle invalid items with appropriate blockers
 4. **Complex filtering in render**: Move complex logic outside render where possible
-5. **Not handling kits properly**: Remember kits contain assets that may need expansion
 
 ## Examples
 
 See these existing drawers for reference:
 
-- `assign-custody-drawer.tsx` - Full featured with asset and kit handling
+- `assign-custody-drawer.tsx` - Full featured, with blockers and a submitting dialog
 - `update-location-drawer.tsx` - Simple asset-only drawer
-- `add-assets-to-booking-drawer.tsx` - Complex business logic with kit expansion
-- `partial-checkin-drawer.tsx` - Advanced filtering and status management
+- `add-assets-to-location-drawer.tsx` - Per-asset quantity input + picker context
 
 ## Migration Guide
 

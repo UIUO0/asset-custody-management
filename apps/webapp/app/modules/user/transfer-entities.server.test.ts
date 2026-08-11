@@ -26,13 +26,11 @@ function createMockTx() {
   return {
     asset: { updateMany: vi.fn() },
     category: { updateMany: vi.fn() },
-    tag: { updateMany: vi.fn() },
     location: { updateMany: vi.fn() },
     customField: { updateMany: vi.fn() },
     invite: { updateMany: vi.fn() },
     booking: { updateMany: vi.fn() },
     image: { updateMany: vi.fn() },
-    kit: { updateMany: vi.fn() },
     assetReminder: { updateMany: vi.fn() },
   };
 }
@@ -45,8 +43,8 @@ function asTx(tx: MockTx) {
 }
 
 /**
- * Asserts the 8 OWNERSHIP rewrites (Asset/Category/Tag/Location/CustomField/
- * Image/Kit/AssetReminder) fired with the expected `where`/`data` shape.
+ * Asserts the 6 OWNERSHIP rewrites (Asset/Category/Location/CustomField/
+ * Image/AssetReminder) fired with the expected `where`/`data` shape.
  * These must move for every `reason` — shared between the demotion and
  * removal test groups below.
  */
@@ -56,10 +54,6 @@ function expectOwnershipTransferred(tx: MockTx) {
     data: { userId: RECIPIENT },
   });
   expect(tx.category.updateMany).toHaveBeenCalledWith({
-    where: { userId: TARGET, organizationId: ORG },
-    data: { userId: RECIPIENT },
-  });
-  expect(tx.tag.updateMany).toHaveBeenCalledWith({
     where: { userId: TARGET, organizationId: ORG },
     data: { userId: RECIPIENT },
   });
@@ -75,10 +69,6 @@ function expectOwnershipTransferred(tx: MockTx) {
     // Image scopes on `ownerOrgId`, not `organizationId`.
     where: { userId: TARGET, ownerOrgId: ORG },
     data: { userId: RECIPIENT },
-  });
-  expect(tx.kit.updateMany).toHaveBeenCalledWith({
-    where: { createdById: TARGET, organizationId: ORG },
-    data: { createdById: RECIPIENT },
   });
   expect(tx.assetReminder.updateMany).toHaveBeenCalledWith({
     where: { createdById: TARGET, organizationId: ORG },

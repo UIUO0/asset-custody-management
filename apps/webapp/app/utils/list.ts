@@ -1,4 +1,3 @@
-import { BookingStatus } from "@prisma/client";
 import type {
   SortingDirection,
   SortingOptions,
@@ -14,27 +13,6 @@ export const getParamsValues = (searchParams: URLSearchParams) => ({
   search: searchParams.get("s") || null,
   categoriesIds: searchParams.getAll("category") || [],
   tagsIds: searchParams.getAll("tag") || [],
-  bookingFrom: searchParams.get("bookingFrom")?.length
-    ? new Date(searchParams.get("bookingFrom") as string)
-    : null,
-  bookingTo: searchParams.get("bookingTo")?.length
-    ? new Date(searchParams.get("bookingTo") as string)
-    : null,
-  hideUnavailable: searchParams.get("hideUnavailable")?.length
-    ? searchParams.get("hideUnavailable") == "true"
-    : undefined,
-  unhideAssetsBookigIds: searchParams.getAll("unhideAssetsBookigIds") || [],
-
-  status: (() => {
-    const raw = searchParams.get("status");
-    if (!raw || raw === "ALL") return null;
-    // Normalize to valid BookingStatus enum value (handles lowercase URLs)
-    return (
-      Object.values(BookingStatus).find(
-        (s) => s.toLowerCase() === raw.toLowerCase(),
-      ) ?? null
-    );
-  })(),
   batch:
     searchParams.get("batch") === "ALL" // If the value is "ALL", we just remove the param
       ? null

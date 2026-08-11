@@ -78,9 +78,9 @@ export default function LocationQuickActions({
           size="sm"
           variant="secondary"
           className="p-2"
-          to={`/locations/${location.id}/scan-assets-kits`}
-          aria-label={t("ui.scanAssetsOrKits")}
-          tooltip={t("ui.scanAssetsOrKits")}
+          to={`/locations/${location.id}/scan-assets`}
+          aria-label={t("ui.scanAssets")}
+          tooltip={t("ui.scanAssets")}
         >
           <QrCodeIcon className="size-4" />
         </Button>

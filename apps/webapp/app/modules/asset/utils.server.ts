@@ -452,60 +452,6 @@ export function detectCustomFieldChanges(
   return changes;
 }
 
-/**
- * Builds the per-asset system-note text for a location change cascaded from a
- * parent kit assignment / removal. Delegates the base phrasing (including the
- * QUANTITY_TRACKED unit count, when the qty fields are supplied) to
- * {@link getLocationUpdateNoteContent}, then appends the kit-cascade suffix.
- *
- * @param quantity - The affected per-row `AssetLocation.quantity` (= the
- *   `AssetKit.quantity` the kit's cascade wrote into the pivot row), NOT
- *   `Asset.quantity`
- * @see {@link getLocationUpdateNoteContent} for the base-phrase parameters.
- */
-export function getKitLocationUpdateNoteContent({
-  currentLocation,
-  newLocation,
-  userId,
-  firstName,
-  lastName,
-  isRemoving,
-  type,
-  unitOfMeasure,
-  quantity,
-}: {
-  currentLocation?: Pick<Location, "id" | "name"> | null;
-  newLocation?: Pick<Location, "id" | "name"> | null;
-  userId: string;
-  firstName: string;
-  lastName: string;
-  isRemoving?: boolean;
-  /** Asset type — only QUANTITY_TRACKED triggers the unit-count phrasing. */
-  type?: AssetType;
-  /** Unit label for the count (e.g. "boxes"); defaults to "units". */
-  unitOfMeasure?: string | null;
-  /** The affected `AssetLocation.quantity`, NOT `Asset.quantity`. */
-  quantity?: number | null;
-}) {
-  const baseMessage = getLocationUpdateNoteContent({
-    currentLocation,
-    newLocation,
-    userId,
-    firstName,
-    lastName,
-    isRemoving,
-    type,
-    unitOfMeasure,
-    quantity,
-  });
-
-  if (isRemoving) {
-    return `${baseMessage.replace(/\.$/, "")} via parent kit removal.`;
-  } else {
-    return `${baseMessage.replace(/\.$/, "")} via parent kit assignment.`;
-  }
-}
-
 export const CurrentSearchParamsSchema = z.object({
   currentSearchParams: z.string().optional().nullable(),
 });
@@ -526,8 +472,7 @@ export function getAssetsWhereInput({
   const searchParams = new URLSearchParams(currentSearchParams);
   const paramsValues = getParamsValues(searchParams);
 
-  const { categoriesIds, locationIds, tagsIds, search, teamMemberIds } =
-    paramsValues;
+  const { categoriesIds, locationIds, search, teamMemberIds } = paramsValues;
 
   const status =
     searchParams.get("status") === "ALL" // If the value is "ALL", we just remove the param
@@ -583,24 +528,6 @@ export function getAssetsWhereInput({
     }
   }
 
-  if (tagsIds && tagsIds.length > 0) {
-    if (tagsIds.includes("untagged")) {
-      where.OR = [
-        ...(where.OR ?? []),
-        { tags: { some: { id: { in: tagsIds } } } },
-        { tags: { none: {} } },
-      ];
-    } else {
-      where.tags = {
-        some: {
-          id: {
-            in: tagsIds,
-          },
-        },
-      };
-    }
-  }
-
   if (locationIds && locationIds.length > 0) {
     if (locationIds.includes("without-location")) {
       // "in these locations" → at least one pivot row matches; "without
@@ -626,18 +553,6 @@ export function getAssetsWhereInput({
       {
         custody: {
           some: { custodian: { userId: { in: teamMemberIds } } },
-        },
-      },
-      {
-        bookingAssets: {
-          some: {
-            booking: { custodianTeamMemberId: { in: teamMemberIds } },
-          },
-        },
-      },
-      {
-        bookingAssets: {
-          some: { booking: { custodianUserId: { in: teamMemberIds } } },
         },
       },
       ...(teamMemberIds.includes("without-custody")
@@ -740,7 +655,6 @@ export const ASSET_CSV_HEADERS = [
 ];
 
 type AllSelectedValues = {
-  selectedTags: string[];
   selectedCategory: string[];
   selectedLocation: string[];
   selectedAssetModel: string[];

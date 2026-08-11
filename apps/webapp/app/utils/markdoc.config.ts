@@ -20,7 +20,12 @@ function collectRawContent(node: Node | undefined): string {
  * Currently includes:
  * - date tag: Renders dates with proper localization and timezone support
  * - assets_list tag: Renders interactive asset count with popover showing asset details
- * - kits_list tag: Renders interactive kit count with popover showing kit details
+ * - kits_list tag: LEGACY. Kits were removed from the product, but notes
+ *   written before that still carry `{% kits_list … /%}` in the database and
+ *   are immutable history. The tag is kept so those notes keep reading as
+ *   "3 kits" instead of dropping the fragment mid-sentence — it transforms to
+ *   plain text, with no component and no link to a route that no longer
+ *   exists. Do not add a renderer back.
  * - link tag: Renders consistent links that open in new tabs
  * - booking_status tag: Renders booking status badges with consistent styling
  * - description tag: Renders truncated descriptions with popover for full text
@@ -77,10 +82,17 @@ export const markdocConfig: Config = {
       },
       selfClosing: true,
     },
+    // LEGACY — see the file header. Text-only, no `render`.
     kits_list: {
-      render: "KitsListComponent",
       description:
-        "Renders an interactive kit count with popover showing kit names",
+        "Legacy kit count from notes written before kits were removed",
+      transform(node) {
+        const count = Number(node.attributes?.count ?? 0);
+        if (!Number.isFinite(count) || count <= 0) {
+          return "kits";
+        }
+        return `${count} ${count === 1 ? "kit" : "kits"}`;
+      },
       attributes: {
         count: {
           type: Number,
@@ -89,12 +101,12 @@ export const markdocConfig: Config = {
         },
         ids: {
           type: String,
-          required: true,
-          description: "Comma-separated list of kit IDs",
+          required: false,
+          description: "Comma-separated list of kit IDs (unused)",
         },
         action: {
           type: String,
-          required: true,
+          required: false,
           description: "Action performed (added, removed, etc.)",
         },
       },

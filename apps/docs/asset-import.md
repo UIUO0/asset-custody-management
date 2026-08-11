@@ -28,9 +28,8 @@ can copy a working starting point.
 - Each row creates a **new** asset — existing assets are never merged or
   overwritten on the create path. To bulk-update existing assets, use
   the **Bulk Update** flow at `/assets/import-update`.
-- Related-entity columns (`kit`, `category`, `location`, `custodian`)
-  are matched by name; unknown values are created automatically.
-- `tags` is comma-separated; unknown tags are created automatically.
+- Related-entity columns (`category`, `location`, `custodian`) are
+  matched by name; unknown values are created automatically.
 
 ## Quantity-tracked + asset-model columns
 
@@ -60,9 +59,9 @@ and warned-and-skipped on update) and in the asset-form UI.
 ## Example CSV (create path)
 
 ```csv
-title,description,kit,category,tags,location,valuation,custodian,bookable,assetModel,type,quantity,minQuantity,unitOfMeasure,consumptionType
-"MacBook Pro 16\"","M3 dev laptop",Working gear,Laptop,"High priority",Dutch office,2500,Thea,no,MacBook Pro 16-inch (M3),INDIVIDUAL,,,,
-"Cardboard boxes","Shipping stock",,Supplies,small,Sofia office,,,yes,,QUANTITY_TRACKED,250,50,boxes,ONE_WAY
+title,description,category,location,valuation,custodian,bookable,assetModel,type,quantity,minQuantity,unitOfMeasure,consumptionType
+"MacBook Pro 16\"","M3 dev laptop",Laptop,Dutch office,2500,Thea,no,MacBook Pro 16-inch (M3),INDIVIDUAL,,,,
+"Cardboard boxes","Shipping stock",Supplies,Sofia office,,,yes,,QUANTITY_TRACKED,250,50,boxes,ONE_WAY
 ```
 
 - Row 1 — `INDIVIDUAL` MacBook with an `assetModel` (auto-created if
@@ -75,7 +74,7 @@ title,description,kit,category,tags,location,valuation,custodian,bookable,assetM
 
 The update import accepts the same columns as the create path for
 fields that are safe to round-trip. As of the qty-tracked support
-rollout, the updatable set is: `name`, `category`, `location`, `tags`,
+rollout, the updatable set is: `name`, `category`, `location`,
 `valuation`, `availableToBook`, `quantity`, `minQuantity`,
 `unitOfMeasure`, `consumptionType`, `assetModel` + any custom fields.
 

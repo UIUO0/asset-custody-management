@@ -7,14 +7,7 @@ import type {
   LoaderFunctionArgs,
   MetaFunction,
 } from "react-router";
-import {
-  data,
-  redirect,
-  useLoaderData,
-  useNavigate,
-  useNavigation,
-  useSubmit,
-} from "react-router";
+import { data, redirect, useLoaderData, useNavigation } from "react-router";
 import { z } from "zod";
 import {
   selectedBulkItemsAtom,
@@ -25,7 +18,6 @@ import {
 import { AssetImage } from "~/components/assets/asset-image/component";
 import { AssetStatusBadge } from "~/components/assets/asset-status-badge";
 import { useAssetSortingOptions } from "~/components/assets/assets-index/filters";
-import { ListItemTagsColumn } from "~/components/assets/assets-index/list-item-tags-column";
 import { CategoryBadge } from "~/components/assets/category-badge";
 import { Form } from "~/components/custom-form";
 import DynamicDropdown from "~/components/dynamic-dropdown/dynamic-dropdown";
@@ -45,7 +37,6 @@ import {
   TabsTrigger,
 } from "~/components/shared/tabs";
 import { Td, Th } from "~/components/table";
-import UnsavedChangesAlert from "~/components/unsaved-changes-alert";
 import { db } from "~/database/db.server";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import type { LOCATION_WITH_HIERARCHY } from "~/modules/asset/fields";
@@ -98,7 +89,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
             organizationId,
           },
           include: {
-            kits: { select: { id: true } },
             // Use `include` (not `select`) at the AssetLocation pivot so
             // Prisma's LocationInclude type narrows through and exposes
             // nested `asset` in the result type. `quantity` powers the
@@ -137,11 +127,9 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     } = paginatedAssets;
@@ -182,7 +170,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       noScroll: true,
       items: itemsWithPickerMeta,
       categories,
-      tags,
       search,
       page,
       totalItems: totalAssets,
@@ -191,7 +178,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       modelName,
       location,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     });
@@ -265,10 +251,7 @@ export default function AddAssetsToLocation() {
   const { location, totalItems } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const isSearching = isFormProcessing(navigation.state);
-  const navigate = useNavigate();
-  const submit = useSubmit();
 
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
   const selectedBulkItems = useAtomValue(selectedBulkItemsAtom);
@@ -276,18 +259,12 @@ export default function AddAssetsToLocation() {
   const setSelectedBulkItems = useSetAtom(setSelectedBulkItemsAtom);
   const selectedBulkItemsCount = useAtomValue(selectedBulkItemsCountAtom);
   const hasSelectedAllItems = isSelectingAllItems(selectedBulkItems);
-
-  const locationKitIds = location.kits.map((k) => k.id);
   // Flatten the AssetLocation pivot rows to the simple `asset[]` shape
   // the component logic expects.
   const locationAssets = useMemo(
     () => location.assetLocations.map((al) => al.asset),
     [location.assetLocations],
   );
-  const locationAssetsCount = locationAssets.length;
-  const hasUnsavedChanges = selectedBulkItemsCount !== locationAssetsCount;
-
-  const manageKitsUrl = `/locations/${location.id}/kits/manage-kits`;
 
   /**
    * Snapshot of each qty-tracked asset's current AssetLocation.quantity
@@ -357,18 +334,12 @@ export default function AddAssetsToLocation() {
   }
 
   return (
-    <Tabs
-      className="flex h-full max-h-full flex-col"
-      value="assets"
-      onValueChange={() => {
-        if (hasUnsavedChanges) {
-          setIsAlertOpen(true);
-          return;
-        }
-
-        void navigate(manageKitsUrl);
-      }}
-    >
+    /*
+     * Single-tab shell. The kits tab this used to switch to is gone, so
+     * there is no `onValueChange` — the Tabs wrapper stays only because
+     * the layout and the `TabsContent` scroll container hang off it.
+     */
+    <Tabs className="flex h-full max-h-full flex-col" value="assets">
       <div className="border-b px-6 py-2">
         <TabsList className="w-full">
           <TabsTrigger className="flex-1 gap-x-2" value="assets">
@@ -376,14 +347,6 @@ export default function AddAssetsToLocation() {
             {selectedBulkItemsCount > 0 ? (
               <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
                 {hasSelectedAllItems ? totalItems : selectedBulkItemsCount}
-              </GrayBadge>
-            ) : null}
-          </TabsTrigger>
-          <TabsTrigger className="flex-1 gap-x-2" value="kits">
-            {t("nav.kits")}
-            {locationKitIds.length > 0 ? (
-              <GrayBadge className="size-[20px] border border-primary-200 bg-primary-50 text-[10px] leading-[10px] text-primary-700">
-                {locationKitIds.length}
               </GrayBadge>
             ) : null}
           </TabsTrigger>
@@ -415,17 +378,6 @@ export default function AddAssetsToLocation() {
           placeholder={t("list.searchCategories")}
           initialDataKey="categories"
           countKey="totalCategories"
-        />
-        <DynamicDropdown
-          trigger={
-            <div className="flex h-6 cursor-pointer items-center gap-2">
-              Tags <ChevronRight className="hidden rotate-90 md:inline" />
-            </div>
-          }
-          model={{ name: "tag", queryKey: "name" }}
-          label={t("list.filterByTag")}
-          initialDataKey="tags"
-          countKey="totalTags"
         />
         <DynamicDropdown
           trigger={
@@ -487,7 +439,6 @@ export default function AddAssetsToLocation() {
             <>
               <Th>{t("assets.location")}</Th>
               <Th>{t("assets.category")}</Th>
-              <Th>{t("nav.tags")}</Th>
             </>
           }
           extraItemComponentProps={{
@@ -535,9 +486,6 @@ export default function AddAssetsToLocation() {
               name="assetQuantities"
               value={JSON.stringify(quantities)}
             />
-            {hasUnsavedChanges && isAlertOpen ? (
-              <input name="redirectTo" value={manageKitsUrl} type="hidden" />
-            ) : null}
             <Button
               type="submit"
               name="intent"
@@ -549,19 +497,6 @@ export default function AddAssetsToLocation() {
           </Form>
         </div>
       </footer>
-
-      <UnsavedChangesAlert
-        open={isAlertOpen}
-        onOpenChange={setIsAlertOpen}
-        onCancel={() => {
-          void navigate(manageKitsUrl);
-        }}
-        onYes={() => {
-          void submit(formRef.current);
-        }}
-      >
-        {t("bookings.unsavedAssetsAlert")}
-      </UnsavedChangesAlert>
     </Tabs>
   );
 }
@@ -572,7 +507,6 @@ type LocationRowItem = Prisma.AssetGetPayload<{
       select: { location: typeof LOCATION_WITH_HIERARCHY };
     };
     category: true;
-    tags: true;
   };
 }> & {
   /** Attached by the loader. Null for INDIVIDUAL rows or when the
@@ -592,7 +526,7 @@ const RowComponent = ({
     initialLocationQuantities: Record<string, number>;
   };
 }) => {
-  const { tags, category } = item;
+  const { category } = item;
   const selectedBulkItems = useAtomValue(selectedBulkItemsAtom);
   const isSelected = selectedBulkItems.some((a) => a.id === item.id);
   const isQty = isQuantityTracked(item);
@@ -766,11 +700,6 @@ const RowComponent = ({
       {/* Category */}
       <Td>
         <CategoryBadge category={category} />
-      </Td>
-
-      {/* Tags */}
-      <Td className="text-start">
-        <ListItemTagsColumn tags={tags} />
       </Td>
     </>
   );

@@ -88,40 +88,26 @@ describe("markdoc.config", () => {
     });
   });
 
-  describe("kits_list tag configuration", () => {
-    it("should have kits_list tag with correct properties", () => {
+  describe("kits_list tag configuration (legacy)", () => {
+    // why: kits were removed from the product, but notes written before that
+    // still carry `{% kits_list … /%}` and are immutable history. The tag has
+    // to stay registered — without a renderer — so those notes degrade to
+    // plain text instead of dropping the fragment mid-sentence.
+    it("has no renderer", () => {
       const kitsListTag = (markdocConfig.tags as any).kits_list;
 
       expect(kitsListTag).toBeDefined();
-      expect(kitsListTag.render).toBe("KitsListComponent");
-      expect(kitsListTag.attributes).toBeDefined();
+      expect(kitsListTag.render).toBeUndefined();
     });
 
-    it("should have correct kits_list tag attributes", () => {
-      const kitsListAttributes = (markdocConfig.tags as any).kits_list
-        .attributes;
+    it("transforms to a plain-text count", () => {
+      const kitsListTag = (markdocConfig.tags as any).kits_list;
 
-      expect(kitsListAttributes).toBeDefined();
-      expect(kitsListAttributes!.count).toEqual(
-        expect.objectContaining({
-          type: Number,
-          required: true,
-        }),
+      expect(kitsListTag.transform({ attributes: { count: 3 } })).toBe(
+        "3 kits",
       );
-
-      expect(kitsListAttributes!.ids).toEqual(
-        expect.objectContaining({
-          type: String,
-          required: true,
-        }),
-      );
-
-      expect(kitsListAttributes!.action).toEqual(
-        expect.objectContaining({
-          type: String,
-          required: true,
-        }),
-      );
+      expect(kitsListTag.transform({ attributes: { count: 1 } })).toBe("1 kit");
+      expect(kitsListTag.transform({ attributes: {} })).toBe("kits");
     });
   });
 
@@ -265,17 +251,6 @@ describe("markdoc.config", () => {
       ).toBe(true);
       expect(
         (markdocConfig.tags as any).assets_list.attributes.action.required,
-      ).toBe(true);
-
-      // Kits list tag - all attributes are required
-      expect(
-        (markdocConfig.tags as any).kits_list.attributes.count.required,
-      ).toBe(true);
-      expect(
-        (markdocConfig.tags as any).kits_list.attributes.ids.required,
-      ).toBe(true);
-      expect(
-        (markdocConfig.tags as any).kits_list.attributes.action.required,
       ).toBe(true);
 
       // Booking status tag - status is required, custodianUserId is optional

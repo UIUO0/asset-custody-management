@@ -97,13 +97,13 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     ];
 
     /**
-     * When there is no assetId or kitId that means that the barcode was created but not linked.
+     * When there is no assetId that means that the barcode was created but not linked.
      * This shouldn't normally happen with our current barcode system.
      */
-    if (!barcode.assetId && !barcode.kitId) {
+    if (!barcode.assetId) {
       throw new ShelfError({
         cause: null,
-        message: "This barcode is not linked to any asset or kit.",
+        message: "This barcode is not linked to any asset.",
         additionalData: { value, shouldSendNotification: false },
         label: "Barcode",
         shouldBeCaptured: false,
@@ -114,14 +114,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     if (barcode.assetId) {
       return redirect(
         `/assets/${barcode.assetId}/overview?ref=barcode&barcodeValue=${value}`,
-        {
-          headers,
-        },
-      );
-    } else if (barcode.kitId) {
-      /** If its linked to a kit, redirect to the kit */
-      return redirect(
-        `/kits/${barcode.kitId}?ref=barcode&barcodeValue=${value}`,
         {
           headers,
         },

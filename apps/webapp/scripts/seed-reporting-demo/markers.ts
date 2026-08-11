@@ -6,11 +6,10 @@
  * touching pre-existing data in the target workspace.
  *
  * - Every `ActivityEvent` the seeder inserts carries `meta.seedRun = SEED_RUN_ID`.
- * - A dedicated `Tag` named `SEED_TAG_NAME` is created in the target org and
- *   attached to every seeded `Asset` and `Booking` via the existing m2m.
- * - Entities that can't carry a tag (TeamMember, Category, Location,
- *   CustomField, Kit, AuditSession) get a `NAME_SUFFIX` appended to their
- *   display name.
+ * - Every other seeded row (Asset, Booking, TeamMember, Category, Location,
+ *   CustomField, AuditSession) gets `NAME_SUFFIX` appended to its display
+ *   name. This used to be the fallback for rows that couldn't carry the
+ *   marker tag; with tags removed from the product it is the only marker.
  *
  * If the seeder is ever re-shaped, bump `SEED_RUN_ID` (e.g. `v2`). Both the
  * seed and clean commands filter on the current id; v1 rows remain inspectable
@@ -20,10 +19,7 @@
 /** Marker value written to `ActivityEvent.meta.seedRun` on every seeded event. */
 export const SEED_RUN_ID = "reporting-demo-v1" as const;
 
-/** Name of the tag created in the target org and attached to seeded assets/bookings. */
-export const SEED_TAG_NAME = "#seed:reporting-demo-v1" as const;
-
-/** Suffix appended to the `name` of entities that cannot carry a tag. */
+/** Suffix appended to the `name`/`title` of every seeded row. */
 export const NAME_SUFFIX = " [seed]" as const;
 
 /**

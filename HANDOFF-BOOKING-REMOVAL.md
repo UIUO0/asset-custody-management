@@ -22,13 +22,13 @@
 
 **قرارات محسومة — لا تُعِد فتحها:**
 
-| السؤال | القرار |
-| --- | --- |
-| حسابات الموظفين | **تبقى** — للتوقيع والاطلاع على عهدهم. لا تُحذف |
-| المرافق و IT | **دور تشغيلي واحد مشترك** (مثل `DEPARTMENT`) + تمييز الإدارة **بالبيانات لا بالصلاحيات**، حتى تُضاف إدارة ثالثة بلا كود |
-| «رقم الأمر» | **رقم أمر الشراء القائم** المشتق من نماذج الاستلام (`/purchase-orders`). بلا جدول جديد ولا ترقيم جديد |
-| طلب الموظف | **لا يوجد** — الإدارة تبادر بالتسليم |
-| «الأصناف المتاحة» | تُحذف من صفحات الموظف العادي |
+| السؤال            | القرار                                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| حسابات الموظفين   | **تبقى** — للتوقيع والاطلاع على عهدهم. لا تُحذف                                                                         |
+| المرافق و IT      | **دور تشغيلي واحد مشترك** (مثل `DEPARTMENT`) + تمييز الإدارة **بالبيانات لا بالصلاحيات**، حتى تُضاف إدارة ثالثة بلا كود |
+| «رقم الأمر»       | **رقم أمر الشراء القائم** المشتق من نماذج الاستلام (`/purchase-orders`). بلا جدول جديد ولا ترقيم جديد                   |
+| طلب الموظف        | **لا يوجد** — الإدارة تبادر بالتسليم                                                                                    |
+| «الأصناف المتاحة» | تُحذف من صفحات الموظف العادي                                                                                            |
 
 **لماذا بقيت حسابات الموظفين:** التوقيع اليوم يتطلب جلسة (`/handovers/$id` تحت
 `_layout+` وتستدعي `getSession()`). وحذف الحسابات كان سيفرض التوقيع على جهاز
@@ -66,12 +66,12 @@ cd apps/webapp && npx tsc -b --pretty false   # يعيد الأخطاء الـ١
 
 كانت في مجلدات الحجز لكنها **ليست منه**:
 
-| المكوّن | موقعه الجديد | مستهلكوه |
-| --- | --- | --- |
-| `status-filter` | `components/shared/status-filter.tsx` | الجرد، الفريق، المجموعات، المواقع، ملاحظات الأصناف |
-| `AvailabilityBadge` | `components/shared/availability-badge.tsx` | أدراج العهدة والمواقع والمجموعات، درج الجرد |
-| `ExtendedAssetStatus` / `ExtendedKitStatus` | `utils/asset-status.ts` | شارات حالة الصنف والمجموعة |
-| `BookingStatusComponent` | `components/markdown/booking-status-component.tsx` | **أُبقي عمداً** كعارض نصّي: ملاحظات الأصناف التاريخية ما زالت تحوي وسم `{% booking_status %}`، ووسم Markdoc بلا عارض يكسر الملاحظة كلها |
+| المكوّن                                     | موقعه الجديد                                       | مستهلكوه                                                                                                                                |
+| ------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `status-filter`                             | `components/shared/status-filter.tsx`              | الجرد، الفريق، المجموعات، المواقع، ملاحظات الأصناف                                                                                      |
+| `AvailabilityBadge`                         | `components/shared/availability-badge.tsx`         | أدراج العهدة والمواقع والمجموعات، درج الجرد                                                                                             |
+| `ExtendedAssetStatus` / `ExtendedKitStatus` | `utils/asset-status.ts`                            | شارات حالة الصنف والمجموعة                                                                                                              |
+| `BookingStatusComponent`                    | `components/markdown/booking-status-component.tsx` | **أُبقي عمداً** كعارض نصّي: ملاحظات الأصناف التاريخية ما زالت تحوي وسم `{% booking_status %}`، ووسم Markdoc بلا عارض يكسر الملاحظة كلها |
 
 ---
 
@@ -82,6 +82,7 @@ cd apps/webapp && npx tsc -b --pretty false   # يعيد الأخطاء الـ١
 أصلح الأخطاء الـ١٥ في هذه الملفات:
 
 **سهلة:**
+
 - `components/assets/assets-index/advanced-asset-columns.tsx` — استيراد
   `EventCardContent` من التقويم المحذوف + عمود `upcomingBookings`
 - `components/layout/command-palette/command-palette.tsx` — `canUseBookings`
@@ -89,6 +90,7 @@ cd apps/webapp && npx tsc -b --pretty false   # يعيد الأخطاء الـ١
 - `routes/api+/mobile+/dashboard.ts` — إحصاءات الحجوزات
 
 **متوسطة:**
+
 - `routes/_layout+/assets.$assetId.tsx` — `booking-actions-dropdown` +
   `booking/service.server`
 - `routes/_layout+/assets.$assetId.overview.tsx` — `booking/service.server`
@@ -97,6 +99,7 @@ cd apps/webapp && npx tsc -b --pretty false   # يعيد الأخطاء الـ١
   `assets-list.tsx` الذي أُنجز)
 
 **ثقيلة — اقرأ التحذير في القسم ٤ أولاً:**
+
 - `modules/reports/helpers.server.ts` (٣٩٠٠ سطر) — ٦ دوال تقارير حجوزات
   (`bookingComplianceReport`, `overdueItemsReport`, `topBookedAssetsReport`,
   `topBookedKitsReport`, `monthlyBookingTrendsReport`,
@@ -122,6 +125,7 @@ cd apps/webapp && npx tsc -b --pretty false   # يعيد الأخطاء الـ١
 وتعدادَي `BookingStatus` و `BookingApprovalState`.
 
 انتبه:
+
 - `ConsumptionLog.bookingId` و `bookingAssetId` — مفاتيح أجنبية اختيارية، أسقطها
 - أصناف عالقة على `AssetStatus.CHECKED_OUT` — صفّرها إلى `AVAILABLE` في الترحيل،
   وإلا بقيت مجمّدة بلا حجز يحرّرها

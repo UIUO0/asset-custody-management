@@ -35,7 +35,6 @@ export const loader = async ({ context, params }: LoaderFunctionArgs) => {
           qrCodes: {
             include: {
               asset: true,
-              kit: true,
             },
           },
           owner: true,
@@ -116,35 +115,16 @@ export const action = async ({
 
 export default function AdminOrgQrCodes() {
   const { organization } = useLoaderData<typeof loader>();
+  // Unlinked codes first — they're the ones an admin acts on.
   const codes = organization?.qrCodes.sort((a, b) => {
-    const aHasKitId = a.kitId !== null;
-    const bHasKitId = b.kitId !== null;
-
-    // Check if both or neither have assetId/kitId, in which case we don't change the order
-    const aHasAssetOrKit = a.assetId !== null || aHasKitId;
-    const bHasAssetOrKit = b.assetId !== null || bHasKitId;
-    if (aHasAssetOrKit && !bHasAssetOrKit) {
-      return 1; // b comes first because it has neither assetId nor kitId
-    } else if (!aHasAssetOrKit && bHasAssetOrKit) {
-      return -1; // a comes first because it has neither assetId nor kitId
-    }
-
-    // Among the rest, prioritize codes with a kitId
-
-    if (aHasKitId && !bHasKitId) {
-      return 1; // b comes first because it does not have a kitId but might have an assetId
-    } else if (!aHasKitId && bHasKitId) {
-      return -1; // a comes first because it does not have a kitId but might have an assetId
-    }
-
-    // If both have or don't have kitId, you might want to further sort them based on another criteria
-    // For simplicity, let's not change the order in this case
+    const aLinked = a.assetId !== null;
+    const bLinked = b.assetId !== null;
+    if (aLinked && !bLinked) return 1;
+    if (!aLinked && bLinked) return -1;
     return 0;
   });
 
-  const unlinkedCodes = codes.filter(
-    (code) => code.assetId === null && code.kitId === null,
-  );
+  const unlinkedCodes = codes.filter((code) => code.assetId === null);
   return (
     <>
       <div className="flex justify-between">
@@ -211,9 +191,6 @@ export default function AdminOrgQrCodes() {
                 Asset
               </th>
               <th className="border-b p-4 text-start text-gray-600 md:px-6">
-                Kit
-              </th>
-              <th className="border-b p-4 text-start text-gray-600 md:px-6">
                 Created At
               </th>
             </tr>
@@ -234,11 +211,6 @@ export default function AdminOrgQrCodes() {
                   {!qrCode?.assetId
                     ? "N/A"
                     : `${qrCode?.asset?.title} (${qrCode?.asset?.id})`}
-                </Td>
-                <Td className="whitespace-normal">
-                  {!qrCode?.kitId
-                    ? "N/A"
-                    : `${qrCode?.kit?.name} (${qrCode?.kit?.id})`}
                 </Td>
                 <Td>
                   <DateS

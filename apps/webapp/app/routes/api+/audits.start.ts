@@ -10,7 +10,6 @@ import { getAssetIndexSettings } from "~/modules/asset-index-settings/service.se
 import { AUDIT_SCHEDULER_EVENTS_ENUM } from "~/modules/audit/constants";
 import {
   resolveAssetIdsForAudit,
-  resolveAssetIdsForKitSelection,
   resolveAssetIdsForLocationSelection,
 } from "~/modules/audit/context-helpers.server";
 import { sendAuditAssignedEmail } from "~/modules/audit/email-helpers";
@@ -63,7 +62,7 @@ export const StartAuditSchema = BaseAuditSchema.extend({
   // Asset IDs - required for bulk selection mode, optional for context mode
   assetIds: z.array(z.string()).optional(),
   // Context parameters - for starting audit from location/kit/user pages
-  contextType: z.enum(["location", "kit", "user"]).optional(),
+  contextType: z.enum(["location", "user"]).optional(),
   contextId: z.string().optional(),
   contextName: z.string().optional(),
   // Location IDs - for the bulk "Create audit" action on the Locations index
@@ -71,7 +70,6 @@ export const StartAuditSchema = BaseAuditSchema.extend({
   locationIds: z.array(z.string()).optional(),
   // Kit IDs - for the bulk "Create audit" action on the Kits index
   // (multi-select). May contain ALL_SELECTED_KEY when "select all" is active.
-  kitIds: z.array(z.string()).optional(),
   includeChildLocations: z.coerce.boolean().default(false),
 }).refine(
   (data) => {
@@ -83,9 +81,7 @@ export const StartAuditSchema = BaseAuditSchema.extend({
       data.contextType === "location" &&
       !!data.locationIds &&
       data.locationIds.length > 0;
-    const hasKitSelection =
-      data.contextType === "kit" && !!data.kitIds && data.kitIds.length > 0;
-    return hasAssetIds || hasContext || hasLocationSelection || hasKitSelection;
+    return hasAssetIds || hasContext || hasLocationSelection;
   },
   {
     message:
@@ -118,7 +114,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
       contextId,
       contextName,
       locationIds,
-      kitIds,
       includeChildLocations,
       currentSearchParams,
     } = parseData(formData, StartAuditSchema.and(CurrentSearchParamsSchema), {
@@ -138,15 +133,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
       assetIds = await resolveAssetIdsForLocationSelection({
         organizationId,
         locationIds,
-        currentSearchParams,
-      });
-    } else if (contextType === "kit" && kitIds && kitIds.length > 0) {
-      // Bulk "Create audit" from the Kits index (multi-select). Resolve the
-      // union of assets across the selected kits server-side — handles "select
-      // all" (honoring the list filter) and asserts explicit IDs.
-      assetIds = await resolveAssetIdsForKitSelection({
-        organizationId,
-        kitIds,
         currentSearchParams,
       });
     } else if (isSelectingAllAssets) {

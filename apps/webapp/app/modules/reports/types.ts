@@ -171,7 +171,6 @@ export interface IdleAssetRow {
   category: string | null;
   location: string | null;
   /** Date of last booking checkout, null if never booked */
-  lastBookedAt: Date | null;
   /** Days since last activity */
   daysSinceLastUse: number;
   /** Current asset status */

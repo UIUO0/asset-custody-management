@@ -75,6 +75,10 @@ export default {
           { text: "سير العمل والأدوار", link: "/epda-workflow-and-roles" },
           { text: "التعريب والمظهر", link: "/epda-i18n-and-theming" },
           { text: "معجم المصطلحات", link: "/epda-glossary" },
+          {
+            text: "دورة حياة الصنف كاملةً",
+            link: "/epda-asset-lifecycle-workflow",
+          },
           { text: "مسار استلام الأصل", link: "/epda-asset-intake-workflow" },
           {
             text: "مسار الطلبات",

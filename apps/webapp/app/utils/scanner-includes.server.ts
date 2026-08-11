@@ -39,44 +39,6 @@ export const ASSET_INCLUDE = {
       location: { select: { id: true, name: true } },
     },
   },
-  assetKits: {
-    select: {
-      kitId: true,
-      kit: { select: { id: true, name: true } },
-    },
-  },
-  ...CUSTODY_INCLUDE,
-};
-
-export const KIT_INCLUDE = {
-  location: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
-  _count: { select: { assetKits: true } },
-  assetKits: {
-    select: {
-      // Scanner needs the AssetKit's own id so kit-driven
-      // BookingAsset rows can be created with `assetKitId` set when
-      // the user scans a kit's QR. Without this, the booking UI
-      // can't tell which kit a row came from.
-      id: true,
-      asset: {
-        select: {
-          id: true,
-          status: true,
-          // `type` lets scanner callers branch INDIVIDUAL vs QUANTITY_TRACKED
-          // (e.g. partial-checkout eligibility — QT supports top-off via the
-          // remaining-units map, INDIVIDUAL is binary).
-          type: true,
-          availableToBook: true,
-          custody: true,
-        },
-      },
-    },
-  },
   ...CUSTODY_INCLUDE,
 };
 
@@ -84,24 +46,15 @@ export const QR_INCLUDE = {
   asset: {
     include: ASSET_INCLUDE,
   },
-  kit: {
-    include: KIT_INCLUDE,
-  },
 };
 
 export const BARCODE_INCLUDE = {
   asset: {
     include: ASSET_INCLUDE,
   },
-  kit: {
-    include: KIT_INCLUDE,
-  },
 };
 
 // Type exports for reuse
-export type KitFromScanner = Prisma.KitGetPayload<{
-  include: typeof KIT_INCLUDE;
-}>;
 
 /**
  * Ambient picker meta the scanner API attaches when a destination

@@ -22,11 +22,9 @@
 | Check out       | تسليم       | **معتمد** — لا تُستخدم «إخراج» |
 | Check in        | استلام      |                                |
 | Checked out     | مُسلَّم     | حالة الصنف                     |
-| Kit             | مجموعة      | **معتمد** — لا تُستخدم «طقم»   |
 | Audit           | جرد         | **معتمد** — لا تُستخدم «تدقيق» |
 | Location        | موقع        |                                |
 | Category        | تصنيف       |                                |
-| Tag             | وسم         |                                |
 | Workspace       | مساحة العمل |                                |
 | Team member     | عضو الفريق  |                                |
 | Custom field    | حقل مخصص    |                                |
@@ -177,7 +175,6 @@
 | Filter               | تصفية                |
 | Filter by status     | تصفية حسب الحالة     |
 | Filter by category   | تصفية حسب التصنيف    |
-| Filter by tag        | تصفية حسب الوسم      |
 | Filter by location   | تصفية حسب الموقع     |
 | Filter by custodian  | تصفية حسب العهدة     |
 | Search categories    | بحث في التصنيفات     |
@@ -188,7 +185,6 @@
 | Clear all filters    | مسح كل الفلاتر       |
 | Save filter          | حفظ الفلتر           |
 | Uncategorized        | غير مصنّف            |
-| Without tag          | بدون وسم             |
 | Without location     | بدون موقع            |
 | Without custody      | بدون عهدة            |
 

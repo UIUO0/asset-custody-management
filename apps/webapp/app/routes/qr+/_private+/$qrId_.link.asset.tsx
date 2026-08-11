@@ -81,9 +81,9 @@ export const loader = async ({
     const t = await getFixedT(getLocale(request));
 
     const qr = await getQr({ id: qrId });
-    if (qr?.assetId || qr?.kitId) {
+    if (qr?.assetId) {
       throw new ShelfError({
-        message: "This QR code is already linked to an asset or a kit.",
+        message: "This QR code is already linked to an asset.",
         title: "QR already linked",
         label: "QR",
         status: 403,
@@ -105,12 +105,10 @@ export const loader = async ({
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     } = await getPaginatedAndFilterableAssets({
@@ -152,7 +150,6 @@ export const loader = async ({
         qrId,
         items: assets,
         categories,
-        tags,
         locations,
         totalLocations,
         search,
@@ -167,7 +164,6 @@ export const loader = async ({
           text: t("search.assetsText"),
         },
         totalCategories,
-        totalTags,
       }),
       {
         headers: [setCookie(await userPrefs.serialize(cookie))],
@@ -225,8 +221,8 @@ export default function QrLinkExisting() {
   const { t } = useTranslation();
   const { header } = useLoaderData<typeof loader>();
   const { qrId } = useParams();
-  const hasFiltersToClear = useSearchParamHasValue("category", "tag");
-  const clearFilters = useClearValueFromParams("category", "tag");
+  const hasFiltersToClear = useSearchParamHasValue("category");
+  const clearFilters = useClearValueFromParams("category");
   const [confirmOpen, setConfirmOpen] = useState<boolean>(false);
 
   /** The id of the asset the user selected to update */
@@ -274,17 +270,6 @@ export default function QrLinkExisting() {
               label={t("list.filterByCategory")}
               initialDataKey="categories"
               countKey="totalCategories"
-            />
-            <DynamicDropdown
-              trigger={
-                <div className="flex cursor-pointer items-center gap-2">
-                  Tags <ChevronRight className="hidden rotate-90 md:inline" />
-                </div>
-              }
-              model={{ name: "tag", queryKey: "name" }}
-              label={t("list.filterByTags")}
-              initialDataKey="tags"
-              countKey="totalTags"
             />
             <DynamicDropdown
               trigger={

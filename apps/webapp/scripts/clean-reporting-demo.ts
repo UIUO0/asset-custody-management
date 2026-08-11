@@ -7,8 +7,7 @@
  *
  * - `ActivityEvent.meta.seedRun === "reporting-demo-v1"` — used to find
  *   every seeded event.
- * - The `#seed:reporting-demo-v1` Tag (and the `" [seed]"` name suffix on
- *   entities that can't carry a tag) — used to find the source rows.
+ * - The `" [seed]"` name suffix on every seeded row — used to find them.
  *
  * Sanity check: before any `delete` runs, the script counts how many of
  * the org's assets / bookings / audit sessions are marked vs. total. If
@@ -31,11 +30,7 @@
 import { createDatabaseClient } from "@shelf/database";
 import type { ExtendedPrismaClient } from "@shelf/database";
 
-import {
-  NAME_SUFFIX,
-  SEED_RUN_ID,
-  SEED_TAG_NAME,
-} from "./seed-reporting-demo/markers";
+import { NAME_SUFFIX, SEED_RUN_ID } from "./seed-reporting-demo/markers";
 
 /** CLI options for the cleanup script. */
 type CleanCliOptions = {
@@ -156,10 +151,9 @@ type MarkedRatios = {
 
 /**
  * Count marked vs. total rows for the categories we'll delete. A marked
- * Asset is one connected to the `SEED_TAG_NAME` tag; a marked Booking
- * uses the same criterion; a marked AuditSession has a name ending in
- * the `" [seed]"` suffix; a marked ActivityEvent has `meta.seedRun`
- * set to the current `SEED_RUN_ID`.
+ * Asset / Booking / AuditSession has a name ending in the `" [seed]"`
+ * suffix; a marked ActivityEvent has `meta.seedRun` set to the current
+ * `SEED_RUN_ID`.
  */
 async function collectMarkedRatios(
   db: ExtendedPrismaClient,
@@ -177,17 +171,11 @@ async function collectMarkedRatios(
   ] = await Promise.all([
     db.asset.count({ where: { organizationId: orgId } }),
     db.asset.count({
-      where: {
-        organizationId: orgId,
-        tags: { some: { name: SEED_TAG_NAME } },
-      },
+      where: { organizationId: orgId, title: { endsWith: NAME_SUFFIX } },
     }),
     db.booking.count({ where: { organizationId: orgId } }),
     db.booking.count({
-      where: {
-        organizationId: orgId,
-        tags: { some: { name: SEED_TAG_NAME } },
-      },
+      where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
     }),
     db.auditSession.count({ where: { organizationId: orgId } }),
     db.auditSession.count({
@@ -273,10 +261,8 @@ type DeleteCounts = {
   partialCheckins: number;
   bookings: number;
   custodies: number;
-  kits: number;
   assets: number;
   customFields: number;
-  tags: number;
   locations: number;
   categories: number;
   teamMembers: number;
@@ -303,10 +289,8 @@ async function deleteAll(
       partialCheckins: 0,
       bookings: 0,
       custodies: 0,
-      kits: 0,
       assets: 0,
       customFields: 0,
-      tags: 0,
       locations: 0,
       categories: 0,
       teamMembers: 0,
@@ -356,69 +340,38 @@ async function deleteAll(
     // 5) PartialBookingCheckin rows attached to seeded bookings.
     const partialResult = await t.partialBookingCheckin.deleteMany({
       where: {
-        booking: {
-          organizationId: orgId,
-          tags: { some: { name: SEED_TAG_NAME } },
-        },
+        booking: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
       },
     });
     counts.partialCheckins = partialResult.count;
 
-    // 6) Booking rows (marker tag).
+    // 6) Booking rows (name suffix).
     const bookingResult = await t.booking.deleteMany({
-      where: {
-        organizationId: orgId,
-        tags: { some: { name: SEED_TAG_NAME } },
-      },
+      where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
     });
     counts.bookings = bookingResult.count;
 
     // 7) Custody rows on seeded assets.
     const custodyResult = await t.custody.deleteMany({
       where: {
-        asset: {
-          organizationId: orgId,
-          tags: { some: { name: SEED_TAG_NAME } },
-        },
+        asset: { organizationId: orgId, title: { endsWith: NAME_SUFFIX } },
       },
     });
     counts.custodies = custodyResult.count;
 
-    // 8) Kit rows (name suffix). `AssetKit` pivot rows cascade-delete
-    // when the kit is deleted (FK is `ON DELETE CASCADE`), so no
-    // explicit detach pass is needed. Assets themselves stay; only the
-    // pivot link to the kit is cleared.
-    const kitResult = await t.kit.deleteMany({
-      where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
-    });
-    counts.kits = kitResult.count;
-
-    // 9) Asset rows (marker tag).
+    // 8) Asset rows (name suffix).
     const assetResult = await t.asset.deleteMany({
-      where: {
-        organizationId: orgId,
-        tags: { some: { name: SEED_TAG_NAME } },
-      },
+      where: { organizationId: orgId, title: { endsWith: NAME_SUFFIX } },
     });
     counts.assets = assetResult.count;
 
-    // 10) CustomField rows (name suffix).
+    // 9) CustomField rows (name suffix).
     const customFieldResult = await t.customField.deleteMany({
       where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
     });
     counts.customFields = customFieldResult.count;
 
-    // 11) Tag rows — both the marker tag (exact name) and the content
-    // tags with the `" [seed]"` suffix.
-    const tagResult = await t.tag.deleteMany({
-      where: {
-        organizationId: orgId,
-        OR: [{ name: SEED_TAG_NAME }, { name: { endsWith: NAME_SUFFIX } }],
-      },
-    });
-    counts.tags = tagResult.count;
-
-    // 12) Location rows (name suffix).
+    // 10) Location rows (name suffix).
     const locationResult = await t.location.deleteMany({
       where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
     });

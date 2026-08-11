@@ -37,7 +37,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           query,
           assets: [],
           audits: [],
-          kits: [],
           bookings: [],
           locations: [],
           teamMembers: [],
@@ -72,16 +71,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       fields.map((field) => ({
         [field]: { contains: term, mode: Prisma.QueryMode.insensitive },
       }));
-
-    // Kit search conditions
-    const kitSearchConditions: Prisma.KitWhereInput[] = searchTerms.map(
-      (term) => ({
-        OR: [
-          ...createTextSearchConditions(term, ["name", "description"]),
-          { id: { contains: term, mode: Prisma.QueryMode.insensitive } },
-        ],
-      }),
-    );
 
     // Booking search conditions
     const bookingSearchConditions: Prisma.BookingWhereInput[] = searchTerms.map(
@@ -152,7 +141,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const isPersonalWorkspace = isPersonalOrg(currentOrganization);
 
     // Check permissions for different entity types based on actual roles
-    const hasKitPermission = ["OWNER", "ADMIN"].includes(role);
     const hasBookingPermission =
       !isPersonalWorkspace &&
       ["OWNER", "ADMIN", "SELF_SERVICE", "BASE"].includes(role);
@@ -162,11 +150,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const hasAuditPermission = true;
 
     // Prepare where clauses for other entities
-
-    const kitWhere: Prisma.KitWhereInput = {
-      organizationId,
-      ...(kitSearchConditions.length ? { OR: kitSearchConditions } : {}),
-    };
 
     const bookingWhere: Prisma.BookingWhereInput = {
       organizationId,
@@ -203,14 +186,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
                   },
                 },
               },
-              // Team members they have kits in custody from
-              {
-                kitCustodies: {
-                  some: {
-                    custodian: { userId },
-                  },
-                },
-              },
               // Their own team member record
               { userId },
             ],
@@ -232,7 +207,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     };
 
     // Execute parallel searches
-    const [assetResults, audits, kits, bookings, locations, teamMembers] =
+    const [assetResults, audits, bookings, locations, teamMembers] =
       await Promise.all([
         // Assets (always allowed) - using enhanced search from asset service.
         // The asset-index default include no longer eagerly loads customFields
@@ -276,18 +251,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
                 description: true,
                 status: true,
                 dueDate: true,
-              },
-            })
-          : Promise.resolve([]),
-
-        // Kits (permission-gated)
-        hasKitPermission
-          ? db.kit.findMany({
-              where: kitWhere,
-              take: 6,
-              orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-              include: {
-                _count: { select: { assetKits: true } },
               },
             })
           : Promise.resolve([]),
@@ -383,7 +346,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
             description: asset.description,
             qrCodes: asset.qrCodes?.map((qr) => qr.id) ?? [],
             categoryName: asset.category?.name ?? null,
-            tagNames: asset.tags?.map((tag) => tag.name) ?? [],
             custodianName: primaryCustody?.custodian?.name ?? null,
             custodianUserName: primaryCustody?.custodian?.user
               ? `${primaryCustody.custodian.user.firstName} ${primaryCustody.custodian.user.lastName}`.trim()
@@ -405,13 +367,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           description: audit.description || null,
           status: audit.status,
           dueDate: audit.dueDate?.toISOString() || null,
-        })),
-        kits: kits.map((kit) => ({
-          id: kit.id,
-          name: kit.name,
-          description: kit.description || null,
-          status: kit.status,
-          assetCount: kit._count?.assetKits ?? 0,
         })),
         bookings: bookings.map((booking) => ({
           id: booking.id,

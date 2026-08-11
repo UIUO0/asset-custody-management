@@ -169,7 +169,6 @@ export default function MyCustodyPage() {
                 <Th>{t("myCustody.asset")}</Th>
                 <Th>{t("assets.category")}</Th>
                 <Th className="text-end">{t("myCustody.quantity")}</Th>
-                <Th>{t("myCustody.source")}</Th>
                 <Th>{t("myCustody.since")}</Th>
                 <Th className="text-end">{t("common.actions")}</Th>
               </tr>
@@ -432,7 +431,6 @@ function CustodyRow({
   custody: MyCustodyItem;
   openHandoverId?: string;
 }) {
-  const { t } = useTranslation();
   const { asset } = custody;
 
   return (
@@ -443,27 +441,6 @@ function CustodyRow({
         quantity={custody.quantity}
         unitOfMeasure={asset.unitOfMeasure}
       />
-
-      <Td>
-        {/*
-          A custody row inherited from a kit was never handed over asset by
-          asset — saying "via <kit>" stops the employee wondering why an item
-          they don't remember receiving is on their list.
-        */}
-        {custody.kitCustody?.kit ? (
-          <Button
-            to={`/kits/${custody.kitCustody.kit.id}`}
-            variant="link"
-            className="text-start font-normal text-gray-600"
-          >
-            {t("myCustody.viaKit", { name: custody.kitCustody.kit.name })}
-          </Button>
-        ) : (
-          <span className="text-gray-600">
-            {t("myCustody.assignedDirectly")}
-          </span>
-        )}
-      </Td>
 
       <Td className="whitespace-nowrap">
         <DateS date={custody.createdAt} options={{ dateStyle: "medium" }} />

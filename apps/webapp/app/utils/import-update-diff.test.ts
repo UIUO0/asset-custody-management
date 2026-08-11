@@ -31,7 +31,6 @@ function makeAsset(overrides: Partial<AssetForUpdate> = {}): AssetForUpdate {
     availableToBook: true,
     category: null,
     location: null,
-    tags: [],
     customFields: [],
     ...overrides,
   };
@@ -172,25 +171,31 @@ describe("analyzeUpdateHeaders", () => {
 
   it("classifies updatable core fields", () => {
     const result = analyzeUpdateHeaders(
-      ["Asset ID", "Name", "Category", "Location", "Tags", "Value"],
+      ["Asset ID", "Name", "Category", "Location", "Value"],
       mockCustomFields,
     );
     const updatableKeys = result.updatableColumns.map((c) => c.internalKey);
     expect(updatableKeys).toContain("name");
     expect(updatableKeys).toContain("category");
     expect(updatableKeys).toContain("location");
-    expect(updatableKeys).toContain("tags");
     expect(updatableKeys).toContain("valuation");
   });
 
   it("classifies non-updatable fields as ignored", () => {
     const result = analyzeUpdateHeaders(
-      ["Asset ID", "Name", "Status", "Kit", "Custody"],
+      ["Asset ID", "Name", "Status", "Tags", "Custody"],
       mockCustomFields,
     );
     expect(result.ignoredColumns).toContain("Status");
-    expect(result.ignoredColumns).toContain("Kit");
     expect(result.ignoredColumns).toContain("Custody");
+    // why: "Tags" used to be an updatable core field. After the tag model was
+    // removed it is no longer a known header at all, so it lands in
+    // `unrecognizedColumns` — skipped rather than applied. The assertion that
+    // matters is that it is not updatable.
+    expect(result.unrecognizedColumns).toContain("Tags");
+    expect(result.updatableColumns.map((c) => c.csvHeader)).not.toContain(
+      "Tags",
+    );
   });
 
   it("matches custom fields by name (case-insensitive)", () => {
@@ -309,31 +314,6 @@ describe("compareCoreField", () => {
     it('shows "(none)" for null location', () => {
       const asset = makeAsset({ location: null });
       const result = compareCoreField("location", "Office", asset, "Location");
-      expect(result?.currentValue).toBe("(none)");
-    });
-  });
-
-  describe("tags", () => {
-    it("detects tag additions", () => {
-      const asset = makeAsset({ tags: [{ id: "t1", name: "TagA" }] });
-      const result = compareCoreField("tags", "TagA, TagB", asset, "Tags");
-      expect(result).not.toBeNull();
-      expect(result?.newValue).toBe("TagA, TagB");
-    });
-
-    it("ignores tag reordering (case-insensitive)", () => {
-      const asset = makeAsset({
-        tags: [
-          { id: "t1", name: "Alpha" },
-          { id: "t2", name: "Beta" },
-        ],
-      });
-      expect(compareCoreField("tags", "beta, alpha", asset, "Tags")).toBeNull();
-    });
-
-    it('shows "(none)" when asset has no tags', () => {
-      const asset = makeAsset({ tags: [] });
-      const result = compareCoreField("tags", "NewTag", asset, "Tags");
       expect(result?.currentValue).toBe("(none)");
     });
   });

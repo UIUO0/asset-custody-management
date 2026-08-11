@@ -1,11 +1,11 @@
 /**
- * Sanitizer for the `assetExtraInclude` / `kitExtraInclude` query params on the
- * scanned-item lookup endpoints.
+ * Sanitizer for the `assetExtraInclude` query param on the scanned-item
+ * lookup endpoints.
  *
  * Those params are user-controlled JSON that gets spread into a Prisma
  * `include`. Unsanitized, an authenticated user could shape the query to
  * over-fetch arbitrary relations (e.g. `organization`, `bookings`,
- * `custody.custodian`, deeply nested `include`s) on a scanned asset/kit, or
+ * `custody.custodian`, deeply nested `include`s) on a scanned asset, or
  * cause expensive nested queries (CWE-94 / overfetch / query DoS). The parent
  * row is already org-scoped, so this is not cross-tenant — but it is still an
  * unbounded query-shape injection.
@@ -21,10 +21,7 @@
 import type { Prisma } from "@prisma/client";
 
 /** Top-level relation keys the scanner drawers may add to the asset include. */
-const ALLOWED_ASSET_EXTRA_INCLUDE = new Set(["kit", "location", "category"]);
-/** Top-level relation keys allowed on the kit include (conservative, low-risk
- * same-org relations; no caller requires more today). */
-const ALLOWED_KIT_EXTRA_INCLUDE = new Set(["category", "location"]);
+const ALLOWED_ASSET_EXTRA_INCLUDE = new Set(["location", "category"]);
 
 /**
  * Allow only the shapes the drawers send: `true`, or a *strictly flat*
@@ -86,17 +83,5 @@ export function sanitizeAssetExtraInclude(
 ): Prisma.AssetInclude | undefined {
   return sanitize(input, ALLOWED_ASSET_EXTRA_INCLUDE) as
     | Prisma.AssetInclude
-    | undefined;
-}
-
-/**
- * Sanitizes a user-supplied `kitExtraInclude` down to a safe allowlisted
- * subset before it is merged into a Prisma kit `include`.
- */
-export function sanitizeKitExtraInclude(
-  input: unknown,
-): Prisma.KitInclude | undefined {
-  return sanitize(input, ALLOWED_KIT_EXTRA_INCLUDE) as
-    | Prisma.KitInclude
     | undefined;
 }

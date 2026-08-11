@@ -33,10 +33,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     const [
       assets,
       categories,
-      tags,
       locations,
       customFields,
-      kits,
       assetReminders,
       images,
       bookings,
@@ -47,17 +45,11 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       db.category.count({
         where: { userId: targetUserId, organizationId },
       }),
-      db.tag.count({
-        where: { userId: targetUserId, organizationId },
-      }),
       db.location.count({
         where: { userId: targetUserId, organizationId },
       }),
       db.customField.count({
         where: { userId: targetUserId, organizationId, deletedAt: null },
-      }),
-      db.kit.count({
-        where: { createdById: targetUserId, organizationId },
       }),
       db.assetReminder.count({
         where: { createdById: targetUserId, organizationId },
@@ -79,10 +71,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     const total =
       assets +
       categories +
-      tags +
       locations +
       customFields +
-      kits +
       assetReminders +
       images +
       bookings;
@@ -91,10 +81,8 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
       payload({
         assets,
         categories,
-        tags,
         locations,
         customFields,
-        kits,
         assetReminders,
         images,
         bookings,

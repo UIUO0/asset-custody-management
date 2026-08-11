@@ -74,12 +74,11 @@ export function links() {
  * Wire format: a JSON-encoded `Array<{ locationId: string;
  * quantity: number }>` in a single hidden form field. Mirror of the
  * `assetQuantities` pattern used by the manage-assets pickers (see
- * `kits.$kitId.assets.manage-assets.tsx` and
  * `locations.$locationId.assets.manage-assets.tsx`) but encodes the
  * full placement set rather than a map.
  *
- * The semantic checks (INDIVIDUAL cap, sum-within-total, org scoping,
- * kit-guard) all live in `replaceAssetPlacements` — this schema only
+ * The semantic checks (INDIVIDUAL cap, sum-within-total, org scoping)
+ * all live in `replaceAssetPlacements` — this schema only
  * guards the *shape* of the payload.
  */
 const PlacementsSchema = z
@@ -153,21 +152,12 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         request,
         include: {
           // Pull the current placement set so the form can pre-populate
-          // existing rows with their qty. Polish-4: `assetKitId` +
-          // `assetKit.kit` discriminate kit-driven rows so the form can
-          // render them read-only with a "via {kit}" indicator.
+          // existing rows with their qty.
           assetLocations: {
             select: {
               locationId: true,
               quantity: true,
-              assetKitId: true,
               location: { select: { id: true, name: true } },
-              assetKit: {
-                select: {
-                  id: true,
-                  kit: { select: { id: true, name: true } },
-                },
-              },
             },
           },
         },
@@ -181,25 +171,11 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
 
     const isQty = isQuantityTracked(asset);
 
-    // Split manual vs kit-driven. Manual rows are the editable set the
-    // form's diff math operates on; kit-driven rows are surfaced as
-    // read-only context so the user understands what's at each
-    // location and why the available pool reflects them.
-    const manualPlacements = asset.assetLocations
-      .filter((al) => al.assetKitId === null)
-      .map((al) => ({
-        locationId: al.locationId,
-        locationName: al.location.name,
-        quantity: al.quantity,
-      }));
-    const kitDrivenPlacements = asset.assetLocations
-      .filter((al) => al.assetKitId !== null && al.assetKit?.kit)
-      .map((al) => ({
-        locationId: al.locationId,
-        locationName: al.location.name,
-        quantity: al.quantity,
-        kit: al.assetKit!.kit,
-      }));
+    const currentPlacements = asset.assetLocations.map((al) => ({
+      locationId: al.locationId,
+      locationName: al.location.name,
+      quantity: al.quantity,
+    }));
 
     return payload({
       asset,
@@ -207,8 +183,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       assetQuantity: asset.quantity ?? null,
       unitOfMeasure: asset.unitOfMeasure ?? null,
       locations,
-      currentPlacements: manualPlacements,
-      kitDrivenPlacements,
+      currentPlacements,
       showModal: true,
     });
   } catch (cause) {
@@ -263,14 +238,8 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 
 export default function ManagePlacementsRoute() {
   const { t } = useTranslation();
-  const {
-    isQty,
-    assetQuantity,
-    unitOfMeasure,
-    locations,
-    currentPlacements,
-    kitDrivenPlacements,
-  } = useLoaderData<typeof loader>();
+  const { isQty, assetQuantity, unitOfMeasure, locations, currentPlacements } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<DataOrErrorResponse>();
   const serverErrorMessage =
     actionData && "error" in actionData && actionData.error?.message
@@ -296,7 +265,6 @@ export default function ManagePlacementsRoute() {
         unitOfMeasure={unitOfMeasure}
         locations={locations}
         initialPlacements={currentPlacements}
-        kitDrivenPlacements={kitDrivenPlacements}
         serverErrorMessage={serverErrorMessage}
       />
     </div>

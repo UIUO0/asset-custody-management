@@ -295,7 +295,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       custodiansData: getCustodiansOrderedByTotalCustodies({
         directCustodians,
         // Bookings are gone; custodian ranking is now direct custody only.
-        bookings: [] as never[],
       }),
       assetsByStatus: buildAssetsByStatusChart(statusGroups),
       assetGrowthData: buildMonthlyGrowthData(monthlyRows, baselineCount),

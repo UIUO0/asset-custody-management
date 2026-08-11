@@ -23,7 +23,6 @@ import { ReportEmptyState } from "~/components/reports/report-empty-state";
 import {
   AssetCell,
   CurrencyCell,
-  DateCell,
   ReportTable,
 } from "~/components/reports/report-table";
 import { useCurrentOrganization } from "~/hooks/use-current-organization";
@@ -69,16 +68,6 @@ const IDLE_ASSETS_COLUMNS: ColumnDef<IdleAssetRow>[] = [
         </span>
       );
     },
-  },
-  {
-    accessorKey: "lastBookedAt",
-    header: "reports.lastUsed",
-    cell: ({ row }) =>
-      row.original.lastBookedAt ? (
-        <DateCell date={row.original.lastBookedAt} />
-      ) : (
-        <span className="text-gray-400">"Never"</span>
-      ),
   },
   {
     accessorKey: "category",

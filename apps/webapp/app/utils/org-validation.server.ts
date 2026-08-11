@@ -24,13 +24,10 @@ import type {
   Asset,
   AssetModel,
   Category,
-  Kit,
   Location,
-  Tag,
   TeamMember,
   User,
 } from "@prisma/client";
-import { TagUseFor } from "@prisma/client";
 import { db } from "~/database/db.server";
 import { ShelfError } from "~/utils/error";
 
@@ -50,18 +47,6 @@ export type OrgValidationTxClient = {
         organizationId: string;
         /** Optional intake-stage filter — see `assertAssetsBelongToOrg` */
         lifecycleStage?: "READY";
-      };
-      select: { id: true };
-    }) => Promise<{ id: string }[]>;
-  };
-  tag: {
-    findMany: (args: {
-      where: {
-        id: { in: string[] };
-        organizationId: string;
-        // Optional asset-assignability filter used by
-        // `assertTagsAssignableToAssets` (useFor empty or includes ASSET).
-        OR?: Array<{ useFor: { isEmpty: true } | { has: TagUseFor } }>;
       };
       select: { id: true };
     }) => Promise<{ id: string }[]>;
@@ -88,12 +73,6 @@ export type OrgValidationTxClient = {
       select: { id: true };
     }) => Promise<{ id: string }[]>;
   };
-  kit: {
-    findMany: (args: {
-      where: { id: { in: string[] }; organizationId: string };
-      select: { id: true };
-    }) => Promise<{ id: string }[]>;
-  };
   customField: {
     findMany: (args: {
       where: { id: { in: string[] }; organizationId: string };
@@ -105,12 +84,6 @@ export type OrgValidationTxClient = {
       where: { userId: string; organizationId: string };
       select: { id: true };
     }) => Promise<{ id: string } | null>;
-  };
-  assetKit: {
-    findMany: (args: {
-      where: { id: { in: string[] }; organizationId: string };
-      select: { id: true };
-    }) => Promise<{ id: string }[]>;
   };
   assetModel: {
     findFirst: (args: {
@@ -171,92 +144,6 @@ export async function assertAssetsBelongToOrg(
       message: onlyReadyAssets
         ? "بعض الأصناف المحددة غير موجودة في مساحة العمل الخاصة بك أو لا تزال قيد الانتظار ولم تُعتمد بعد. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى."
         : "بعض الأصناف المحددة غير موجودة في مساحة العمل الخاصة بك. يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى.",
-      label,
-      status: 400,
-      shouldBeCaptured: false,
-      additionalData: { organizationId },
-    });
-  }
-}
-
-/**
- * Asserts that every `AssetKit` (kit-membership pivot) ID belongs to
- * `organizationId`.
- *
- * Used by the booking kit-add paths: `kitSlices` carry an `assetKitId` (the
- * kit-source discriminator) sourced from request/form input, which is written
- * straight onto `BookingAsset.assetKitId`. Without this guard a user in Org A
- * could attach Org B's `AssetKit.id` to their own booking row (cross-org
- * reference). Dedupes first; a no-op for an empty list.
- *
- * @param params.assetKitIds - AssetKit IDs sourced from request/form input
- * @param params.organizationId - The caller's (validated) organization ID
- * @param tx - Optional Prisma transaction client; defaults to the global `db`
- * @throws {ShelfError} 400 if any ID is missing or belongs to another org
- */
-export async function assertAssetKitsBelongToOrg(
-  {
-    assetKitIds,
-    organizationId,
-  }: { assetKitIds: string[]; organizationId: string },
-  tx?: OrgValidationTxClient,
-): Promise<void> {
-  if (assetKitIds.length === 0) return;
-
-  const client = tx ?? db;
-  const uniqueIds = [...new Set(assetKitIds)];
-
-  const found = await client.assetKit.findMany({
-    where: { id: { in: uniqueIds }, organizationId },
-    select: { id: true },
-  });
-
-  if (found.length !== uniqueIds.length) {
-    throw new ShelfError({
-      cause: null,
-      title: "Invalid asset kits",
-      message:
-        "Some of the selected kit memberships do not exist in your workspace. Please reload and try again.",
-      label,
-      status: 400,
-      shouldBeCaptured: false,
-      additionalData: { organizationId },
-    });
-  }
-}
-
-/**
- * Asserts that every kit ID belongs to `organizationId`.
- *
- * For bulk paths that accept a list of kit IDs from request/form input (e.g.
- * creating an audit from a multi-select on the Kits index). Dedupes the input
- * so duplicate IDs don't inflate the expected count. A no-op for an empty list.
- *
- * @param params.kitIds - Kit IDs sourced from request/form input
- * @param params.organizationId - The caller's (validated) organization ID
- * @param tx - Optional Prisma transaction client; defaults to the global `db`
- * @throws {ShelfError} 400 if any ID is missing or belongs to another org
- */
-export async function assertKitsBelongToOrg(
-  { kitIds, organizationId }: { kitIds: Kit["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient,
-): Promise<void> {
-  if (kitIds.length === 0) return;
-
-  const client = tx ?? db;
-  const uniqueIds = [...new Set(kitIds)];
-
-  const found = await client.kit.findMany({
-    where: { id: { in: uniqueIds }, organizationId },
-    select: { id: true },
-  });
-
-  if (found.length !== uniqueIds.length) {
-    throw new ShelfError({
-      cause: null,
-      title: "Invalid kits",
-      message:
-        "Some of the selected kits do not exist in your workspace. Please reload and try again.",
       label,
       status: 400,
       shouldBeCaptured: false,
@@ -347,92 +234,6 @@ export async function assertCustomFieldsBelongToOrg(
       title: "Invalid custom fields",
       message:
         "Some of the selected custom fields do not exist in your workspace. Please reload and try again.",
-      label,
-      status: 400,
-      shouldBeCaptured: false,
-      additionalData: { organizationId },
-    });
-  }
-}
-
-/**
- * Asserts that every tag ID belongs to `organizationId`.
- *
- * @param params.tagIds - Tag IDs sourced from request/form input
- * @param params.organizationId - The caller's (validated) organization ID
- * @param tx - Optional Prisma transaction client; defaults to the global `db`
- * @throws {ShelfError} 400 if any ID is missing or belongs to another org
- */
-export async function assertTagsBelongToOrg(
-  { tagIds, organizationId }: { tagIds: Tag["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient,
-): Promise<void> {
-  if (tagIds.length === 0) return;
-
-  const client = tx ?? db;
-  const uniqueIds = [...new Set(tagIds)];
-
-  const found = await client.tag.findMany({
-    where: { id: { in: uniqueIds }, organizationId },
-    select: { id: true },
-  });
-
-  if (found.length !== uniqueIds.length) {
-    throw new ShelfError({
-      cause: null,
-      title: "Invalid tags",
-      message:
-        "Some of the selected tags do not exist in your workspace. Please reload and try again.",
-      label,
-      status: 400,
-      shouldBeCaptured: false,
-      additionalData: { organizationId },
-    });
-  }
-}
-
-/**
- * Asserts that every tag id is BOTH owned by `organizationId` AND assignable to
- * assets (its `useFor` is empty or includes `ASSET`).
- *
- * Use this on asset create/update paths. {@link assertTagsBelongToOrg} only
- * proves org ownership, so on its own it would let a crafted request connect a
- * booking-only tag to an asset and break the asset-tag contract. Booking paths
- * keep using {@link assertTagsBelongToOrg}. The predicate mirrors
- * `getTagsForAssetTagsFilter` (the source the mobile picker reads from), so the
- * picker and the write path agree on what "asset-assignable" means.
- *
- * @param params.tagIds - Tag IDs sourced from request/form input
- * @param params.organizationId - The caller's (validated) organization ID
- * @param tx - Optional Prisma transaction client; defaults to the global `db`
- * @throws {ShelfError} 400 if any ID is missing, in another org, or not
- *   assignable to assets
- */
-export async function assertTagsAssignableToAssets(
-  { tagIds, organizationId }: { tagIds: Tag["id"][]; organizationId: string },
-  tx?: OrgValidationTxClient,
-): Promise<void> {
-  if (tagIds.length === 0) return;
-
-  const client = tx ?? db;
-  const uniqueIds = [...new Set(tagIds)];
-
-  const found = await client.tag.findMany({
-    where: {
-      id: { in: uniqueIds },
-      organizationId,
-      // Asset-assignable = useFor empty (applies to every entity) or ASSET.
-      OR: [{ useFor: { isEmpty: true } }, { useFor: { has: TagUseFor.ASSET } }],
-    },
-    select: { id: true },
-  });
-
-  if (found.length !== uniqueIds.length) {
-    throw new ShelfError({
-      cause: null,
-      title: "Invalid tags",
-      message:
-        "Some of the selected tags can't be assigned to assets in your workspace. Please reload and try again.",
       label,
       status: 400,
       shouldBeCaptured: false,

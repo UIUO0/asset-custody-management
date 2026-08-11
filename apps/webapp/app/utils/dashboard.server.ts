@@ -104,36 +104,20 @@ interface DirectCustodian {
   _count: { custodies: number };
 }
 
-interface BookingForCustodians {
-  custodianUserId: string | null;
-  custodianTeamMemberId: string | null;
-  custodianTeamMember: {
-    id: string;
-    name: string;
-    userId: string | null;
-  } | null;
-  custodianUser: {
-    firstName: string | null;
-    lastName: string | null;
-    profilePicture: string | null;
-    email: string;
-  } | null;
-  /**
-   * Count of assets on this booking via the explicit `BookingAsset` pivot.
-   * Pre-Phase-3a this field was `_count.assets` (from the implicit M2M);
-   * the migration renamed it to `bookingAssets` across the Prisma schema
-   * but this interface wasn't updated, which caused `_count.assets` to
-   * resolve as `undefined` → NaN in the dashboard "Top custodians" widget.
-   */
-  _count: { bookingAssets: number };
-}
-
+/**
+ * The five custodians holding the most assets.
+ *
+ * It used to take a second `bookings` list and add each booking's asset count
+ * to its custodian's tally. Every caller had already been reduced to passing
+ * `[]` when bookings were removed, so the whole branch summed an empty array.
+ *
+ * @param directCustodians - Team members with their custody counts
+ * @returns Up to five entries, highest count first
+ */
 export function getCustodiansOrderedByTotalCustodies({
   directCustodians,
-  bookings,
 }: {
   directCustodians: DirectCustodian[];
-  bookings: BookingForCustodians[];
 }) {
   // Map keyed by (userId || teamMemberId)
   const countMap = new Map<
@@ -178,51 +162,6 @@ export function getCustodiansOrderedByTotalCustodies({
     }
   }
 
-  // Add booking custodies
-  for (const booking of bookings) {
-    const assetCount = booking._count.bookingAssets;
-    if (assetCount === 0) continue;
-
-    if (booking.custodianTeamMemberId && booking.custodianTeamMember) {
-      const key =
-        booking.custodianTeamMember.userId ?? booking.custodianTeamMemberId;
-      const existing = countMap.get(key);
-      if (existing) {
-        existing.count += assetCount;
-      } else {
-        countMap.set(key, {
-          count: assetCount,
-          custodian: {
-            id: booking.custodianTeamMemberId,
-            name: booking.custodianTeamMember.name,
-            userId: booking.custodianTeamMember.userId,
-            user: null,
-          },
-        });
-      }
-    } else if (booking.custodianUserId && booking.custodianUser) {
-      const key = booking.custodianUserId;
-      const existing = countMap.get(key);
-      if (existing) {
-        existing.count += assetCount;
-      } else {
-        countMap.set(key, {
-          count: assetCount,
-          custodian: {
-            id: booking.custodianUserId,
-            name: "",
-            userId: booking.custodianUserId,
-            user: {
-              firstName: booking.custodianUser.firstName,
-              lastName: booking.custodianUser.lastName,
-              profilePicture: booking.custodianUser.profilePicture,
-            },
-          },
-        });
-      }
-    }
-  }
-
   // Sort by count desc, then by id for stable order
   const sorted = [...countMap.entries()]
     .sort(
@@ -251,7 +190,6 @@ export async function checklistOptions({
   try {
     const [
       categoriesCount,
-      tagsCount,
       teamMembersCount,
       custodiesCount,
       customFieldsCount,
@@ -263,10 +201,6 @@ export async function checklistOptions({
             notIn: defaultUserCategories.map((uc) => uc.name),
           },
         },
-      }),
-
-      db.tag.count({
-        where: { organizationId },
       }),
 
       db.teamMember.count({
@@ -291,7 +225,6 @@ export async function checklistOptions({
     return {
       hasAssets,
       hasCategories: categoriesCount > 0,
-      hasTags: tagsCount > 0,
       hasTeamMembers: teamMembersCount > 0,
       hasCustodies: custodiesCount > 0,
       hasCustomFields: customFieldsCount > 0,

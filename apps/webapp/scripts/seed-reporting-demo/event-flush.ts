@@ -72,7 +72,6 @@ function toCreateManyInput(
     bookingId: input.bookingId ?? null,
     auditSessionId: input.auditSessionId ?? null,
     auditAssetId: input.auditAssetId ?? null,
-    kitId: input.kitId ?? null,
     locationId: input.locationId ?? null,
     teamMemberId: input.teamMemberId ?? null,
     targetUserId: input.targetUserId ?? null,

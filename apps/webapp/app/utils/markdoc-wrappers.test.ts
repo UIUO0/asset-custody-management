@@ -1,13 +1,10 @@
 import {
   wrapDateForNote,
-  wrapKitsForNote,
   wrapAssetsWithDataForNote,
-  wrapKitsWithDataForNote,
   wrapUserLinkForNote,
   wrapLinkForNote,
   wrapCustodianForNote,
   wrapDescriptionForNote,
-  wrapTagForNote,
   extractDateTags,
   extractAssetsListTags,
   DATE_TAG_REGEX,
@@ -18,25 +15,6 @@ import {
 // 👋 see https://vitest.dev/guide/environment.html#environments-for-specific-files
 
 describe("markdoc-wrappers", () => {
-  describe("wrapTagForNote", () => {
-    it("should wrap tag name and optional id", () => {
-      const result = wrapTagForNote({ id: "tag-1", name: "Operations" });
-      expect(result).toBe('{% tag name="Operations" id="tag-1" /%}');
-    });
-
-    it("should omit id attribute when not provided", () => {
-      const result = wrapTagForNote({ id: undefined, name: "Logistics" });
-      expect(result).toBe('{% tag name="Logistics" /%}');
-    });
-
-    it("should escape quotes in tag name", () => {
-      const result = wrapTagForNote({ id: "tag-2", name: 'Quality "Control"' });
-      expect(result).toBe(
-        '{% tag name="Quality &quot;Control&quot;" id="tag-2" /%}',
-      );
-    });
-  });
-
   describe("wrapDateForNote", () => {
     it("should wrap date with Markdoc date tag", () => {
       const date = new Date("2023-12-25T10:30:00.000Z");
@@ -59,35 +37,6 @@ describe("markdoc-wrappers", () => {
       const result = wrapDateForNote(date, true);
 
       expect(result).toBe('{% date value="2023-12-25T10:30:00.000Z" /%}');
-    });
-  });
-
-  describe("wrapKitsForNote", () => {
-    it("should wrap single kit ID", () => {
-      const kitIds = ["kit-1"];
-      const result = wrapKitsForNote(kitIds, "added");
-
-      expect(result).toBe(
-        '{% kits_list count=1 ids="kit-1" action="added" /%}',
-      );
-    });
-
-    it("should wrap multiple kit IDs", () => {
-      const kitIds = ["kit-1", "kit-2"];
-      const result = wrapKitsForNote(kitIds, "removed");
-
-      expect(result).toBe(
-        '{% kits_list count=2 ids="kit-1,kit-2" action="removed" /%}',
-      );
-    });
-
-    it("should default action to 'added'", () => {
-      const kitIds = ["kit-1"];
-      const result = wrapKitsForNote(kitIds);
-
-      expect(result).toBe(
-        '{% kits_list count=1 ids="kit-1" action="added" /%}',
-      );
     });
   });
 
@@ -123,38 +72,6 @@ describe("markdoc-wrappers", () => {
       const result = wrapAssetsWithDataForNote(assets, "added");
 
       expect(result).toBe('{% assets_list count=0 ids="" action="added" /%}');
-    });
-  });
-
-  describe("wrapKitsWithDataForNote", () => {
-    it("should handle single kit with direct link", () => {
-      const kit = { id: "kit-1", name: "Photography Kit" };
-      const result = wrapKitsWithDataForNote(kit, "added");
-
-      expect(result).toBe(
-        '{% link to="/kits/kit-1" text="Photography Kit" /%}',
-      );
-    });
-
-    it("should handle multiple kits with tag", () => {
-      const kits = [
-        { id: "kit-1", name: "Photography Kit" },
-        { id: "kit-2", name: "Video Kit" },
-      ];
-      const result = wrapKitsWithDataForNote(kits, "removed");
-
-      expect(result).toBe(
-        '{% kits_list count=2 ids="kit-1,kit-2" action="removed" /%}',
-      );
-    });
-
-    it("should handle array with single kit", () => {
-      const kits = [{ id: "kit-1", name: "Photography Kit" }];
-      const result = wrapKitsWithDataForNote(kits, "added");
-
-      expect(result).toBe(
-        '{% link to="/kits/kit-1" text="Photography Kit" /%}',
-      );
     });
   });
 
@@ -355,9 +272,9 @@ describe("wrapLinkForNote", () => {
     expect(result).toBe(`{% link to="/assets/456" text="Laptop Dell XPS" /%}`);
   });
 
-  it("should handle kit links", () => {
-    const result = wrapLinkForNote("/kits/789", "Camera Kit");
-    expect(result).toBe(`{% link to="/kits/789" text="Camera Kit" /%}`);
+  it("should handle location links", () => {
+    const result = wrapLinkForNote("/locations/789", "Warehouse A");
+    expect(result).toBe(`{% link to="/locations/789" text="Warehouse A" /%}`);
   });
 
   it("should handle links with special characters in text", () => {

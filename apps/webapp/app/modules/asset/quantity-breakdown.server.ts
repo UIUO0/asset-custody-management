@@ -37,7 +37,7 @@ type GetAssetQuantityRowsArgs = {
  *
  * @param db - Prisma client (or transaction) to read through.
  * @param args - The org-scoped asset to fetch (see {@link GetAssetQuantityRowsArgs}).
- * @returns The asset row with its custody and kit slices.
+ * @returns The asset row with its custody slices.
  * @throws {ShelfError} 404 when the asset is not found in the caller's org.
  */
 export async function getAssetQuantityRows(
@@ -51,13 +51,6 @@ export async function getAssetQuantityRows(
       type: true,
       quantity: true,
       custody: { select: { quantity: true } },
-      assetKits: {
-        select: {
-          id: true,
-          quantity: true,
-          kit: { select: { id: true, name: true } },
-        },
-      },
     },
   });
 

@@ -42,7 +42,7 @@ export interface QuantityOverviewCardProps {
   /** Consumption behavior: ONE_WAY (used up) or TWO_WAY (returnable) */
   consumptionType: ConsumptionType | null;
   /**
-   * Availability (total - inCustody - inKits),
+   * Availability (total - inCustody),
    * shown on the "Available" row. This is what's available to reserve for a
    * future booking.
    */
@@ -64,7 +64,6 @@ export interface QuantityOverviewCardProps {
    * Surfaced on its own "In kits" row when > 0 so users see how many units
    * are earmarked for kit use — these are not free stock.
    */
-  inKitsQuantity?: number;
   /**
    * Sum of `AssetLocation.quantity` across every location this asset is
    * placed at. Surfaced on its own "In locations" row when > 0; the
@@ -151,7 +150,6 @@ export function QuantityOverviewCard({
   availableQuantity,
   custodyAvailableQuantity,
   inCustodyQuantity,
-  inKitsQuantity,
   inLocationsQuantity,
   canUpdate = false,
   className,
@@ -159,13 +157,11 @@ export function QuantityOverviewCard({
   const { t } = useTranslation();
   const qty = quantity ?? 0;
   const unit = unitOfMeasure || null;
-  const inKits = inKitsQuantity ?? 0;
   const inLocations = inLocationsQuantity ?? 0;
   const unplaced = Math.max(0, qty - inLocations);
 
   /** Use computed values from the loader, falling back to phase-1 defaults */
-  const available =
-    availableQuantity ?? qty - inKits - (inCustodyQuantity ?? 0);
+  const available = availableQuantity ?? qty - (inCustodyQuantity ?? 0);
   const inCustody = inCustodyQuantity ?? 0;
 
   /** Low stock when a threshold is set and available quantity is at or below it */
@@ -210,16 +206,7 @@ export function QuantityOverviewCard({
         value={formatWithUnit(available, unit)}
         warning={isLowStock}
       />
-      {/* Render the kit allocation total only when the asset is actually
-          to any kit. The detailed per-kit breakdown lives in the dedicated
-          t("assetOverview.includedInKits") card. */}
-      {inKits > 0 ? (
-        <OverviewRow
-          label={t("quantity.inKits")}
-          value={formatWithUnit(inKits, unit)}
-        />
-      ) : null}
-      {/* "In locations" mirrors "In kits": only renders when > 0 so
+      {/* "In locations" only renders when > 0 so
           assets with no placements stay uncluttered. Always sits next
           to t("quantity.unplaced") for the at-a-glance placed/unplaced split.
           Detailed per-location breakdown lives in the dedicated

@@ -19,7 +19,6 @@ type TranslateFn = (key: string) => string;
 export interface FilterLookupData {
   locations?: Array<{ id: string; name: string }>;
   categories?: Array<{ id: string; name: string }>;
-  tags?: Array<{ id: string; name: string }>;
   teamMembers?: Array<{ id: string; name: string }>;
 }
 
@@ -242,12 +241,6 @@ function formatSingleValue(
   if (fieldName === "category" && lookupData?.categories) {
     const category = lookupData.categories.find((cat) => cat.id === valueStr);
     if (category) return category.name;
-  }
-
-  // Tag lookup
-  if ((fieldName === "tag" || fieldName === "tags") && lookupData?.tags) {
-    const tag = lookupData.tags.find((t) => t.id === valueStr);
-    if (tag) return tag.name;
   }
 
   // Team member/custody lookup

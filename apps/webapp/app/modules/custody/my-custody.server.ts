@@ -106,14 +106,6 @@ export async function getMyCustodyAndCheckouts({
           id: true,
           quantity: true,
           createdAt: true,
-          /**
-           * Non-null when this row was inherited from a kit-level custody, so
-           * the UI can say "via kit" instead of implying it was handed over
-           * asset by asset.
-           */
-          kitCustody: {
-            select: { id: true, kit: { select: { id: true, name: true } } },
-          },
           asset: { select: MY_CUSTODY_ASSET_SELECT },
         },
         orderBy: { createdAt: "desc" },
@@ -131,9 +123,6 @@ export async function getMyCustodyAndCheckouts({
               id: true,
               quantity: true,
               createdAt: true,
-              kitCustody: {
-                select: { id: true, kit: { select: { id: true, name: true } } },
-              },
               asset: { select: MY_CUSTODY_ASSET_SELECT },
             },
             orderBy: { createdAt: "desc" },

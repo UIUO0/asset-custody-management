@@ -38,11 +38,9 @@ export type SeederContext = {
 export type SeederCounts = {
   categories: number;
   locations: number;
-  tags: number;
   customFields: number;
   teamMembers: number;
   assets: number;
-  kits: number;
   bookings: number;
   partialCheckins: number;
   auditSessions: number;
@@ -57,11 +55,9 @@ export function emptyCounts(): SeederCounts {
   return {
     categories: 0,
     locations: 0,
-    tags: 0,
     customFields: 0,
     teamMembers: 0,
     assets: 0,
-    kits: 0,
     bookings: 0,
     partialCheckins: 0,
     auditSessions: 0,
@@ -80,15 +76,10 @@ export function emptyCounts(): SeederCounts {
 export type SeederState = {
   categoryIds: string[];
   locationIds: string[];
-  /** All tag ids, including the marker tag. */
-  tagIds: string[];
-  /** The one marker tag attached to every seeded asset/booking. */
-  markerTagId: string | null;
   customFieldIds: string[];
   /** All team-member ids — real + fake. */
   teamMemberIds: string[];
   assetIds: string[];
-  kitIds: string[];
   bookingIds: string[];
   auditSessionIds: string[];
   counts: SeederCounts;
@@ -99,12 +90,9 @@ export function emptyState(): SeederState {
   return {
     categoryIds: [],
     locationIds: [],
-    tagIds: [],
-    markerTagId: null,
     customFieldIds: [],
     teamMemberIds: [],
     assetIds: [],
-    kitIds: [],
     bookingIds: [],
     auditSessionIds: [],
     counts: emptyCounts(),

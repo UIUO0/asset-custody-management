@@ -1,6 +1,6 @@
 /**
  * Shared Zod schema for the `assetQuantities` wire field used by the
- * Phase 4b location + kit pickers (and the corresponding scanner
+ * Phase 4b location picker (and the corresponding scanner
  * drawers).
  *
  * Wire format: a JSON-encoded `Record<assetId, quantity>`. One entry
@@ -9,19 +9,17 @@
  * default, legacy behaviour for paths that don't expose a qty input).
  *
  * Why a single schema (vs. a per-route copy):
- *   - 2 pickers + 2 scanner routes all need the exact same parse +
+ *   - The picker and the scanner route need the exact same parse +
  *     validation behaviour. Drift between them would silently produce
  *     different 400-vs-500 responses for the same malformed payload.
  *   - Server-side re-validation against the strict-available pool
- *     happens downstream in `updateLocationAssets` /
- *     `updateKitAssets` — this schema only guards the *shape* of the
- *     payload, not the *semantic* ceiling.
+ *     happens downstream in `updateLocationAssets` — this schema only
+ *     guards the *shape* of the payload, not the *semantic* ceiling.
  *
  * Default empty-object input keeps action handlers working for
  * pure-INDIVIDUAL submissions where the picker has nothing to write.
  *
  * @see {@link file://./../routes/_layout+/locations.$locationId.assets.manage-assets.tsx}
- * @see {@link file://./../routes/_layout+/kits.$kitId.assets.manage-assets.tsx}
  */
 
 import { z } from "zod";

@@ -42,6 +42,7 @@ import type {
 // enum is available. Browser-reachable modules must use `./enums` instead.
 import { AssetLifecycleStage } from "@prisma/client";
 import { db } from "~/database/db.server";
+import { approveAssetsByIds } from "~/modules/asset/approve.server";
 import { ShelfError } from "~/utils/error";
 import { ItemClassValue, ReceiptState } from "./enums";
 
@@ -564,5 +565,192 @@ export async function getHandoverCandidates({
     },
     orderBy: { title: "asc" },
     select: { id: true, title: true, quantity: true },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/*                    اعتماد وإتاحة أصناف الأمر — والقفل عليه                   */
+/* -------------------------------------------------------------------------- */
+
+/** What the order screen needs to render — and gate — its approval button. */
+export type OrderApprovalState = {
+  /** Items on this order still awaiting المستودعات' approval. */
+  pendingCount: number;
+  /**
+   * أصول on this order with no رقم ترميز yet. **This is the lock**: while it is
+   * above zero the order cannot be approved.
+   */
+  awaitingCodeCount: number;
+  /** Whether {@link approveOrderAssets} would do anything if called now. */
+  canApprove: boolean;
+};
+
+/**
+ * Which assets an order-wide approval would move, and whether it may run.
+ *
+ * ## Why finance coding gates approval
+ *
+ * Approval is the act that puts stock into circulation — it can be handed to a
+ * department the moment it lands. An أصل that reaches a department uncoded is
+ * one nobody can trace in the accounting record afterwards, and chasing a code
+ * for an item already sitting on somebody's desk is a different, much worse
+ * job than assigning it while the delivery is still on the warehouse floor.
+ * Coding first is the cheap ordering; this makes the screen enforce it.
+ *
+ * ## What counts, and what deliberately does not
+ *
+ * - **مواد are never counted.** A material is expensed on issue and never
+ *   coded, so waiting for a code on one would lock the order forever.
+ * - **Items from a cancelled receipt are excluded**, from both counts. The
+ *   delivery was called off: its stock is deliberately left alone, it is out of
+ *   the order's totals and out of المالية's queue, and letting it block the
+ *   live part of the order would be the same mistake in a new place.
+ * - **Unclassified items (`itemClass: null`) do not block either.** No
+ *   classification means no code is due — `setAssetFinanceCode` refuses them
+ *   outright — so counting them would be waiting for something the system
+ *   refuses to accept.
+ *
+ * @param args.orderNumber - The number as written on the receipts
+ * @param args.organizationId - Workspace, applied to every read
+ * @returns The two counts and the derived gate
+ */
+export async function getOrderApprovalState({
+  orderNumber,
+  organizationId,
+}: {
+  orderNumber: string;
+  organizationId: string;
+}): Promise<OrderApprovalState> {
+  const trimmed = orderNumber.trim();
+
+  /** Live receipts of this order — cancelled ones are out of scope entirely. */
+  const liveReceipt: Prisma.AssetWhereInput["receiptLine"] = {
+    receipt: {
+      organizationId,
+      state: { not: ReceiptState.VOIDED },
+      OR: [
+        { purchaseOrderNumber: trimmed },
+        { purchaseRequestNumber: trimmed },
+      ],
+    },
+  };
+
+  const [pendingCount, awaitingCodeCount] = await Promise.all([
+    db.asset.count({
+      where: {
+        organizationId,
+        lifecycleStage: AssetLifecycleStage.PENDING,
+        receiptLine: liveReceipt,
+      },
+    }),
+    db.asset.count({
+      where: {
+        organizationId,
+        itemClass: ItemClassValue.ASSET,
+        // `null` and `""` both mean uncoded — the field is cleared by writing an
+        // empty string, so testing for null alone would let a cleared code pass.
+        OR: [{ financeCode: null }, { financeCode: "" }],
+        receiptLine: liveReceipt,
+      },
+    }),
+  ]);
+
+  return {
+    pendingCount,
+    awaitingCodeCount,
+    canApprove: pendingCount > 0 && awaitingCodeCount === 0,
+  };
+}
+
+/**
+ * Approves every pending item on one order, and opens it for distribution.
+ *
+ * The asset ids are **re-derived here from the order number**, never taken from
+ * the form. A client that posted its own list could otherwise approve anything
+ * in the workspace under cover of an order number it is merely allowed to read.
+ *
+ * The finance-coding gate is re-checked here too, not just reflected in a
+ * disabled button. Disabling a control is a hint; this is the fence — and the
+ * two can disagree, because the page's state is as old as the last load and
+ * المالية may have cleared a code in another tab since.
+ *
+ * The effect itself belongs to {@link approveAssetsByIds}, which also carries
+ * the three-signature receipt gate. That gate stays in force: an order whose
+ * receipts are fully coded but not fully signed still cannot be approved.
+ *
+ * @param args.orderNumber - The number as written on the receipts
+ * @param args.organizationId - Workspace, applied to every read and write
+ * @param args.userId - Who approved, recorded per asset
+ * @returns How many assets moved
+ * @throws {ShelfError} 409 while any أصل on the order is still uncoded, or when
+ *   there is nothing pending to approve
+ */
+export async function approveOrderAssets({
+  orderNumber,
+  organizationId,
+  userId,
+}: {
+  orderNumber: string;
+  organizationId: string;
+  userId: string;
+}): Promise<number> {
+  const trimmed = orderNumber.trim();
+
+  const state = await getOrderApprovalState({
+    orderNumber: trimmed,
+    organizationId,
+  });
+
+  if (state.awaitingCodeCount > 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "الترميز غير مكتمل",
+      message: `لا يمكن اعتماد الأمر قبل أن ترمّز المالية أصوله: ${state.awaitingCodeCount} أصل بلا رقم ترميز. المواد لا تُرمَّز ولا تُحتسب هنا.`,
+      additionalData: {
+        orderNumber: trimmed,
+        organizationId,
+        awaitingCodeCount: state.awaitingCodeCount,
+      },
+      label,
+      status: 409,
+      shouldBeCaptured: false,
+    });
+  }
+
+  if (state.pendingCount === 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "لا شيء للاعتماد",
+      message:
+        "لا توجد أصناف قيد الانتظار في هذا الأمر — إمّا أنها اعتُمدت فعلاً أو أن نماذجها ملغاة.",
+      additionalData: { orderNumber: trimmed, organizationId },
+      label,
+      status: 409,
+      shouldBeCaptured: false,
+    });
+  }
+
+  const pending = await db.asset.findMany({
+    where: {
+      organizationId,
+      lifecycleStage: AssetLifecycleStage.PENDING,
+      receiptLine: {
+        receipt: {
+          organizationId,
+          state: { not: ReceiptState.VOIDED },
+          OR: [
+            { purchaseOrderNumber: trimmed },
+            { purchaseRequestNumber: trimmed },
+          ],
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  return approveAssetsByIds({
+    assetIds: pending.map((asset) => asset.id),
+    organizationId,
+    userId,
   });
 }

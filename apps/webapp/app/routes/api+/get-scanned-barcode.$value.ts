@@ -22,23 +22,15 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-import {
-  sanitizeAssetExtraInclude,
-  sanitizeKitExtraInclude,
-} from "~/utils/scanner-extra-include.server";
-import type {
-  AssetFromScanner,
-  KitFromScanner,
-} from "~/utils/scanner-includes.server";
+import { sanitizeAssetExtraInclude } from "~/utils/scanner-extra-include.server";
+import type { AssetFromScanner } from "~/utils/scanner-includes.server";
 import {
   ASSET_INCLUDE,
   BARCODE_INCLUDE,
-  KIT_INCLUDE,
 } from "~/utils/scanner-includes.server";
 
 // Export types for barcode scanning
 export type AssetFromBarcode = AssetFromScanner;
-export type KitFromBarcode = KitFromScanner;
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   const authSession = context.getSession();
   const { userId } = authSession;
@@ -78,12 +70,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
     // Decode the URL-encoded barcode value
     const value = decodeURIComponent(encodedValue);
 
-    const {
-      assetExtraInclude,
-      kitExtraInclude,
-      auditSessionId,
-      pickerContext,
-    } = parseData(
+    const { assetExtraInclude, auditSessionId, pickerContext } = parseData(
       searchParams,
       z.object({
         assetExtraInclude: z
@@ -95,17 +82,6 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
               return JSON.parse(val);
             } catch (_error) {
               throw new Error("Invalid JSON input for assetExtraInclude");
-            }
-          }),
-        kitExtraInclude: z
-          .string()
-          .optional()
-          .transform((val) => {
-            if (!val) return undefined;
-            try {
-              return JSON.parse(val);
-            } catch (_error) {
-              throw new Error("Invalid JSON input for kitExtraInclude");
             }
           }),
         auditSessionId: z.string().optional(),
@@ -130,16 +106,14 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       }),
     ) as {
       assetExtraInclude: Prisma.AssetInclude | undefined;
-      kitExtraInclude: Prisma.KitInclude | undefined;
       auditSessionId?: string;
       pickerContext?: ReturnType<typeof ScannerPickerContextSchema.parse>;
     };
 
-    // SECURITY (CWE-94 / overfetch): assetExtraInclude/kitExtraInclude are
-    // user-controlled JSON. Allowlist them before merging into the Prisma
-    // include so relation traversal / deep nesting cannot be injected.
+    // SECURITY (CWE-94 / overfetch): assetExtraInclude is user-controlled
+    // JSON. Allowlist it before merging into the Prisma include so relation
+    // traversal / deep nesting cannot be injected.
     const safeAssetExtraInclude = sanitizeAssetExtraInclude(assetExtraInclude);
-    const safeKitExtraInclude = sanitizeKitExtraInclude(kitExtraInclude);
 
     const include = {
       ...BARCODE_INCLUDE,
@@ -147,10 +121,6 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       // Include additional data based on search params. This will override the default includes
       ...(safeAssetExtraInclude
         ? { asset: { include: { ...ASSET_INCLUDE, ...safeAssetExtraInclude } } }
-        : undefined),
-
-      ...(safeKitExtraInclude
-        ? { kit: { include: { ...KIT_INCLUDE, ...safeKitExtraInclude } } }
         : undefined),
     };
 
@@ -171,10 +141,10 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       });
     }
 
-    if (!barcode.assetId && !barcode.kitId) {
+    if (!barcode.assetId) {
       throw new ShelfError({
         cause: null,
-        message: "Barcode is not linked to any asset or kit",
+        message: "Barcode is not linked to any asset",
         additionalData: { value, shouldSendNotification: false },
         shouldBeCaptured: false,
         label: "Barcode",
@@ -230,7 +200,7 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
       payload({
         barcode: {
           ...barcode,
-          type: barcode.asset ? "asset" : barcode.kit ? "kit" : undefined,
+          type: barcode.asset ? ("asset" as const) : undefined,
           asset: barcode.asset
             ? {
                 ...barcode.asset,

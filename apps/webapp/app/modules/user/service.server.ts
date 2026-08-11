@@ -1618,17 +1618,6 @@ export async function transferEntitiesToNewOwner({
     },
   });
 
-  /** Update tags */
-  await tx.tag.updateMany({
-    where: {
-      userId: id,
-      organizationId: organizationId,
-    },
-    data: {
-      userId: newOwnerId,
-    },
-  });
-
   /** Update locations */
   await tx.location.updateMany({
     where: {
@@ -1719,17 +1708,6 @@ export async function transferEntitiesToNewOwner({
     },
     data: {
       userId: newOwnerId,
-    },
-  });
-
-  /** Update kits */
-  await tx.kit.updateMany({
-    where: {
-      createdById: id,
-      organizationId: organizationId,
-    },
-    data: {
-      createdById: newOwnerId,
     },
   });
 

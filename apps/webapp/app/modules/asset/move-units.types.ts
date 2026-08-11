@@ -3,14 +3,13 @@
  *
  * Shared types + constants for the split/merge UX. Used by:
  * - `moveAssetLocationUnits` (modules/asset/service.server.ts)
- * - `moveAssetKitUnits` (modules/kit/service.server.ts)
  * - `placeUnplacedUnits` (modules/asset/service.server.ts)
  * - `MoveUnitsDialog` component (components/assets/move-units-dialog.tsx)
  * - The action handler on `assets.$assetId.overview.tsx`
  *
  * Background: Phase 4c surfaces the user-facing "move N units between two
  * pivot rows" flow on the asset detail page. Schema is already in place
- * (AssetLocation + AssetKit pivots from 4a/4b with `quantity` columns and
+ * (the AssetLocation pivot from 4a with its `quantity` column and
  * the orthogonal-axes triggers); 4c is service + UX work on top.
  *
  * @see PRD `docs/proposals/quantitative-assets.md` lines 823-828
@@ -20,18 +19,13 @@
 /**
  * Axis along which a Phase 4c "move units" operation acts.
  *
- * - `location`       — move between AssetLocation rows (manual pivot only,
- *                      i.e. rows where `assetKitId IS NULL`). Kit-driven
- *                      rows must be moved via the `kit` axis.
- * - `kit`            — move between AssetKit rows. Cascades the new
- *                      quantities to kit-driven BookingAsset slices
- *                      (per the existing `updateKitAssets` pattern).
+ * - `location`       — move between AssetLocation rows.
  * - `place-unplaced` — one-sided variant: place N of the asset's unplaced
  *                      units at a destination location. No source row to
  *                      decrement; fills the gap between `Asset.quantity`
- *                      and `sum(AssetLocation.quantity WHERE assetKitId IS NULL)`.
+ *                      and `sum(AssetLocation.quantity)`.
  */
-export type MoveAxis = "location" | "kit" | "place-unplaced";
+export type MoveAxis = "location" | "place-unplaced";
 
 /**
  * Hidden form-field name used by `MoveUnitsDialog` and consumed by the
@@ -46,21 +40,11 @@ export interface MoveAssetLocationUnitsArgs {
   organizationId: string;
   /** Acting user — recorded on the paired Notes + ActivityEvents. */
   userId: string;
-  /** Manual source row (must have `assetKitId IS NULL`). */
+  /** Source row. */
   fromLocationId: string;
-  /** Manual destination row (created if it does not yet exist). */
+  /** Destination row (created if it does not yet exist). */
   toLocationId: string;
   /** Number of units to move. Must be ≥ 1 and ≤ source row's `quantity`. */
-  quantity: number;
-}
-
-/** Arguments for moving units between two `AssetKit` rows. */
-export interface MoveAssetKitUnitsArgs {
-  assetId: string;
-  organizationId: string;
-  userId: string;
-  fromKitId: string;
-  toKitId: string;
   quantity: number;
 }
 
@@ -77,7 +61,7 @@ export interface PlaceUnplacedUnitsArgs {
 }
 
 /**
- * Result of a `moveAssetLocationUnits` / `moveAssetKitUnits` call.
+ * Result of a `moveAssetLocationUnits` call.
  * Returned so the caller can update optimistic UI without re-fetching.
  */
 export interface MoveUnitsResult {

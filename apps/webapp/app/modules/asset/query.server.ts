@@ -13,13 +13,6 @@ import { expandLocationHierarchyFilters } from "./location-filter.server";
 import type { CustomFieldSorting } from "./types";
 import type { Column } from "../asset-index-settings/helpers";
 
-/**
- * SQL fragment: checks that the asset status is CHECKED_OUT.
- * Used to guard booking-based custody so that partially checked-in
- * assets are not incorrectly shown as "in custody".
- */
-const ASSET_IS_CHECKED_OUT = Prisma.sql`a.status = 'CHECKED_OUT'`;
-
 export const CUSTOM_FIELD_SEARCH_PATHS = [
   "valueText",
   "valueMultiLineText",
@@ -85,18 +78,6 @@ export function generateWhereClause(
           c.name ILIKE ${`%${term}%`} OR
           l.name ILIKE ${`%${term}%`} OR
           EXISTS (
-            -- Tag-name search. Rewritten from the fanning join on
-            -- _AssetToTag + Tag with t.name ILIKE (which was the sole reason
-            -- the outer query needed a GROUP BY) to a per-asset EXISTS, so
-            -- the slim pagination phase can drop the tag joins and the GROUP
-            -- BY entirely. Any-tag-match semantics are preserved: the asset
-            -- matches iff at least one of its tags' names ILIKE the term
-            -- (EXISTS dedups the same way GROUP BY did).
-            SELECT 1 FROM public."_AssetToTag" att
-            JOIN public."Tag" t ON att."B" = t.id
-            WHERE att."A" = a.id AND t.name ILIKE ${`%${term}%`}
-          ) OR
-          EXISTS (
             -- Custodian search. Custody moved to the custody_agg LATERAL
             -- (multi-custodian), so there is no top-level tm/u join to
             -- reference here — match against ALL of the asset's
@@ -148,7 +129,7 @@ export function generateWhereClause(
     switch (filter.type) {
       case "string":
         if (
-          ["location", "kit", "category", "qrId"].includes(filter.name) ||
+          ["location", "category", "qrId"].includes(filter.name) ||
           filter.name.startsWith("barcode_")
         ) {
           whereClause = addRelationFilter(whereClause, filter);
@@ -172,7 +153,9 @@ export function generateWhereClause(
         whereClause = addEnumFilter(whereClause, filter);
         break;
       case "array":
-        whereClause = addArrayFilter(whereClause, filter);
+        // why: `array` was the tags filter and nothing else. The type stays
+        // in the union so an unhandled case is a compile error the day a
+        // second array-shaped column appears — it is not silently dropped.
         break;
       case "customField":
         whereClause = addCustomFieldFilter(whereClause, filter);
@@ -778,231 +761,110 @@ function addEnumFilter(whereClause: Prisma.Sql, filter: Filter): Prisma.Sql {
     }
   }
 
-  // Kit handling — an asset's kit membership lives on the `AssetKit`
-  // pivot. `@@unique([assetId])` enforces "at most one kit per asset",
-  // so EXISTS checks against AssetKit give a yes/no answer per asset.
-  if (filter.name === "kit") {
-    switch (filter.operator) {
-      case "is":
-        if (filter.value === "in-kit") {
-          return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)`;
-        }
-        if (filter.value === "without-kit") {
-          return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)`;
-        }
-        // Match assets linked to the specified kit via AssetKit.
-        return Prisma.sql`${whereClause} AND EXISTS (
-          SELECT 1 FROM public."AssetKit" ak
-          WHERE ak."assetId" = a.id AND ak."kitId" = ${filter.value}
-        )`;
-
-      case "isNot":
-        if (filter.value === "in-kit") {
-          return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)`;
-        }
-        if (filter.value === "without-kit") {
-          return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)`;
-        }
-        return Prisma.sql`${whereClause} AND NOT EXISTS (
-          SELECT 1 FROM public."AssetKit" ak
-          WHERE ak."assetId" = a.id AND ak."kitId" = ${filter.value}
-        )`;
-
-      case "containsAny": {
-        const values = (
-          typeof filter.value === "string"
-            ? filter.value.split(",").map((v) => v.trim())
-            : Array.isArray(filter.value)
-            ? filter.value
-            : [filter.value]
-        ).filter(Boolean);
-
-        const hasInKit = values.includes("in-kit");
-        const hasWithoutKit = values.includes("without-kit");
-
-        // If both are selected, match all assets
-        if (hasInKit && hasWithoutKit) {
-          return whereClause;
-        }
-
-        // Handle "in-kit" - assets that are in a kit
-        if (hasInKit) {
-          return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)`;
-        }
-
-        // Handle "without-kit" - assets that are not in a kit
-        if (hasWithoutKit) {
-          const kitIds = values.filter((v) => v !== "without-kit");
-
-          if (kitIds.length === 0) {
-            return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)`;
-          }
-
-          const kitIdsArray = Prisma.join(
-            kitIds.map((id) => Prisma.sql`${id}`),
-            ", ",
-          );
-          return Prisma.sql`${whereClause} AND (
-            NOT EXISTS (SELECT 1 FROM public."AssetKit" ak WHERE ak."assetId" = a.id)
-            OR EXISTS (
-              SELECT 1 FROM public."AssetKit" ak
-              WHERE ak."assetId" = a.id AND ak."kitId" = ANY(ARRAY[${kitIdsArray}]::text[])
-            )
-          )`;
-        }
-
-        // An empty kit set matches no assets. Guard before `Prisma.join([])`
-        // (which throws) — same crash class as SHELF-WEBAPP-1MY.
-        if (values.length === 0) {
-          return Prisma.sql`${whereClause} AND 1=0`;
-        }
-
-        const kitIdsArray = Prisma.join(
-          values.map((id) => Prisma.sql`${id}`),
-          ", ",
-        );
-        return Prisma.sql`${whereClause} AND EXISTS (
-          SELECT 1 FROM public."AssetKit" ak
-          WHERE ak."assetId" = a.id AND ak."kitId" = ANY(ARRAY[${kitIdsArray}]::text[])
-        )`;
-      }
-
-      default:
-        return whereClause;
-    }
-  }
-
   return whereClause;
 }
 
+/**
+ * `barcode_<Type>` filters. Split out of {@link addRelationFilter} so the
+ * barcode branch is a named unit rather than a fall-through inside a function
+ * whose other branches were removed with the kit model.
+ */
+function addBarcodeFilter(whereClause: Prisma.Sql, filter: Filter): Prisma.Sql {
+  const barcodeType = filter.name.split("_")[1]; // Code128, Code39, DataMatrix, …
+
+  // Normalize the filter value the SAME way the value is stored
+  // (`normalizeBarcodeValue`): ExternalQR preserves its original case while
+  // every other type is uppercased. Unconditionally uppercasing here broke
+  // exact-match operators (is/isNot/matchesAny) for ExternalQR, whose codes
+  // are stored case-sensitively, so `b.value = '813E1AE5'` never matched a
+  // stored '813e1ae5'. (contains/containsAny were unaffected — ILIKE is
+  // case-insensitive.)
+  const normalizeForType = (value: string) =>
+    normalizeBarcodeValue(barcodeType as BarcodeType, value);
+
+  const normalizedValue =
+    typeof filter.value === "string"
+      ? normalizeForType(filter.value)
+      : filter.value;
+
+  switch (filter.operator) {
+    case "is":
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value = ${normalizedValue})`;
+    case "isNot":
+      return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value = ${normalizedValue})`;
+    case "contains":
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value ILIKE ${`%${normalizedValue}%`})`;
+    case "matchesAny": {
+      const values = (filter.value as string)
+        .split(",")
+        .map((v) => normalizeForType(v.trim()));
+      const valuesArray = Prisma.join(
+        values.map((v) => Prisma.sql`${v}`),
+        ", ",
+      );
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value = ANY(ARRAY[${valuesArray}]::text[]))`;
+    }
+    case "containsAny": {
+      const values = (filter.value as string)
+        .split(",")
+        .map((v) => normalizeForType(v.trim()));
+      const likeConditions = values.map(
+        (value) => Prisma.sql`b.value ILIKE ${`%${value}%`}`,
+      );
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND (${Prisma.join(
+        likeConditions,
+        " OR ",
+      )}))`;
+    }
+    default:
+      return whereClause;
+  }
+}
+
+/**
+ * Relation-shaped `string` filters: `qrId` and the `barcode_*` family.
+ *
+ * `location` and `category` are typed `enum` (see `getFilterType`) and are
+ * handled by {@link addEnumFilter}; `kit` was the only other caller and went
+ * away with the kit model. That is why there is no longer an alias map and a
+ * generic `<alias>.name` switch at the tail — those branches were reachable
+ * only for `kit`, and with it gone they would have interpolated `undefined`
+ * as a SQL identifier.
+ */
 function addRelationFilter(
   whereClause: Prisma.Sql,
   filter: Filter,
 ): Prisma.Sql {
-  const relationAliasMap: Record<string, string> = {
-    kit: "k",
-    qrId: "q",
-  };
-
-  const alias = relationAliasMap[filter.name];
-
-  // Special handling for qrId
-  if (filter.name === "qrId") {
-    switch (filter.operator) {
-      case "is":
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id = ${filter.value})`;
-      case "isNot":
-        return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id = ${filter.value})`;
-      case "contains":
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id ILIKE ${`%${filter.value}%`})`;
-      case "matchesAny": {
-        const values = (filter.value as string).split(",").map((v) => v.trim());
-        const valuesArray = Prisma.join(
-          values.map((v) => Prisma.sql`${v}`),
-          ", ",
-        );
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id = ANY(ARRAY[${valuesArray}]::text[]))`;
-      }
-      case "containsAny": {
-        const values = (filter.value as string).split(",").map((v) => v.trim());
-        const likeConditions = values.map(
-          (value) => Prisma.sql`q.id ILIKE ${`%${value}%`}`,
-        );
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND (${Prisma.join(
-          likeConditions,
-          " OR ",
-        )}))`;
-      }
-      default:
-        return whereClause;
-    }
-  }
-
-  // Special handling for barcode fields
   if (filter.name.startsWith("barcode_")) {
-    const barcodeType = filter.name.split("_")[1]; // Extract the barcode type (Code128, Code39, DataMatrix, etc.)
-
-    // Normalize the filter value the SAME way the value is stored
-    // (`normalizeBarcodeValue`): ExternalQR preserves its original case while
-    // every other type is uppercased. Unconditionally uppercasing here broke
-    // exact-match operators (is/isNot/matchesAny) for ExternalQR, whose codes
-    // are stored case-sensitively, so `b.value = '813E1AE5'` never matched a
-    // stored '813e1ae5'. (contains/containsAny were unaffected — ILIKE is
-    // case-insensitive.)
-    const normalizeForType = (value: string) =>
-      normalizeBarcodeValue(barcodeType as BarcodeType, value);
-
-    const normalizedValue =
-      typeof filter.value === "string"
-        ? normalizeForType(filter.value)
-        : filter.value;
-
-    switch (filter.operator) {
-      case "is":
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value = ${normalizedValue})`;
-      case "isNot":
-        return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value = ${normalizedValue})`;
-      case "contains":
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value ILIKE ${`%${normalizedValue}%`})`;
-      case "matchesAny": {
-        const values = (filter.value as string)
-          .split(",")
-          .map((v) => normalizeForType(v.trim()));
-        const valuesArray = Prisma.join(
-          values.map((v) => Prisma.sql`${v}`),
-          ", ",
-        );
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND b.value = ANY(ARRAY[${valuesArray}]::text[]))`;
-      }
-      case "containsAny": {
-        const values = (filter.value as string)
-          .split(",")
-          .map((v) => normalizeForType(v.trim()));
-        const likeConditions = values.map(
-          (value) => Prisma.sql`b.value ILIKE ${`%${value}%`}`,
-        );
-        return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Barcode" b WHERE b."assetId" = a.id AND b.type::text = ${barcodeType} AND (${Prisma.join(
-          likeConditions,
-          " OR ",
-        )}))`;
-      }
-      default:
-        return whereClause;
-    }
+    return addBarcodeFilter(whereClause, filter);
   }
+
+  if (filter.name !== "qrId") return whereClause;
 
   switch (filter.operator) {
     case "is":
-      return Prisma.sql`${whereClause} AND ${Prisma.raw(alias)}.name = ${
-        filter.value
-      }`;
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id = ${filter.value})`;
     case "isNot":
-      return Prisma.sql`${whereClause} AND ${Prisma.raw(alias)}.name != ${
-        filter.value
-      }`;
+      return Prisma.sql`${whereClause} AND NOT EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id = ${filter.value})`;
     case "contains":
-      return Prisma.sql`${whereClause} AND ${Prisma.raw(
-        alias,
-      )}.name ILIKE ${`%${filter.value}%`}`;
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id ILIKE ${`%${filter.value}%`})`;
     case "matchesAny": {
       const values = (filter.value as string).split(",").map((v) => v.trim());
       const valuesArray = Prisma.join(
         values.map((v) => Prisma.sql`${v}`),
         ", ",
       );
-      return Prisma.sql`${whereClause} AND ${Prisma.raw(
-        alias,
-      )}.name = ANY(ARRAY[${valuesArray}]::text[])`;
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND q.id = ANY(ARRAY[${valuesArray}]::text[]))`;
     }
     case "containsAny": {
       const values = (filter.value as string).split(",").map((v) => v.trim());
       const likeConditions = values.map(
-        (value) => Prisma.sql`${Prisma.raw(alias)}.name ILIKE ${`%${value}%`}`,
+        (value) => Prisma.sql`q.id ILIKE ${`%${value}%`}`,
       );
-      return Prisma.sql`${whereClause} AND (${Prisma.join(
+      return Prisma.sql`${whereClause} AND EXISTS (SELECT 1 FROM public."Qr" q WHERE q."assetId" = a.id AND (${Prisma.join(
         likeConditions,
         " OR ",
-      )})`;
+      )}))`;
     }
     default:
       return whereClause;
@@ -1106,136 +968,6 @@ function addCustodyFilter(whereClause: Prisma.Sql, filter: Filter): Prisma.Sql {
       )`;
     }
 
-    default:
-      return whereClause;
-  }
-}
-
-/**
- * Handles array type filters (e.g., tags)
- * @param whereClause - The existing WHERE clause
- * @param filter - The filter configuration
- * @returns Modified WHERE clause with array filtering conditions
- */
-function addArrayFilter(whereClause: Prisma.Sql, filter: Filter): Prisma.Sql {
-  /**
-   * NOTE: This currently only works for tags. Will need to be adjusted once we have more arrays to filter by
-   */
-  switch (filter.operator) {
-    case "contains": {
-      // Handle "untagged" special case
-      if (filter.value === "untagged") {
-        return Prisma.sql`${whereClause} AND NOT EXISTS (
-          SELECT 1 FROM public."_AssetToTag" att
-          WHERE att."A" = a.id
-        )`;
-      }
-      // Single tag filtering via a per-asset EXISTS. Byte-identical to the
-      // previous `t.id = value` against the fanning tag join (the join was an
-      // inner semantic and GROUP BY deduped it) — but self-contained, so the
-      // slim pagination phase needs no outer `t`/`att` join.
-      return Prisma.sql`${whereClause} AND EXISTS (
-        SELECT 1 FROM public."_AssetToTag" att
-        JOIN public."Tag" t ON att."B" = t.id
-        WHERE att."A" = a.id AND t.id = ${filter.value}
-      )`;
-    }
-    case "containsAll": {
-      // ALL tags must be present
-      const values = (filter.value as string).split(",").map((v) => v.trim());
-
-      // If "untagged" is included, return assets with no tags
-      // (an asset can't be both untagged and have tags)
-      if (values.includes("untagged")) {
-        return Prisma.sql`${whereClause} AND NOT EXISTS (
-          SELECT 1 FROM public."_AssetToTag" att
-          WHERE att."A" = a.id
-        )`;
-      }
-
-      const valuesArray = Prisma.join(
-        values.map((v) => Prisma.sql`${v}`),
-        ", ",
-      );
-      return Prisma.sql`${whereClause} AND NOT EXISTS (
-        SELECT unnest(ARRAY[${valuesArray}]::text[]) AS required_tag
-        EXCEPT
-        SELECT t.id
-        FROM public."_AssetToTag" att
-        JOIN public."Tag" t ON t.id = att."B"
-        WHERE att."A" = a.id
-      )`;
-    }
-    case "containsAny": {
-      // ANY of the tags must be present
-      const values = (filter.value as string).split(",").map((v) => v.trim());
-
-      // If "untagged" is included, we need OR logic:
-      // Either the asset has no tags OR it has one of the other specified tags
-      if (values.includes("untagged")) {
-        // Remove "untagged" from the values array
-        const tagIds = values.filter((v) => v !== "untagged");
-
-        if (tagIds.length === 0) {
-          // Only "untagged" was selected - return assets with no tags
-          return Prisma.sql`${whereClause} AND NOT EXISTS (
-            SELECT 1 FROM public."_AssetToTag" att
-            WHERE att."A" = a.id
-          )`;
-        }
-
-        // Return assets that are either untagged OR have one of the specified tags
-        const valuesArray = Prisma.join(
-          tagIds.map((id) => Prisma.sql`${id}`),
-          ", ",
-        );
-        return Prisma.sql`${whereClause} AND (
-          NOT EXISTS (SELECT 1 FROM public."_AssetToTag" att WHERE att."A" = a.id)
-          OR EXISTS (
-            SELECT 1 FROM public."_AssetToTag" att
-            JOIN public."Tag" t ON att."B" = t.id
-            WHERE att."A" = a.id AND t.id = ANY(ARRAY[${valuesArray}]::text[])
-          )
-        )`;
-      }
-
-      const valuesArray = Prisma.join(
-        values.map((v) => Prisma.sql`${v}`),
-        ", ",
-      );
-      // Any-tag EXISTS (see the `contains` branch) — keeps the slim phase free
-      // of the fanning tag join while preserving match semantics.
-      return Prisma.sql`${whereClause} AND EXISTS (
-        SELECT 1 FROM public."_AssetToTag" att
-        JOIN public."Tag" t ON att."B" = t.id
-        WHERE att."A" = a.id AND t.id = ANY(ARRAY[${valuesArray}]::text[])
-      )`;
-    }
-
-    case "excludeAny": {
-      // Exclude assets that have ANY of the specified tags
-      const values = (filter.value as string).split(",").map((v) => v.trim());
-
-      if (values.includes("untagged")) {
-        // If "untagged" is included, we want to ensure assets have at least one tag
-        return Prisma.sql`${whereClause} AND EXISTS (
-          SELECT 1 FROM public."_AssetToTag" att2
-          WHERE att2."A" = a.id
-        )`;
-      }
-
-      const valuesArray = Prisma.join(
-        values.map((v) => Prisma.sql`${v}`),
-        ", ",
-      );
-      return Prisma.sql`${whereClause} AND NOT EXISTS (
-        SELECT 1
-        FROM public."_AssetToTag" att2
-        JOIN public."Tag" t2 ON t2.id = att2."B"
-        WHERE att2."A" = a.id
-        AND t2.id = ANY(ARRAY[${valuesArray}]::text[])
-      )`;
-    }
     default:
       return whereClause;
   }
@@ -1439,10 +1171,6 @@ export function parseSortingOptions(sortBy: string[]): {
       }
     } else if (field.name === "qrId") {
       orderByParts.push(getNormalizedSortExpression(`"qrId"`, field.direction));
-    } else if (field.name === "kit") {
-      orderByParts.push(
-        getNormalizedSortExpression(`"kitName"`, field.direction),
-      );
     } else if (field.name === "category") {
       orderByParts.push(
         getNormalizedSortExpression(`"categoryName"`, field.direction),
@@ -1747,13 +1475,9 @@ export const assetQueryFragment = (options: AssetQueryOptions = {}) => {
       a."consumptionType" AS "assetConsumptionType",
       a."availableToBook" AS "assetAvailableToBook",
       a."lifecycleStage" AS "assetLifecycleStage",
-      k.id AS "assetKitId",
       a."categoryId" AS "assetCategoryId",
       a."assetModelId" AS "assetModelId",
       am.name AS "assetModelName",
-      k.id AS "kitId",
-      k.name AS "kitName",
-      k.status AS "kitStatus",
       c.id AS "categoryId",
       c.name AS "categoryName",
       c.color AS "categoryColor",
@@ -1770,14 +1494,7 @@ export const assetQueryFragment = (options: AssetQueryOptions = {}) => {
         WHEN l.name IS NOT NULL THEN l.name
         ELSE NULL
       END AS "locationName",
-      kits_agg.kits AS kits,
       locations_agg.locations AS locations,
-      COALESCE(
-        jsonb_agg(
-          DISTINCT jsonb_build_object('id', t.id, 'name', t.name, 'color', t.color)
-        ) FILTER (WHERE t.id IS NOT NULL),
-        '[]'::jsonb
-      ) AS tags,
       custody_agg.custody AS custody,
       (
         SELECT jsonb_agg(
@@ -1832,42 +1549,10 @@ export const assetQueryFragment = (options: AssetQueryOptions = {}) => {
 
 export const assetQueryJoins = Prisma.sql`
   FROM public."Asset" a
-  -- Kit membership goes through the AssetKit pivot. AssetKit has no
-  -- @@unique([assetId]) (qty-tracked assets can belong to multiple
-  -- kits), so a plain LEFT JOIN AssetKit would fan out and duplicate
-  -- the asset in the index. Use a LATERAL primary-pick (oldest pivot
-  -- row) to keep exactly one kit row per asset — used for ORDER BY
-  -- (by primary kit name) and for the singular kit field on the row
-  -- projection.
-  LEFT JOIN LATERAL (
-    SELECT k.id, k.name, k.status
-    FROM public."AssetKit" ak
-    JOIN public."Kit" k ON ak."kitId" = k.id
-    WHERE ak."assetId" = a.id
-    ORDER BY ak."createdAt" ASC, ak.id ASC
-    LIMIT 1
-  ) k ON TRUE
-  -- Full kit membership aggregated as a jsonb array, so the asset-index
-  -- "Kit" column can render primary + "+N more" for multi-kit qty-
-  -- tracked assets (mirror of custody_agg below). Always returns an
-  -- array (COALESCE → '[]'::jsonb) so the column code never branches
-  -- on null.
-  LEFT JOIN LATERAL (
-    SELECT COALESCE(
-      jsonb_agg(
-        jsonb_build_object('id', k2.id, 'name', k2.name, 'status', k2.status)
-        ORDER BY ak2."createdAt" ASC, ak2.id ASC
-      ),
-      '[]'::jsonb
-    ) AS kits
-    FROM public."AssetKit" ak2
-    JOIN public."Kit" k2 ON ak2."kitId" = k2.id
-    WHERE ak2."assetId" = a.id
-  ) kits_agg ON TRUE
   LEFT JOIN public."Category" c ON a."categoryId" = c.id
   LEFT JOIN public."AssetModel" am ON a."assetModelId" = am.id
-  -- Placement goes through the AssetLocation pivot. Same fan-out concern
-  -- as kit (qty-tracked can be at many locations) — LATERAL primary-pick
+  -- Placement goes through the AssetLocation pivot. A plain join would fan
+  -- out (qty-tracked can be at many locations) — LATERAL primary-pick
   -- yields one "primary location" per asset.
   LEFT JOIN LATERAL (
     SELECT l.id, l.name, l."parentId"
@@ -1878,7 +1563,7 @@ export const assetQueryJoins = Prisma.sql`
     LIMIT 1
   ) l ON TRUE
   -- Full placement list aggregated as a jsonb array, mirror of
-  -- kits_agg above. Drives the asset-index "Location" column's
+  -- custody_agg below. Drives the asset-index "Location" column's
   -- primary + "+N more" rendering for qty-tracked assets placed at
   -- multiple locations.
   LEFT JOIN LATERAL (
@@ -1902,8 +1587,6 @@ export const assetQueryJoins = Prisma.sql`
     JOIN public."Location" l2 ON al2."locationId" = l2.id
     WHERE al2."assetId" = a.id
   ) locations_agg ON TRUE
-  LEFT JOIN public."_AssetToTag" att ON a.id = att."A"
-  LEFT JOIN public."Tag" t ON att."B" = t.id
   LEFT JOIN LATERAL (
     -- Aggregate ALL custody rows for this asset into a single jsonb
     -- array. Replaces the previous direct LEFT JOINs on Custody +
@@ -1917,8 +1600,8 @@ export const assetQueryJoins = Prisma.sql`
     -- explicit ORDER BY has an undefined input order, so the primary
     -- could differ between rows/plans and the sort key could disagree
     -- with the rendered badge. Order by oldest custody first
-    -- (createdAt, id) — the same primary-pick convention the kit /
-    -- location LATERALs use. Must stay identical to CHEAP_CUSTODY_JOINS.
+    -- (createdAt, id) — the same primary-pick convention the location
+    -- LATERALs use. Must stay identical to CHEAP_CUSTODY_JOINS.
     SELECT COALESCE(
       jsonb_agg(
         jsonb_build_object(
@@ -1996,11 +1679,7 @@ export const assetReturnFragment = (options: AssetReturnOptions = {}) => {
           'minQuantity', aq."assetMinQuantity",
           'consumptionType', aq."assetConsumptionType",
           'availableToBook', aq."assetAvailableToBook",
-          'kitId', aq."assetKitId",
-          'kit', CASE WHEN aq."kitId" IS NOT NULL THEN jsonb_build_object('id', aq."kitId", 'name', aq."kitName", 'status', aq."kitStatus") ELSE NULL END,
-          'kits', COALESCE(aq.kits, '[]'::jsonb),
           'category', CASE WHEN aq."categoryId" IS NOT NULL THEN jsonb_build_object('id', aq."categoryId", 'name', aq."categoryName", 'color', aq."categoryColor") ELSE NULL END,
-          'tags', aq.tags,
           'location', CASE
             WHEN aq."assetLocationId" IS NOT NULL THEN jsonb_build_object(
               'id', aq."assetLocationId",
@@ -2075,42 +1754,21 @@ const BARCODE_SORT_KEY_SELECTS = Prisma.sql`(
       ) AS barcode_EAN13`;
 
 /**
- * The custody CASE expression (direct custody wins; booking-derived synthetic
- * custody for CHECKED_OUT assets otherwise; NULL). Verbatim copy of the heavy
- * projection's custody CASE, including the NRM-name guard (CONCAT vs btm.name,
- * never COALESCE(CONCAT(...))). Emitted `AS custody` in the cheap phase only
- * when a custody sort is active — the `custody->0->>'name'` sort term needs it.
+ * The custody sort key: the per-asset custody array, or NULL when empty.
+ *
+ * ⚠️ This used to be a CASE with a second branch that synthesised custody from
+ * an active booking, referencing the aliases `b` / `bu` / `btm`. Those joins
+ * were removed with the booking system but the CASE kept referencing them, so
+ * ANY custody-sorted request on the advanced index failed with
+ * `missing FROM-clause entry for table "b"` — invisible to `tsc` (it cannot
+ * see inside `Prisma.sql`) and to the test suite, which only asserted alias
+ * hygiene for `GROUP BY`.
+ *
+ * Emitted `AS custody` in the cheap phase only when a custody sort is active —
+ * the `custody->0->>'name'` sort term needs it.
  */
 const CUSTODY_SORT_CASE = Prisma.sql`CASE
         WHEN jsonb_array_length(custody_agg.custody) > 0 THEN custody_agg.custody
-        WHEN b.id IS NOT NULL AND ${ASSET_IS_CHECKED_OUT} THEN
-          jsonb_build_array(
-            jsonb_build_object(
-              'name', CASE
-                WHEN bu.id IS NOT NULL
-                  THEN CONCAT(bu."firstName", ' ', bu."lastName")
-                ELSE btm.name
-              END,
-              'custodian', jsonb_build_object(
-                'name', CASE
-                  WHEN bu.id IS NOT NULL
-                    THEN CONCAT(bu."firstName", ' ', bu."lastName")
-                  ELSE btm.name
-                END,
-                'user', CASE
-                  WHEN bu.id IS NOT NULL THEN
-                    jsonb_build_object(
-                      'id', bu.id,
-                      'firstName', bu."firstName",
-                      'lastName', bu."lastName",
-                      'profilePicture', bu."profilePicture",
-                      'email', bu.email
-                    )
-                  ELSE NULL
-                END
-              )
-            )
-          )
         ELSE NULL
       END`;
 
@@ -2119,21 +1777,12 @@ const CUSTODY_SORT_CASE = Prisma.sql`CASE
  * joins a given request actually needs. Each is a 1:1 join or LATERAL
  * primary-pick (no fan-out), a verbatim mirror of the corresponding join in
  * {@link assetQueryJoins}. Gated in {@link buildAdvancedAssetsQuery} on whether
- * the active sort references the joined name (kit/category/assetModel/location)
+ * the active sort references the joined name (category/assetModel/location)
  * and — for category/location — whether a text search is active (the search
  * predicate references `c.name` / `l.name`). why: joining all four for every
  * matching asset even under the default `createdAt` sort was the residual O(N)
  * cost that kept the rewrite ~2× instead of ~10× faster.
  */
-const CHEAP_KIT_JOIN = Prisma.sql`
-    LEFT JOIN LATERAL (
-      SELECT k.id, k.name, k.status
-      FROM public."AssetKit" ak
-      JOIN public."Kit" k ON ak."kitId" = k.id
-      WHERE ak."assetId" = a.id
-      ORDER BY ak."createdAt" ASC, ak.id ASC
-      LIMIT 1
-    ) k ON TRUE`;
 const CHEAP_CATEGORY_JOIN = Prisma.sql`
     LEFT JOIN public."Category" c ON a."categoryId" = c.id`;
 const CHEAP_ASSET_MODEL_JOIN = Prisma.sql`
@@ -2149,11 +1798,10 @@ const CHEAP_LOCATION_JOIN = Prisma.sql`
     ) l ON TRUE`;
 
 /**
- * Cheap-phase custody joins: the per-asset custody aggregation (`custody_agg`)
- * plus the active-booking LATERAL (`b`) and its custodian joins (`bu`/`btm`).
- * Injected only when a custody FILTER or a custody SORT is active — the custody
- * WHERE predicates reference `jsonb_array_length(custody_agg.custody)` and the
- * custody sort key references the full CASE (which needs `b`/`bu`/`btm`).
+ * Cheap-phase custody joins: the per-asset custody aggregation (`custody_agg`).
+ * Injected only when a custody FILTER or a custody SORT is active — both the
+ * custody WHERE predicates and the custody sort key reference
+ * `custody_agg.custody`.
  * Verbatim mirror of the custody joins in {@link assetQueryJoins} — including
  * the `ORDER BY cu."createdAt" ASC, cu.id ASC` inside `jsonb_agg` that makes
  * element 0 (the primary custodian used by the sort key `custody->0->>'name'`)
@@ -2205,7 +1853,6 @@ function detectActiveSortKeys(sortBy: string[]): {
   qrId: boolean;
   custody: boolean;
   barcode: boolean;
-  kitName: boolean;
   categoryName: boolean;
   assetModelName: boolean;
   locationName: boolean;
@@ -2213,7 +1860,6 @@ function detectActiveSortKeys(sortBy: string[]): {
   let qrId = false;
   let custody = false;
   let barcode = false;
-  let kitName = false;
   let categoryName = false;
   let assetModelName = false;
   let locationName = false;
@@ -2223,8 +1869,7 @@ function detectActiveSortKeys(sortBy: string[]): {
     else if (name === "custody") custody = true;
     else if (name.startsWith("barcode_")) barcode = true;
     // Joined-name sort keys (mirror the parseSortingOptions field-name branches):
-    // "kit" -> kitName, "category" -> categoryName, etc.
-    else if (name === "kit") kitName = true;
+    // "category" -> categoryName, etc.
     else if (name === "category") categoryName = true;
     else if (name === "assetModel") assetModelName = true;
     else if (name === "location") locationName = true;
@@ -2233,7 +1878,6 @@ function detectActiveSortKeys(sortBy: string[]): {
     qrId,
     custody,
     barcode,
-    kitName,
     categoryName,
     assetModelName,
     locationName,
@@ -2270,8 +1914,7 @@ export type BuildAdvancedAssetsQueryParams = {
  *
  * Shape (three CTEs + a lateral heavy phase):
  * 1. `asset_query` — SLIM: `a.id` + sort keys only, one row per matching asset,
- *    NO `GROUP BY` (the tag search/filter is EXISTS-ified in
- *    {@link generateWhereClause}, so no fanning tag join remains).
+ *    NO `GROUP BY` (no fanning join remains in the slim phase).
  * 2. `sorted_asset_query` — `ROW_NUMBER()` freezes the sort into an integer
  *    `__sortRank`, then `LIMIT/OFFSET` slices the page.
  * 3. `count_query` — `COUNT(*)` over the slim set (full filtered total).
@@ -2300,7 +1943,6 @@ export function buildAdvancedAssetsQuery({
     qrId: qrIdSort,
     custody: custodySort,
     barcode: barcodeSort,
-    kitName: kitNameSort,
     categoryName: categoryNameSort,
     assetModelName: assetModelNameSort,
     locationName: locationNameSort,
@@ -2316,15 +1958,10 @@ export function buildAdvancedAssetsQuery({
   // common default sort. Category/Location are also needed for text search
   // (its WHERE references c.name / l.name); the SELECT alias is only needed
   // when the matching name sort is active (search reads c.name/l.name directly).
-  const needKitJoin = kitNameSort;
   const needCategoryJoin = categoryNameSort || hasSearch;
   const needAssetModelJoin = assetModelNameSort;
   const needLocationJoin = locationNameSort || hasSearch;
 
-  const kitNameSelect = kitNameSort
-    ? Prisma.sql`,
-      k.name AS "kitName"`
-    : Prisma.empty;
   const categoryNameSelect = categoryNameSort
     ? Prisma.sql`,
       c.name AS "categoryName"`
@@ -2352,7 +1989,6 @@ export function buildAdvancedAssetsQuery({
     : Prisma.empty;
   const custodyJoins = custodyJoinsActive ? CHEAP_CUSTODY_JOINS : Prisma.empty;
 
-  const kitJoin = needKitJoin ? CHEAP_KIT_JOIN : Prisma.empty;
   const categoryJoin = needCategoryJoin ? CHEAP_CATEGORY_JOIN : Prisma.empty;
   const assetModelJoin = needAssetModelJoin
     ? CHEAP_ASSET_MODEL_JOIN
@@ -2360,7 +1996,6 @@ export function buildAdvancedAssetsQuery({
   const locationJoin = needLocationJoin ? CHEAP_LOCATION_JOIN : Prisma.empty;
   const baseJoins = Prisma.sql`
     FROM public."Asset" a
-    ${kitJoin}
     ${categoryJoin}
     ${assetModelJoin}
     ${locationJoin}`;
@@ -2387,7 +2022,7 @@ export function buildAdvancedAssetsQuery({
           a.status AS "assetStatus",
           a.type AS "assetType",
           a.description AS "assetDescription",
-          a."availableToBook" AS "assetAvailableToBook"${kitNameSelect}${categoryNameSelect}${assetModelNameSelect}${locationNameSelect}${qrIdSortSelect}${custodySortSelect}${barcodeSortSelects}${customFieldSelect}
+          a."availableToBook" AS "assetAvailableToBook"${categoryNameSelect}${assetModelNameSelect}${locationNameSelect}${qrIdSortSelect}${custodySortSelect}${barcodeSortSelects}${customFieldSelect}
         ${baseJoins}
         ${custodyJoins}
         ${whereClause}
@@ -2423,7 +2058,14 @@ export function buildAdvancedAssetsQuery({
         })}
         ${assetQueryJoins}
         WHERE a.id = saq."assetId"
-        GROUP BY a.id, k.id, k.name, k.status, c.id, c.name, c.color, l.id, l."parentId", l.name, custody_agg.custody, kits_agg.kits, locations_agg.locations, am.id, am.name
+        -- No GROUP BY. The heavy projection had exactly one aggregate --
+        -- the jsonb_agg(DISTINCT ...) AS tags over the fanning _AssetToTag
+        -- + Tag join -- and it went away with the tag model. Every
+        -- remaining join is 1:1 (Category, AssetModel) or a LATERAL that
+        -- yields exactly one row (primary location, locations_agg,
+        -- custody_agg), so this lateral already returns a single row per
+        -- asset. Re-adding a GROUP BY here would be a sign that a fanning
+        -- join crept back in -- fix the join instead.
       ) aq ON TRUE;
     `;
 }

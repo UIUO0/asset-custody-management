@@ -15,7 +15,7 @@ import Input from "../forms/input";
 interface AddBarcodeFormProps {
   onCancel: () => void;
   onSuccess: () => void;
-  action: string; // The route to submit to (e.g., "/assets/123" or "/kits/456")
+  action: string; // The route to submit to (e.g., "/assets/123")
   onRefetchData?: () => void; // Callback to refetch data after successful submission
   // For scan mode - hide fields and use predetermined values
   hideFields?: boolean;

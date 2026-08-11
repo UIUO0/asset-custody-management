@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import type { Prisma } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -15,11 +14,8 @@ import {
 } from "~/atoms/qr-scanner";
 import { Button } from "~/components/shared/button";
 import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
-import type { LoaderData } from "~/routes/_layout+/locations.$locationId.scan-assets-kits";
-import type {
-  AssetFromQr,
-  KitFromQr,
-} from "~/routes/api+/get-scanned-item.$qrId";
+import type { LoaderData } from "~/routes/_layout+/locations.$locationId.scan-assets";
+import type { AssetFromQr } from "~/routes/api+/get-scanned-item.$qrId";
 import { tw } from "~/utils/tw";
 import { createAvailabilityLabels } from "../availability-label-factory";
 import { createBlockers } from "../blockers-factory";
@@ -28,9 +24,8 @@ import { GenericItemRow, DefaultLoadingState } from "../generic-item-row";
 import { ScannedAssetQuantityInput } from "../scanned-asset-quantity-input";
 
 // Export the schema so it can be reused
-export const addScannedAssetsOrKitsToLocationSchema = z.object({
+export const addScannedAssetsToLocationSchema = z.object({
   assetIds: z.array(z.string()).optional().default([]),
-  kitIds: z.array(z.string()).optional().default([]),
   /**
    * JSON-encoded `Record<assetId, quantity>` mirroring the location
    * picker's wire format. Empty / missing entries fall back to the
@@ -56,9 +51,9 @@ type AssetFromQrWithLocation = AssetFromQr & {
 };
 
 /**
- * Drawer component for managing scanned assets/kits to be added to bookings
+ * Drawer component for managing scanned assets to be added to a location
  */
-export default function AddAssetsKitsToLocationDrawer({
+export default function AddAssetsToLocationDrawer({
   className,
   style,
   isLoading,
@@ -86,13 +81,8 @@ export default function AddAssetsKitsToLocationDrawer({
     .filter((item) => !!item && item.data && item.type === "asset")
     .map((item) => item?.data as AssetFromQr);
 
-  const kits = Object.values(items)
-    .filter((item) => !!item && item.type === "kit")
-    .map((item) => item?.data as KitFromQr);
-
   // List of asset IDs for the form
   const assetIdsForLocation = Array.from(new Set([...assetIds]));
-  const kitIdsForLocation = Array.from(new Set([...kits.map((k) => k.id)]));
 
   // Per-asset qty for QUANTITY_TRACKED scans. Stringify into the
   // hidden `assetQuantities` field so the route action can parse it
@@ -122,19 +112,6 @@ export default function AddAssetsKitsToLocationDrawer({
     .filter((asset) => pivotRows.some((al) => al?.asset?.id === asset.id))
     .map((a) => !!a && a.id);
 
-  // Kit blockers
-  const kitsAlreadyAddedIds = kits
-    .filter((kit) => !!kit)
-    .filter((kit) => location.kits.some((k) => k?.id === kit.id))
-    .map((k) => !!k && k.id);
-
-  const qrIdsOfAlreadyAddedKits = Object.entries(items)
-    .filter(([, item]) => {
-      if (!item || item.type !== "kit") return false;
-      return kitsAlreadyAddedIds.includes((item?.data as any)?.id);
-    })
-    .map(([qrId]) => qrId);
-
   // Create blockers configuration
   const blockerConfigs = [
     {
@@ -147,17 +124,6 @@ export default function AddAssetsKitsToLocationDrawer({
         </>
       ),
       onResolve: () => removeAssetsFromList(assetsAlreadyAddedIds),
-    },
-    {
-      condition: kitsAlreadyAddedIds.length > 0,
-      count: kitsAlreadyAddedIds.length,
-      message: (count: number) => (
-        <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"}`}</strong>{" "}
-          already added to this location.
-        </>
-      ),
-      onResolve: () => removeItemsFromList([...qrIdsOfAlreadyAddedKits]),
     },
     {
       condition: errors.length > 0,
@@ -177,10 +143,7 @@ export default function AddAssetsKitsToLocationDrawer({
     blockerConfigs,
     onResolveAll: () => {
       removeAssetsFromList([...assetsAlreadyAddedIds]);
-      removeItemsFromList([
-        ...errors.map(([qrId]) => qrId),
-        ...qrIdsOfAlreadyAddedKits,
-      ]);
+      removeItemsFromList(errors.map(([qrId]) => qrId));
     },
   });
 
@@ -202,8 +165,6 @@ export default function AddAssetsKitsToLocationDrawer({
               location={location}
             />
           );
-        } else if (item?.type === "kit") {
-          return <KitRow kit={data as KitFromQr} location={location} />;
         }
         return null;
       }}
@@ -234,13 +195,9 @@ export default function AddAssetsKitsToLocationDrawer({
 
   return (
     <ConfigurableDrawer
-      schema={addScannedAssetsOrKitsToLocationSchema}
-      /**
-       * We merge the existing assetIds(kitAssetsIds) with the ids of the scanned assets(assetIdsForKit).
-       * We have to do this because the manageAssets action expects both of them to be present in the formData sent */
+      schema={addScannedAssetsToLocationSchema}
       formData={{
         assetIds: assetIdsForLocation,
-        kitIds: kitIdsForLocation,
         assetQuantities: assetQuantitiesJson,
       }}
       items={items}
@@ -253,7 +210,7 @@ export default function AddAssetsKitsToLocationDrawer({
       defaultExpanded={defaultExpanded}
       className={className}
       style={style}
-      formName="AddScannedAssetsOrKitsToLocation"
+      formName="AddScannedAssetsToLocation"
     />
   );
 }
@@ -277,7 +234,7 @@ export function AssetRow({
 
   // Use a combination of standard presets and custom configurations
   const availabilityConfigs = [
-    // Custom preset for "already in this kit"
+    // Custom preset for "already in this location"
     {
       condition: location.assetLocations.some(
         (al) => al?.asset?.id === asset.id,
@@ -370,90 +327,6 @@ export function AssetRow({
           unit={asset.unitOfMeasure || "units"}
         />
       ) : null}
-    </div>
-  );
-}
-
-export function KitRow({
-  kit,
-  location,
-}: {
-  kit: KitFromQr;
-  location: Pick<
-    Prisma.LocationGetPayload<{
-      include: {
-        kits: { select: { id: true } };
-      };
-    }>,
-    "id" | "kits"
-  >;
-}) {
-  const { t } = useTranslation();
-  // Use a combination of standard presets and custom configurations
-  const availabilityConfigs = [
-    // Custom preset for "already in this kit"
-    {
-      condition: location.kits.some((a: any) => a?.id === kit.id),
-      badgeText: t("scanAvailability.alreadyAddedToLocation"),
-      tooltipTitle: t("scanAvailability.kitPartOfLocationTitle"),
-      tooltipContent: t("scanAvailability.kitInLocationContent"),
-      priority: 70,
-    },
-    {
-      condition: !!kit.locationId && kit.locationId !== location.id,
-      badgeText: t("scanAvailability.partOfAnotherLocation"),
-      tooltipTitle: t("scanAvailability.kitPartOfAnotherLocationTitle"),
-      tooltipContent: (
-        <>
-          {t("scanAvailability.kitInAnotherLocationPrefix")}
-          {kit?.location ? (
-            <>
-              :{" "}
-              <Button
-                to={`/locations/${kit.location.id}`}
-                target="_blank"
-                variant="link-gray"
-                className={"text-xs"}
-              >
-                {kit.location.name}
-              </Button>
-              <br />
-            </>
-          ) : undefined}
-          {t("scanAvailability.stillCanReplaceKitLocation")}
-        </>
-      ),
-      priority: 70,
-    },
-  ];
-
-  // Create the availability labels component
-  const [, KitAvailabilityLabels] = createAvailabilityLabels(
-    availabilityConfigs,
-    { maxLabels: 5 },
-  );
-
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="word-break whitespace-break-spaces font-medium">
-        {kit.name}{" "}
-        <span className="text-[12px] font-normal text-gray-700">
-          ({kit._count.assetKits} assets)
-        </span>
-      </p>
-
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span
-          className={tw(
-            "inline-block bg-gray-50 px-[6px] py-[2px]",
-            "rounded-md border border-gray-200",
-            "text-xs text-gray-700",
-          )}
-        >
-          kit
-        </span>
-        <KitAvailabilityLabels />
-      </div>
     </div>
   );
 }

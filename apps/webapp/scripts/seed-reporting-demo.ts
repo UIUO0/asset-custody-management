@@ -2,7 +2,7 @@
  * Reporting Demo Data Seeder (entry point)
  *
  * Fills a dedicated staging workspace with ~12 months of coherent historic
- * data — assets, bookings, audits, custody, kits, taxonomy, and the matching
+ * data — assets, bookings, audits, custody, taxonomy, and the matching
  * `ActivityEvent` trail — so the reporting UI can render non-empty charts
  * and tables for all ten target reports (R1–R10, see
  * `CONTEXT-activity-event-next.md`).
@@ -62,7 +62,6 @@ import { runAssetsPhase } from "./seed-reporting-demo/phases/assets";
 import { runAuditsPhase } from "./seed-reporting-demo/phases/audits";
 import { runBookingsPhase } from "./seed-reporting-demo/phases/bookings";
 import { runCurrentStatePhase } from "./seed-reporting-demo/phases/current-state";
-import { runKitsPhase } from "./seed-reporting-demo/phases/kits";
 import { runTaxonomyPhase } from "./seed-reporting-demo/phases/taxonomy-and-team";
 
 /**
@@ -73,11 +72,9 @@ export const SEED_TARGETS = {
   categories: 7,
   locations: 5,
   /** Includes the one marker tag. */
-  tags: 10,
   customFields: 3,
   teamMembers: 18,
   assets: 300,
-  kits: 15,
   bookings: 1_500,
   /** Subset of bookings that went through a partial-checkin step. */
   partialCheckinBookings: 75,
@@ -248,11 +245,9 @@ function printPlannedTargets(options: SeederCliOptions, orgName: string): void {
       "Planned row counts:\n" +
       `  Categories         ${SEED_TARGETS.categories}\n` +
       `  Locations          ${SEED_TARGETS.locations}\n` +
-      `  Tags               ${SEED_TARGETS.tags} (incl. marker tag)\n` +
       `  Custom Fields      ${SEED_TARGETS.customFields}\n` +
       `  Team Members       ${SEED_TARGETS.teamMembers}\n` +
       `  Assets             ${SEED_TARGETS.assets}\n` +
-      `  Kits               ${SEED_TARGETS.kits}\n` +
       `  Bookings           ${SEED_TARGETS.bookings}\n` +
       `  Partial Check-ins  ${SEED_TARGETS.partialCheckinBookings}\n` +
       `  Audit Sessions     ${SEED_TARGETS.auditSessions}\n` +
@@ -269,25 +264,17 @@ async function runPhases(
   ctx: SeederContext,
   state: SeederState,
 ): Promise<void> {
-  console.log(
-    "Phase 2 — taxonomy (categories, locations, tags, custom fields)…",
-  );
+  console.log("Phase 2 — taxonomy (categories, locations, custom fields)…");
   await runTaxonomyPhase(ctx, state);
   console.log(
     `  ${state.counts.categories} categories, ${state.counts.locations} locations, ` +
-      `${state.counts.tags} tags, ${state.counts.customFields} custom fields\n`,
+      `${state.counts.customFields} custom fields\n`,
   );
 
   console.log("Phase 3 — assets with change history…");
   await runAssetsPhase(ctx, state);
   console.log(
     `  ${state.counts.assets} assets, ${state.counts.activityEvents} activity events so far\n`,
-  );
-
-  console.log("Phase 4 — kits with asset membership…");
-  await runKitsPhase(ctx, state);
-  console.log(
-    `  ${state.counts.kits} kits, ${state.counts.activityEvents} activity events so far\n`,
   );
 
   console.log(

@@ -16,8 +16,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@prisma/client";
-import { Trans, useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { useTranslation } from "react-i18next";
+import { useFetcher } from "react-router";
 import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
 import { Card } from "~/components/shared/card";
@@ -31,12 +31,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/shared/modal";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/shared/tooltip";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { useDisabled } from "~/hooks/use-disabled";
 import { isFormProcessing } from "~/utils/form";
@@ -48,14 +42,6 @@ import { QuantityCustodyDialog } from "./quantity-custody-dialog";
 interface CustodyRecord {
   createdAt: string | Date;
   quantity?: number;
-  /** When set, this row was inherited from a kit's custody. The UI must
-   * not allow direct release — the only legitimate way to clear it is
-   * to release the parent kit's custody (which cascades). */
-  kitCustodyId?: string | null;
-  /** Parent kit info for the "held via kit" badge tooltip. */
-  kitCustody?: {
-    kit: { id: string; name: string };
-  } | null;
   custodian: {
     id: string;
     name: string;
@@ -84,10 +70,6 @@ export interface QuantityCustodyListProps {
   canViewAllCustody?: boolean;
   /** Whether the user has permission to assign/release custody */
   canCustody?: boolean;
-  /** When the asset is part of a kit (any status), surface that to the
-   * Assign dialog as a soft informational note so the user knows operator
-   * custody is tracked separately from the kit's allocation. */
-  inKit?: { id: string; name: string } | null;
 }
 
 /**
@@ -109,7 +91,6 @@ export function QuantityCustodyList({
   currentUserId,
   canViewAllCustody = true,
   canCustody = true,
-  inKit,
 }: QuantityCustodyListProps) {
   const { t } = useTranslation();
   const unitLabel = unitOfMeasure || t("quantity.units");
@@ -151,7 +132,6 @@ export function QuantityCustodyList({
             assetId={assetId}
             unitOfMeasure={unitOfMeasure}
             availableQuantity={availableQuantity}
-            inKit={inKit}
             trigger={
               <Button
                 type="button"
@@ -258,9 +238,7 @@ function CustodyRow({
         </div>
       </div>
 
-      {record.kitCustodyId ? (
-        <KitCustodyBadge kit={record.kitCustody?.kit} />
-      ) : canRelease ? (
+      {canRelease ? (
         <ReleaseButton
           assetId={assetId}
           teamMemberId={record.custodian.id}
@@ -269,59 +247,6 @@ function CustodyRow({
         />
       ) : null}
     </li>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*                            KitCustodyBadge                                 */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Replaces the Release button on rows whose custody was inherited from a kit.
- * Releasing such a row directly would corrupt the kit's state — the parent
- * KitCustody row would still mark the kit as in custody while its child rows
- * have been removed. The user must release the kit's custody to clear it
- * (which cascades through the FK).
- */
-function KitCustodyBadge({
-  kit,
-}: {
-  kit?: { id: string; name: string } | null;
-}) {
-  const { t } = useTranslation();
-
-  const tooltipBody = kit ? (
-    <span className="block">
-      <Trans
-        i18nKey="quantity.heldViaNamedKit"
-        values={{ name: kit.name }}
-        components={{
-          1: (
-            <Link
-              to={`/kits/${kit.id}`}
-              className="font-medium text-primary-600 underline"
-            />
-          ),
-        }}
-      />
-    </span>
-  ) : (
-    t("quantity.heldViaKitCustody")
-  );
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="cursor-help rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-            {t("quantity.viaKit")}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="max-w-xs text-xs">
-          {tooltipBody}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 }
 

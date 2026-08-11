@@ -4,9 +4,8 @@ import type {
   Organization,
   UserOrganization,
   Asset,
-  Kit,
 } from "@prisma/client";
-import { AssetType, BookingStatus, Prisma } from "@prisma/client";
+import { AssetType, Prisma } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { db } from "~/database/db.server";
 import { getSupabaseAdmin } from "~/integrations/supabase/client";
@@ -40,7 +39,6 @@ import {
 import {
   formatLocationLink,
   buildAssetListMarkup,
-  buildKitListMarkup,
   LOCATION_SORTING_OPTIONS,
 } from "./utils";
 import { recordEvent, recordEvents } from "../activity-event/service.server";
@@ -49,12 +47,9 @@ import { getPrimaryLocation } from "../asset/utils";
 import {
   getAssetsWhereInput,
   getLocationUpdateNoteContent,
-  getKitLocationUpdateNoteContent,
 } from "../asset/utils.server";
-import { getKitsWhereInput } from "../kit/utils.server";
 import { createSystemLocationNote as createSystemLocationActivityNote } from "../location-note/service.server";
 import { createNote } from "../note/service.server";
-import { getUserByID } from "../user/service.server";
 
 const label: ErrorLabel = "Location";
 const MAX_LOCATION_DEPTH = 12;
@@ -98,47 +93,6 @@ async function assertAssetsInOrganization({
     });
   }
 }
-
-/**
- * SECURITY: Asserts that every supplied kit ID belongs to `organizationId`.
- *
- * Service-layer defense-in-depth guard for the location ↔ kit mutation
- * helpers (`updateLocationKits`). Without this check, Prisma's 1:N
- * `connect`/`disconnect` on `Location.kits` happily accepts cross-org
- * `kitId`s supplied via the form payload — silently reparenting a victim's
- * kit (and its cascading assets) out of their workspace (CWE-862 / IDOR).
- *
- * @throws {ShelfError} 403 if any of `ids` does not belong to `organizationId`
- */
-async function assertKitsInOrganization({
-  ids,
-  organizationId,
-  additionalData,
-}: {
-  ids: Kit["id"][];
-  organizationId: Organization["id"];
-  additionalData?: Record<string, unknown>;
-}): Promise<void> {
-  if (ids.length === 0) return;
-
-  const authorizedCount = await db.kit.count({
-    where: { id: { in: ids }, organizationId },
-  });
-
-  if (authorizedCount !== ids.length) {
-    throw new ShelfError({
-      cause: null,
-      title: "Unauthorized",
-      message:
-        "You are not authorized to modify one or more of the selected kits.",
-      additionalData: { ...additionalData, organizationId, ids },
-      label,
-      status: 403,
-      shouldBeCaptured: false,
-    });
-  }
-}
-
 export async function getLocation(
   params: Pick<Location, "id"> & {
     organizationId: Organization["id"];
@@ -196,30 +150,6 @@ export async function getLocation(
         {
           custody: {
             some: { custodian: { userId: { in: teamMemberIds } } },
-          },
-        },
-        {
-          bookingAssets: {
-            some: {
-              booking: {
-                custodianTeamMemberId: { in: teamMemberIds },
-                status: {
-                  in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                },
-              },
-            },
-          },
-        },
-        {
-          bookingAssets: {
-            some: {
-              booking: {
-                custodianUserId: { in: teamMemberIds },
-                status: {
-                  in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                },
-              },
-            },
           },
         },
         ...(teamMemberIds.includes("without-custody")
@@ -301,12 +231,6 @@ export async function getLocation(
                   color: true,
                 },
               },
-              tags: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
               /**
                * Pull the pivot rows for THIS location only. An asset
                * can have both a manual row AND one or more kit-driven
@@ -321,13 +245,6 @@ export async function getLocation(
                 select: {
                   locationId: true,
                   quantity: true,
-                  assetKitId: true,
-                  assetKit: {
-                    select: {
-                      id: true,
-                      kit: { select: { id: true, name: true } },
-                    },
-                  },
                 },
               },
               // Asset-code resolution relations — see
@@ -568,7 +485,7 @@ export async function getLocationSubtreeDepth(params: {
 export const LOCATION_LIST_INCLUDE = {
   // Asset count comes from the `AssetLocation` pivot rather than a
   // direct `Location.assets` relation (which doesn't exist).
-  _count: { select: { kits: true, assetLocations: true, children: true } },
+  _count: { select: { assetLocations: true, children: true } },
   parent: {
     select: {
       id: true,
@@ -1378,143 +1295,6 @@ export async function generateLocationWithImages({
     });
   }
 }
-
-export async function getLocationKits(
-  params: Pick<Location, "id"> & {
-    organizationId: Organization["id"];
-    /** Page number. Starts at 1 */
-    page?: number;
-    /** Assets to be loaded per page with the location */
-    perPage?: number;
-    search?: string | null;
-    orderBy?: string;
-    orderDirection?: "asc" | "desc";
-    teamMemberIds?: string[] | null;
-  },
-) {
-  const {
-    organizationId,
-    id,
-    page = 1,
-    perPage = 8,
-    search,
-    orderBy = "createdAt",
-    orderDirection,
-    teamMemberIds,
-  } = params;
-
-  try {
-    const skip = page > 1 ? (page - 1) * perPage : 0;
-    const take = perPage >= 1 ? perPage : 8; // min 1 and max 25 per page
-
-    const kitWhere: Prisma.KitWhereInput = {
-      organizationId,
-      locationId: id,
-    };
-
-    if (teamMemberIds && teamMemberIds.length) {
-      kitWhere.OR = [
-        ...(kitWhere.OR ?? []),
-        {
-          custody: { custodianId: { in: teamMemberIds } },
-        },
-        {
-          custody: { custodian: { userId: { in: teamMemberIds } } },
-        },
-        {
-          assetKits: {
-            some: {
-              asset: {
-                bookingAssets: {
-                  some: {
-                    booking: {
-                      custodianTeamMemberId: { in: teamMemberIds },
-                      status: {
-                        in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        {
-          assetKits: {
-            some: {
-              asset: {
-                bookingAssets: {
-                  some: {
-                    booking: {
-                      custodianUserId: { in: teamMemberIds },
-                      status: {
-                        in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        ...(teamMemberIds.includes("without-custody")
-          ? [{ custody: null }]
-          : []),
-      ];
-    }
-
-    if (search) {
-      kitWhere.name = {
-        contains: search,
-        mode: "insensitive",
-      };
-    }
-
-    const [kits, totalKits] = await Promise.all([
-      db.kit.findMany({
-        where: kitWhere,
-        include: {
-          category: true,
-          custody: {
-            select: {
-              custodian: {
-                select: {
-                  id: true,
-                  name: true,
-                  user: {
-                    select: {
-                      id: true,
-                      firstName: true,
-                      lastName: true,
-                      displayName: true,
-                      profilePicture: true,
-                      email: true,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        skip,
-        take,
-        orderBy: { [orderBy]: orderDirection },
-      }),
-      db.kit.count({ where: kitWhere }),
-    ]);
-
-    return { kits, totalKits };
-  } catch (cause) {
-    throw new ShelfError({
-      cause,
-      title: "Something went wrong while fetching the location kits",
-      message:
-        "Something went wrong while fetching the location kits. Please try again or contact support.",
-      label,
-    });
-  }
-}
-
 /**
  * Persists a system note on an asset describing a location add/change/remove.
  *
@@ -1625,7 +1405,6 @@ async function createBulkLocationChangeNotes({
         select: {
           locationId: true;
           quantity: true;
-          assetKitId: true;
           location: {
             select: {
               name: true;
@@ -1725,9 +1504,8 @@ async function createBulkLocationChangeNotes({
         // location (kit-driven rows aren't touched by this flow). `null` for
         // INDIVIDUAL keeps the original phrasing via `formatUnitCount`.
         const affectedQuantity = isRemoving
-          ? asset.assetLocations.find(
-              (al) => al.locationId === location.id && al.assetKitId == null,
-            )?.quantity ?? null
+          ? asset.assetLocations.find((al) => al.locationId === location.id)
+              ?.quantity ?? null
           : assetQuantities[asset.id] ?? asset.quantity ?? null;
 
         await createLocationChangeNote({
@@ -2037,12 +1815,6 @@ export async function updateLocationAssets({
             select: {
               locationId: true,
               quantity: true,
-              // Discriminate manual vs kit-driven so the sum-within-total
-              // validator below can treat them correctly. Manual rows
-              // at THIS location are editable; kit-driven rows at THIS
-              // location aren't, but their qty still counts against
-              // the asset's pool.
-              assetKitId: true,
               location: {
                 select: {
                   name: true,
@@ -2119,18 +1891,11 @@ export async function updateLocationAssets({
       const otherLocationsQty = asset.assetLocations
         .filter((al) => al.locationId !== locationId)
         .reduce((sum, al) => sum + (al.quantity ?? 0), 0);
-      // Kit-driven rows at this location (untouched by the picker but
-      // still claiming part of the asset's pool). `== null` covers
-      // both null and undefined so fixtures without `assetKitId` read
-      // as manual.
-      const kitDrivenAtThisLocation = asset.assetLocations
-        .filter((al) => al.locationId === locationId && al.assetKitId != null)
-        .reduce((sum, al) => sum + (al.quantity ?? 0), 0);
+      const kitDrivenAtThisLocation = 0;
       // The manual row at this location is what the picker edits.
       const manualAtThisLocation =
-        asset.assetLocations.find(
-          (al) => al.locationId === locationId && al.assetKitId == null,
-        )?.quantity ?? 0;
+        asset.assetLocations.find((al) => al.locationId === locationId)
+          ?.quantity ?? 0;
       const spaceWithoutMe = Math.max(
         0,
         totalQty - otherLocationsQty - kitDrivenAtThisLocation,
@@ -2231,7 +1996,6 @@ export async function updateLocationAssets({
         await tx.assetLocation.deleteMany({
           where: {
             assetId: { in: crossLocationMovedIds },
-            assetKitId: null,
           },
         });
       }
@@ -2286,7 +2050,7 @@ export async function updateLocationAssets({
           // `AssetLocation_manual_unique` ensures at most one matching
           // row per (assetId, locationId).
           await tx.assetLocation.updateMany({
-            where: { assetId, locationId, assetKitId: null },
+            where: { assetId, locationId },
             data: { quantity: submitted },
           });
         }
@@ -2301,7 +2065,6 @@ export async function updateLocationAssets({
         // above already confirmed org ownership.
         await tx.assetLocation.deleteMany({
           where: {
-            assetKitId: null,
             assetId: { in: removedAssetIds },
             locationId,
             organizationId,
@@ -2343,7 +2106,7 @@ export async function updateLocationAssets({
           const asset = assetById.get(assetId);
           // Removed qty = the MANUAL pivot row dropped at THIS location.
           const removedQty = asset?.assetLocations.find(
-            (al) => al.locationId === locationId && al.assetKitId == null,
+            (al) => al.locationId === locationId,
           )?.quantity;
           return {
             organizationId,
@@ -2386,462 +2149,6 @@ export async function updateLocationAssets({
       cause,
       message: "Something went wrong while updating the location assets.",
       additionalData: { assetIds, organizationId, locationId },
-      label,
-    });
-  }
-}
-
-export async function updateLocationKits({
-  locationId,
-  kitIds,
-  removedKitIds,
-  organizationId,
-  userId,
-  request,
-}: {
-  locationId: Location["id"];
-  kitIds: Kit["id"][];
-  removedKitIds: Kit["id"][];
-  organizationId: Location["organizationId"];
-  userId: User["id"];
-  request: Request;
-}) {
-  try {
-    const location = await db.location
-      .findUniqueOrThrow({
-        where: { id: locationId, organizationId },
-        include: {
-          kits: {
-            select: {
-              id: true,
-              assetKits: { select: { asset: { select: { id: true } } } },
-            },
-          },
-        },
-      })
-      .catch((cause) => {
-        // Only the genuine "record not found" path should become a
-        // user-facing 404. Re-throw anything else so the outer try/catch
-        // (or `makeShelfError`) can wrap it as a 5xx with capture enabled.
-        if (isNotFoundError(cause)) {
-          throw new ShelfError({
-            cause,
-            message: "Location not found",
-            additionalData: { locationId, userId, organizationId },
-            status: 404,
-            label: "Location",
-            shouldBeCaptured: false,
-          });
-        }
-        throw cause;
-      });
-
-    /**
-     * If user has selected all kits, then we have to get ids of all those kits
-     * with respect to the filters applied.
-     * */
-    const hasSelectedAll = kitIds.includes(ALL_SELECTED_KEY);
-    if (hasSelectedAll) {
-      const searchParams = getCurrentSearchParams(request);
-      const kitWhere = getKitsWhereInput({
-        organizationId,
-        currentSearchParams: searchParams.toString(),
-      });
-
-      const allKits = await db.kit.findMany({
-        where: kitWhere,
-        select: {
-          id: true,
-          assetKits: { select: { asset: { select: { id: true } } } },
-        },
-      });
-
-      const locationKits = location.kits.map((kit) => kit.id);
-      /**
-       * New kits that needs to be added are
-       * - Previously added kits
-       * - All kits with applied filters
-       */
-      kitIds = [
-        ...new Set([
-          ...allKits.map((kit) => kit.id),
-          ...locationKits.filter((kit) => !removedKitIds.includes(kit)),
-        ]),
-      ];
-    }
-
-    /**
-     * SECURITY: every submitted kit ID (add or remove) must belong to the
-     * caller's organization. Without this guard, Prisma's `connect`/`disconnect`
-     * on `Location.kits` accepts cross-org IDs, silently reparenting another
-     * workspace's kit (and its cascading assets) to the caller's location
-     * (CWE-862).
-     */
-    await assertKitsInOrganization({
-      ids: Array.from(new Set([...kitIds, ...removedKitIds])),
-      organizationId,
-      additionalData: { userId, locationId },
-    });
-
-    /**
-     * Filter out kits already at this location - they don't need notes
-     * since no actual change is happening for them.
-     */
-    const existingKitIds = new Set(location.kits.map((k) => k.id));
-    const actuallyNewKitIds = kitIds.filter((id) => !existingKitIds.has(id));
-
-    /**
-     * Also compute asset IDs that are already at this location via existing kits
-     * so we don't create duplicate notes for them.
-     */
-    const existingKitAssetIds = new Set(
-      location.kits.flatMap((kit) => kit.assetKits.map((ak) => ak.asset.id)),
-    );
-
-    if (kitIds.length > 0) {
-      // Get all asset IDs from the kits that are being added to this
-      // location. Pull `type` + `quantity` on the kit's assets to compute
-      // the new `AssetLocation.quantity`, and read each asset's previous
-      // placement through the `assetLocations` pivot.
-      const kitsToAdd = await db.kit.findMany({
-        where: { id: { in: kitIds }, organizationId },
-        select: {
-          id: true,
-          name: true,
-          locationId: true,
-          location: { select: { id: true, name: true } },
-          assetKits: {
-            select: {
-              asset: {
-                select: {
-                  id: true,
-                  title: true,
-                  type: true,
-                  quantity: true,
-                  assetLocations: {
-                    select: {
-                      location: { select: { id: true, name: true } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      });
-
-      const assetIds = kitsToAdd.flatMap((kit) =>
-        kit.assetKits.map((ak) => ak.asset.id),
-      );
-
-      /**
-       * Kits remain a direct relation on Location, but assets are placed
-       * via the `AssetLocation` pivot. We wrap the `kits.connect`
-       * mutation and the pivot inserts in a single transaction so the
-       * cascade is atomic. `skipDuplicates` matters because an asset
-       * already placed at this location (e.g. added solo before its kit
-       * was reparented) would violate `@@unique([assetId, locationId])`
-       * — the no-op is the desired behaviour.
-       */
-      const flattenedKitAssets = kitsToAdd.flatMap((kit) => kit.assetKits);
-      await db
-        .$transaction(async (tx) => {
-          await tx.location.update({
-            where: {
-              id: locationId,
-              organizationId,
-            },
-            data: {
-              kits: {
-                connect: kitIds.map((id) => ({ id })),
-              },
-            },
-          });
-
-          if (flattenedKitAssets.length > 0) {
-            // A kit being attached to this location should drive
-            // kit-driven AssetLocation rows (`assetKitId` set) rather
-            // than manual ones, so the "via kit" badge and the
-            // kit-cascade flow downstream still work. Drop any
-            // pre-existing kit-driven rows for these AssetKits (the
-            // kit might be moving in from another location), then
-            // create fresh kit-driven rows here.
-            const newKitIds = kitsToAdd.map((k) => k.id);
-            await tx.assetLocation.deleteMany({
-              where: { assetKit: { kitId: { in: newKitIds } } },
-            });
-            const assetKitsForKits = await tx.assetKit.findMany({
-              where: { kitId: { in: newKitIds } },
-              select: { id: true, assetId: true, quantity: true },
-            });
-            if (assetKitsForKits.length > 0) {
-              await tx.assetLocation.createMany({
-                data: assetKitsForKits.map((ak) => ({
-                  assetId: ak.assetId,
-                  locationId,
-                  organizationId,
-                  quantity: ak.quantity,
-                  assetKitId: ak.id,
-                })),
-              });
-            }
-          }
-        })
-        .catch((cause) => {
-          throw new ShelfError({
-            cause,
-            message:
-              "Something went wrong while adding the kits to the location. Please try again or contact support.",
-            additionalData: { kitIds, userId, locationId },
-            label: "Location",
-          });
-        });
-
-      const user = await getUserByID(userId, {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          displayName: true,
-        } satisfies Prisma.UserSelect,
-      });
-
-      // Only include actually new kits in the summary note
-      const kitsSummary = kitsToAdd
-        .filter((kit) => actuallyNewKitIds.includes(kit.id))
-        .map((kit) => ({
-          id: kit.id,
-          name: kit.name ?? kit.id,
-        }));
-
-      if (kitsSummary.length > 0) {
-        const userLink = wrapUserLinkForNote({
-          id: userId,
-          firstName: user?.firstName,
-          lastName: user?.lastName,
-        });
-
-        // Build "Moved from" context for kits coming from other locations
-        const actuallyNewKits = kitsToAdd.filter((kit) =>
-          actuallyNewKitIds.includes(kit.id),
-        );
-        const prevLocLinks = [
-          ...new Map(
-            actuallyNewKits
-              .filter((k) => k.locationId && k.locationId !== locationId)
-              .map((k) => [
-                k.locationId!,
-                wrapLinkForNote(
-                  `/locations/${k.locationId}`,
-                  k.location?.name ?? "Unknown",
-                ),
-              ]),
-          ).values(),
-        ];
-        const movedFromSuffix =
-          prevLocLinks.length > 0
-            ? ` Moved from ${prevLocLinks.join(", ")}.`
-            : "";
-
-        await createSystemLocationActivityNote({
-          locationId,
-          content: `${userLink} added ${buildKitListMarkup(
-            kitsSummary,
-            "added",
-          )} to ${formatLocationLink(location)}.${movedFromSuffix}`,
-          userId,
-        });
-
-        // Create removal notes on previous locations
-        const byPrevLoc = new Map<
-          string,
-          { name: string; kits: Array<{ id: string; name: string }> }
-        >();
-        for (const kit of actuallyNewKits) {
-          if (!kit.locationId || kit.locationId === locationId) continue;
-          const prevLocName = kit.location?.name ?? "Unknown";
-          const existing = byPrevLoc.get(kit.locationId);
-          if (existing) {
-            existing.kits.push({ id: kit.id, name: kit.name ?? kit.id });
-          } else {
-            byPrevLoc.set(kit.locationId, {
-              name: prevLocName,
-              kits: [{ id: kit.id, name: kit.name ?? kit.id }],
-            });
-          }
-        }
-        for (const [locId, { name, kits }] of byPrevLoc) {
-          const prevLocLink = wrapLinkForNote(`/locations/${locId}`, name);
-          const kitMarkup = buildKitListMarkup(kits, "removed");
-          const movedTo = ` Moved to ${formatLocationLink(location)}.`;
-          await createSystemLocationActivityNote({
-            locationId: locId,
-            content: `${userLink} removed ${kitMarkup} from ${prevLocLink}.${movedTo}`,
-            userId,
-          });
-        }
-      }
-
-      // Add notes to the assets that their location was updated via their parent kit
-      // Only include assets not already at this location
-      if (assetIds.length > 0) {
-        const allAssets = kitsToAdd
-          .flatMap((kit) => kit.assetKits.map((ak) => ak.asset))
-          .filter((asset) => !existingKitAssetIds.has(asset.id));
-
-        // Create individual notes for each asset — previous placement
-        // comes from the `AssetLocation` pivot.
-        await Promise.all(
-          allAssets.map((asset) =>
-            createNote({
-              content: getKitLocationUpdateNoteContent({
-                currentLocation: getPrimaryLocation(asset),
-                newLocation: location,
-                userId,
-                firstName: user?.firstName ?? "",
-                lastName: user?.lastName ?? "",
-                isRemoving: false,
-              }),
-              type: "UPDATE",
-              userId,
-              assetId: asset.id,
-              // why: asset belongs to a kit loaded scoped to
-              // organizationId — pass the org so the note is validated
-              // against the asset's true org (cross-org IDOR guard)
-              organizationId,
-            }),
-          ),
-        );
-      }
-    }
-
-    /** If some kits were removed, we also need to handle those */
-    if (removedKitIds.length > 0) {
-      // Get asset IDs from the kits being removed
-      const kitsBeingRemoved = await db.kit.findMany({
-        where: { id: { in: removedKitIds }, organizationId },
-        select: {
-          id: true,
-          name: true,
-          assetKits: {
-            select: { asset: { select: { id: true, title: true } } },
-          },
-        },
-      });
-
-      const removedAssetIds = kitsBeingRemoved.flatMap((kit) =>
-        kit.assetKits.map((ak) => ak.asset.id),
-      );
-
-      // Detach kits via the direct relation and drop the corresponding
-      // `AssetLocation` pivot rows for the kit's assets, atomically in
-      // one transaction.
-      await db
-        .$transaction(async (tx) => {
-          await tx.location.update({
-            where: {
-              organizationId,
-              id: locationId,
-            },
-            data: {
-              kits: {
-                disconnect: removedKitIds.map((id) => ({ id })),
-              },
-            },
-          });
-
-          if (removedAssetIds.length > 0) {
-            // Only drop the kit-driven rows for the kits being
-            // detached from this location. Manual rows the user
-            // created at this location for the same assets survive.
-            await tx.assetLocation.deleteMany({
-              where: {
-                assetKit: { kitId: { in: removedKitIds } },
-                locationId,
-                organizationId,
-              },
-            });
-          }
-        })
-        .catch((cause) => {
-          throw new ShelfError({
-            cause,
-            message:
-              "Something went wrong while removing the kits from the location. Please try again or contact support.",
-            additionalData: { removedKitIds, userId, locationId },
-            label: "Location",
-          });
-        });
-
-      // Add notes to the assets that their location was removed via their parent kit
-      if (removedAssetIds.length > 0) {
-        const user = await getUserByID(userId, {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            displayName: true,
-          } satisfies Prisma.UserSelect,
-        });
-        const allRemovedAssets = kitsBeingRemoved.flatMap((kit) =>
-          kit.assetKits.map((ak) => ak.asset),
-        );
-
-        // Create location activity note for removed kits
-        const removedKitsSummary = kitsBeingRemoved.map((kit) => ({
-          id: kit.id,
-          name: kit.name ?? kit.id,
-        }));
-
-        if (removedKitsSummary.length > 0) {
-          const userLink = wrapUserLinkForNote({
-            id: userId,
-            firstName: user?.firstName,
-            lastName: user?.lastName,
-          });
-
-          await createSystemLocationActivityNote({
-            locationId,
-            content: `${userLink} removed ${buildKitListMarkup(
-              removedKitsSummary,
-              "removed",
-            )} from ${formatLocationLink(location)}.`,
-            userId,
-          });
-        }
-
-        // Create individual notes for each asset
-        await Promise.all(
-          allRemovedAssets.map((asset) =>
-            createNote({
-              content: getKitLocationUpdateNoteContent({
-                currentLocation: location,
-                newLocation: null,
-                userId,
-                firstName: user?.firstName ?? "",
-                lastName: user?.lastName ?? "",
-                isRemoving: true,
-              }),
-              type: "UPDATE",
-              userId,
-              assetId: asset.id,
-              // why: asset belongs to a kit loaded scoped to
-              // organizationId — pass the org so the note is validated
-              // against the asset's true org (cross-org IDOR guard)
-              organizationId,
-            }),
-          ),
-        );
-      }
-    }
-  } catch (cause) {
-    if (isLikeShelfError(cause)) {
-      throw cause;
-    }
-    throw new ShelfError({
-      cause,
-      message: "Something went wrong while updating the location kits.",
-      additionalData: { locationId, kitIds },
       label,
     });
   }

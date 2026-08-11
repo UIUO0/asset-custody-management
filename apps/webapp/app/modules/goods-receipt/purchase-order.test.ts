@@ -24,20 +24,35 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const findMany = vi.fn();
 
 const assetFindMany = vi.fn();
+const assetCount = vi.fn();
 const teamMemberFindMany = vi.fn();
 
 vi.mock("~/database/db.server", () => ({
   db: {
     goodsReceipt: { findMany: (...args: unknown[]) => findMany(...args) },
-    asset: { findMany: (...args: unknown[]) => assetFindMany(...args) },
+    asset: {
+      findMany: (...args: unknown[]) => assetFindMany(...args),
+      count: (...args: unknown[]) => assetCount(...args),
+    },
     teamMember: {
       findMany: (...args: unknown[]) => teamMemberFindMany(...args),
     },
   },
 }));
 
+// why: the approval effect (stage + booking flag + signature gate + notes) has
+// its own module and its own tests. What matters here is the *order-level gate*
+// in front of it — so the effect is stubbed and the assertions are about
+// whether it was reached at all, and with which ids.
+const approveAssetsByIds = vi.fn();
+vi.mock("~/modules/asset/approve.server", () => ({
+  approveAssetsByIds: (...args: unknown[]) => approveAssetsByIds(...args),
+}));
+
 const {
+  approveOrderAssets,
   getHandoverCandidates,
+  getOrderApprovalState,
   getPurchaseOrders,
   listDepartments,
   orderNumberOf,
@@ -313,6 +328,187 @@ describe("listDepartments", () => {
       organizationId: "org-1",
       isDepartment: true,
       deletedAt: null,
+    });
+  });
+});
+
+/**
+ * The finance-coding lock on order-wide approval.
+ *
+ * Approval is what puts stock into circulation, and once it is in circulation
+ * it can be handed to a department the same day. Chasing a رقم ترميز for an
+ * item already on somebody's desk is a much worse job than assigning it while
+ * the delivery is still on the warehouse floor — so coding comes first, and
+ * these tests pin the three ways that ordering could quietly be lost.
+ *
+ * The assertions are about the **gate**, not the effect: `approveAssetsByIds`
+ * is stubbed, so "did it reach the effect, and with which ids" is the question.
+ */
+describe("order approval gate", () => {
+  beforeEach(() => {
+    assetCount.mockReset();
+    assetFindMany.mockReset();
+    approveAssetsByIds.mockReset();
+    approveAssetsByIds.mockResolvedValue(0);
+  });
+
+  /** `getOrderApprovalState` issues [pendingCount, awaitingCodeCount]. */
+  function counts({ pending, uncoded }: { pending: number; uncoded: number }) {
+    assetCount.mockResolvedValueOnce(pending).mockResolvedValueOnce(uncoded);
+  }
+
+  describe("getOrderApprovalState", () => {
+    it("opens the gate when every أصل is coded", async () => {
+      counts({ pending: 4, uncoded: 0 });
+
+      await expect(
+        getOrderApprovalState({ orderNumber: "PO-1", organizationId: "org-1" }),
+      ).resolves.toEqual({
+        pendingCount: 4,
+        awaitingCodeCount: 0,
+        canApprove: true,
+      });
+    });
+
+    it("holds the gate shut while a code is missing", async () => {
+      counts({ pending: 4, uncoded: 1 });
+
+      const state = await getOrderApprovalState({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+      });
+
+      expect(state.canApprove).toBe(false);
+    });
+
+    it("does not offer approval when nothing is pending", async () => {
+      // Fully approved already: the button would do nothing, and a control that
+      // does nothing reads as broken.
+      counts({ pending: 0, uncoded: 0 });
+
+      const state = await getOrderApprovalState({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+      });
+
+      expect(state.canApprove).toBe(false);
+    });
+
+    it("counts only أصول as uncoded, and treats a cleared code as uncoded", async () => {
+      // مواد are expensed on issue and never coded — counting them would lock
+      // the order forever. A cleared code arrives as "" rather than null, so
+      // testing for null alone would let it pass as coded.
+      counts({ pending: 1, uncoded: 0 });
+
+      await getOrderApprovalState({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+      });
+
+      const codeWhere = assetCount.mock.calls[1][0].where;
+
+      expect(codeWhere.itemClass).toBe("ASSET");
+      expect(codeWhere.OR).toEqual([
+        { financeCode: null },
+        { financeCode: "" },
+      ]);
+    });
+
+    it("ignores items from a cancelled receipt on both counts", async () => {
+      // A called-off delivery is out of the order's totals and out of المالية's
+      // queue; letting it block approval would be the same mistake elsewhere.
+      counts({ pending: 1, uncoded: 0 });
+
+      await getOrderApprovalState({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+      });
+
+      for (const call of assetCount.mock.calls) {
+        expect(call[0].where.receiptLine.receipt.state).toEqual({
+          not: "VOIDED",
+        });
+      }
+    });
+  });
+
+  describe("approveOrderAssets", () => {
+    it("refuses while any أصل is uncoded, and never reaches the effect", async () => {
+      // The button being disabled is a hint; this is the fence. The page's
+      // state is as old as its last load, and المالية may have cleared a code
+      // in another tab since.
+      counts({ pending: 3, uncoded: 2 });
+
+      // Asserted on status + effect rather than wording: the copy is Arabic
+      // prose that will be reworded, and what must not change is that the call
+      // is refused as a conflict and nothing moves.
+      await expect(
+        approveOrderAssets({
+          orderNumber: "PO-1",
+          organizationId: "org-1",
+          userId: "u-1",
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+
+      expect(approveAssetsByIds).not.toHaveBeenCalled();
+    });
+
+    it("refuses when there is nothing pending", async () => {
+      counts({ pending: 0, uncoded: 0 });
+
+      await expect(
+        approveOrderAssets({
+          orderNumber: "PO-1",
+          organizationId: "org-1",
+          userId: "u-1",
+        }),
+      ).rejects.toMatchObject({ status: 409 });
+
+      expect(approveAssetsByIds).not.toHaveBeenCalled();
+    });
+
+    it("approves the order's pending items once the gate opens", async () => {
+      counts({ pending: 2, uncoded: 0 });
+      assetFindMany.mockResolvedValue([{ id: "a-1" }, { id: "a-2" }]);
+      approveAssetsByIds.mockResolvedValue(2);
+
+      await expect(
+        approveOrderAssets({
+          orderNumber: "PO-1",
+          organizationId: "org-1",
+          userId: "u-1",
+        }),
+      ).resolves.toBe(2);
+
+      expect(approveAssetsByIds).toHaveBeenCalledWith({
+        assetIds: ["a-1", "a-2"],
+        organizationId: "org-1",
+        userId: "u-1",
+      });
+    });
+
+    it("derives the assets from the order, never from a caller-supplied list", async () => {
+      // The whole reason this takes an order number and not asset ids: a client
+      // posting its own list could approve anything in the workspace under
+      // cover of an order number it is merely allowed to read.
+      counts({ pending: 1, uncoded: 0 });
+      assetFindMany.mockResolvedValue([{ id: "a-1" }]);
+
+      await approveOrderAssets({
+        orderNumber: "  PO-1  ",
+        organizationId: "org-1",
+        userId: "u-1",
+      });
+
+      const where = assetFindMany.mock.calls[0][0].where;
+
+      expect(where.organizationId).toBe("org-1");
+      expect(where.lifecycleStage).toBe("PENDING");
+      // Trimmed, and matched exactly — a prefix match would fold PO-1 into PO-11.
+      expect(where.receiptLine.receipt.OR).toEqual([
+        { purchaseOrderNumber: "PO-1" },
+        { purchaseRequestNumber: "PO-1" },
+      ]);
     });
   });
 });

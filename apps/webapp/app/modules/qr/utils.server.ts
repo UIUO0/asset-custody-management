@@ -8,7 +8,7 @@ import type { ErrorLabel } from "~/utils/error";
 import { isLikeShelfError, ShelfError } from "~/utils/error";
 import { gifToPng } from "~/utils/gif-to-png";
 // eslint-disable-next-line import/no-cycle
-import { createQr, getQrByAssetId, getQrByKitId } from "./service.server";
+import { createQr, getQrByAssetId } from "./service.server";
 
 const label: ErrorLabel = "QR";
 
@@ -63,38 +63,31 @@ export async function generateCode({
 }
 
 export async function generateQrObj({
-  kitId,
   assetId,
   userId,
   organizationId,
 }: {
-  kitId?: Qr["kitId"];
   assetId?: Qr["assetId"];
   userId: User["id"];
   organizationId: Organization["id"];
 }) {
   try {
-    if (!kitId && !assetId) {
+    if (!assetId) {
       throw new ShelfError({
         cause: null,
-        message: "No kitId or assetId provided",
+        message: "No assetId provided",
         label: "QR",
       });
     }
 
     let qr: Qr | null = null;
 
-    if (assetId) {
-      qr = await getQrByAssetId({ assetId });
-    } else if (kitId) {
-      qr = await getQrByKitId({ kitId });
-    }
+    qr = await getQrByAssetId({ assetId });
 
     /** If for some reason there is no QR, we create one and return it */
     if (!qr) {
       qr = await createQr({
         assetId: assetId || undefined,
-        kitId: kitId || undefined,
         userId,
         organizationId,
       });
@@ -119,7 +112,7 @@ export async function generateQrObj({
       message: isLikeShelfError(cause)
         ? cause.message
         : "Failed to find qr code",
-      additionalData: { kitId, assetId, organizationId, userId },
+      additionalData: { assetId, organizationId, userId },
       label: "QR",
     });
   }

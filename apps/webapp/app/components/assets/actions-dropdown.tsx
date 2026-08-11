@@ -13,7 +13,7 @@ import { ChevronRight } from "~/components/icons/library";
 import { useControlledDropdownMenu } from "~/hooks/use-controlled-dropdown-menu";
 import { useUserData } from "~/hooks/use-user-data";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
-import { getPrimaryKit, isQuantityTracked } from "~/modules/asset/utils";
+import { isQuantityTracked } from "~/modules/asset/utils";
 import { getPrimaryCustody, hasCustody } from "~/modules/custody/utils";
 import type { loader } from "~/routes/_layout+/assets.$assetId";
 import {
@@ -62,15 +62,6 @@ const ConditionalActionsDropdown = () => {
   const user = useUserData();
 
   const { ref: popoverContentRef, open, setOpen } = useControlledDropdownMenu();
-  const assetKitMembership = getPrimaryKit<{
-    id: string;
-    name: string;
-    status: string;
-  }>(asset);
-  const assetIsPartOfKit = Boolean(assetKitMembership);
-  const assetIsPartOfUnavailableKit = Boolean(
-    assetKitMembership && assetKitMembership.status !== "AVAILABLE",
-  );
   const custodyActionDisabled = assetIsCheckedOut && !assetCanBeReleased;
 
   function handleMenuClose() {
@@ -222,9 +213,7 @@ const ConditionalActionsDropdown = () => {
                       width="full"
                       onClick={handleMenuClose}
                       disabled={
-                        custodyActionDisabled ||
-                        assetIsPartOfUnavailableKit ||
-                        disableReleaseForSelfService
+                        custodyActionDisabled || disableReleaseForSelfService
                       }
                     >
                       <span className="flex items-center gap-1">
@@ -292,22 +281,7 @@ const ConditionalActionsDropdown = () => {
                     className="justify-start px-4 py-3 text-gray-700 hover:bg-slate-100 hover:text-gray-700"
                     width="full"
                     onClick={handleMenuClose}
-                    disabled={
-                      assetIsCheckedOut
-                        ? true
-                        : assetIsPartOfKit
-                        ? {
-                            reason: (
-                              <>
-                                This asset's location is managed by its parent
-                                kit{" "}
-                                <strong>"{assetKitMembership?.name}"</strong>.
-                                Update the kit's location instead.
-                              </>
-                            ),
-                          }
-                        : undefined
-                    } // to show tooltip only when disabled
+                    disabled={assetIsCheckedOut}
                   >
                     <span className="flex items-center gap-2">
                       <Icon icon="location" />{" "}
@@ -400,11 +374,6 @@ const ConditionalActionsDropdown = () => {
                     {t("assetActions.disabledCheckedOut")}
                   </div>
                 ) : null}
-                {assetIsPartOfUnavailableKit ? (
-                  <div className=" border-t p-2 text-start text-xs">
-                    {t("assetActions.disabledPartOfKit")}
-                  </div>
-                ) : null}
               </When>
               <When
                 truthy={userHasPermission({
@@ -415,9 +384,7 @@ const ConditionalActionsDropdown = () => {
               >
                 <div
                   className="px-0 py-1 md:p-0"
-                  aria-disabled={
-                    assetIsCheckedOut || assetIsPartOfUnavailableKit
-                  }
+                  aria-disabled={assetIsCheckedOut}
                 >
                   <DeleteAsset
                     asset={asset}
@@ -429,9 +396,7 @@ const ConditionalActionsDropdown = () => {
                         icon="trash"
                         className="justify-start rounded-sm px-4 py-3 text-sm font-semibold text-gray-700 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-100 hover:text-gray-700"
                         width="full"
-                        disabled={
-                          assetIsCheckedOut || assetIsPartOfUnavailableKit
-                        }
+                        disabled={assetIsCheckedOut}
                       >
                         {t("assetActions.delete")}
                       </Button>

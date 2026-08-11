@@ -1,5 +1,5 @@
 import type { Organization, Prisma, TeamMember } from "@prisma/client";
-import { BookingStatus, OrganizationRoles } from "@prisma/client";
+import { OrganizationRoles } from "@prisma/client";
 import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/database/db.server";
 import { updateCookieWithPerPage } from "~/utils/cookies.server";
@@ -347,44 +347,43 @@ export async function getTeamMemberForCustodianFilter({
 }
 
 /**
- * Fetches team member(s) for use in booking form custodian select.
+ * The team members a form's custodian picker should offer.
  *
- * Behavior based on booking status:
- * 1. Ongoing/Overdue/Complete/Cancelled/Archived/Reserved: Only fetch current custodian
- * 2. Draft: Fetch team members list, always including current custodian
- * 3. New booking (no status): Standard fetch without custodian guarantee
+ * Users scoped to their own records get exactly one entry — themselves — so a
+ * form cannot assign custody to somebody else. Everyone else gets the paginated
+ * list.
  *
- * For BASE/SELF_SERVICE users: Returns only their team member (optimized single query)
- * For ADMIN users: Returns paginated list with conditional custodian inclusion
+ * It used to take `bookingStatus` / `custodianUserId` / `custodianTeamMemberId`
+ * and, for a booking in a locked status, collapse the list to the single
+ * custodian already on it. No caller has supplied those since bookings were
+ * removed, so the branch could only ever be skipped.
  *
- * This is separate from getTeamMemberForCustodianFilter to avoid mixing concerns:
- * - Filter: needs paginated list for sidebar filters
- * - Form: Needs conditional fetching based on booking state
+ * @param organizationId - Workspace
+ * @param userId - The signed-in user
+ * @param isScopedToOwnRecords - Whether they may only see their own records
+ * @param getAll - Skip pagination
+ * @param usersOnly - Exclude non-registered members
+ * @returns The team members and a total count
+ * @throws {ShelfError} If the read fails
  */
 export async function getTeamMemberForForm({
   organizationId,
   userId,
   isScopedToOwnRecords,
   getAll,
-  custodianUserId,
-  custodianTeamMemberId,
-  bookingStatus,
   usersOnly,
 }: {
   organizationId: Organization["id"];
   userId: string;
   isScopedToOwnRecords: boolean;
   getAll?: boolean;
-  custodianUserId?: string;
-  custodianTeamMemberId?: string;
-  bookingStatus?: BookingStatus;
   /**
    * If set to true, only return team members with users (exclude NRMs)
    */
   usersOnly?: boolean;
 }) {
   try {
-    // BASE/SELF_SERVICE users can only see their own bookings, so always return only their team member
+    // Users scoped to their own records may only ever pick themselves.
     if (isScopedToOwnRecords) {
       const teamMember = await db.teamMember.findFirst({
         where: {
@@ -413,96 +412,9 @@ export async function getTeamMemberForForm({
       };
     }
 
-    // For ADMIN users with locked booking statuses, only return the current custodian
-    const lockedStatuses: BookingStatus[] = [
-      BookingStatus.RESERVED,
-      BookingStatus.ONGOING,
-      BookingStatus.OVERDUE,
-      BookingStatus.COMPLETE,
-      BookingStatus.CANCELLED,
-      BookingStatus.ARCHIVED,
-    ];
-    const isLockedStatus =
-      bookingStatus && lockedStatuses.includes(bookingStatus);
-
-    if (isLockedStatus) {
-      // Find the custodian's team member (try by team member id first, then by user id)
-      const custodianTeamMember = custodianTeamMemberId
-        ? await db.teamMember.findFirst({
-            where: {
-              id: custodianTeamMemberId,
-              organizationId,
-              deletedAt: null,
-            },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  displayName: true,
-                  email: true,
-                },
-              },
-            },
-          })
-        : custodianUserId
-        ? await db.teamMember.findFirst({
-            where: {
-              userId: custodianUserId,
-              organizationId,
-              deletedAt: null,
-            },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  displayName: true,
-                  email: true,
-                },
-              },
-            },
-          })
-        : null;
-
-      await fixTeamMembersNames(
-        custodianTeamMember ? [custodianTeamMember] : [],
-      );
-
-      return {
-        teamMembers: custodianTeamMember ? [custodianTeamMember] : [],
-        totalTeamMembers: custodianTeamMember ? 1 : 0,
-      };
-    }
-
-    // ADMIN users get paginated list
-    // For DRAFT bookings, ensure custodian is included in selectedTeamMembers
-    const selectedTeamMembers: string[] = [];
-
-    if (bookingStatus === "DRAFT") {
-      // Find custodian team member id if we have custodianUserId but no custodianTeamMemberId
-      if (custodianUserId && !custodianTeamMemberId) {
-        const custodian = await db.teamMember.findFirst({
-          where: {
-            userId: custodianUserId,
-            organizationId,
-            deletedAt: null,
-          },
-          select: { id: true },
-        });
-        if (custodian) {
-          selectedTeamMembers.push(custodian.id);
-        }
-      } else if (custodianTeamMemberId) {
-        selectedTeamMembers.push(custodianTeamMemberId);
-      }
-    }
-
     return await getTeamMemberForCustodianFilter({
       organizationId,
-      selectedTeamMembers,
+      selectedTeamMembers: [],
       getAll,
       userId,
       filterByUserId: false,

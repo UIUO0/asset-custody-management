@@ -43,6 +43,7 @@ import { UnpaidInvoiceBanner } from "~/components/subscription/unpaid-invoice-ba
 import { config } from "~/config/shelf.config";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
+import { getAssetActionQueue } from "~/modules/asset/action-queue.server";
 import { countHandoversAwaitingMySignature } from "~/modules/custody/handover.server";
 import { CHANGE_CURRENT_ORGANIZATION_ACTION } from "~/modules/organization/constants";
 import {
@@ -205,38 +206,74 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
      * authenticated page load, answering a question nobody asked. The service
      * itself is still used — by the org admin screen and `/api/:org/working-hours`.
      */
-    const [unreadUpdatesCount, pendingHandoverCount] = await Promise.all([
-      /**
-       * The whole role array, not `roles[0]`. An update aimed at `DEPARTMENT`
-       * belongs in this badge for an account stored `[OWNER, DEPARTMENT]`, and
-       * reading the first element hid it from the badge, the list, and
-       * "mark all as read" alike.
-       */
-      currentOrganizationUserRoles?.length
-        ? getUnreadCountForUser({
-            userId: authSession.userId,
-            userRoles: currentOrganizationUserRoles,
-          })
-        : Promise.resolve(0),
-      /**
-       * Counted for everyone, unlike the requests badge: anybody can be named
-       * as the employee on a handover, so there is no role that provably never
-       * has one waiting.
-       *
-       * `canOperate` decides whether desk-side signatures count too. Without
-       * it an employee-initiated return sits signed and unannounced — the
-       * warehouse is the blocking party but nothing tells them so.
-       */
-      countHandoversAwaitingMySignature({
-        userId: authSession.userId,
-        organizationId: currentOrganization.id,
-        canOperate: userHasPermission({
-          roles: currentOrganizationUserRoles ?? [],
-          entity: PermissionEntity.asset,
-          action: PermissionAction.custody,
+    /**
+     * What this viewer may do, asked once and reused below.
+     *
+     * The action-queue counts are gated on these rather than on a role name so
+     * they stay in step with the permission map — and so an employee who can do
+     * neither pays for neither query on every page load.
+     */
+    const canApproveAssets = userHasPermission({
+      roles: currentOrganizationUserRoles ?? [],
+      entity: PermissionEntity.asset,
+      action: PermissionAction.approve,
+    });
+    /**
+     * المستودعات hold `asset.update` too, so `update` alone does not identify
+     * المالية. Whoever can approve is the receiving end of the relay and gets
+     * the approval badge; the coding badge is for those who can edit an asset
+     * but cannot release it — which is exactly المالية.
+     */
+    const canCodeAssets =
+      !canApproveAssets &&
+      userHasPermission({
+        roles: currentOrganizationUserRoles ?? [],
+        entity: PermissionEntity.asset,
+        action: PermissionAction.update,
+      });
+
+    const [unreadUpdatesCount, pendingHandoverCount, assetActionQueue] =
+      await Promise.all([
+        /**
+         * The whole role array, not `roles[0]`. An update aimed at `DEPARTMENT`
+         * belongs in this badge for an account stored `[OWNER, DEPARTMENT]`, and
+         * reading the first element hid it from the badge, the list, and
+         * "mark all as read" alike.
+         */
+        currentOrganizationUserRoles?.length
+          ? getUnreadCountForUser({
+              userId: authSession.userId,
+              userRoles: currentOrganizationUserRoles,
+            })
+          : Promise.resolve(0),
+        /**
+         * Counted for everyone, unlike the requests badge: anybody can be named
+         * as the employee on a handover, so there is no role that provably never
+         * has one waiting.
+         *
+         * `canOperate` decides whether desk-side signatures count too. Without
+         * it an employee-initiated return sits signed and unannounced — the
+         * warehouse is the blocking party but nothing tells them so.
+         */
+        countHandoversAwaitingMySignature({
+          userId: authSession.userId,
+          organizationId: currentOrganization.id,
+          canOperate: userHasPermission({
+            roles: currentOrganizationUserRoles ?? [],
+            entity: PermissionEntity.asset,
+            action: PermissionAction.custody,
+          }),
         }),
-      }),
-    ]);
+        /**
+         * The coding/approval relay backlog — one side of it, whichever this
+         * viewer is on. Skips both queries for anyone who is on neither.
+         */
+        getAssetActionQueue({
+          organizationId: currentOrganization.id,
+          canCode: canCodeAssets,
+          canApprove: canApproveAssets,
+        }),
+      ]);
 
     return data(
       payload({
@@ -247,6 +284,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
         currentOrganizationUserRoles,
         subscription,
         enablePremium: config.enablePremiumFeatures,
+        assetActionQueue,
         hideNoticeCard: userPrefsCookie.hideNoticeCard,
         minimizedSidebar: userPrefsCookie.minimizedSidebar,
         scannerCameraId: userPrefsCookie.scannerCameraId as string | undefined,

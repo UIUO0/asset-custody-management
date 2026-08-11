@@ -61,7 +61,6 @@ export function getUIFieldType({
     case "status":
     case "category":
     case "location":
-    case "kit":
     case "type":
     case "assetModel":
       fieldType = "enum";
@@ -79,9 +78,6 @@ export function getUIFieldType({
     case "createdAt":
     case "updatedAt":
       fieldType = "date";
-      break;
-    case "tags":
-      fieldType = "array";
       break;
     default:
       // Handle custom fields

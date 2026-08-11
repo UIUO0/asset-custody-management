@@ -5,11 +5,8 @@ import type {
   Qr,
   Asset,
   User,
-  Tag,
   Organization,
   TeamMember,
-  Booking,
-  Kit,
   AssetIndexSettings,
   UserOrganization,
   BarcodeType,
@@ -18,12 +15,10 @@ import {
   AssetLifecycleStage,
   AssetStatus,
   AssetType,
-  BookingStatus,
   ConsumptionType,
   ErrorCorrection,
   OrganizationRoles,
   Prisma,
-  TagUseFor,
 } from "@prisma/client";
 import { LRUCache } from "lru-cache";
 import type { LoaderFunctionArgs } from "react-router";
@@ -55,14 +50,12 @@ import {
 } from "~/modules/custom-field/service.server";
 import type { CustomFieldDraftPayload } from "~/modules/custom-field/types";
 import { assertReceiptSignedBeforeApproval } from "~/modules/goods-receipt/receipt-gate.server";
-import { bulkAssignKitCustody } from "~/modules/kit/service.server";
 import {
   createLocationChangeNote,
   createLocationsIfNotExists,
 } from "~/modules/location/service.server";
 import { createLoadUserForNotes } from "~/modules/note/load-user-for-notes.server";
 import { getQr, parseQrCodesFromImportData } from "~/modules/qr/service.server";
-import { createTagsIfNotExists } from "~/modules/tag/service.server";
 import {
   createTeamMemberIfNotExists,
   getTeamMemberForCustodianFilter,
@@ -119,9 +112,7 @@ import {
   assertAssetModelBelongsToOrg,
   assertAssetsBelongToOrg,
   assertCustomFieldsBelongToOrg,
-  assertKitsBelongToOrg,
   assertLocationBelongsToOrg,
-  assertTagsBelongToOrg,
   assertTeamMemberBelongsToOrg,
 } from "~/utils/org-validation.server";
 import {
@@ -129,7 +120,8 @@ import {
   parseFileFormData,
   uploadImageFromUrl,
 } from "~/utils/storage.server";
-import { resolveTeamMemberName, resolveUserDisplayName } from "~/utils/user";
+import { resolveTeamMemberName } from "~/utils/user";
+import { approveAssetsByIds } from "./approve.server";
 import { resolveAssetIdsForBulkOperation } from "./bulk-operations-helper.server";
 import { assetIndexFields } from "./fields";
 import type {
@@ -171,7 +163,6 @@ import {
 import { cancelAssetReminderScheduler } from "../asset-reminder/scheduler.server";
 import { lockAssetForQuantityUpdate } from "../consumption-log/quantity-lock.server";
 import { createConsumptionLog } from "../consumption-log/service.server";
-import { createKitsIfNotExists } from "../kit/service.server";
 import { createSystemLocationNote } from "../location-note/service.server";
 import {
   createAssetCategoryChangeNote,
@@ -180,9 +171,6 @@ import {
   createAssetQuantityChangeNote,
   createAssetValuationChangeNote,
   createNote,
-  createNotes,
-  createTagChangeNoteIfNeeded,
-  type TagSummary,
 } from "../note/service.server";
 import { getUserByID } from "../user/service.server";
 
@@ -209,12 +197,6 @@ const ASSET_BEFORE_UPDATE_SELECT = Prisma.validator<Prisma.AssetSelect>()({
       currency: true,
     },
   },
-  tags: {
-    select: {
-      id: true,
-      name: true,
-    },
-  },
 });
 
 /**
@@ -238,230 +220,6 @@ async function fetchAssetBeforeUpdate({
     select: ASSET_BEFORE_UPDATE_SELECT,
   });
 }
-
-/**
- * Sets kit custody for imported assets after all assets have been created
- */
-/**
- * Assigns kit custody for imported assets after all assets have been created.
- *
- * A CSV row carrying both a `kit` and a `custodian` means the KIT is in that
- * person's custody (`validateKitCustodyConflicts` has already guaranteed a single
- * custodian per kit). This groups the affected kits by custodian and delegates to
- * the canonical {@link bulkAssignKitCustody} flow — one call per custodian —
- * which creates the `KitCustody`, sets the kit and its member assets to
- * `IN_CUSTODY`, inherits a kit-driven `Custody` row onto every member asset, and
- * records the matching notes + `CUSTODY_ASSIGNED` events. Rows lacking either a
- * kit or a custodian are ignored. Must run after the create loop because it
- * relies on the `AssetKit` pivot rows already existing.
- *
- * @param args.data - The parsed import rows (source of kit/custodian names).
- * @param args.kits - Kit-name → Kit, from the org-scoped `createKitsIfNotExists` map.
- * @param args.teamMembers - Custodian-name → TeamMember (org-scoped).
- * @param args.userId - The importing user (actor for the custody events/notes).
- * @param args.organizationId - The workspace the import runs in.
- */
-export async function setKitCustodyAfterAssetImport({
-  data,
-  kits,
-  teamMembers,
-  userId,
-  organizationId,
-}: {
-  data: CreateAssetFromContentImportPayload[];
-  kits: Record<string, Kit>;
-  teamMembers: Record<string, TeamMember>;
-  userId: string;
-  organizationId: string;
-}) {
-  // A row's `custodian` combined with a `kit` means the KIT is in that person's
-  // custody (validateKitCustodyConflicts already guarantees a single custodian
-  // per kit). Group the kits that need custody by their custodian so we make one
-  // bulkAssignKitCustody call per custodian.
-  const kitIdsByCustodian = new Map<
-    string,
-    { custodianName: string; kitIds: Set<string> }
-  >();
-
-  for (const asset of data) {
-    const kitName = asset.kit?.trim();
-    const custodianName = asset.custodian?.trim();
-    if (!kitName || !custodianName) continue;
-
-    const kit = kits[kitName];
-    const teamMember = teamMembers[custodianName];
-    if (!kit || !teamMember) continue;
-
-    const existing = kitIdsByCustodian.get(teamMember.id);
-    if (existing) {
-      existing.kitIds.add(kit.id);
-    } else {
-      kitIdsByCustodian.set(teamMember.id, {
-        custodianName: teamMember.name,
-        kitIds: new Set([kit.id]),
-      });
-    }
-  }
-
-  // Reuse the canonical kit-custody flow: it creates the KitCustody, sets kit +
-  // member-asset status to IN_CUSTODY, and inherits a kit-driven Custody row to
-  // every member asset (with matching notes + CUSTODY_ASSIGNED events). This
-  // keeps imports in lock-step with the interactive "assign custody to a kit".
-  for (const [custodianId, { custodianName, kitIds }] of kitIdsByCustodian) {
-    await bulkAssignKitCustody({
-      kitIds: [...kitIds],
-      organizationId,
-      custodianId,
-      custodianName,
-      userId,
-    });
-  }
-}
-
-/**
- * Validates custody conflicts for kits during import.
- * This includes:
- * - Assets with custody being imported into kits that exist but are not in custody,
- * - Existing kits with different custodians,
- * - Multiple custodians assigned to the same kit within the same import.
- */
-async function validateKitCustodyConflicts({
-  data,
-  organizationId,
-}: {
-  data: CreateAssetFromContentImportPayload[];
-  organizationId: Organization["id"];
-}) {
-  // Extract assets that have both a kit and a custodian
-  // Normalize kit/custodian names so padded CSV values don't bypass conflict checks.
-  const conflictCandidates = data
-    .map((asset) => ({
-      title: asset.title,
-      kit: asset.kit?.trim(),
-      custodian: asset.custodian?.trim(),
-    }))
-    .filter((asset) => asset.kit && asset.custodian);
-
-  if (conflictCandidates.length === 0) {
-    return; // No conflicts possible
-  }
-
-  // Get unique kit names that might have conflicts
-  const kitNames = [
-    ...new Set(conflictCandidates.map((asset) => asset.kit)),
-  ].filter(Boolean) as string[];
-
-  // Fetch existing kits and their custody status in one query.
-  const existingKitsRaw = await db.kit.findMany({
-    where: {
-      name: { in: kitNames },
-      organizationId,
-    },
-    select: {
-      id: true,
-      name: true,
-      custody: {
-        select: {
-          id: true,
-          custodian: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-      assetKits: {
-        select: {
-          asset: { select: { id: true } },
-        },
-      },
-    },
-  });
-
-  // Flatten pivot rows into the in-memory `assets` shape the existing
-  // conflict logic expects.
-  const existingKits = existingKitsRaw.map((kit) => ({
-    ...kit,
-    assets: kit.assetKits.map((ak) => ak.asset),
-  }));
-
-  // Find conflicts: existing kits without custody that would receive assets with custody
-  const conflicts: Array<{
-    asset: string;
-    custodian: string;
-    kit: string;
-    issue: string;
-  }> = [];
-  const existingKitsMap = new Map(existingKits.map((kit) => [kit.name, kit]));
-
-  // Check for conflicts within the import data itself - assets going to same kit with different custodians
-  const kitToCustodiansMap = new Map<string, Set<string>>();
-  for (const asset of conflictCandidates) {
-    if (!kitToCustodiansMap.has(asset.kit!)) {
-      kitToCustodiansMap.set(asset.kit!, new Set());
-    }
-    kitToCustodiansMap.get(asset.kit!)!.add(asset.custodian!);
-  }
-
-  // Add conflicts for kits with multiple custodians in the same import
-  for (const [kitName, custodians] of kitToCustodiansMap) {
-    if (custodians.size > 1) {
-      const custodiansArray = Array.from(custodians);
-      const assetsForThisKit = conflictCandidates.filter(
-        (asset) => asset.kit === kitName,
-      );
-
-      for (const asset of assetsForThisKit) {
-        conflicts.push({
-          asset: asset.title,
-          custodian: asset.custodian!,
-          kit: asset.kit!,
-          issue: `Kit has assets with multiple custodians: ${custodiansArray.join(
-            ", ",
-          )}`,
-        });
-      }
-    }
-  }
-
-  for (const asset of conflictCandidates) {
-    const existingKit = existingKitsMap.get(asset.kit!);
-
-    if (existingKit) {
-      if (!existingKit.custody && existingKit.assets.length > 0) {
-        conflicts.push({
-          asset: asset.title,
-          custodian: asset.custodian!,
-          kit: asset.kit!,
-          issue: `Kit exists without custody but has ${
-            existingKit.assets.length
-          } existing asset${existingKit.assets.length === 1 ? "" : "s"}`,
-        });
-      } else if (existingKit.custody) {
-        conflicts.push({
-          asset: asset.title,
-          custodian: asset.custodian!,
-          kit: asset.kit!,
-          issue: `Kit already has a custodian (${existingKit.custody.custodian.name}). Importing custody for kits that already have a custodian is not allowed`,
-        });
-      }
-    }
-  }
-
-  if (conflicts.length > 0) {
-    throw new ShelfError({
-      cause: null,
-      message: `We found custody conflicts with existing kits. Assets with custody cannot be imported into existing kits that are not in custody.`,
-      additionalData: {
-        kitCustodyConflicts: conflicts,
-      },
-      label: "Assets",
-      status: 400,
-      shouldBeCaptured: false,
-    });
-  }
-}
-
 type AssetWithInclude<T extends Prisma.AssetInclude | undefined> =
   T extends Prisma.AssetInclude
     ? Prisma.AssetGetPayload<{ include: T }>
@@ -597,7 +355,6 @@ export async function getAssets(params: {
   search?: string | null;
   categoriesIds?: Category["id"][] | null;
   locationIds?: Location["id"][] | null;
-  tagsIds?: Tag["id"][] | null;
   status?: Asset["status"] | null;
   teamMemberIds?: TeamMember["id"][] | null;
   extraInclude?: Prisma.AssetInclude;
@@ -608,18 +365,12 @@ export async function getAssets(params: {
    * - assets that are checkedout
    * */
   hideUnavailableToAddToKit?: boolean;
-  assetKitFilter?: string | null;
   /**
    * Hide assets still awaiting warehouse approval (`lifecycleStage: PENDING`).
    * Set for roles scoped to their own records — ordinary employees must not
    * see an asset before المستودعات release it.
    */
   onlyReadyAssets?: boolean;
-  /**
-   * EPDA: drop assets a confirmed booking is holding at this moment. See the
-   * clause in the body for why drafts and future bookings are excluded.
-   */
-  excludeCurrentlyBooked?: boolean;
 }) {
   let {
     organizationId,
@@ -630,12 +381,9 @@ export async function getAssets(params: {
     search,
     categoriesIds,
     locationIds,
-    tagsIds,
     status,
     teamMemberIds,
     extraInclude,
-    assetKitFilter,
-    excludeCurrentlyBooked = false,
     onlyReadyAssets,
   } = params;
 
@@ -661,59 +409,6 @@ export async function getAssets(params: {
     // in the query (not after) keeps `totalAssets` and paging consistent.
     if (onlyReadyAssets) {
       where.lifecycleStage = AssetLifecycleStage.READY;
-    }
-
-    /**
-     * EPDA: hide anything a confirmed booking is holding right now.
-     *
-     * `Asset.status` only flips to `CHECKED_OUT` at physical checkout, so
-     * between "reserved" and "handed over" an asset stayed `AVAILABLE` and kept
-     * appearing on the employees' «الأصناف المتاحة» list. Two people would
-     * request the same item and the second only found out at reserve time, from
-     * a conflict error — the system knew, it just told them late.
-     *
-     * "Holding it" is two different shapes, and collapsing them into one
-     * window test is wrong:
-     *
-     * - **Reserved** — committed for a window. Only hides the asset while that
-     *   window contains *now*. An asset reserved for next month is genuinely
-     *   free today, and hiding it would empty the list in a workspace that
-     *   plans ahead.
-     * - **Out** (`ONGOING` / `OVERDUE`) — physically gone. The end date is
-     *   irrelevant: an overdue booking is *past* its `to` precisely because
-     *   nobody brought the item back. Testing `to >= now` against it would
-     *   never match, which is the bug this shape replaced.
-     *
-     * `DRAFT` deliberately holds nothing. A draft is unsubmitted; if drafts
-     * hid stock, one employee could quietly empty the catalogue with drafts
-     * they never submit and nothing would ever release it.
-     *
-     * The `ONGOING`/`OVERDUE` branch is belt-and-braces — checkout already
-     * flips `Asset.status` to `CHECKED_OUT`, which the caller's status filter
-     * excludes — but it is cheap and keeps this predicate true on its own
-     * terms rather than resting on a flag set elsewhere.
-     */
-    if (excludeCurrentlyBooked) {
-      const now = new Date();
-
-      where.bookingAssets = {
-        none: {
-          booking: {
-            OR: [
-              {
-                status: BookingStatus.RESERVED,
-                from: { lte: now },
-                to: { gte: now },
-              },
-              {
-                status: {
-                  in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                },
-              },
-            ],
-          },
-        },
-      };
     }
 
     if (search) {
@@ -911,28 +606,6 @@ export async function getAssets(params: {
       }
     }
 
-    if (tagsIds && tagsIds.length) {
-      // Check if 'untagged' is part of the selected tag IDs
-      if (tagsIds.includes("untagged")) {
-        // Remove 'untagged' from the list of tags
-        tagsIds = tagsIds.filter((id) => id !== "untagged");
-
-        // Filter for assets that are untagged only
-        where.OR = [
-          ...(where.OR || []), // Preserve existing AND conditions if any
-          { tags: { none: {} } }, // Include assets with no tags
-        ];
-      }
-
-      // If there are other tags specified, apply AND condition
-      if (tagsIds.length > 0) {
-        where.OR = [
-          ...(where.OR || []), // Preserve existing AND conditions if any
-          { tags: { some: { id: { in: tagsIds } } } }, // Filter by remaining tags
-        ];
-      }
-    }
-
     if (locationIds && locationIds.length > 0) {
       if (locationIds.includes("without-location")) {
         where.OR = [
@@ -958,42 +631,10 @@ export async function getAssets(params: {
             some: { custodian: { userId: { in: teamMemberIds } } },
           },
         },
-        {
-          bookingAssets: {
-            some: {
-              booking: {
-                custodianTeamMemberId: { in: teamMemberIds },
-                /** We only get them if the booking is ongoing */
-                status: {
-                  in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                },
-              },
-            },
-          },
-        },
-        {
-          bookingAssets: {
-            some: {
-              booking: {
-                custodianUserId: { in: teamMemberIds },
-                /** We only get them if the booking is ongoing */
-                status: {
-                  in: [BookingStatus.ONGOING, BookingStatus.OVERDUE],
-                },
-              },
-            },
-          },
-        },
         ...(teamMemberIds.includes("without-custody")
           ? [{ custody: { none: {} } }]
           : []),
       ];
-    }
-
-    if (assetKitFilter === "NOT_IN_KIT") {
-      where.assetKits = { none: {} };
-    } else if (assetKitFilter === "IN_OTHER_KITS") {
-      where.assetKits = { some: {} };
     }
 
     /**
@@ -1167,55 +808,13 @@ export async function getAdvancedPaginatedAndFilterableAssets({
     });
   }
 }
-
-/**
- * Builds the `assetKits` nested-create fragment that attaches a newly-created
- * asset to a kit via the `AssetKit` pivot.
- *
- * `Asset.kit`/`kitId` was replaced by the `AssetKit` pivot, so kit membership
- * must be written through `assetKits`; a `kit: { connect }` throws
- * `Unknown argument kit` at runtime (the create-with-kit crash this restores).
- * The pivot quantity mirrors `addedAssetKitQuantity` in `kit/service.server.ts`:
- * the asset's full tracked pool for QUANTITY_TRACKED assets, otherwise 1.
- *
- * @param args.kitId - The kit to attach to (must be org-scoped by the caller).
- * @param args.organizationId - The owning workspace.
- * @param args.type - The asset type (drives the pivot quantity).
- * @param args.quantity - The asset's tracked quantity (QUANTITY_TRACKED only).
- * @returns An `AssetCreateInput` fragment: `{ assetKits: { create: {...} } }`.
- */
-export function buildAssetKitCreateData({
-  kitId,
-  organizationId,
-  type,
-  quantity,
-}: {
-  kitId: string;
-  organizationId: string;
-  type?: AssetType | null;
-  quantity?: number | null;
-}): Pick<Prisma.AssetCreateInput, "assetKits"> {
-  return {
-    assetKits: {
-      create: {
-        kit: { connect: { id: kitId } },
-        organization: { connect: { id: organizationId } },
-        quantity:
-          type === AssetType.QUANTITY_TRACKED && quantity ? quantity : 1,
-      },
-    },
-  };
-}
-
 export async function createAsset({
   title,
   description,
   userId,
-  kitId,
   categoryId,
   locationId,
   qrId,
-  tags,
   custodian,
   customFieldsValues,
   organizationId,
@@ -1236,10 +835,8 @@ export async function createAsset({
   Asset,
   "description" | "title" | "categoryId" | "userId" | "valuation"
 > & {
-  kitId?: Kit["id"];
   qrId?: Qr["id"];
   locationId?: Location["id"];
-  tags?: { set: { id: string }[] };
   custodian?: TeamMember["id"];
   customFieldsValues?: ShelfAssetCustomFieldValueType[];
   barcodes?: { type: BarcodeType; value: string; existingId?: string }[];
@@ -1332,8 +929,7 @@ export async function createAsset({
       const qrCodes =
         qr &&
         (qr.organizationId === organizationId || !qr.organizationId) &&
-        qr.assetId === null &&
-        qr.kitId === null
+        qr.assetId === null
           ? { connect: { id: qrId } }
           : {
               create: [
@@ -1369,26 +965,6 @@ export async function createAsset({
         lifecycleStage,
       };
 
-      /**
-       * If a kitId is passed, attach the asset to the kit via the `AssetKit`
-       * pivot. `Asset.kit` no longer exists, so a `kit: { connect }` here throws
-       * `Unknown argument kit`. The kit id is proven to belong to this org
-       * inside the transaction below (assertKitsBelongToOrg), matching the
-       * assetModel / custom-field IDOR guards.
-       */
-      const hasKit = Boolean(kitId && kitId !== "uncategorized");
-      if (hasKit) {
-        Object.assign(
-          data,
-          buildAssetKitCreateData({
-            kitId: kitId!,
-            organizationId,
-            type,
-            quantity,
-          }),
-        );
-      }
-
       /** If a categoryId is passed, link the category to the asset. */
       if (categoryId && categoryId !== "uncategorized") {
         Object.assign(data, {
@@ -1422,15 +998,6 @@ export async function createAsset({
       // Placement can't be set inline in the asset create (the AssetLocation
       // pivot needs the assetId), so it's created in the tx below right
       // after the asset row.
-
-      /** If a tags is passed, link the category to the asset. */
-      if (tags && tags?.set?.length > 0) {
-        Object.assign(data, {
-          tags: {
-            connect: tags?.set,
-          },
-        });
-      }
 
       /** If a custodian is passed, create a Custody relation with that asset
        * `custodian` represents the id of a {@link TeamMember}. */
@@ -1529,14 +1096,6 @@ export async function createAsset({
           { customFieldIds: customFieldIdsToValidate, organizationId },
           tx,
         );
-
-        // SECURITY (cross-org IDOR): the kitId comes from form/CSV input and is
-        // connected by the assetKits nested create above with no org scoping of
-        // its own. Prove it belongs to this org before the write (same pattern
-        // as the assetModel / custom-field guards).
-        if (hasKit) {
-          await assertKitsBelongToOrg({ kitIds: [kitId!], organizationId }, tx);
-        }
 
         const created = await tx.asset.create({
           data,
@@ -1739,8 +1298,6 @@ export async function bulkCreateAssetsFromModel({
   valuation,
   description,
   locationId,
-  kitId,
-  tags,
   customFieldsValues,
   mainImage,
   mainImageExpiration,
@@ -1757,8 +1314,6 @@ export async function bulkCreateAssetsFromModel({
   valuation?: number | null;
   description?: string | null;
   locationId?: Location["id"];
-  kitId?: Kit["id"];
-  tags?: { set: { id: string }[] };
   customFieldsValues?: ShelfAssetCustomFieldValueType[];
   mainImage?: Asset["mainImage"];
   mainImageExpiration?: Asset["mainImageExpiration"];
@@ -1870,15 +1425,9 @@ export async function bulkCreateAssetsFromModel({
     await assertLocationBelongsToOrg({ locationId, organizationId });
   }
 
-  if (tags?.set && tags.set.length > 0) {
-    await assertTagsBelongToOrg({
-      tagIds: tags.set.map((t) => t.id),
-      organizationId,
-    });
-  }
-  // kitId + customFieldsValues + categoryId — createAsset's connect will
-  // throw a 400 on cross-org id (Prisma surfaces a foreign-key violation).
-  // Could harden with explicit asserts in a future polish.
+  // customFieldsValues + categoryId — createAsset's connect will throw a 400
+  // on a cross-org id (Prisma surfaces a foreign-key violation). Could harden
+  // with explicit asserts in a future polish.
 
   // ── Read model + resolve defaults ────────────────────────────────────
 
@@ -1905,9 +1454,7 @@ export async function bulkCreateAssetsFromModel({
         assetModelId,
         categoryId: resolvedCategoryId,
         valuation: resolvedValuation,
-        kitId,
         locationId,
-        tags,
         customFieldsValues,
         mainImage,
         mainImageExpiration,
@@ -1965,7 +1512,6 @@ export async function updateAsset({
   thumbnailImage,
   categoryId,
   assetModelId,
-  tags,
   id,
   newLocationId,
   currentLocationId,
@@ -2005,37 +1551,12 @@ export async function updateAsset({
       quantity: number | null;
     } | null = null;
     if (shouldUpdatePlacement) {
-      const assetWithKit = await db.asset.findUnique({
+      // Placement used to be refused when a parent kit owned the asset's
+      // location. Kits are gone, so every placement is the operator's own.
+      assetForValidation = await db.asset.findUnique({
         where: { id, organizationId },
-        select: {
-          type: true,
-          quantity: true,
-          assetKits: {
-            select: { kit: { select: { id: true, name: true } } },
-          },
-        },
+        select: { type: true, quantity: true },
       });
-
-      // Defensive `?.` on `assetKits` itself tolerates fixtures /
-      // payloads that omit the pivot relation entirely.
-      const parentKit = assetWithKit?.assetKits?.[0]?.kit;
-      if (parentKit) {
-        throw new ShelfError({
-          cause: null,
-          message: `This asset's location is managed by its parent kit "${parentKit.name}". Please update the kit's location instead.`,
-          additionalData: {
-            assetId: id,
-            kitId: parentKit.id,
-            kitName: parentKit.name,
-          },
-          label: "Assets",
-          status: 400,
-          shouldBeCaptured: false,
-        });
-      }
-      assetForValidation = assetWithKit
-        ? { type: assetWithKit.type, quantity: assetWithKit.quantity }
-        : null;
     }
 
     /**
@@ -2072,8 +1593,6 @@ export async function updateAsset({
       }
     }
 
-    const isTagUpdate = Boolean(tags?.set);
-
     const trackedFieldUpdates = Boolean(
       typeof title !== "undefined" ||
         typeof description !== "undefined" ||
@@ -2089,15 +1608,8 @@ export async function updateAsset({
     const assetBeforeUpdate = await fetchAssetBeforeUpdate({
       id,
       organizationId,
-      shouldFetch: trackedFieldUpdates || isTagUpdate,
+      shouldFetch: trackedFieldUpdates,
     });
-
-    const previousTags: TagSummary[] = isTagUpdate
-      ? (assetBeforeUpdate?.tags ?? []).map((tag) => ({
-          id: tag.id,
-          name: tag.name ?? "",
-        }))
-      : [];
 
     const loadUserForNotes = createLoadUserForNotes(userId);
 
@@ -2218,13 +1730,6 @@ export async function updateAsset({
 
     /** disconnecting location relation if a user clears locations */
     // (no-op here too; the pivot deleteMany happens in the tx below.)
-
-    /** If a tags is passed, link the category to the asset. */
-    if (isTagUpdate) {
-      Object.assign(data, {
-        tags,
-      });
-    }
 
     /** If custom fields are passed, create/update them */
     let currentCustomFieldsValuesWithFields: {
@@ -2468,7 +1973,6 @@ export async function updateAsset({
         data,
         include: {
           assetLocations: { include: { location: true } },
-          tags: true,
           category: true,
           organization: true,
         },
@@ -2485,22 +1989,14 @@ export async function updateAsset({
           // location. `updated.assetLocations` is the pre-delete snapshot.
           locationChangeQuantity =
             updated.assetLocations.find(
-              (al) =>
-                al.locationId === currentLocationId && al.assetKitId == null,
+              (al) => al.locationId === currentLocationId,
             )?.quantity ?? null;
         }
 
-        // Clear existing MANUAL primary placement(s) first. Kit-driven
-        // rows (`assetKitId IS NOT NULL`) are owned by the kit's flow
-        // and stay untouched — the user editing the asset-overview
-        // single-location dialog can replace their manual placement
-        // without nuking the kit-driven row. INDIVIDUAL is capped at
-        // 1 manual row by trigger; QUANTITY_TRACKED multi-placement
-        // edits go through the manage-placements dialog or the
-        // location picker.
-        await tx.assetLocation.deleteMany({
-          where: { assetId: id, assetKitId: null },
-        });
+        // Clear the existing placement(s) first. INDIVIDUAL is capped at
+        // one row by trigger; QUANTITY_TRACKED multi-placement edits go
+        // through the manage-placements dialog or the location picker.
+        await tx.assetLocation.deleteMany({ where: { assetId: id } });
         if (newLocationId) {
           await tx.assetLocation.create({
             data: {
@@ -2522,7 +2018,6 @@ export async function updateAsset({
             where: { id, organizationId },
             include: {
               assetLocations: { include: { location: true } },
-              tags: true,
               category: true,
               organization: true,
             },
@@ -2894,37 +2389,6 @@ export async function updateAsset({
       }
     }
 
-    if (isTagUpdate) {
-      await createTagChangeNoteIfNeeded({
-        assetId: asset.id,
-        organizationId,
-        userId,
-        previousTags,
-        currentTags: asset.tags ?? [],
-        loadUserForNotes,
-      });
-
-      // Activity event for tag changes — compare the before/after tag-id sets.
-      const previousTagIds = new Set(previousTags.map((t) => t.id));
-      const currentTagIds = new Set((asset.tags ?? []).map((t) => t.id));
-      const setsDiffer =
-        previousTagIds.size !== currentTagIds.size ||
-        [...previousTagIds].some((t) => !currentTagIds.has(t));
-      if (setsDiffer) {
-        await recordEvent({
-          organizationId,
-          actorUserId: userId,
-          action: "ASSET_TAGS_CHANGED",
-          entityType: "ASSET",
-          entityId: asset.id,
-          assetId: asset.id,
-          field: "tags",
-          fromValue: [...previousTagIds],
-          toValue: [...currentTagIds],
-        });
-      }
-    }
-
     /** If custom fields were processed, create notes for any changes */
     if (customFieldsValuesFromForm && customFieldsValuesFromForm.length > 0) {
       // Early detection of potential changes to avoid unnecessary DB queries
@@ -3107,14 +2571,9 @@ export async function replaceAssetPlacements({
   placements: Array<{ locationId: string; quantity: number }>;
 }) {
   try {
-    // 1. Fetch the asset's current state — total qty, type, manual
-    //    placements only (kit-driven rows are owned by the kit's flow
-    //    and stay read-only from this dialog), and the kit-driven
-    //    placements separately so the sum-within-total math accounts
-    //    for them. Manual placements coexist with kit-driven rows on
-    //    different `assetKitId` values — the manage-placements dialog
-    //    edits manual rows only, kit-driven rows are owned by the
-    //    kit's flow.
+    // 1. Fetch the asset's current state — total qty, type and its
+    //    placements. Every placement is the operator's own now that kits
+    //    are gone, so there is no read-only subset to exclude.
     const asset = await db.asset.findUniqueOrThrow({
       where: { id: assetId, organizationId },
       select: {
@@ -3129,24 +2588,14 @@ export async function replaceAssetPlacements({
           select: {
             locationId: true,
             quantity: true,
-            assetKitId: true,
             location: { select: { id: true, name: true } },
           },
         },
       },
     });
 
-    // Split manual vs kit-driven. The diff math below operates only on
-    // manual rows; the kit-driven sum is added to the sum-within-total
-    // pre-check so a submitted set that "fits" against manual rows
-    // alone but exceeds Asset.quantity once kit rows are counted gets
-    // rejected up-front instead of failing at the DEFERRED trigger.
-    const manualPlacements = asset.assetLocations.filter(
-      (al) => al.assetKitId === null,
-    );
-    const kitDrivenSum = asset.assetLocations
-      .filter((al) => al.assetKitId !== null)
-      .reduce((sum, al) => sum + (al.quantity ?? 0), 0);
+    const manualPlacements = asset.assetLocations;
+    const kitDrivenSum = 0;
 
     // 3. Shape validation — duplicate ids + per-row qty bounds.
     const seenLocationIds = new Set<string>();
@@ -3297,7 +2746,6 @@ export async function replaceAssetPlacements({
         await tx.assetLocation.deleteMany({
           where: {
             assetId,
-            assetKitId: null,
             locationId: { in: toDelete.map((al) => al.locationId) },
           },
         });
@@ -3310,7 +2758,7 @@ export async function replaceAssetPlacements({
       // row per (assetId, locationId) for manual placements.
       for (const u of toUpdate) {
         await tx.assetLocation.updateMany({
-          where: { assetId, locationId: u.locationId, assetKitId: null },
+          where: { assetId, locationId: u.locationId },
           data: { quantity: u.quantity },
         });
       }
@@ -3727,7 +3175,6 @@ export function createCustomFieldsPayloadFromAsset(
   asset: Prisma.AssetGetPayload<{
     include: {
       custody: { include: { custodian: true } };
-      tags: true;
       customFields: true;
     };
   }>,
@@ -3772,7 +3219,6 @@ export async function duplicateAsset({
   asset: Prisma.AssetGetPayload<{
     include: {
       custody: { include: { custodian: true } };
-      tags: true;
       customFields: true;
       // Needed so the duplicate can copy the primary placement.
       assetLocations: { select: { location: { select: { id: true } } } };
@@ -3784,13 +3230,6 @@ export async function duplicateAsset({
 }) {
   try {
     const duplicatedAssets: Awaited<ReturnType<typeof createAsset>>[] = [];
-
-    // why: defense-in-depth cross-org guard. The source `asset` is loaded
-    // org-scoped by the caller, but we re-validate the tag ids against the
-    // target `organizationId` before copying them onto the new assets so a
-    // tampered/stale payload can never connect tags from another workspace.
-    const copiedTagIds = asset.tags.map((tag) => tag.id);
-    await assertTagsBelongToOrg({ tagIds: copiedTagIds, organizationId });
 
     //irrespective category it has to copy all the custom fields;
     const customFields = await getActiveCustomFields({
@@ -3805,7 +3244,6 @@ export async function duplicateAsset({
       userId,
       categoryId: asset.categoryId,
       locationId: getPrimaryLocation(asset)?.id ?? undefined,
-      tags: { set: copiedTagIds.map((id) => ({ id })) },
       valuation: asset.valuation,
     };
 
@@ -3877,16 +3315,13 @@ export async function getAllEntriesForCreateAndEdit({
   organizationId,
   request,
   defaults,
-  tagUseFor,
 }: {
   organizationId: Organization["id"];
   request: LoaderFunctionArgs["request"];
   defaults?: {
     category?: string | string[] | null;
-    tag?: string | null;
     location?: string | null;
   };
-  tagUseFor?: TagUseFor;
 }) {
   const searchParams = getCurrentSearchParams(request);
   const categorySelected =
@@ -3896,41 +3331,25 @@ export async function getAllEntriesForCreateAndEdit({
   const getAllEntries = searchParams.getAll("getAll") as AllowedModelNames[];
 
   try {
-    const [
-      { categories, totalCategories },
-      tags,
-      { locations, totalLocations },
-    ] = await Promise.all([
-      getCategoriesForCreateAndEdit({
-        request,
-        organizationId,
-        defaultCategory: defaults?.category,
-      }),
-
-      /** Get the tags */
-      db.tag.findMany({
-        where: {
+    const [{ categories, totalCategories }, { locations, totalLocations }] =
+      await Promise.all([
+        getCategoriesForCreateAndEdit({
+          request,
           organizationId,
-          OR: [
-            { useFor: { isEmpty: true } },
-            ...(tagUseFor ? [{ useFor: { has: tagUseFor } }] : []),
-          ],
-        },
-        orderBy: { name: "asc" },
-      }),
+          defaultCategory: defaults?.category,
+        }),
 
-      /** Get the locations */
-      getLocationsForCreateAndEdit({
-        organizationId,
-        request,
-        defaultLocation: defaults?.location,
-      }),
-    ]);
+        /** Get the locations */
+        getLocationsForCreateAndEdit({
+          organizationId,
+          request,
+          defaultLocation: defaults?.location,
+        }),
+      ]);
 
     return {
       categories,
       totalCategories,
-      tags,
       locations,
       totalLocations,
     };
@@ -3955,7 +3374,6 @@ export async function getPaginatedAndFilterableAssets({
   organizationId,
   extraInclude,
   excludeCategoriesQuery = false,
-  excludeTagsQuery = false,
   excludeLocationQuery = false,
   filters = "",
   isSelfService,
@@ -3964,12 +3382,8 @@ export async function getPaginatedAndFilterableAssets({
 }: {
   request: LoaderFunctionArgs["request"];
   organizationId: Organization["id"];
-  // `AssetKit` pivot. Callers still pass a plain `kitId` string here
-  // for filtering; the where-builder will map it onto `assetKits.some`.
-  kitId?: string | null;
   extraInclude?: Prisma.AssetInclude;
   excludeCategoriesQuery?: boolean;
-  excludeTagsQuery?: boolean;
   excludeLocationQuery?: boolean;
   filters?: string;
 
@@ -4003,10 +3417,8 @@ export async function getPaginatedAndFilterableAssets({
     orderDirection,
     search,
     categoriesIds,
-    tagsIds,
     locationIds,
     teamMemberIds,
-    assetKitFilter,
   } = paramsValues;
 
   const cookie = await updateCookieWithPerPage(request, perPageParam);
@@ -4018,14 +3430,7 @@ export async function getPaginatedAndFilterableAssets({
      * so we run them in parallel to reduce total loader latency.
      */
     const [
-      {
-        tags,
-        totalTags,
-        categories,
-        totalCategories,
-        locations,
-        totalLocations,
-      },
+      { categories, totalCategories, locations, totalLocations },
       teamMembersData,
       { assets, totalAssets },
     ] = await Promise.all([
@@ -4033,7 +3438,6 @@ export async function getPaginatedAndFilterableAssets({
         organizationId,
         allSelectedEntries: getAllEntries,
         selectedCategoryIds: categoriesIds,
-        selectedTagIds: tagsIds,
         selectedLocationIds: locationIds,
       }),
       getTeamMemberForCustodianFilter({
@@ -4051,12 +3455,10 @@ export async function getPaginatedAndFilterableAssets({
         orderDirection,
         search,
         categoriesIds,
-        tagsIds,
         status,
         locationIds,
         teamMemberIds,
         extraInclude,
-        assetKitFilter,
         onlyReadyAssets,
       }),
     ]);
@@ -4069,9 +3471,7 @@ export async function getPaginatedAndFilterableAssets({
       search,
       totalAssets,
       totalCategories,
-      totalTags,
       categories: excludeCategoriesQuery ? [] : categories,
-      tags: excludeTagsQuery ? [] : tags,
       assets,
       totalPages,
       cookie,
@@ -4086,7 +3486,6 @@ export async function getPaginatedAndFilterableAssets({
       additionalData: {
         organizationId,
         excludeCategoriesQuery,
-        excludeTagsQuery,
         paramsValues,
         getAllEntries,
       },
@@ -4183,7 +3582,6 @@ export async function fetchAssetsForExport({
             custodian: true,
           },
         },
-        tags: true,
         customFields: {
           include: {
             customField: true,
@@ -4312,57 +3710,34 @@ export async function createAssetsFromContentImport({
         })
       : [];
 
-    // Validate kit-custody conflicts before any database operations
-    await validateKitCustodyConflicts({
-      data,
-      organizationId,
-    });
-
     // Create all required related entities
-    const [
-      kits,
-      categories,
-      locations,
-      teamMembers,
-      tags,
-      { customFields },
-      assetModels,
-    ] = await Promise.all([
-      createKitsIfNotExists({
-        data,
-        userId,
-        organizationId,
-      }),
-      createCategoriesIfNotExists({
-        data,
-        userId,
-        organizationId,
-      }),
-      createLocationsIfNotExists({
-        data,
-        userId,
-        organizationId,
-      }),
-      createTeamMemberIfNotExists({
-        data,
-        organizationId,
-      }),
-      createTagsIfNotExists({
-        data,
-        userId,
-        organizationId,
-      }),
-      createCustomFieldsIfNotExists({
-        data,
-        organizationId,
-        userId,
-      }),
-      createAssetModelsIfNotExists({
-        data,
-        userId,
-        organizationId,
-      }),
-    ]);
+    const [categories, locations, teamMembers, { customFields }, assetModels] =
+      await Promise.all([
+        createCategoriesIfNotExists({
+          data,
+          userId,
+          organizationId,
+        }),
+        createLocationsIfNotExists({
+          data,
+          userId,
+          organizationId,
+        }),
+        createTeamMemberIfNotExists({
+          data,
+          organizationId,
+        }),
+        createCustomFieldsIfNotExists({
+          data,
+          organizationId,
+          userId,
+        }),
+        createAssetModelsIfNotExists({
+          data,
+          userId,
+          organizationId,
+        }),
+      ]);
 
     // Process assets sequentially to handle image uploads
     for (const asset of data) {
@@ -4518,24 +3893,6 @@ export async function createAssetsFromContentImport({
       const assetBarcodes =
         barcodesPerAsset.find((item) => item.key === asset.key)?.barcodes || [];
 
-      // Resolve kit/custodian IDs from normalized CSV values to avoid undefined lookups.
-      const kitKey = asset.kit?.trim();
-      const kitId = kitKey ? kits?.[kitKey]?.id : undefined;
-      // Surface a clear import error instead of a TypeError when a kit value can't be resolved.
-      if (kitKey && !kitId) {
-        throw new ShelfError({
-          cause: null,
-          message: `Kit "${kitKey}" could not be resolved for asset "${asset.title}". Please verify the kit column values in your CSV.`,
-          additionalData: {
-            assetKey: asset.key,
-            assetTitle: asset.title,
-            kit: kitKey,
-          },
-          label: "Assets",
-          shouldBeCaptured: false,
-        });
-      }
-
       const custodianKey = asset.custodian?.trim();
       const custodianId = custodianKey
         ? teamMembers?.[custodianKey]?.id
@@ -4612,22 +3969,9 @@ export async function createAssetsFromContentImport({
         title: asset.title,
         description: asset.description || "",
         userId,
-        kitId,
         categoryId: asset.category ? categories?.[asset.category] : null,
         locationId: asset.location ? locations?.[asset.location] : undefined,
-        // Kit rows: custody belongs to the kit (assigned + inherited to members
-        // in setKitCustodyAfterAssetImport). Don't also create a direct operator
-        // custody on the asset, or it'd be IN_CUSTODY before the kit assignment
-        // (double-holding + tripping bulkAssignKitCustody's availability guard).
-        custodian: kitId ? undefined : custodianId,
-        tags:
-          asset?.tags && asset.tags.length > 0
-            ? {
-                set: asset.tags
-                  .filter((t) => tags[t])
-                  .map((t) => ({ id: tags[t] })),
-              }
-            : undefined,
+        custodian: custodianId,
         valuation: asset.valuation ? +asset.valuation : null,
         customFieldsValues,
         availableToBook: asset?.bookable !== "no",
@@ -4645,15 +3989,6 @@ export async function createAssetsFromContentImport({
         consumptionType,
       });
     }
-
-    // Set kit custody for imported assets after all assets have been created
-    await setKitCustodyAfterAssetImport({
-      data,
-      kits,
-      teamMembers,
-      userId,
-      organizationId,
-    });
 
     return true;
   } catch (cause) {
@@ -4934,53 +4269,6 @@ export async function createAssetsFromBackupImport({
           }
         }
 
-        /** Tags */
-        if (asset.tags && asset.tags.length > 0) {
-          const tagsNames = asset.tags.map((t) => t.name);
-          // now we loop through the categories and check if they exist
-          const tags: Record<string, string> = {};
-          for (const tag of tagsNames) {
-            const existingTag = await db.tag.findFirst({
-              where: {
-                name: tag,
-                organizationId,
-              },
-            });
-
-            if (!existingTag) {
-              // if the tag doesn't exist, we create a new one
-              const newTag = await db.tag.create({
-                data: {
-                  name: tag as string,
-                  user: {
-                    connect: {
-                      id: userId,
-                    },
-                  },
-                  organization: {
-                    connect: {
-                      id: organizationId,
-                    },
-                  },
-                },
-              });
-              tags[tag] = newTag.id;
-            } else {
-              // if the tag exists, we just update the id
-              tags[tag] = existingTag.id;
-            }
-          }
-
-          Object.assign(d.data, {
-            tags:
-              asset.tags.length > 0
-                ? {
-                    connect: asset.tags.map((tag) => ({ id: tags[tag.name] })),
-                  }
-                : undefined,
-          });
-        }
-
         /** Custom fields */
         if (asset.customFields && asset.customFields.length > 0) {
           const customFieldDef = asset.customFields.reduce(
@@ -5142,6 +4430,32 @@ export async function updateAssetLifecycleStage({
      * warehouse made on purpose.
      */
     const isApproval = stage === AssetLifecycleStage.READY;
+
+    /**
+     * The three signatures gate this door too.
+     *
+     * They did not, until 2026-08-10. `bulkApproveAssets` carried the check and
+     * its comment claimed it was "the single chokepoint every approval passes
+     * through — the index bulk action, the asset page and any future caller".
+     * The asset page went through *here* instead, and this function never
+     * called the gate: opening one unsigned item's page and pressing «اعتماد»
+     * released it into circulation, while approving the same item from the
+     * index was refused. A control that one screen enforces and another does
+     * not is not a control.
+     *
+     * Only on approval. A send-back is a *tightening* — pulling an item out of
+     * circulation — and gating it on a signature would trap an item that was
+     * approved by mistake exactly where it should not be.
+     *
+     * Items with no receipt line pass unaffected, as everywhere else: they
+     * predate this flow and were never covered by the rule.
+     */
+    if (isApproval) {
+      await assertReceiptSignedBeforeApproval({
+        assetIds: [id],
+        organizationId,
+      });
+    }
 
     const updatedAsset = await db.asset.update({
       where: { id, organizationId },
@@ -6084,7 +5398,6 @@ export async function bulkUpdateAssetLocation({
               location: { select: { id: true, name: true } },
             },
           },
-          assetKits: { select: { kit: { select: { id: true, name: true } } } },
         },
       }),
       getUserByID(userId, {
@@ -6128,33 +5441,6 @@ export async function bulkUpdateAssetLocation({
       });
     }
 
-    // Kit-guard applies only to INDIVIDUAL assets that survive the
-    // qty-tracked filter above. INDIVIDUAL in a kit really IS a
-    // conflict — the kit owns its location and the BEFORE trigger
-    // caps an INDIVIDUAL at one AssetLocation row, so we can't
-    // additively place it elsewhere via this bulk path.
-    const assetsInKits = nonQtyTracked.filter(
-      (asset) => asset.assetKits?.[0]?.kit,
-    );
-    if (assetsInKits.length > 0) {
-      const kitNames = Array.from(
-        new Set(assetsInKits.map((asset) => asset.assetKits?.[0]?.kit?.name)),
-      ).join(", ");
-      throw new ShelfError({
-        cause: null,
-        message: `Cannot update location for assets that belong to kits: ${kitNames}. Update the kit locations instead.`,
-        additionalData: {
-          assetIds: assetsInKits.map((asset) => asset.id),
-          kitNames,
-          userId,
-          organizationId,
-        },
-        label: "Assets",
-        status: 400,
-        shouldBeCaptured: false,
-      });
-    }
-
     // why: parity with the singular `updateAsset` path. When a location is
     // provided it MUST belong to the caller's org — hard-reject a foreign/
     // invalid id instead of silently coercing it to "remove location"
@@ -6188,7 +5474,6 @@ export async function bulkUpdateAssetLocation({
         await tx.assetLocation.deleteMany({
           where: {
             assetId: { in: assetsToUpdate.map((a) => a.id) },
-            assetKitId: null,
           },
         });
         if (newLocation) {
@@ -6469,196 +5754,21 @@ export async function bulkUpdateAssetCategory({
     });
   }
 }
-
-export async function bulkAssignAssetTags({
-  userId,
-  assetIds,
-  organizationId,
-  tagsIds,
-  currentSearchParams,
-  remove,
-  settings,
-}: {
-  userId: string;
-  assetIds: Asset["id"][];
-  organizationId: Asset["organizationId"];
-  tagsIds: string[];
-  currentSearchParams?: string | null;
-  remove: boolean;
-  settings: AssetIndexSettings;
-}) {
-  try {
-    // Resolve IDs (works for both simple and advanced mode)
-    const resolvedIds = await resolveAssetIdsForBulkOperation({
-      assetIds,
-      organizationId,
-      currentSearchParams,
-      settings,
-    });
-
-    if (resolvedIds.length === 0) {
-      return true;
-    }
-
-    // Validate that every tag id belongs to this organization before
-    // wiring it into the `connect`/`disconnect` payload. Prisma's nested
-    // `connect: { id }` operation has no org scoping on its own, so a
-    // crafted foreign-org tag id would otherwise be attached/detached.
-    if (tagsIds.length > 0) {
-      const orgTags = await db.tag.findMany({
-        where: { id: { in: tagsIds }, organizationId },
-        select: { id: true },
-      });
-      if (orgTags.length !== new Set(tagsIds).size) {
-        throw new ShelfError({
-          cause: null,
-          title: "Tag not found",
-          message:
-            "One or more selected tags do not exist or you do not have permission to access them.",
-          additionalData: { tagsIds, organizationId, userId },
-          label,
-          status: 404,
-          shouldBeCaptured: false,
-        });
-      }
-    }
-
-    const loadUserForNotes = createLoadUserForNotes(userId);
-
-    const previousTagsByAssetId = await db.asset
-      .findMany({
-        where: {
-          id: { in: resolvedIds },
-          organizationId,
-        },
-        select: {
-          id: true,
-          tags: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      })
-      .then((assets) =>
-        assets.reduce<Map<string, TagSummary[]>>((acc, asset) => {
-          acc.set(asset.id, asset.tags);
-          return acc;
-        }, new Map()),
-      );
-
-    // Defense-in-depth: this issues one `asset.update` per selected asset
-    // inside the interactive tx (needed to diff each asset's tag set), so a
-    // large selection serially exhausts Prisma's 5s default and aborts with
-    // P2028 (Sentry SHELF-WEBAPP-1MH). Bump the ceiling to 15s.
-    const updatedAssets = await db.$transaction(
-      async (tx) => {
-        const results = await Promise.all(
-          resolvedIds.map((id) =>
-            tx.asset.update({
-              where: { id, organizationId },
-              data: {
-                tags: {
-                  [remove ? "disconnect" : "connect"]: tagsIds.map((tagId) => ({
-                    id: tagId,
-                  })),
-                },
-              },
-              include: {
-                tags: { select: { id: true, name: true } },
-              },
-            }),
-          ),
-        );
-
-        // Activity events — one ASSET_TAGS_CHANGED per asset whose tag set
-        // actually changed. Same shape as the singular `updateAsset` flow.
-        const tagChangeEvents: Parameters<typeof recordEvents>[0] = [];
-        for (const asset of results) {
-          const previousTags = previousTagsByAssetId.get(asset.id) ?? [];
-          const previousTagIds = new Set(previousTags.map((t) => t.id));
-          const currentTagIds = new Set(asset.tags.map((t) => t.id));
-          const setsDiffer =
-            previousTagIds.size !== currentTagIds.size ||
-            [...previousTagIds].some((t) => !currentTagIds.has(t));
-          if (setsDiffer) {
-            tagChangeEvents.push({
-              organizationId,
-              actorUserId: userId,
-              action: "ASSET_TAGS_CHANGED",
-              entityType: "ASSET",
-              entityId: asset.id,
-              assetId: asset.id,
-              field: "tags",
-              fromValue: [...previousTagIds],
-              toValue: [...currentTagIds],
-            });
-          }
-        }
-        if (tagChangeEvents.length > 0) {
-          await recordEvents(tagChangeEvents, tx);
-        }
-
-        return results;
-      },
-      { timeout: 15000 },
-    );
-
-    await Promise.all(
-      updatedAssets.map((asset) =>
-        createTagChangeNoteIfNeeded({
-          assetId: asset.id,
-          organizationId,
-          userId,
-          previousTags: previousTagsByAssetId.get(asset.id) ?? [],
-          currentTags: asset.tags,
-          loadUserForNotes,
-        }),
-      ),
-    );
-
-    // ASSET_TAGS_CHANGED events are emitted inside the $transaction above
-    // (per the use-record-event rule — the tx-wrapped emission is the
-    // authoritative one). Pre-merge HEAD had a second post-tx emission for
-    // the same events; that was a duplicate left over from before PR
-    // #2495 wrapped the tag updates in a transaction. Dropped here.
-    return true;
-  } catch (cause) {
-    const isShelfError = isLikeShelfError(cause);
-
-    throw new ShelfError({
-      cause,
-      message: isShelfError
-        ? cause.message
-        : "Something went wrong while bulk updating tags.",
-      additionalData: { userId, assetIds, organizationId, tagsIds },
-      label,
-    });
-  }
-}
-
 /**
- * Moves many assets to `READY` in one pass — the bulk twin of
- * {@link updateAssetLifecycleStage}.
+ * Approves a selection from the asset index.
  *
- * Only the release direction is offered in bulk. Sending assets back requires a
- * reason per asset, and a single reason pasted across a hundred rows would make
- * the note trail worthless, so the return direction stays one asset at a time.
+ * Resolves the selection (including "select all" against the current filters)
+ * and hands the ids to {@link approveAssetsByIds}, which owns the effect itself
+ * — the stage change, the booking flag, the signature gate and the note. This
+ * function is the index's *door*, not a second copy of the rule.
  *
- * Assets already at `READY` are skipped by the `where` clause rather than
- * rejected, so a select-all over a mixed page does the sensible thing. A note
- * is written for each asset actually moved.
- *
- * Callers must have already checked `asset.approve`.
- *
- * @param organizationId - Owning organization (scopes the update)
- * @param assetIds - Selected ids, or `ALL_SELECTED_KEY` resolved via settings
- * @param userId - Actor, recorded as the note author
- * @param currentSearchParams - Active filters, for the select-all case
- * @param settings - Index settings, needed to resolve select-all in both modes
- * @returns The number of assets actually moved
- * @throws {ShelfError} If the update fails
+ * @param args.assetIds - Selected ids, or the select-all sentinel
+ * @param args.organizationId - Workspace
+ * @param args.userId - Who approved
+ * @param args.currentSearchParams - Active filters, for the select-all case
+ * @param args.settings - The user's index settings (simple vs advanced)
+ * @returns How many assets actually moved
+ * @throws {ShelfError} 400 when an item's goods receipt is not fully signed
  */
 export async function bulkApproveAssets({
   organizationId,
@@ -6673,89 +5783,18 @@ export async function bulkApproveAssets({
   currentSearchParams?: string | null;
   settings: AssetIndexSettings;
 }) {
-  try {
-    const resolvedIds = await resolveAssetIdsForBulkOperation({
-      assetIds,
-      organizationId,
-      currentSearchParams,
-      settings,
-    });
+  const resolvedIds = await resolveAssetIdsForBulkOperation({
+    assetIds,
+    organizationId,
+    currentSearchParams,
+    settings,
+  });
 
-    // Read the pending subset first: `updateMany` returns only a count, and we
-    // need the exact ids to write one note per asset that actually moved.
-    const pendingAssets = await db.asset.findMany({
-      where: {
-        id: { in: resolvedIds },
-        organizationId,
-        lifecycleStage: AssetLifecycleStage.PENDING,
-      },
-      select: { id: true },
-    });
-
-    if (pendingAssets.length === 0) {
-      return 0;
-    }
-
-    const pendingIds = pendingAssets.map((asset) => asset.id);
-
-    /**
-     * EPDA: an item admitted by a goods receipt cannot be released into
-     * circulation until all three parties have signed the document that
-     * admitted it.
-     *
-     * Enforced here rather than in the route because this is the single
-     * chokepoint every approval passes through — the index bulk action, the
-     * asset page and any future caller. Items with no receipt line (created
-     * before the receipt flow, or imported) are unaffected: they were never
-     * covered by the rule and applying it retroactively would freeze existing
-     * inventory.
-     *
-     * Throws rather than filtering: an operator who selected twenty assets and
-     * silently got eighteen approved has no way to discover the other two.
-     */
-    await assertReceiptSignedBeforeApproval({
-      assetIds: pendingIds,
-      organizationId,
-    });
-
-    await db.asset.updateMany({
-      where: {
-        id: { in: pendingIds },
-        organizationId,
-        lifecycleStage: AssetLifecycleStage.PENDING,
-      },
-      // Mirrors the single-asset path in `updateAssetLifecycleStage`: approving
-      // releases the asset and opens it for booking in one act. Approving in
-      // bulk must not produce a different asset than approving one by one.
-      data: {
-        lifecycleStage: AssetLifecycleStage.READY,
-        availableToBook: true,
-      },
-    });
-
-    const user = await db.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { id: true, displayName: true, firstName: true, lastName: true },
-    });
-    const actor = wrapUserLinkForNote(user);
-
-    await createNotes({
-      content: `${actor} marked this asset as **ready for distribution** and made it available to book.`,
-      type: "UPDATE",
-      userId,
-      assetIds: pendingIds,
-      organizationId,
-    });
-
-    return pendingIds.length;
-  } catch (cause) {
-    throw new ShelfError({
-      cause,
-      message: "Something went wrong while approving the selected assets.",
-      additionalData: { assetIds, organizationId },
-      label,
-    });
-  }
+  return approveAssetsByIds({
+    assetIds: resolvedIds,
+    organizationId,
+    userId,
+  });
 }
 
 export async function bulkMarkAvailability({
@@ -6844,17 +5883,6 @@ export async function relinkAssetQrCode({
     });
   }
 
-  if (qr.kitId) {
-    throw new ShelfError({
-      cause: null,
-      title: "QR already linked.",
-      message:
-        "You cannot link to this code because its already linked to another kit. Delete the other kit to free up the code and try again.",
-      label: "QR",
-      shouldBeCaptured: false,
-    });
-  }
-
   if (qr.assetId && qr.assetId !== assetId) {
     throw new ShelfError({
       cause: null,
@@ -6924,12 +5952,10 @@ export async function getUserAssetsTabLoaderData({
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
     } = await getPaginatedAndFilterableAssets({
@@ -6952,12 +5978,10 @@ export async function getUserAssetsTabLoaderData({
       perPage,
       page,
       categories,
-      tags,
       items: assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
       modelName,
@@ -6981,14 +6005,12 @@ export async function getUserAssetsTabLoaderData({
 export async function getEntitiesWithSelectedValues({
   organizationId,
   allSelectedEntries,
-  selectedTagIds = [],
   selectedCategoryIds = [],
   selectedLocationIds = [],
   selectedAssetModelIds = [],
 }: {
   organizationId: Organization["id"];
   allSelectedEntries: AllowedModelNames[];
-  selectedTagIds: Array<Tag["id"]>;
   selectedCategoryIds: Array<Category["id"]>;
   selectedLocationIds: Array<Location["id"]>;
   selectedAssetModelIds?: string[];
@@ -6998,11 +6020,6 @@ export async function getEntitiesWithSelectedValues({
     categoryExcludedSelected,
     selectedCategories,
     totalCategories,
-
-    // Tags
-    tagsExcludedSelected,
-    selectedTags,
-    totalTags,
 
     // Locations
     locationExcludedSelected,
@@ -7026,43 +6043,6 @@ export async function getEntitiesWithSelectedValues({
       : Promise.resolve([]),
     db.category.count({ where: { organizationId } }),
     /** Categories end */
-
-    /** Tags start */
-    db.tag.findMany({
-      where: {
-        organizationId,
-        id: { notIn: selectedTagIds },
-        OR: [
-          { useFor: { isEmpty: true } },
-          { useFor: { has: TagUseFor.ASSET } },
-        ],
-      },
-      take: allSelectedEntries.includes("tag") ? undefined : 12,
-      orderBy: { name: "asc" },
-    }),
-    selectedTagIds.length > 0
-      ? db.tag.findMany({
-          where: {
-            organizationId,
-            id: { in: selectedTagIds },
-            OR: [
-              { useFor: { isEmpty: true } },
-              { useFor: { has: TagUseFor.ASSET } },
-            ],
-          },
-          orderBy: { name: "asc" },
-        })
-      : Promise.resolve([]),
-    db.tag.count({
-      where: {
-        organizationId,
-        OR: [
-          { useFor: { isEmpty: true } },
-          { useFor: { has: TagUseFor.ASSET } },
-        ],
-      },
-    }),
-    /** Tags end */
 
     /** Location start */
     db.location.findMany({
@@ -7093,8 +6073,6 @@ export async function getEntitiesWithSelectedValues({
   return {
     categories: [...selectedCategories, ...categoryExcludedSelected],
     totalCategories,
-    tags: [...selectedTags, ...tagsExcludedSelected],
-    totalTags,
     locations: [...selectedLocations, ...locationExcludedSelected],
     totalLocations,
     assetModels: [...selectedAssetModels, ...assetModelExcludedSelected],
@@ -7345,46 +6323,25 @@ export async function checkOutQuantity({
       /**
        * Step 4: Compute available quantity within the transaction.
        *
-       * `available = total − inCustody − checkedOutViaBooking`
+       * `available = total − inCustody`
        *
-       * Units currently checked out via an ONGOING/OVERDUE booking are
-       * semantically held by that booking's custodian (even if no
-       * `Custody` row exists for them — qty-tracked bookings track the
-       * commitment on the `BookingAsset` pivot, not via `Custody`). They
-       * must be subtracted so we never double-allocate the same physical
-       * unit to a direct custody assignment AND an active booking.
-       *
-       * Reservations (RESERVED bookings) are NOT subtracted — those
-       * units are still physically present until their booking is
-       * checked out, so they're valid targets for custody assignment
-       * right now. The booking will re-validate availability at its own
-       * checkout time.
+       * Custody is the only consumer of the pool. A booking term used to
+       * be subtracted here too; bookings no longer participate in the
+       * quantity pool, so the sum is custody alone.
        */
       const totalQuantity = asset.quantity ?? 0;
-      const [custodySum, bookingCheckedOutSum] = await Promise.all([
-        tx.custody.aggregate({
-          where: { assetId },
-          _sum: { quantity: true },
-        }),
-        tx.bookingAsset.aggregate({
-          where: {
-            assetId,
-            booking: {
-              status: { in: ["ONGOING", "OVERDUE"] },
-            },
-          },
-          _sum: { quantity: true },
-        }),
-      ]);
+      const custodySum = await tx.custody.aggregate({
+        where: { assetId },
+        _sum: { quantity: true },
+      });
       const inCustody = custodySum._sum.quantity ?? 0;
-      const checkedOut = bookingCheckedOutSum._sum.quantity ?? 0;
-      const available = totalQuantity - inCustody - checkedOut;
+      const available = totalQuantity - inCustody;
 
       /** Step 5: Validate sufficient availability */
       if (quantity > available) {
         throw new ShelfError({
           cause: null,
-          message: `Cannot check out ${quantity} units. Only ${available} units are available (${inCustody} in custody, ${checkedOut} checked out on active bookings).`,
+          message: `Cannot check out ${quantity} units. Only ${available} units are available (${inCustody} already in custody).`,
           label,
           status: 400,
           additionalData: {
@@ -7392,7 +6349,6 @@ export async function checkOutQuantity({
             quantity,
             available,
             inCustody,
-            checkedOut,
           },
         });
       }
@@ -7407,7 +6363,7 @@ export async function checkOutQuantity({
        * create/update sequence is safe inside this tx.
        */
       const existingOperatorCustody = await tx.custody.findFirst({
-        where: { assetId, teamMemberId, kitCustodyId: null },
+        where: { assetId, teamMemberId },
         select: { id: true },
       });
       if (existingOperatorCustody) {
@@ -7589,7 +6545,7 @@ export async function releaseQuantity({
        * them via `KitCustody.id` → `Custody.kitCustodyId`).
        */
       const custody = await tx.custody.findFirst({
-        where: { assetId, teamMemberId, kitCustodyId: null },
+        where: { assetId, teamMemberId },
       });
 
       if (!custody) {
@@ -7853,7 +6809,7 @@ export async function moveAssetLocationUnits(
        * this endpoint — they're deliberately invisible to this query.
        */
       const source = await tx.assetLocation.findFirst({
-        where: { assetId, locationId: fromLocationId, assetKitId: null },
+        where: { assetId, locationId: fromLocationId },
         select: { id: true, quantity: true },
       });
 
@@ -7921,7 +6877,7 @@ export async function moveAssetLocationUnits(
        * one match.
        */
       const existingDest = await tx.assetLocation.findFirst({
-        where: { assetId, locationId: toLocationId, assetKitId: null },
+        where: { assetId, locationId: toLocationId },
         select: { id: true, quantity: true },
       });
 
@@ -8215,7 +7171,7 @@ export async function placeUnplacedUnits(
        * `20260602100000_assetlocation_sum_exclude_kit_driven`).
        */
       const manualPlacements = await tx.assetLocation.aggregate({
-        where: { assetId, assetKitId: null },
+        where: { assetId },
         _sum: { quantity: true },
       });
       const placed = manualPlacements._sum.quantity ?? 0;
@@ -8252,7 +7208,7 @@ export async function placeUnplacedUnits(
        * at the same `(assetId, locationId)` — we must not collide with it.
        */
       const existingDest = await tx.assetLocation.findFirst({
-        where: { assetId, locationId: toLocationId, assetKitId: null },
+        where: { assetId, locationId: toLocationId },
         select: { id: true, quantity: true },
       });
 

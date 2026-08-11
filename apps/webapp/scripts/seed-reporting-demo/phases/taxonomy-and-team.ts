@@ -2,11 +2,11 @@
  * Phase 2 — Taxonomy.
  *
  * Creates the supporting reference rows every later phase depends on:
- * 7 `Category`, 5 `Location`, 10 `Tag` (incl. the seed marker tag),
+ * 7 `Category`, 5 `Location`,
  * 3 `CustomField`.
  *
  * Emits `LOCATION_CREATED` events (the only `*_CREATED` action Shelf's
- * enum tracks for taxonomy — Category / Tag / CustomField creation is
+ * enum tracks for taxonomy — Category / CustomField creation is
  * not instrumented at runtime, so we match that and skip events for
  * those rows).
  *
@@ -26,7 +26,7 @@ import type { SeederContext, SeederState } from "../context";
 import { randomDateBetween } from "../distributions";
 import { flushEvents } from "../event-flush";
 import { locationCreatedEvent } from "../event-shapes";
-import { NAME_SUFFIX, SEED_TAG_NAME } from "../markers";
+import { NAME_SUFFIX } from "../markers";
 
 /**
  * Curated category names. Seven realistic asset categories that give the
@@ -63,22 +63,6 @@ const LOCATION_NAMES = [
 ] as const;
 
 /**
- * Nine content tag names plus the marker tag (spliced in at index 0 at
- * insert time). Covers asset + booking tag scopes.
- */
-const TAG_NAMES = [
-  "fragile",
-  "high-value",
-  "outdoor",
-  "training",
-  "rental",
-  "archived",
-  "maintenance-due",
-  "certified",
-  "internal-use",
-] as const;
-
-/**
  * Three custom fields covering the common Shelf types so the reporting UI
  * can render text, date, and number filters.
  */
@@ -111,7 +95,6 @@ export async function runTaxonomyPhase(
 
   await insertCategories(ctx, state, setupEnd);
   await insertLocations(ctx, state, setupEnd);
-  await insertTags(ctx, state, setupEnd);
   await insertCustomFields(ctx, state, setupEnd);
 }
 
@@ -172,42 +155,6 @@ async function insertLocations(
   );
   const written = await flushEvents(ctx.db, events);
   state.counts.activityEvents += written;
-}
-
-async function insertTags(
-  ctx: SeederContext,
-  state: SeederState,
-  end: Date,
-): Promise<void> {
-  // The marker tag must exist — the cleanup command uses its name to find
-  // seeded assets/bookings. Insert it first and hold onto its id.
-  const marker = await ctx.db.tag.create({
-    data: {
-      name: SEED_TAG_NAME,
-      userId: ctx.ownerUserId,
-      organizationId: ctx.orgId,
-      createdAt: ctx.historyStart,
-    },
-    select: { id: true },
-  });
-  state.markerTagId = marker.id;
-  state.tagIds.push(marker.id);
-
-  for (const name of TAG_NAMES) {
-    const createdAt = randomDateBetween(ctx.historyStart, end, ctx.rng);
-    const row = await ctx.db.tag.create({
-      data: {
-        name: `${name}${NAME_SUFFIX}`,
-        color: faker.color.rgb(),
-        userId: ctx.ownerUserId,
-        organizationId: ctx.orgId,
-        createdAt,
-      },
-      select: { id: true },
-    });
-    state.tagIds.push(row.id);
-  }
-  state.counts.tags = state.tagIds.length;
 }
 
 async function insertCustomFields(

@@ -564,100 +564,6 @@ describe("generateWhereClause - special filter values", () => {
     });
   });
 
-  describe("kit filter with special values", () => {
-    it("handles 'in-kit' with is operator", () => {
-      const filter: Filter = {
-        name: "kit",
-        type: "enum",
-        operator: "is",
-        value: "in-kit",
-      };
-
-      const result = generateWhereClause(orgId, null, [filter]);
-      const sql = getSqlString(result);
-
-      expect(sql).toContain('EXISTS (SELECT 1 FROM public."AssetKit" ak');
-      expect(sql).toContain('ak."assetId" = a.id');
-      expect(sql).not.toContain("NOT EXISTS");
-    });
-
-    it("handles 'in-kit' with isNot operator (inverts to not in kit)", () => {
-      const filter: Filter = {
-        name: "kit",
-        type: "enum",
-        operator: "isNot",
-        value: "in-kit",
-      };
-
-      const result = generateWhereClause(orgId, null, [filter]);
-      const sql = getSqlString(result);
-
-      expect(sql).toContain('NOT EXISTS (SELECT 1 FROM public."AssetKit" ak');
-      expect(sql).toContain('ak."assetId" = a.id');
-    });
-
-    it("handles 'without-kit' with is operator", () => {
-      const filter: Filter = {
-        name: "kit",
-        type: "enum",
-        operator: "is",
-        value: "without-kit",
-      };
-
-      const result = generateWhereClause(orgId, null, [filter]);
-      const sql = getSqlString(result);
-
-      expect(sql).toContain('NOT EXISTS (SELECT 1 FROM public."AssetKit" ak');
-      expect(sql).toContain('ak."assetId" = a.id');
-    });
-
-    it("handles containsAny with only 'in-kit'", () => {
-      const filter: Filter = {
-        name: "kit",
-        type: "enum",
-        operator: "containsAny",
-        value: "in-kit",
-      };
-
-      const result = generateWhereClause(orgId, null, [filter]);
-      const sql = getSqlString(result);
-
-      expect(sql).toContain('EXISTS (SELECT 1 FROM public."AssetKit" ak');
-      expect(sql).toContain('ak."assetId" = a.id');
-      expect(sql).not.toContain("NOT EXISTS");
-    });
-
-    it("handles containsAny with both 'in-kit' and 'without-kit' (matches all)", () => {
-      const filter: Filter = {
-        name: "kit",
-        type: "enum",
-        operator: "containsAny",
-        value: "in-kit,without-kit",
-      };
-
-      const result = generateWhereClause(orgId, null, [filter]);
-      const sql = getSqlString(result);
-
-      // Should not add any kit-specific conditions
-      expect(sql).not.toContain('"AssetKit"');
-    });
-
-    it("handles containsAny with 'without-kit' + specific IDs (OR logic)", () => {
-      const filter: Filter = {
-        name: "kit",
-        type: "enum",
-        operator: "containsAny",
-        value: "without-kit,specific-kit-id",
-      };
-
-      const result = generateWhereClause(orgId, null, [filter]);
-      const sql = getSqlString(result);
-
-      expect(sql).toContain('NOT EXISTS (SELECT 1 FROM public."AssetKit" ak');
-      expect(sql).toContain('ak."kitId" = ANY');
-    });
-  });
-
   // why: regression coverage for SHELF-WEBAPP-1MY and its sibling branches. A
   // `containsAny` filter whose id list resolves to empty (e.g. a stale
   // `withinHierarchy` expansion, or an empty submitted value) must never call
@@ -667,7 +573,6 @@ describe("generateWhereClause - special filter values", () => {
     const cases: { name: Filter["name"] }[] = [
       { name: "location" },
       { name: "category" },
-      { name: "kit" },
       { name: "custody" },
     ];
 
@@ -939,56 +844,6 @@ describe("generateWhereClause - barcode value case normalization", () => {
   });
 });
 
-describe("generateWhereClause - tag EXISTS-ification (slim-phase enabler)", () => {
-  const orgId = "test-org-id";
-
-  /**
-   * The paginate-first rewrite drops the fanning `LEFT JOIN _AssetToTag + Tag`
-   * from the cheap phase, so any tag reference in the WHERE clause must be a
-   * self-contained per-asset EXISTS (not a bare `t.name`/`t.id` against an
-   * outer join alias). These tests lock that shape.
-   */
-  it("EXISTS-ifies the tag-name search (per-asset scoped, not a fanning join)", () => {
-    const sql = getSqlString(generateWhereClause(orgId, "widget", []));
-
-    // The tag search must be an EXISTS over _AssetToTag JOIN Tag scoped to the
-    // current asset — never a bare `t.name ILIKE` disjunct against an outer
-    // join that would force a GROUP BY.
-    expect(sql).toContain('SELECT 1 FROM public."_AssetToTag" att');
-    expect(sql).toContain('JOIN public."Tag" t ON att."B" = t.id');
-    expect(sql).toContain('WHERE att."A" = a.id AND t.name ILIKE');
-  });
-
-  it("EXISTS-ifies a single-tag `contains` filter", () => {
-    const filter: Filter = {
-      name: "tags",
-      type: "array",
-      operator: "contains",
-      value: "tag-1",
-    };
-    const sql = getSqlString(generateWhereClause(orgId, null, [filter]));
-
-    // No bare `t.id = ` against an outer alias; must be a scoped EXISTS whose
-    // `t.id =` predicate lives inside a per-asset subquery. Tables are
-    // schema-qualified (`public.`) to match the rest of the module.
-    expect(sql).toContain('SELECT 1 FROM public."_AssetToTag" att');
-    expect(sql).toContain('JOIN public."Tag" t ON att."B" = t.id');
-    expect(sql).toContain('WHERE att."A" = a.id AND t.id =');
-  });
-
-  it("EXISTS-ifies a multi-tag `containsAny` filter", () => {
-    const filter: Filter = {
-      name: "tags",
-      type: "array",
-      operator: "containsAny",
-      value: "tag-1,tag-2",
-    };
-    const sql = getSqlString(generateWhereClause(orgId, null, [filter]));
-
-    expect(sql).toContain('WHERE att."A" = a.id AND t.id = ANY');
-  });
-});
-
 describe("buildAdvancedAssetsQuery", () => {
   /** Joins the raw SQL segments; interpolated values render as `?`. */
   function getQuerySqlString(sql: Prisma.Sql): string {
@@ -1055,8 +910,7 @@ describe("buildAdvancedAssetsQuery", () => {
   });
 
   it("gates a name-sort column in the cheap phase on the active sort", () => {
-    // The heavy projection always selects `k.name AS "kitName"` (for display),
-    // so isolate the CHEAP phase (everything before `sorted_asset_query`) to
+    // Isolate the CHEAP phase (everything before `sorted_asset_query`) to
     // assert the gating: default sort omits the name joins/selects there — the
     // residual-O(N) fix — and sorting by one brings it back.
     const cheap = (overrides?: Parameters<typeof build>[0]) => {
@@ -1064,10 +918,12 @@ describe("buildAdvancedAssetsQuery", () => {
       return sql.slice(0, sql.indexOf("sorted_asset_query"));
     };
     const def = cheap({ sortBy: [] });
-    expect(def).not.toContain('k.name AS "kitName"');
+    expect(def).not.toContain('c.name AS "categoryName"');
     expect(def).not.toContain('l.name AS "locationName"');
 
-    expect(cheap({ sortBy: ["kit:asc"] })).toContain('k.name AS "kitName"');
+    expect(cheap({ sortBy: ["category:asc"] })).toContain(
+      'c.name AS "categoryName"',
+    );
     expect(cheap({ sortBy: ["location:asc"] })).toContain(
       'l.name AS "locationName"',
     );
@@ -1129,47 +985,149 @@ describe("buildAdvancedAssetsQuery", () => {
  * only when Postgres parses it — as a 500 on the page, for the roles whose
  * index happens to be in ADVANCED mode.
  *
- * That is exactly what happened on 2026-08-06: the booking laterals (`b`,
- * `bu`, `btm`) were removed but stayed in the `GROUP BY`, and `/assets` broke
- * for المالية and المخزون while every test stayed green.
+ * This has now bitten twice, both times from the same removal:
+ *
+ * - 2026-08-06 — the booking laterals (`b`, `bu`, `btm`) were removed but
+ *   stayed in the `GROUP BY`. `/assets` broke for المالية and المخزون.
+ * - 2026-08-11 — the same three aliases were still referenced by
+ *   `CUSTODY_SORT_CASE`, which is only emitted when a **custody sort** is
+ *   active. The 2026-08-06 test built one query with the default sort, so the
+ *   broken shape was never generated and the suite stayed green while
+ *   `?sortBy=custody:asc` returned a 500.
+ *
+ * The lesson in the second one is the important one: asserting on a single
+ * generated query only covers the branches that query happens to take. These
+ * tests therefore sweep EVERY sort shape and both search states.
  */
 describe("buildAdvancedAssetsQuery — no orphaned aliases", () => {
-  function fullSql() {
+  /** Sort keys that each switch on a different set of joins/selects. */
+  const SORT_SHAPES = [
+    [],
+    ["category:asc"],
+    ["location:asc"],
+    ["assetModel:asc"],
+    ["qrId:asc"],
+    ["custody:asc"],
+    ["barcode_Code128:asc"],
+    ["createdAt:desc"],
+  ];
+
+  /**
+   * SQL comments are part of the template string, so an assertion like
+   * `not.toContain("GROUP BY")` would trip on a comment that merely explains
+   * why there is no GROUP BY. Strip them before asserting on structure.
+   */
+  function stripSqlComments(sql: string) {
+    return sql.replace(/--[^\n]*/g, "");
+  }
+
+  function sqlFor(sortBy: string[], hasSearch = false, withBarcodes = false) {
     const query = buildAdvancedAssetsQuery({
-      whereClause: generateWhereClause("org-1", null, []),
-      ...parseSortingOptions([]),
-      sortBy: [],
+      whereClause: generateWhereClause("org-1", hasSearch ? "pen" : null, []),
+      ...parseSortingOptions(sortBy),
+      sortBy,
       parsedFilters: [],
-      withBarcodes: false,
+      withBarcodes,
       paginationClause: Prisma.sql`LIMIT 20 OFFSET 0`,
-      hasSearch: false,
+      hasSearch,
     } as never);
     return (query as unknown as { strings: string[] }).strings.join("$1");
   }
 
-  it("never references the removed booking aliases", () => {
-    const sql = fullSql();
-    // `b.` is legitimate inside the Barcode subqueries, so assert on the
-    // booking-only aliases and on the table names themselves.
-    expect(sql).not.toContain('public."Booking"');
-    expect(sql).not.toContain('public."BookingAsset"');
-    expect(sql).not.toMatch(/\bbu\./);
-    expect(sql).not.toMatch(/\bbtm\./);
+  /** Every shape the production caller can produce. */
+  function allShapes(): Array<{ label: string; sql: string }> {
+    const out: Array<{ label: string; sql: string }> = [];
+    for (const sortBy of SORT_SHAPES) {
+      for (const hasSearch of [false, true]) {
+        for (const withBarcodes of [false, true]) {
+          out.push({
+            label: `sort=${
+              sortBy.join(",") || "default"
+            } search=${hasSearch} barcodes=${withBarcodes}`,
+            sql: stripSqlComments(sqlFor(sortBy, hasSearch, withBarcodes)),
+          });
+        }
+      }
+    }
+    return out;
+  }
+
+  it("never references the removed booking aliases in any shape", () => {
+    for (const { label, sql } of allShapes()) {
+      // `b.` is legitimate inside the Barcode subqueries, so assert on the
+      // booking-only aliases and on the table names themselves.
+      expect(sql, label).not.toContain('public."Booking"');
+      expect(sql, label).not.toContain('public."BookingAsset"');
+      expect(sql, label).not.toMatch(/\bbu\./);
+      expect(sql, label).not.toMatch(/\bbtm\./);
+    }
   });
 
-  it("groups only by aliases the query actually joins", () => {
-    const sql = fullSql();
-    const groupBy = sql.match(/GROUP BY ([^\n]+)/)?.[1] ?? "";
-    expect(groupBy).toBeTruthy();
+  it("never references the removed kit and tag tables in any shape", () => {
+    for (const { label, sql } of allShapes()) {
+      expect(sql, label).not.toContain('public."Kit"');
+      expect(sql, label).not.toContain('public."AssetKit"');
+      expect(sql, label).not.toContain('public."Tag"');
+      expect(sql, label).not.toContain('public."_AssetToTag"');
+    }
+  });
 
-    for (const ref of groupBy.split(",").map((part) => part.trim())) {
-      const alias = ref.split(".")[0];
-      // Every alias must be introduced by a FROM/JOIN somewhere above.
-      expect(
-        new RegExp(
-          `(FROM public\\."[A-Za-z]+" ${alias}\\b|\\) ${alias} ON TRUE|JOIN public\\."[A-Za-z]+" ${alias}\\b)`,
-        ).test(sql),
-      ).toBe(true);
+  /**
+   * Generic backstop: every `<alias>.<column>` reference must have a matching
+   * FROM/JOIN. This is what would have caught BOTH incidents above without
+   * anyone having to think of the specific alias.
+   */
+  it("only references aliases the query actually introduces", () => {
+    // Aliases bound by something other than a FROM/JOIN we can pattern-match
+    // (CTE names, the json_agg row alias, subquery-local aliases).
+    const BOUND_ELSEWHERE = new Set([
+      // `public."Table"` is a schema qualifier, not an alias.
+      "public",
+      "aq",
+      "saq",
+      "asset_query",
+      "sorted_asset_query",
+      "count_query",
+    ]);
+
+    for (const { label, sql } of allShapes()) {
+      const introduced = new Set<string>(BOUND_ELSEWHERE);
+      for (const m of sql.matchAll(
+        /(?:FROM|JOIN)\s+public\."[A-Za-z_]+"\s+([a-z][a-z0-9_]*)/g,
+      )) {
+        introduced.add(m[1]);
+      }
+      // LATERAL subqueries: `) alias ON TRUE`
+      for (const m of sql.matchAll(/\)\s*([a-z][a-z0-9_]*)\s+ON TRUE/g)) {
+        introduced.add(m[1]);
+      }
+      // CTE definitions: `name AS (`
+      for (const m of sql.matchAll(/([a-z][a-z0-9_]*)\s+AS\s*\(/g)) {
+        introduced.add(m[1]);
+      }
+
+      const referenced = new Set<string>();
+      for (const m of sql.matchAll(/\b([a-z][a-z0-9_]*)\."?[A-Za-z_]/g)) {
+        referenced.add(m[1]);
+      }
+
+      for (const alias of referenced) {
+        expect(
+          introduced.has(alias),
+          `${label}: alias "${alias}" is referenced but never joined`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  /**
+   * The heavy projection lost its only aggregate when the fanning tag join
+   * went away, so it must no longer carry a GROUP BY. A GROUP BY reappearing
+   * means a fanning join crept back in.
+   */
+  it("has no GROUP BY — every remaining join yields one row per asset", () => {
+    for (const { label, sql } of allShapes()) {
+      expect(sql, label).not.toContain("GROUP BY");
     }
   });
 });

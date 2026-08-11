@@ -28,24 +28,6 @@ export function isQuantityTracked(
   const type = typeof assetOrType === "string" ? assetOrType : assetOrType.type;
   return type === "QUANTITY_TRACKED";
 }
-
-/**
- * Returns the asset's primary kit (or null) from the `AssetKit` pivot.
- *
- * `TKit` is inferred from the asset's projected shape: pass any value
- * whose type carries `assetKits: { kit: ... }[]` and the helper picks
- * up the nested kit type automatically. Callers loading a deeply-merged
- * shape Prisma fails to narrow can still override with an explicit
- * `getPrimaryKit<MyKit>(asset as unknown)` cast at the call site.
- *
- * @returns The first pivot row's kit, or `null` when the asset has no kit
- */
-export function getPrimaryKit<TKit>(
-  asset: { assetKits?: Array<{ kit?: TKit | null }> } | null | undefined,
-): TKit | null {
-  return asset?.assetKits?.[0]?.kit ?? null;
-}
-
 /**
  * Returns the asset's primary location (or null) from the
  * `AssetLocation` pivot.

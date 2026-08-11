@@ -257,7 +257,6 @@ function generateIdleAssetsCsv(rows: IdleAssetRow[]): string {
     escapeCsvField(row.assetName),
     row.category || "",
     row.location || "",
-    row.lastBookedAt ? formatDateForCsv(row.lastBookedAt) : "Never",
     row.daysSinceLastUse.toString(),
     row.valuation?.toString() || "",
   ]);

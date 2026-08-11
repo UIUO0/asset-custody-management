@@ -67,7 +67,6 @@ vi.mock("react-router", async () => {
               toId: formData.get("toId"),
               quantity: formData.get("quantity"),
               fromLocationId: formData.get("fromLocationId"),
-              fromKitId: formData.get("fromKitId"),
               assetId: formData.get("assetId"),
             });
             onSubmit?.(e);
@@ -181,26 +180,6 @@ describe("MoveUnitsDialog", () => {
 
       expect(
         screen.getByRole("heading", { name: /Move pcs from Warehouse A/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("renders 'Move … from {kit}' title for axis=kit", () => {
-      render(
-        <MoveUnitsDialog
-          axis="kit"
-          assetId="asset-1"
-          assetTitle="Drill"
-          unitOfMeasure="units"
-          fromKit={{ id: "kit-from", name: "Toolkit Alpha", quantity: 3 }}
-          destinations={[{ id: "kit-to", name: "Toolkit Beta" }]}
-          actionUrl="/api/move"
-          open
-          onOpenChange={vi.fn()}
-        />,
-      );
-
-      expect(
-        screen.getByRole("heading", { name: /Move units from Toolkit Alpha/i }),
       ).toBeInTheDocument();
     });
 

@@ -69,8 +69,7 @@ export function PreviewDisplay({
   const totalAssets = preview.assetsToUpdate.length;
   const hasNewEntities =
     preview.newEntities.categories.length > 0 ||
-    preview.newEntities.locations.length > 0 ||
-    preview.newEntities.tags.length > 0;
+    preview.newEntities.locations.length > 0;
 
   // Collect all field-level validation warnings
   const allWarnings = preview.assetsToUpdate.flatMap((asset) =>
@@ -270,19 +269,6 @@ export function PreviewDisplay({
                 ))}
               </p>
             )}
-            {preview.newEntities.tags.length > 0 && (
-              <p>
-                <strong>{t("assetUpdate.newTags")}</strong>{" "}
-                {preview.newEntities.tags.map((name, i) => (
-                  <span key={name}>
-                    {i > 0 && ", "}
-                    <span className="rounded bg-amber-100 px-1.5 py-0.5 font-mono text-xs">
-                      {name}
-                    </span>
-                  </span>
-                ))}
-              </p>
-            )}
           </div>
         </div>
       )}
@@ -405,10 +391,6 @@ export function PreviewDisplay({
                           preview.newEntities.locations.length > 0 &&
                             t("assetUpdate.newLocationsCount", {
                               count: preview.newEntities.locations.length,
-                            }),
-                          preview.newEntities.tags.length > 0 &&
-                            t("assetUpdate.newTagsCount", {
-                              count: preview.newEntities.tags.length,
                             }),
                         ]
                           .filter(Boolean)

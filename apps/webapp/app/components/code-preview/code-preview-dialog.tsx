@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactElement } from "react";
 import { cloneElement, useCallback, useMemo, useState } from "react";
-import type { Asset, Kit, BarcodeType } from "@prisma/client";
+import type { Asset, BarcodeType } from "@prisma/client";
 import { useTranslation } from "react-i18next";
 import useApiQuery from "~/hooks/use-api-query";
 import { useBarcodePermissions } from "~/utils/permissions/use-barcode-permissions";
@@ -13,16 +13,11 @@ import When from "../when/when";
 
 type CodePreviewDialogProps = {
   className?: string;
-  item:
-    | (Pick<Asset, "id" | "title"> & {
-        qrId: string;
-        type: "asset";
-        sequentialId?: string | null;
-      })
-    | (Pick<Kit, "id" | "name"> & {
-        qrId: string;
-        type: "kit";
-      });
+  item: Pick<Asset, "id" | "title"> & {
+    qrId: string;
+    type: "asset";
+    sequentialId?: string | null;
+  };
   trigger: ReactElement<{
     onClick: () => void;
   }>;
@@ -74,7 +69,7 @@ export function CodePreviewDialog({
     [canUseBarcodes, data?.barcodes],
   );
 
-  const itemName = item.type === "asset" ? item.title : item.name;
+  const itemName = item.title;
 
   // Memoize item prop object to prevent recreation
   const codePreviewItem = useMemo(

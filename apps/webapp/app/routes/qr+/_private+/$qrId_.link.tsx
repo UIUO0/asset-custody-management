@@ -13,7 +13,6 @@ import {
 } from "react-router";
 import { z } from "zod";
 import { UnlinkIcon } from "~/components/icons/library";
-import HorizontalTabs from "~/components/layout/horizontal-tabs";
 
 import { Button } from "~/components/shared/button";
 
@@ -195,14 +194,6 @@ export default function QrLink() {
               >
                 {t("qr.linkToExisting")}
               </Button>
-              <Button
-                variant="secondary"
-                className=" max-w-full"
-                to={`/kits/new?qrId=${qrId}`}
-              >
-                {t("ui.createANewKitAndLink")}
-              </Button>
-
               <Button variant="secondary" className="max-w-full" to={"/"}>
                 {t("common.cancel")}
               </Button>
@@ -210,23 +201,11 @@ export default function QrLink() {
           </div>
         </div>
       ) : (
-        <div className="flex flex-col">
-          <HorizontalTabs
-            items={[
-              {
-                to: "asset",
-                content: t("nav.assets"),
-              },
-              {
-                to: "kit",
-                content: t("nav.kits"),
-              },
-            ]}
-            className="mb-0 justify-center ps-0 [&>a]:w-full"
-          />
-          <div className="max-h-full">
-            <Outlet />
-          </div>
+        /* Only assets can be linked now that kits are gone, so the
+           two-tab switcher is a single destination — render the child
+           route directly instead of a tab strip with one tab. */
+        <div className="max-h-full">
+          <Outlet />
         </div>
       )}
     </>

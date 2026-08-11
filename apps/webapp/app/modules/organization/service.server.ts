@@ -37,10 +37,21 @@ export async function getOrganizationById<T extends Prisma.OrganizationInclude>(
   extraIncludes?: T,
 ) {
   try {
-    return (await db.organization.findUniqueOrThrow({
+    /*
+     * The double cast is load-bearing. A direct `as` makes TypeScript prove
+     * the two payload types overlap, which walks the whole extended-client
+     * relation graph and blows the instantiation budget
+     * (`TS2321: Excessive stack depth`). Routing through `unknown` asserts
+     * the same result type without the structural comparison.
+     */
+    const organization = await db.organization.findUniqueOrThrow({
       where: { id },
-      include: extraIncludes,
-    })) as Prisma.OrganizationGetPayload<{ include: T }>;
+      include: extraIncludes as Prisma.OrganizationInclude | undefined,
+    });
+
+    return organization as unknown as Prisma.OrganizationGetPayload<{
+      include: T;
+    }>;
   } catch (cause) {
     throw new ShelfError({
       cause,

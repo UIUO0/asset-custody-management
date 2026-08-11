@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
-import { AssetStatus, AssetType } from "@prisma/client";
+import { AssetStatus } from "@prisma/client";
 import { useAtomValue, useSetAtom } from "jotai";
 import { CircleX } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,22 +31,16 @@ import {
 import { Spinner } from "~/components/shared/spinner";
 import { useDisabled } from "~/hooks/use-disabled";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
-import { isQuantityTracked } from "~/modules/asset/utils";
 import { createCustodianSchema } from "~/modules/custody/schema";
 import type { ScannerLoader } from "~/routes/_layout+/scanner";
-import type {
-  AssetFromQr,
-  KitFromQr,
-} from "~/routes/api+/get-scanned-item.$qrId";
+import type { AssetFromQr } from "~/routes/api+/get-scanned-item.$qrId";
 import { ShelfError } from "~/utils/error";
 import { objectToFormData } from "~/utils/object-to-form-data";
-import type { KitFromScanner } from "~/utils/scanner-includes.server";
 import { tw } from "~/utils/tw";
 import { resolveTeamMemberName } from "~/utils/user";
 import {
   assetLabelPresets,
   createAvailabilityLabels,
-  kitLabelPresets,
 } from "../availability-label-factory";
 import { createBlockers } from "../blockers-factory";
 import ConfigurableDrawer from "../configurable-drawer";
@@ -61,19 +55,13 @@ export const AssignCustodyToSignedItemsSchema = z.object({
   assetIds: z.array(z.string()).min(1),
 });
 
-const BulkAssignCustodySchema = z
-  .object({
-    assetIds: z.array(z.string()).optional().default([]),
-    kitIds: z.array(z.string()).optional().default([]),
-    custodian: createCustodianSchema(),
-  })
-  .refine((data) => data.assetIds.length > 0 || data.kitIds.length > 0, {
-    message: "At least one asset or kit must be selected",
-    path: ["assetIds"], // This will attach the error to the assetIds field
-  });
+const BulkAssignCustodySchema = z.object({
+  assetIds: z.array(z.string()).min(1, "At least one asset must be selected"),
+  custodian: createCustodianSchema(),
+});
 
 /**
- * Drawer component for assigning custody to scanned assets and kits
+ * Drawer component for assigning custody to scanned assets
  */
 export default function AssignCustodyDrawer({
   className,
@@ -99,10 +87,6 @@ export default function AssignCustodyDrawer({
     .filter((item) => !!item && item.data && item.type === "asset")
     .map((item) => item?.data as AssetFromQr);
 
-  const kits = Object.values(items)
-    .filter((item) => !!item && item.data && item.type === "kit")
-    .map((item) => item?.data as KitFromQr);
-
   // Setup blockers
   const errors = Object.entries(items).filter(([, item]) => !!item?.error);
 
@@ -115,54 +99,6 @@ export default function AssignCustodyDrawer({
   const assetsAreCheckedOut = assets
     .filter((asset) => !!asset && asset.status === AssetStatus.CHECKED_OUT)
     .map((asset) => asset.id);
-
-  // Asset is part of a kit. Only INDIVIDUAL assets get blocked here —
-  // a qty-tracked asset can be partially in a kit and still have a
-  // free pool that's eligible for direct custody assignment. The
-  // server-side strict-available re-validation catches over-allocation.
-  const assetsArePartOfKit = assets
-    .filter(
-      (asset) =>
-        !!asset &&
-        asset.type === AssetType.INDIVIDUAL &&
-        asset.assetKits.length > 0 &&
-        asset.id,
-    )
-    .map((asset) => asset.id);
-
-  // Kit blockers
-  // Kit is in custody
-  const kitsIsAlreadyInCustody = kits
-    .filter((kit) => kit.status === AssetStatus.IN_CUSTODY)
-    .map((kit) => kit.id);
-
-  // Kit has assets inside that that are in custody
-  const kitsWithAssetsInCustody = kits
-    .filter((kit) =>
-      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY),
-    )
-    .map((kit) => kit.id);
-  // Kit is checked out
-  const kitsAreCheckedOut = kits
-    .filter((kit) => kit.status === AssetStatus.CHECKED_OUT)
-    .map((kit) => kit.id);
-
-  // Find the QR IDs that correspond to kit IDs with blockers
-  // This is necessary because we need to remove the QR IDs from the items object, not the kit IDs
-  const getQrIdsForKitIds = (kitIds: string[]) =>
-    Object.entries(items)
-      .filter(([, item]) => {
-        if (!item || item.type !== "kit") return false;
-        return kitIds.includes((item.data as KitFromScanner)?.id);
-      })
-      .map(([qrId]) => qrId);
-
-  // Get the QR IDs for each type of kit blocker
-  const qrIdsOfKitsInCustody = getQrIdsForKitIds(kitsIsAlreadyInCustody);
-  const qrIdsOfKitsWithAssetsInCustody = getQrIdsForKitIds(
-    kitsWithAssetsInCustody,
-  );
-  const qrIdsOfKitsCheckedOut = getQrIdsForKitIds(kitsAreCheckedOut);
 
   // Create blockers configuration
   const blockerConfigs = [
@@ -190,52 +126,6 @@ export default function AssignCustodyDrawer({
       onResolve: () => removeAssetsFromList(assetsAreCheckedOut),
     },
     {
-      condition: assetsArePartOfKit.length > 0,
-      count: assetsArePartOfKit.length,
-      message: (count: number) => (
-        <>
-          <strong>{`${count} asset${count > 1 ? "s" : ""} `}</strong>{" "}
-          {t("scanner.blockerPartOfKit")}
-        </>
-      ),
-      description: t("scanner.noteScanKitQrToAdd"),
-      onResolve: () => removeAssetsFromList(assetsArePartOfKit),
-    },
-    {
-      condition: qrIdsOfKitsInCustody.length > 0,
-      count: qrIdsOfKitsInCustody.length,
-      message: (count: number) => (
-        <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
-          already <strong>{t("assets.inCustody")}</strong>.
-        </>
-      ),
-      onResolve: () => removeItemsFromList(qrIdsOfKitsInCustody),
-    },
-    {
-      condition: qrIdsOfKitsWithAssetsInCustody.length > 0,
-      count: qrIdsOfKitsWithAssetsInCustody.length,
-      message: (count: number) => (
-        <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
-          already have assets <strong>{t("assets.inCustody")}</strong>.
-        </>
-      ),
-      onResolve: () => removeItemsFromList(qrIdsOfKitsWithAssetsInCustody),
-    },
-    {
-      condition: qrIdsOfKitsCheckedOut.length > 0,
-      count: qrIdsOfKitsCheckedOut.length,
-      message: (count: number) => (
-        <>
-          <strong>{`${count} kit${count > 1 ? "s are" : " is"} `}</strong>{" "}
-          checked out.
-        </>
-      ),
-      onResolve: () => removeItemsFromList(qrIdsOfKitsCheckedOut),
-      description: t("scanner.noteCheckedOutKitsNoCustody"),
-    },
-    {
       condition: errors.length > 0,
       count: errors.length,
       message: (count: number) => (
@@ -251,17 +141,8 @@ export default function AssignCustodyDrawer({
   const [hasBlockers, Blockers] = createBlockers({
     blockerConfigs,
     onResolveAll: () => {
-      removeAssetsFromList([
-        ...assetsAlreadyInCustody,
-        ...assetsAreCheckedOut,
-        ...assetsArePartOfKit,
-      ]);
-      removeItemsFromList([
-        ...errors.map(([qrId]) => qrId),
-        ...qrIdsOfKitsInCustody,
-        ...qrIdsOfKitsWithAssetsInCustody,
-        ...qrIdsOfKitsCheckedOut,
-      ]);
+      removeAssetsFromList([...assetsAlreadyInCustody, ...assetsAreCheckedOut]);
+      removeItemsFromList(errors.map(([qrId]) => qrId));
     },
   });
 
@@ -278,8 +159,6 @@ export default function AssignCustodyDrawer({
       renderItem={(data) => {
         if (item?.type === "asset" && data) {
           return <AssetRow asset={data as AssetFromQr} />;
-        } else if (item?.type === "kit" && data) {
-          return <KitRow kit={data as KitFromQr} />;
         }
         return null;
       }}
@@ -306,8 +185,6 @@ export default function AssignCustodyDrawer({
 type CustodyState = {
   assetStatus: "processing" | "success" | "error" | "skipped";
   assetErrorMessage?: string;
-  kitStatus: "processing" | "success" | "error" | "skipped";
-  kitErrorMessage?: string;
   custodianName: string;
 };
 
@@ -316,7 +193,6 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [custodyState, setCustodyState] = useState<CustodyState>({
     assetStatus: "processing",
-    kitStatus: "processing",
     custodianName: "",
   });
   const disabled = useDisabled();
@@ -326,7 +202,7 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
     onValidSubmit: (e) => {
       e.preventDefault();
       setDialogOpen(true);
-      const { custodian, assetIds, kitIds } = e.data;
+      const { custodian, assetIds } = e.data;
       setCustodyState((state) => ({
         ...state,
         custodianName: custodian.name,
@@ -375,62 +251,16 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
           assetStatus: "skipped",
         }));
       }
-
-      // Handle kit request
-      if (kitIds && kitIds.length > 0) {
-        // Create object data structure for kits
-        const kitData = {
-          custodian,
-          kitIds,
-          intent: "bulk-assign-custody",
-        };
-
-        // Convert to FormData
-        const kitFormData = objectToFormData(kitData, {
-          jsonStringifyFields: ["custodian"],
-        });
-
-        // Send kit request
-        fetch("/api/kits/bulk-actions", {
-          method: "POST",
-          body: kitFormData,
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            setCustodyState((state) => ({
-              ...state,
-              kitStatus: data.error ? "error" : "success",
-              ...(data.error && { kitErrorMessage: data.error.message }),
-            }));
-          })
-          .catch((error) => {
-            setCustodyState((state) => ({
-              ...state,
-              kitStatus: "error",
-              kitErrorMessage:
-                error instanceof ShelfError
-                  ? error.message
-                  : t("scanner.assignCustodyFailed"),
-            }));
-          });
-      } else {
-        // No kits to process, mark as skipped
-        setCustodyState((state) => ({
-          ...state,
-          kitStatus: "skipped",
-        }));
-      }
     },
   });
 
-  const { assetIds, kitIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
+  const { assetIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
 
   const clearItems = useSetAtom(clearScannedItemsAtom);
 
   function cleanupState() {
     setCustodyState({
       assetStatus: "processing",
-      kitStatus: "processing",
       custodianName: "",
     });
     clearItems();
@@ -450,15 +280,6 @@ function CustodyForm({ disableSubmit }: { disableSubmit: boolean }) {
             key={`asset-${id}`}
             type="hidden"
             name={`assetIds[${index}]`}
-            value={id}
-          />
-        ))}
-
-        {kitIds.map((id, index) => (
-          <input
-            key={`kit-${id}`}
-            type="hidden"
-            name={`kitIds[${index}]`}
             value={id}
           />
         ))}
@@ -531,11 +352,6 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
   const availabilityConfigs = [
     assetLabelPresets.inCustody(t, asset.status === AssetStatus.IN_CUSTODY),
     assetLabelPresets.checkedOut(t, asset.status === AssetStatus.CHECKED_OUT),
-    assetLabelPresets.partOfKit(
-      t,
-      asset.assetKits.length > 0,
-      isQuantityTracked(asset),
-    ),
   ];
 
   // Create the availability labels component with max 2 labels
@@ -566,52 +382,6 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     </div>
   );
 }
-
-export function KitRow({ kit }: { kit: KitFromQr }) {
-  const { t } = useTranslation();
-  // Use predefined presets to create label configurations
-  const availabilityConfigs = [
-    kitLabelPresets.inCustody(t, kit.status === AssetStatus.IN_CUSTODY),
-    kitLabelPresets.checkedOut(t, kit.status === AssetStatus.CHECKED_OUT),
-    kitLabelPresets.hasAssetsInCustody(
-      t,
-      kit.assetKits.some((ak) => ak.asset.status === AssetStatus.IN_CUSTODY),
-    ),
-  ];
-
-  // Create the availability labels component with default options
-  const [, KitAvailabilityLabels] = createAvailabilityLabels(
-    availabilityConfigs,
-    {
-      maxLabels: 3,
-    },
-  );
-
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="word-break whitespace-break-spaces font-medium">
-        {kit.name}{" "}
-        <span className="text-[12px] font-normal text-gray-700">
-          ({kit._count.assetKits} assets)
-        </span>
-      </p>
-
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span
-          className={tw(
-            "inline-block bg-gray-50 px-[6px] py-[2px]",
-            "rounded-md border border-gray-200",
-            "text-xs text-gray-700",
-          )}
-        >
-          kit
-        </span>
-        <KitAvailabilityLabels />
-      </div>
-    </div>
-  );
-}
-
 function SubmittingDialog({
   open,
   setOpen,
@@ -643,12 +413,6 @@ function SubmittingDialog({
                 errorMessage={custodyState?.assetErrorMessage}
                 custodianName={custodyState.custodianName}
               />
-              <SubmissionState
-                type={"kit"}
-                status={custodyState.kitStatus}
-                errorMessage={custodyState?.kitErrorMessage}
-                custodianName={custodyState.custodianName}
-              />
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -673,7 +437,7 @@ function SubmissionState({
   errorMessage,
   custodianName,
 }: {
-  type: "asset" | "kit";
+  type: "asset";
   status: "processing" | "success" | "error" | "skipped";
   errorMessage?: string;
   custodianName?: string;
@@ -698,8 +462,7 @@ function SubmissionState({
           <CheckmarkIcon />
         </span>
         <div className="font-mono">
-          {type === "asset" ? "Assets" : t("nav.kits")} are now in custody of{" "}
-          {custodianName}
+          Assets are now in custody of {custodianName}
         </div>
       </div>
     );

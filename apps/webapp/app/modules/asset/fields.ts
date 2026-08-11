@@ -13,68 +13,22 @@ export const LOCATION_WITH_HIERARCHY = {
   },
 } satisfies Prisma.LocationDefaultArgs;
 
-export const KITS_INCLUDE_FIELDS = {
-  _count: { select: { assetKits: true } },
-  custody: {
-    select: {
-      custodian: {
-        select: {
-          name: true,
-          user: {
-            select: {
-              firstName: true,
-              lastName: true,
-              displayName: true,
-              profilePicture: true,
-              email: true,
-            },
-          },
-        },
-      },
-    },
-  },
-} satisfies Prisma.KitInclude;
-
-export const getAssetOverviewFields = (
-  assetId: string,
-  canUseBarcodes: boolean = false,
-) => {
+export const getAssetOverviewFields = (canUseBarcodes: boolean = false) => {
   const baseFields = {
     category: true,
     qrCodes: true,
-    tags: true,
     // `quantity` is pulled so loaders can show per-location slices and
     // derive the "placed / unplaced" split for qty-tracked assets.
-    // `assetKitId` + nested `assetKit.kit` discriminate manual vs kit-
-    // driven placements so the UI can render the "via kit" badge
-    // alongside the kit-driven rows.
     assetLocations: {
       select: {
         quantity: true,
-        assetKitId: true,
         location: LOCATION_WITH_HIERARCHY,
-        assetKit: {
-          select: {
-            id: true,
-            kit: { select: { id: true, name: true } },
-          },
-        },
       },
     },
     custody: {
       select: {
         createdAt: true,
         quantity: true,
-        // why: kit-allocated custody rows must not be released directly
-        // from the asset's custody-breakdown card. The UI uses
-        // `kitCustodyId` to swap the Release button for a "held via kit"
-        // badge — releasing the parent kit is the only correct path.
-        kitCustodyId: true,
-        kitCustody: {
-          select: {
-            kit: { select: { id: true, name: true } },
-          },
-        },
         custodian: {
           include: {
             user: true,
@@ -109,16 +63,6 @@ export const getAssetOverviewFields = (
       },
     },
     assetModel: { select: { id: true, name: true } },
-    // A QUANTITY_TRACKED asset can sit in multiple kits at distinct slices.
-    // Pull `quantity` so the asset-overview sidebar can list each kit with
-    // its allocation and so the loader can derive a true "available" pool
-    // (units NOT in any kit or custody).
-    assetKits: {
-      select: {
-        quantity: true,
-        kit: { select: { id: true, name: true, status: true } },
-      },
-    },
   } satisfies Prisma.AssetInclude;
 
   if (canUseBarcodes) {
@@ -157,25 +101,13 @@ export const getAssetOverviewFields = (
  */
 export const assetIndexFields = () => {
   const fields = {
-    assetKits: { select: { kit: true } },
     category: true,
-    tags: true,
     // `quantity` is pulled so loaders can show per-location slices and
     // derive the "placed / unplaced" split for qty-tracked assets.
-    // `assetKitId` + nested `assetKit.kit` discriminate manual vs kit-
-    // driven placements so the UI can render the "via kit" badge
-    // alongside the kit-driven rows.
     assetLocations: {
       select: {
         quantity: true,
-        assetKitId: true,
         location: LOCATION_WITH_HIERARCHY,
-        assetKit: {
-          select: {
-            id: true,
-            kit: { select: { id: true, name: true } },
-          },
-        },
       },
     },
     custody: {
@@ -222,9 +154,7 @@ export const assetIndexFields = () => {
 
 export const advancedAssetIndexFields = () => {
   const fields = {
-    assetKits: { select: { kit: true } },
     category: true,
-    tags: true,
     assetLocations: {
       select: {
         quantity: true,

@@ -16,13 +16,7 @@
 
 import { CustodyHandoverKind } from "@prisma/client";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import {
-  data,
-  redirect,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-} from "react-router";
+import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 import { Form } from "~/components/custom-form";
 import Header from "~/components/layout/header";
@@ -30,13 +24,16 @@ import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { Table, Td, Th, Tr } from "~/components/table";
 import { db } from "~/database/db.server";
+import { useDisabled } from "~/hooks/use-disabled";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { openHandover } from "~/modules/custody/handover.server";
 import { categoryLabel } from "~/modules/goods-receipt/capitalization";
 import { itemClassLabel } from "~/modules/goods-receipt/classification";
 import { ItemClassValue, ReceiptState } from "~/modules/goods-receipt/enums";
 import {
+  approveOrderAssets,
   getHandoverCandidates,
+  getOrderApprovalState,
   getPurchaseOrder,
   listDepartments,
   setAssetFinanceCode,
@@ -75,13 +72,17 @@ const HandoverSchema = z.object({
 });
 
 /**
- * Two different actions on one screen, so the intent is parsed first and each
- * branch re-checks its own permission. `code` is المالية's and `handover` is
- * المستودعات' — neither role should inherit the other's button by sharing a
- * single `requirePermission` at the top.
+ * Three different actions on one screen, so the intent is parsed first and each
+ * branch re-checks its own permission. `code` is المالية's; `approve` and
+ * `handover` are المستودعات' — and they are separate permissions from each
+ * other too. No role should inherit another's button by sharing a single
+ * `requirePermission` at the top.
+ *
+ * `approve` carries no fields of its own: the assets it moves are re-derived on
+ * the server from the order number in the URL. See {@link approveOrderAssets}.
  */
 const IntentSchema = z.object({
-  intent: z.enum(["code", "handover"]),
+  intent: z.enum(["code", "approve", "handover"]),
 });
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
@@ -107,12 +108,16 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // gated on the permission: the panel itself is gated in the component, and
     // a loader that branches on role is one more place for the two checks to
     // disagree.
-    const [departments, handoverCandidates] = await Promise.all([
+    const [departments, handoverCandidates, approvalState] = await Promise.all([
       listDepartments({ organizationId }),
       getHandoverCandidates({ orderNumber, organizationId }),
+      // Counted rather than derived from `order.items` on the client: the two
+      // would drift the moment the shape of either changes, and this one is a
+      // gate rather than a display.
+      getOrderApprovalState({ orderNumber, organizationId }),
     ]);
 
-    return payload({ order, departments, handoverCandidates });
+    return payload({ order, departments, handoverCandidates, approvalState });
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
     throw data(error(reason), { status: reason.status });
@@ -127,6 +132,32 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const { intent } = parseData(formData, IntentSchema, {
       shouldBeCaptured: false,
     });
+
+    if (intent === "approve") {
+      /**
+       * Approval is `asset.approve` — المستودعات'. Deliberately not the same
+       * gate as `handover`: releasing stock into circulation and handing it to
+       * a department are two decisions, and a role that may do one is not
+       * thereby entitled to the other.
+       */
+      const { organizationId } = await requirePermission({
+        userId,
+        request,
+        entity: PermissionEntity.asset,
+        action: PermissionAction.approve,
+      });
+
+      // No form fields are read. The assets, the coding gate and the
+      // three-signature gate are all resolved server-side from this order
+      // number — see `approveOrderAssets`.
+      const approved = await approveOrderAssets({
+        orderNumber: params.orderNumber as string,
+        organizationId,
+        userId,
+      });
+
+      return payload({ approved });
+    }
 
     if (intent === "handover") {
       /**
@@ -241,10 +272,12 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
 }
 
 export default function PurchaseOrderDetailPage() {
-  const { order, departments, handoverCandidates } =
+  const { order, departments, handoverCandidates, approvalState } =
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  const navigation = useNavigation();
+  // `useDisabled`, not `useNavigation` — the project's one way of disabling a
+  // control mid-submit. See CLAUDE.md, "Disabled State for Form Submissions".
+  const disabled = useDisabled();
   const { roles } = useUserRoleHelper();
 
   const errorMessage =
@@ -262,6 +295,16 @@ export default function PurchaseOrderDetailPage() {
     roles,
     entity: PermissionEntity.asset,
     action: PermissionAction.custody,
+  });
+
+  /**
+   * Releasing stock into circulation — also المستودعات', and a separate
+   * permission from handing it over. المالية code, they do not approve.
+   */
+  const canApprove = userHasPermission({
+    roles,
+    entity: PermissionEntity.asset,
+    action: PermissionAction.approve,
   });
 
   /**
@@ -309,6 +352,58 @@ export default function PurchaseOrderDetailPage() {
       ) : null}
 
       {/*
+        ── اعتماد وإتاحة أصناف الأمر ──
+
+        Placed above the handover panel because that is the order of the work:
+        nothing can be handed to a department until it has been approved.
+
+        Shown only while something is pending. Once the order is fully approved
+        the panel disappears rather than sitting there disabled — an empty batch
+        is not a state the operator has to reason about, it is this panel's job
+        being done.
+
+        The button is disabled, **not hidden**, while coding is outstanding. A
+        hidden control leaves the warehouse wondering where it went; a disabled
+        one with the count beside it says who they are waiting for. The server
+        re-checks the same rule regardless — see `approveOrderAssets`.
+      */}
+      {canApprove && approvalState.pendingCount > 0 ? (
+        <section className="mb-8 rounded-lg border border-gray-200 p-6">
+          <h2 className="mb-1 text-lg font-semibold">
+            اعتماد وإتاحة أصناف الأمر
+          </h2>
+          <p className="mb-4 text-sm text-gray-600">
+            {approvalState.pendingCount} صنفاً قيد الانتظار. الاعتماد ينقلها إلى
+            «جاهز للتوزيع» ويتيحها دفعةً واحدة.
+          </p>
+
+          {approvalState.awaitingCodeCount > 0 ? (
+            <div className="mb-4 rounded border border-warning-300 bg-warning-50 p-3 text-sm text-warning-700">
+              مقفل حتى تكتمل ترميز المالية — {approvalState.awaitingCodeCount}{" "}
+              أصل بلا رقم ترميز. المواد لا تُرمَّز ولا تمنع الاعتماد.
+            </div>
+          ) : null}
+
+          <Form method="post">
+            <input type="hidden" name="intent" value="approve" />
+            <Button
+              type="submit"
+              disabled={approvalState.awaitingCodeCount > 0 || disabled}
+            >
+              {disabled
+                ? "جارٍ الاعتماد…"
+                : `اعتماد ${approvalState.pendingCount} صنفاً وإتاحتها`}
+            </Button>
+          </Form>
+
+          <p className="mt-3 text-xs text-gray-500">
+            لا يُعتمد صنف من نموذج لم تكتمل تواقيعه الثلاثة، حتى لو اكتمل
+            ترميزه.
+          </p>
+        </section>
+      ) : null}
+
+      {/*
         ── تسليم الدفعة لإدارة ──
 
         Only shown to a role that may move custody, and only while there is
@@ -353,8 +448,8 @@ export default function PurchaseOrderDetailPage() {
               </select>
             </div>
 
-            <Button type="submit" disabled={navigation.state !== "idle"}>
-              {navigation.state !== "idle" ? "جارٍ الفتح…" : "فتح محضر التسليم"}
+            <Button type="submit" disabled={disabled}>
+              {disabled ? "جارٍ الفتح…" : "فتح محضر التسليم"}
             </Button>
           </Form>
 
@@ -541,7 +636,7 @@ export default function PurchaseOrderDetailPage() {
                           type="submit"
                           variant="secondary"
                           size="sm"
-                          disabled={navigation.state !== "idle"}
+                          disabled={disabled}
                         >
                           حفظ
                         </Button>

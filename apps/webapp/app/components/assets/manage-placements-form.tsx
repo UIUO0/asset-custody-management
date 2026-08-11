@@ -51,28 +51,11 @@ export interface ManagePlacementsFormProps {
   unitOfMeasure: string | null;
   /** Workspace locations available to pick. */
   locations: LocationOption[];
-  /**
-   * Pre-existing MANUAL placements; pre-fills the editable rows. The
-   * route filters kit-driven rows out of this list so the form's diff
-   * math operates on manual placements only.
-   */
+  /** Pre-existing placements; pre-fills the editable rows. */
   initialPlacements: Array<{
     locationId: string;
     locationName: string;
     quantity: number;
-  }>;
-  /**
-   * Polish-4: kit-driven placements (read-only). Rendered above the
-   * editable rows so users see the full picture — these eat into the
-   * "Unplaced" pool but the dialog can't modify them. To change a kit-
-   * driven row, the user edits the kit (membership qty or kit
-   * location).
-   */
-  kitDrivenPlacements?: Array<{
-    locationId: string;
-    locationName: string;
-    quantity: number;
-    kit: { id: string; name: string };
   }>;
   /** Server-side error message surfaced as a red banner. */
   serverErrorMessage: string | null;
@@ -94,15 +77,12 @@ export function ManagePlacementsForm({
   unitOfMeasure,
   locations,
   initialPlacements,
-  kitDrivenPlacements,
   serverErrorMessage,
 }: ManagePlacementsFormProps) {
   const { t } = useTranslation();
   const disabled = useDisabled();
   const unit = unitOfMeasure || "units";
   const totalPool = assetQuantity ?? 1;
-  const kitDriven = kitDrivenPlacements ?? [];
-  const kitDrivenSum = kitDriven.reduce((s, p) => s + p.quantity, 0);
 
   const [rows, setRows] = useState<PlacementRow[]>(() =>
     initialPlacements.length > 0
@@ -138,19 +118,11 @@ export function ManagePlacementsForm({
 
   /**
    * Client-side validation messages — server is the ultimate guard.
-   *
-   * The sum check uses `placedSum + kitDrivenSum` because the kit-
-   * driven rows survive the edit and the DEFERRED trigger checks the
-   * combined total at COMMIT. Surfacing the breakdown in the message
-   * keeps the diagnostic actionable.
    */
   const clientError = useMemo(() => {
     if (!isQty) return null;
-    const projectedSum = placedSum + kitDrivenSum;
-    if (projectedSum > totalPool) {
-      return kitDrivenSum > 0
-        ? `Your manual placements (${placedSum}) plus kit-driven placements (${kitDrivenSum}) sum to ${projectedSum}, which exceeds the asset's total quantity (${totalPool}).`
-        : `Sum of placements (${placedSum}) exceeds the asset's total quantity (${totalPool}).`;
+    if (placedSum > totalPool) {
+      return `Sum of placements (${placedSum}) exceeds the asset's total quantity (${totalPool}).`;
     }
     const seen = new Set<string>();
     for (const r of rows) {
@@ -161,11 +133,9 @@ export function ManagePlacementsForm({
       seen.add(r.locationId);
     }
     return null;
-  }, [isQty, placedSum, kitDrivenSum, totalPool, rows]);
+  }, [isQty, placedSum, totalPool, rows]);
 
-  // "Unplaced" excludes kit-driven rows from the pool the user can
-  // claim with manual placements — they're already spoken for.
-  const unplaced = Math.max(0, totalPool - placedSum - kitDrivenSum);
+  const unplaced = Math.max(0, totalPool - placedSum);
 
   const canAddRow = isQty
     ? rows.length < locations.length && unplaced > 0
@@ -213,37 +183,6 @@ export function ManagePlacementsForm({
 
   return (
     <Form method="post">
-      {/* Read-only kit-driven placements (Polish-4). Surfaced ABOVE the
-          editable rows so users see the full picture — these eat into
-          the Unplaced pool but can only change via the kit (membership
-          qty or kit location). Hidden when the asset isn't in any kit. */}
-      {kitDriven.length > 0 ? (
-        <div className="mb-4 space-y-2">
-          <p className="text-xs font-medium text-gray-500">
-            {t("assets.placementsManagedByKits")}
-          </p>
-          {kitDriven.map((p) => (
-            <div
-              key={`${p.locationId}-${p.kit.id}`}
-              className="flex items-center justify-between gap-2 rounded-md border border-blue-100 bg-blue-50/50 p-2 text-sm"
-              title={`Change the kit "${p.kit.name}" (location or per-asset qty) to modify this placement.`}
-            >
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="truncate text-gray-700">{p.locationName}</span>
-                <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                  via kit {p.kit.name}
-                </span>
-              </div>
-              {isQty ? (
-                <span className="shrink-0 text-xs tabular-nums text-gray-500">
-                  {p.quantity} {unit}
-                </span>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       {/* Placement rows */}
       <div className="mb-4 space-y-3">
         {rows.map((row, idx) => (
@@ -308,8 +247,7 @@ export function ManagePlacementsForm({
       </div>
 
       {/* Placed / unplaced indicator (qty-tracked only). Splits the
-          allocation into the manual rows the form edits, the kit-
-          driven rows the form treats as read-only, and the unplaced
+          allocation into the rows the form edits and the unplaced
           remainder. Total always equals `Asset.quantity`. */}
       {isQty ? (
         <div className="mb-4 rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-sm">
@@ -319,14 +257,6 @@ export function ManagePlacementsForm({
               {placedSum} / {totalPool} {unit}
             </span>
           </div>
-          {kitDrivenSum > 0 ? (
-            <div className="flex justify-between text-blue-700">
-              <span>{t("ui.viaKits")}</span>
-              <span className="tabular-nums">
-                {kitDrivenSum} {unit}
-              </span>
-            </div>
-          ) : null}
           <div className="flex justify-between text-gray-500">
             <span>{t("quantity.unplaced")}</span>
             <span className="tabular-nums">

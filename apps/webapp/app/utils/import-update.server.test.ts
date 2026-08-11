@@ -31,9 +31,6 @@ vitest.mock("~/database/db.server", () => ({
     asset: {
       findMany: vitest.fn().mockResolvedValue([]),
     },
-    tag: {
-      findMany: vitest.fn().mockResolvedValue([]),
-    },
     category: {
       findMany: vitest.fn().mockResolvedValue([]),
     },
@@ -88,7 +85,6 @@ function makeDbAsset(overrides: Record<string, unknown> = {}) {
     assetModelId: null,
     category: null,
     assetLocations: [],
-    tags: [],
     customFields: [],
     ...overrides,
   };
@@ -100,7 +96,6 @@ beforeEach(() => {
   // updates. We reset to safe defaults that the per-test setup overrides.
   vi.mocked(db.customField.findMany).mockResolvedValue([]);
   vi.mocked(db.asset.findMany).mockResolvedValue([]);
-  vi.mocked(db.tag.findMany).mockResolvedValue([]);
   vi.mocked(db.category.findMany).mockResolvedValue([]);
   vi.mocked(db.location.findMany).mockResolvedValue([]);
   vi.mocked(db.assetModel.findMany).mockResolvedValue([]);

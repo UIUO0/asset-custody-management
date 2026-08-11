@@ -1,4 +1,4 @@
-import type { Barcode, Organization, User, Asset, Kit } from "@prisma/client";
+import type { Barcode, Organization, User, Asset } from "@prisma/client";
 import { BarcodeType } from "@prisma/client";
 import { db } from "~/database/db.server";
 import type { ErrorLabel } from "~/utils/error";
@@ -20,7 +20,6 @@ export interface CreateBarcodeParams {
   organizationId: Organization["id"];
   userId: User["id"];
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
 }
 
 export interface UpdateBarcodeParams {
@@ -29,7 +28,6 @@ export interface UpdateBarcodeParams {
   value?: string;
   organizationId: Organization["id"];
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
 }
 
 /**
@@ -41,7 +39,6 @@ export async function createBarcode({
   organizationId,
   userId,
   assetId,
-  kitId,
 }: CreateBarcodeParams): Promise<Barcode> {
   try {
     // Validate barcode value format (preserve case for ExternalQR)
@@ -63,7 +60,6 @@ export async function createBarcode({
         value: normalizedValue, // Preserve case for ExternalQR, uppercase others
         organizationId,
         ...(assetId && { assetId }),
-        ...(kitId && { kitId }),
       },
     });
     return barcode;
@@ -76,37 +72,35 @@ export async function createBarcode({
 
       if (target && target.includes("value")) {
         // Use existing validation function for detailed error messages
-        const relationshipType = assetId ? "asset" : "kit";
+        const relationshipType = "asset";
         await validateBarcodeUniqueness(
           [{ type, value }],
           organizationId,
           undefined, // No currentItemId for creates
-          relationshipType as "asset" | "kit",
+          relationshipType,
         );
       }
     }
 
     throw maybeUniqueConstraintViolation(cause, "Barcode", {
-      additionalData: { type, value, organizationId, userId, assetId, kitId },
+      additionalData: { type, value, organizationId, userId, assetId },
     });
   }
 }
 
 /**
- * Create multiple barcodes for an asset or kit using createMany for performance
+ * Create multiple barcodes for an asset using createMany for performance
  */
 export async function createBarcodes({
   barcodes,
   organizationId,
   userId,
   assetId,
-  kitId,
 }: {
   barcodes: { type: BarcodeType; value: string }[];
   organizationId: Organization["id"];
   userId: User["id"];
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
 }): Promise<void> {
   try {
     if (!barcodes || barcodes.length === 0) {
@@ -143,7 +137,6 @@ export async function createBarcodes({
         value: normalizeBarcodeValue(barcode.type, barcode.value),
         organizationId,
         ...(assetId && { assetId }),
-        ...(kitId && { kitId }),
       })),
     });
   } catch (cause) {
@@ -155,18 +148,18 @@ export async function createBarcodes({
 
       if (target && target.includes("value")) {
         // Use existing validation function for detailed error messages
-        const relationshipType = assetId ? "asset" : "kit";
+        const relationshipType = "asset";
         await validateBarcodeUniqueness(
           barcodes,
           organizationId,
           undefined, // No currentItemId for creates
-          relationshipType as "asset" | "kit",
+          relationshipType,
         );
       }
     }
 
     throw maybeUniqueConstraintViolation(cause, "Barcode", {
-      additionalData: { barcodes, organizationId, userId, assetId, kitId },
+      additionalData: { barcodes, organizationId, userId, assetId },
     });
   }
 }
@@ -180,7 +173,6 @@ export async function updateBarcode({
   value,
   organizationId,
   assetId,
-  kitId,
 }: UpdateBarcodeParams): Promise<Barcode> {
   try {
     const updateData: Partial<Pick<Barcode, "type" | "value">> = {};
@@ -221,20 +213,20 @@ export async function updateBarcode({
       const target = prismaError.meta?.target;
 
       if (target && target.includes("value") && value !== undefined) {
-        const relationshipType = assetId ? "asset" : "kit";
-        const currentItemId = assetId || kitId;
+        const relationshipType = "asset";
+        const currentItemId = assetId;
 
         await validateBarcodeUniqueness(
           [{ type: type || "Code128", value }], // Use provided type or default
           organizationId,
           currentItemId,
-          relationshipType as "asset" | "kit",
+          relationshipType,
         );
       }
     }
 
     throw maybeUniqueConstraintViolation(cause, "Barcode", {
-      additionalData: { id, type, value, organizationId, assetId, kitId },
+      additionalData: { id, type, value, organizationId, assetId },
     });
   }
 }
@@ -264,15 +256,13 @@ export async function deleteBarcode({
 }
 
 /**
- * Delete all barcodes for an asset or kit
+ * Delete all barcodes for an asset
  */
 export async function deleteBarcodes({
   assetId,
-  kitId,
   organizationId,
 }: {
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
   organizationId: Organization["id"];
 }): Promise<void> {
   try {
@@ -280,14 +270,13 @@ export async function deleteBarcodes({
       where: {
         organizationId,
         ...(assetId && { assetId }),
-        ...(kitId && { kitId }),
       },
     });
   } catch (cause) {
     throw new ShelfError({
       cause,
       message: "Failed to delete barcodes",
-      additionalData: { assetId, kitId, organizationId },
+      additionalData: { assetId, organizationId },
       label,
     });
   }
@@ -299,7 +288,6 @@ export async function deleteBarcodes({
 export async function getBarcodeByValue<
   T = {
     asset: boolean;
-    kit: boolean;
   },
 >({
   value,
@@ -322,7 +310,6 @@ export async function getBarcodeByValue<
       },
       include: include || {
         asset: true,
-        kit: true,
       },
     });
     return barcode;
@@ -366,64 +353,29 @@ export async function getAssetBarcodes({
     });
   }
 }
-
-/**
- * Get all barcodes for a kit
- */
-export async function getKitBarcodes({
-  kitId,
-  organizationId,
-}: {
-  kitId: Kit["id"];
-  organizationId: Organization["id"];
-}): Promise<Barcode[]> {
-  try {
-    const barcodes = await db.barcode.findMany({
-      where: {
-        kitId,
-        organizationId,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-    return barcodes;
-  } catch (cause) {
-    throw new ShelfError({
-      cause,
-      message: "Failed to get kit barcodes",
-      additionalData: { kitId, organizationId },
-      label,
-    });
-  }
-}
-
 /**
  * Replace all barcodes for an asset (used in updates)
  */
 export async function replaceBarcodes({
   barcodes,
   assetId,
-  kitId,
   organizationId,
   userId,
 }: {
   barcodes: { type: BarcodeType; value: string }[];
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
   organizationId: Organization["id"];
   userId: User["id"];
 }): Promise<void> {
   try {
     // Delete existing barcodes
-    await deleteBarcodes({ assetId, kitId, organizationId });
+    await deleteBarcodes({ assetId, organizationId });
 
     // Create new barcodes using createMany for performance
     if (barcodes && barcodes.length > 0) {
       await createBarcodes({
         barcodes,
         assetId,
-        kitId,
         organizationId,
         userId,
       });
@@ -440,7 +392,7 @@ export async function replaceBarcodes({
     throw new ShelfError({
       cause,
       message: "Failed to replace barcodes",
-      additionalData: { barcodes, assetId, kitId, organizationId, userId },
+      additionalData: { barcodes, assetId, organizationId, userId },
       label,
     });
   }
@@ -454,7 +406,7 @@ export async function validateBarcodeUniqueness(
   barcodes: { type: BarcodeType; value: string }[],
   organizationId: Organization["id"],
   currentItemId?: string,
-  relationshipType?: "asset" | "kit",
+  relationshipType?: "asset",
 ): Promise<void> {
   const validationErrors: ValidationError<any> = {};
 
@@ -491,19 +443,12 @@ export async function validateBarcodeUniqueness(
     },
     include: {
       asset: { select: { title: true } },
-      kit: { select: { name: true } },
     },
   });
 
   // Filter out the current item manually
   const filteredExistingBarcodes = isEditing
-    ? existingBarcodes.filter((barcode) => {
-        if (relationshipType === "asset") {
-          return barcode.assetId !== currentItemId;
-        } else {
-          return barcode.kitId !== currentItemId;
-        }
-      })
+    ? existingBarcodes.filter((barcode) => barcode.assetId !== currentItemId)
     : existingBarcodes;
 
   // Create a map for O(1) lookup: value -> existing barcode info
@@ -522,10 +467,7 @@ export async function validateBarcodeUniqueness(
     const existingBarcode = existingValueMap.get(normalizedValue);
 
     if (existingBarcode) {
-      const itemName =
-        existingBarcode.asset?.title ||
-        existingBarcode.kit?.name ||
-        "Unknown item";
+      const itemName = existingBarcode.asset?.title || "Unknown item";
       validationErrors[`barcodes[${i}].value`] = {
         message: `This barcode value is already used by "${itemName}"`,
       };
@@ -555,13 +497,11 @@ export async function validateBarcodeUniqueness(
 export async function updateBarcodes({
   barcodes,
   assetId,
-  kitId,
   organizationId,
   userId,
 }: {
   barcodes: { id?: string; type: BarcodeType; value: string }[];
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
   organizationId: Organization["id"];
   userId: User["id"];
 }): Promise<void> {
@@ -594,7 +534,6 @@ export async function updateBarcodes({
       where: {
         organizationId,
         ...(assetId && { assetId }),
-        ...(kitId && { kitId }),
       },
     });
 
@@ -635,7 +574,6 @@ export async function updateBarcodes({
             value: normalizeBarcodeValue(barcode.type, barcode.value),
             organizationId,
             ...(assetId && { assetId }),
-            ...(kitId && { kitId }),
           },
         }),
       );
@@ -664,13 +602,13 @@ export async function updateBarcodes({
 
       if (target && target.includes("value")) {
         // Use existing validation function for detailed error messages
-        const currentItemId = assetId || kitId;
-        const relationshipType = assetId ? "asset" : "kit";
+        const currentItemId = assetId;
+        const relationshipType = "asset";
         await validateBarcodeUniqueness(
           barcodes,
           organizationId,
           currentItemId,
-          relationshipType as "asset" | "kit",
+          relationshipType,
         );
 
         // If validateBarcodeUniqueness completes without throwing,
@@ -679,7 +617,7 @@ export async function updateBarcodes({
     }
 
     throw maybeUniqueConstraintViolation(cause, "Barcode", {
-      additionalData: { barcodes, assetId, kitId, organizationId, userId },
+      additionalData: { barcodes, assetId, organizationId, userId },
     });
   }
 }
@@ -865,26 +803,24 @@ export async function parseBarcodesFromImportData({
       },
       include: {
         asset: { select: { title: true } },
-        kit: { select: { name: true } },
       },
     });
 
-    // Check for barcodes already linked to assets or kits in this organization
+    // Check for barcodes already linked to assets in this organization
     const linkedBarcodes = existingBarcodes.filter(
-      (barcode) => barcode.assetId || barcode.kitId,
+      (barcode) => barcode.assetId,
     );
 
     if (linkedBarcodes.length > 0) {
       const linkedDetails = linkedBarcodes.map((barcode) => {
         const sources = barcodeAssetsMap.get(barcode.value);
-        const linkedTo =
-          barcode.asset?.title || barcode.kit?.name || "Unknown item";
+        const linkedTo = barcode.asset?.title || "Unknown item";
         return `${barcode.value} (${sources?.[0]?.type}) - already linked to "${linkedTo}"`;
       });
 
       throw new ShelfError({
         cause: null,
-        message: `Some barcodes are already linked to other assets or kits in your organization. Please use unlinked barcodes: ${linkedDetails.join(
+        message: `Some barcodes are already linked to other assets in your organization. Please use unlinked barcodes: ${linkedDetails.join(
           ", ",
         )}`,
         additionalData: { linkedBarcodes: linkedDetails },
@@ -896,7 +832,7 @@ export async function parseBarcodesFromImportData({
     // Create a map of existing orphaned barcodes that can be reused
     const orphanedBarcodeMap = new Map<string, string>();
     existingBarcodes
-      .filter((barcode) => !barcode.assetId && !barcode.kitId) // Only orphaned barcodes
+      .filter((barcode) => !barcode.assetId) // Only orphaned barcodes
       .forEach((barcode) => {
         orphanedBarcodeMap.set(barcode.value, barcode.id);
       });

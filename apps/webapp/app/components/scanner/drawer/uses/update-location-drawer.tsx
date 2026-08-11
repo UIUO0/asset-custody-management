@@ -28,10 +28,7 @@ import {
 import { Spinner } from "~/components/shared/spinner";
 import { useDisabled } from "~/hooks/use-disabled";
 import { getPrimaryLocation } from "~/modules/asset/utils";
-import type {
-  AssetFromQr,
-  KitFromQr,
-} from "~/routes/api+/get-scanned-item.$qrId";
+import type { AssetFromQr } from "~/routes/api+/get-scanned-item.$qrId";
 import { ShelfError } from "~/utils/error";
 import { objectToFormData } from "~/utils/object-to-form-data";
 import { tw } from "~/utils/tw";
@@ -109,8 +106,6 @@ export default function UpdateLocationDrawer({
       renderItem={(data) => {
         if (item?.type === "asset") {
           return <AssetRow asset={data as AssetFromQr} />;
-        } else if (item?.type === "kit") {
-          return <KitRow kit={data as KitFromQr} />;
         }
         return null;
       }}
@@ -136,7 +131,7 @@ export default function UpdateLocationDrawer({
 
 function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
   const { t } = useTranslation();
-  const { assetIds, idsTotalCount, kitIds } = useAtomValue(scannedItemIdsAtom);
+  const { assetIds, idsTotalCount } = useAtomValue(scannedItemIdsAtom);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [locationState, setLocationState] = useState<LocationState>({
     status: "processing",
@@ -147,10 +142,9 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
     onValidSubmit: async (e) => {
       e.preventDefault();
       setDialogOpen(true);
-      const { assetIds, newLocationId, kitIds } = e.data;
+      const { assetIds, newLocationId } = e.data;
 
-      // Skip if no assets or no kitIds to process
-      if (assetIds.length === 0 && kitIds.length === 0) {
+      if (assetIds.length === 0) {
         setLocationState({
           status: "error",
           errorMessage: t("scanner.noSelectionForLocation"),
@@ -177,24 +171,6 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
           locationState = {
             status: assetsData.error ? "error" : "success",
             ...(assetsData.error && { errorMessage: assetsData.error.message }),
-          };
-        }
-
-        if (kitIds.length) {
-          const kitFormData = objectToFormData({
-            kitIds,
-            newLocationId,
-            intent: "bulk-update-location",
-          });
-
-          const kitsResponse = await fetch("/api/kits/bulk-actions", {
-            method: "POST",
-            body: kitFormData,
-          });
-          const kitsData = await kitsResponse.json();
-          locationState = {
-            status: kitsData.error ? "error" : "success",
-            ...(kitsData.error && { errorMessage: kitsData.error.message }),
           };
         }
 
@@ -237,15 +213,6 @@ function AddToLocationForm({ disableSubmit }: { disableSubmit: boolean }) {
             value={id}
           />
         ))}
-        {kitIds.map((id, index) => (
-          <input
-            key={`kit-${id}`}
-            type="hidden"
-            name={`kitIds[${index}]`}
-            value={id}
-          />
-        ))}
-
         <div className="px-4 md:ps-0">
           <div className="relative z-50 my-8">
             <h5 className="mb-1">{t("scanner.updateLocationTo")}</h5>
@@ -331,32 +298,6 @@ export function AssetRow({ asset }: { asset: AssetFromQr }) {
     </div>
   );
 }
-
-export function KitRow({ kit }: { kit: KitFromQr }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <p className="word-break whitespace-break-spaces font-medium">
-        {kit.name}{" "}
-        <span className="text-[12px] font-normal text-gray-700">
-          ({kit._count.assetKits} assets)
-        </span>
-      </p>
-
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-        <span
-          className={tw(
-            "inline-block bg-gray-50 px-[6px] py-[2px]",
-            "rounded-md border border-gray-200",
-            "text-xs text-gray-700",
-          )}
-        >
-          kit
-        </span>
-      </div>
-    </div>
-  );
-}
-
 function SubmittingDialog({
   open,
   setOpen,

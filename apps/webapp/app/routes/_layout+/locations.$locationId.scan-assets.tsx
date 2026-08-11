@@ -11,15 +11,14 @@ import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
 import { CodeScanner } from "~/components/scanner/code-scanner";
 import type { OnCodeDetectionSuccessProps } from "~/components/scanner/code-scanner";
-import AddAssetsKitsToLocationDrawer, {
-  addScannedAssetsOrKitsToLocationSchema,
+import AddAssetsToLocationDrawer, {
+  addScannedAssetsToLocationSchema,
 } from "~/components/scanner/drawer/uses/add-assets-to-location-drawer";
 import { useScannerCameraId } from "~/hooks/use-scanner-camera-id";
 import { useViewportHeight } from "~/hooks/use-viewport-height";
 import {
   getLocation,
   updateLocationAssets,
-  updateLocationKits,
 } from "~/modules/location/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { AssetQuantitiesSchema } from "~/utils/asset-quantities-schema";
@@ -63,7 +62,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
         // LocationInclude type narrows through and exposes the nested `asset`
         // to downstream consumers.
         assetLocations: { include: { asset: { select: { id: true } } } },
-        kits: { select: { id: true } },
       },
     });
 
@@ -77,7 +75,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // Reassert the shape downstream consumers (the drawer) require.
     const locationForDrawer = location as typeof location & {
       assetLocations: { asset: { id: string } }[];
-      kits: { id: string }[];
     };
 
     return payload({ title, header, location: locationForDrawer });
@@ -92,7 +89,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 ];
 
 export const handle = {
-  name: "location.scan-assets-kits",
+  name: "location.scan-assets",
 };
 
 export async function action({ context, request, params }: ActionFunctionArgs) {
@@ -108,13 +105,11 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     });
 
     const formData = await request.formData();
-    const {
-      kitIds,
-      assetIds,
-      assetQuantities: rawAssetQuantities,
-    } = parseData(formData, addScannedAssetsOrKitsToLocationSchema, {
-      additionalData: { userId, organizationId, locationId },
-    });
+    const { assetIds, assetQuantities: rawAssetQuantities } = parseData(
+      formData,
+      addScannedAssetsToLocationSchema,
+      { additionalData: { userId, organizationId, locationId } },
+    );
 
     // Parse the JSON-encoded `assetQuantities` blob with the same
     // schema the manage-assets picker uses. Missing entries fall back
@@ -134,17 +129,6 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
       });
     }
 
-    if (kitIds.length) {
-      await updateLocationKits({
-        locationId,
-        kitIds,
-        organizationId,
-        userId,
-        request,
-        removedKitIds: [],
-      });
-    }
-
     return redirect(`/locations/${locationId}/assets`);
   } catch (cause) {
     const reason = makeShelfError(cause, { userId, locationId });
@@ -152,7 +136,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
   }
 }
 
-export default function ScanAssetsKitsForLocation() {
+export default function ScanAssetsForLocation() {
   const addItem = useSetAtom(addScannedItemAtom);
   const navigation = useNavigation();
   const isLoading = isFormProcessing(navigation.state);
@@ -175,7 +159,7 @@ export default function ScanAssetsKitsForLocation() {
     <>
       <Header hidePageDescription />
 
-      <AddAssetsKitsToLocationDrawer isLoading={isLoading} />
+      <AddAssetsToLocationDrawer isLoading={isLoading} />
 
       <div className="-mx-4 flex flex-col" style={{ height: `${height}px` }}>
         <CodeScanner

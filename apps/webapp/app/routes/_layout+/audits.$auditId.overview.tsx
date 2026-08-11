@@ -604,7 +604,6 @@ export default function AuditOverview() {
               <Th>{t("assets.location")}</Th>
               <CustodianHeader />
               <Th>{t("assets.category")}</Th>
-              <Th>{t("nav.tags")}</Th>
               {canRemoveAssets && <Th className="w-[60px]" />}
             </>
           }

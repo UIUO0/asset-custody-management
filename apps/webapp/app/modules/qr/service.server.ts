@@ -5,7 +5,6 @@ import {
   type Prisma,
   type Qr,
   type User,
-  type Kit,
 } from "@prisma/client";
 import type { TypeNumber, ErrorCorrectionLevel } from "qrcode-generator";
 import type { LoaderFunctionArgs } from "react-router";
@@ -38,23 +37,6 @@ export async function getQrByAssetId({ assetId }: Pick<Qr, "assetId">) {
     });
   }
 }
-
-export async function getQrByKitId({ kitId }: Pick<Qr, "kitId">) {
-  try {
-    return await db.qr.findFirst({
-      where: { kitId },
-    });
-  } catch (cause) {
-    throw new ShelfError({
-      cause,
-      message:
-        "Something went wrong while fetching the QR. Please try again or contact support.",
-      additionalData: { kitId },
-      label,
-    });
-  }
-}
-
 type QrWithInclude<T extends Prisma.QrInclude | undefined> =
   T extends Prisma.QrInclude ? Prisma.QrGetPayload<{ include: T }> : Qr;
 
@@ -110,11 +92,9 @@ export async function getQrOrganizationLookup({ qrId }: { qrId: Qr["id"] }) {
 export async function createQr({
   userId,
   assetId,
-  kitId,
   organizationId,
 }: Pick<Qr, "userId" | "organizationId"> & {
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
 }) {
   const data = {
     id: id(),
@@ -129,13 +109,6 @@ export async function createQr({
       asset: {
         connect: {
           id: assetId,
-        },
-      },
-    }),
-    ...(kitId && {
-      kit: {
-        connect: {
-          id: kitId,
         },
       },
     }),
@@ -362,12 +335,6 @@ async function getQrCodes({
             select: {
               id: true,
               title: true,
-            },
-          },
-          kit: {
-            select: {
-              id: true,
-              name: true,
             },
           },
           organization: {
@@ -604,11 +571,9 @@ export async function parseQrCodesFromImportData({
       });
     }
 
-    /** Check for codes already linked to asset or kit. Returns QRCodePerImportedAsset[] */
+    /** Check for codes already linked to an asset. Returns QRCodePerImportedAsset[] */
     const linkedCodes = qrCodePerAsset.filter((asset) =>
-      codes.find(
-        (code) => code.id === asset?.qrId && (code.assetId || code.kitId),
-      ),
+      codes.find((code) => code.id === asset?.qrId && code.assetId),
     );
     if (linkedCodes.length) {
       throw new ShelfError({

@@ -15,21 +15,17 @@ import { getCategory } from "~/modules/category/service.server";
 import { lockAssetForQuantityUpdate } from "~/modules/consumption-log/quantity-lock.server";
 import { createConsumptionLog } from "~/modules/consumption-log/service.server";
 import { getActiveCustomFields } from "~/modules/custom-field/service.server";
-import { bulkAssignKitCustody } from "~/modules/kit/service.server";
 import { getQr } from "~/modules/qr/service.server";
 import { ShelfError } from "~/utils/error";
 import { createSignedUrl } from "~/utils/storage.server";
 import {
   BULK_CREATE_MAX,
-  bulkAssignAssetTags,
   bulkCheckOutAssets,
   bulkCreateAssetsFromModel,
   bulkDeleteAssets,
   bulkUpdateAssetCategory,
-  buildAssetKitCreateData,
   checkOutQuantity,
   createAsset,
-  setKitCustodyAfterAssetImport,
   getActiveCustomFieldsForAsset,
   moveAssetLocationUnits,
   getAssets,
@@ -187,15 +183,17 @@ vitest.mock("~/modules/category/service.server", async () => {
 });
 
 // why: avoid real QR lookup during relink tests
-vitest.mock("~/modules/qr/service.server", () => ({
-  getQr: vitest.fn(),
+// why: `updateAssetLifecycleStage` now runs the goods-receipt signature gate
+// before an approval. That rule is covered by `lifecycle-stage.test.ts` and by
+// the gate's own tests; here it is stubbed so these cases stay about what the
+// lifecycle change *writes*, and so a shared `db.asset.findMany` mock cannot
+// decide whether an approval is allowed.
+vitest.mock("~/modules/goods-receipt/receipt-gate.server", () => ({
+  assertReceiptSignedBeforeApproval: vitest.fn().mockResolvedValue(undefined),
 }));
 
-// why: setKitCustodyAfterAssetImport delegates to the canonical bulkAssignKitCustody
-// flow (kit/service). Mock it so we can assert the delegation (grouping by
-// custodian) without running the full kit-custody transaction.
-vitest.mock("~/modules/kit/service.server", () => ({
-  bulkAssignKitCustody: vitest.fn(),
+vitest.mock("~/modules/qr/service.server", () => ({
+  getQr: vitest.fn(),
 }));
 
 // why: avoid hitting Supabase storage during uploadDuplicateAssetMainImage tests
@@ -281,13 +279,12 @@ describe("relinkAssetQrCode (asset)", () => {
     vitest.clearAllMocks();
   });
 
-  it("throws when QR is already linked to a kit", async () => {
+  it("throws when QR is already linked to another asset", async () => {
     //@ts-expect-error mock setup
     getQr.mockResolvedValue({
       id: "qr-1",
       organizationId: "org-1",
-      assetId: null,
-      kitId: "kit-1",
+      assetId: "asset-other",
     });
     //@ts-expect-error mock setup
     db.asset.findFirst.mockResolvedValue({ qrCodes: [] });
@@ -308,7 +305,6 @@ describe("relinkAssetQrCode (asset)", () => {
       id: "qr-1",
       organizationId: "org-1",
       assetId: null,
-      kitId: null,
     });
     //@ts-expect-error mock setup
     db.asset.findFirst.mockResolvedValue({ qrCodes: [{ id: "old-qr" }] });
@@ -658,9 +654,6 @@ describe("checkOutQuantity — availability accounting", () => {
   // declared unique and we no longer have one. Track the create call as
   // the "new operator-allocated row was written" signal.
   const mockCustodyCreate = db.custody.create as ReturnType<typeof vitest.fn>;
-  const mockBookingAssetAggregate = db.bookingAsset.aggregate as ReturnType<
-    typeof vitest.fn
-  >;
   const mockAssetFindUniqueOrThrow = db.asset.findUniqueOrThrow as ReturnType<
     typeof vitest.fn
   >;
@@ -689,13 +682,11 @@ describe("checkOutQuantity — availability accounting", () => {
     (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({});
   });
 
-  it("rejects when booking-reserved units push requested qty over available", async () => {
-    // Regression guard: availability must subtract BOTH direct custody
-    // AND units tied to ONGOING/OVERDUE bookings. Without the booking
-    // term, the math is `100 - 0 = 100` and this checkout would
-    // silently succeed even though only 20 units are physically free.
-    mockCustodyAggregate.mockResolvedValue({ _sum: { quantity: 0 } });
-    mockBookingAssetAggregate.mockResolvedValue({ _sum: { quantity: 80 } });
+  it("rejects when custody already holds more than the requested qty leaves", async () => {
+    // Availability is `total − custody`. With 80 of 100 units already in
+    // custody only 20 are free, so a 25-unit checkout must be refused
+    // rather than over-allocating the pool.
+    mockCustodyAggregate.mockResolvedValue({ _sum: { quantity: 80 } });
 
     let caught: unknown;
     try {
@@ -712,18 +703,16 @@ describe("checkOutQuantity — availability accounting", () => {
 
     expect(caught).toBeInstanceOf(ShelfError);
     expect((caught as ShelfError).status).toBe(400);
-    // why: "Only 20" is the single most operator-meaningful substring — it
-    // encodes the post-fix math (100 - 0 - 80 = 20) and would not appear if
-    // the service regressed to "Only 100 available" (custody-only math).
+    // why: "Only 20" encodes the math (100 - 80) and would not appear if the
+    // service regressed to reporting the full pool as available.
     expect((caught as ShelfError).message).toContain("Only 20");
     // The service must not create a custody row or log entry on rejection.
     expect(mockCustodyCreate).not.toHaveBeenCalled();
     expect(mockCreateConsumptionLog).not.toHaveBeenCalled();
   });
 
-  it("accepts a checkout that fits within (total − custody − booked) availability", async () => {
-    mockCustodyAggregate.mockResolvedValue({ _sum: { quantity: 0 } });
-    mockBookingAssetAggregate.mockResolvedValue({ _sum: { quantity: 80 } });
+  it("accepts a checkout that fits within (total − custody) availability", async () => {
+    mockCustodyAggregate.mockResolvedValue({ _sum: { quantity: 80 } });
 
     await checkOutQuantity({
       assetId: "asset-1",
@@ -740,13 +729,11 @@ describe("checkOutQuantity — availability accounting", () => {
     );
   });
 
-  it("ignores RESERVED bookings when computing availability", async () => {
-    // The service's bookingAsset.aggregate call filters on
-    // `status: { in: ["ONGOING", "OVERDUE"] }`, so RESERVED bookings are
-    // excluded at the DB layer. We mirror that by returning 0 from the
-    // aggregate mock — a RESERVED-only booking contributes nothing.
+  it("computes availability from custody alone", async () => {
+    // why: availability used to subtract a booking term as well. Bookings no
+    // longer participate in the quantity pool, so the only consumer is
+    // custody — a checkout of the whole free pool must succeed.
     mockCustodyAggregate.mockResolvedValue({ _sum: { quantity: 0 } });
-    mockBookingAssetAggregate.mockResolvedValue({ _sum: { quantity: 0 } });
 
     await checkOutQuantity({
       assetId: "asset-1",
@@ -756,17 +743,6 @@ describe("checkOutQuantity — availability accounting", () => {
       organizationId: "org-1",
     });
 
-    // Assert the aggregate was invoked with the ONGOING/OVERDUE filter —
-    // this is what makes RESERVED invisible to availability math.
-    expect(mockBookingAssetAggregate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          assetId: "asset-1",
-          booking: { status: { in: ["ONGOING", "OVERDUE"] } },
-        }),
-        _sum: { quantity: true },
-      }),
-    );
     expect(mockCustodyCreate).toHaveBeenCalledTimes(1);
     expect(mockCreateConsumptionLog).toHaveBeenCalledTimes(1);
   });
@@ -1105,65 +1081,6 @@ describe("bulkUpdateAssetCategory — activity events", () => {
         toValue: null,
       }),
     ]);
-  });
-});
-
-describe("bulkAssignAssetTags — activity events", () => {
-  const mockAssetFindMany = db.asset.findMany as ReturnType<typeof vitest.fn>;
-  const mockAssetUpdate = db.asset.update as ReturnType<typeof vitest.fn>;
-  const mockRecordEvents = recordEvents as ReturnType<typeof vitest.fn>;
-
-  beforeEach(() => {
-    vitest.clearAllMocks();
-  });
-
-  it("emits ASSET_TAGS_CHANGED per asset whose tag set actually changed", async () => {
-    // Pre-fetch returns previous tag arrays per asset.
-    mockAssetFindMany.mockResolvedValue([
-      { id: "asset-1", tags: [{ id: "tag-a", name: "A" }] },
-      // asset-2 already has tag-b — connecting tag-b is a no-op
-      { id: "asset-2", tags: [{ id: "tag-b", name: "B" }] },
-    ]);
-    // The per-asset update returns the asset with the post-update tag set.
-    mockAssetUpdate.mockResolvedValueOnce({
-      id: "asset-1",
-      tags: [
-        { id: "tag-a", name: "A" },
-        { id: "tag-b", name: "B" },
-      ],
-    });
-    mockAssetUpdate.mockResolvedValueOnce({
-      id: "asset-2",
-      // Same set as before — must be filtered out
-      tags: [{ id: "tag-b", name: "B" }],
-    });
-
-    // IDOR check verifies every tagId belongs to this org via tag.findMany.
-    (db.tag.findMany as ReturnType<typeof vitest.fn>).mockResolvedValueOnce([
-      { id: "tag-b" },
-    ]);
-
-    await bulkAssignAssetTags({
-      userId: "user-1",
-      assetIds: ["asset-1", "asset-2"],
-      organizationId: "org-1",
-      tagsIds: ["tag-b"],
-      remove: false,
-      settings: {} as never,
-    });
-
-    expect(mockRecordEvents).toHaveBeenCalledTimes(1);
-    const events = mockRecordEvents.mock.calls[0][0];
-    expect(events).toHaveLength(1);
-    expect(events[0]).toEqual(
-      expect.objectContaining({
-        action: "ASSET_TAGS_CHANGED",
-        entityId: "asset-1",
-        field: "tags",
-        fromValue: ["tag-a"],
-        toValue: ["tag-a", "tag-b"],
-      }),
-    );
   });
 });
 
@@ -1794,112 +1711,6 @@ describe("bulkUpdateAssetCategory", () => {
         settings: {},
       }),
     ).rejects.toThrow(ShelfError);
-  });
-});
-
-describe("bulkAssignAssetTags", () => {
-  beforeEach(() => {
-    vitest.clearAllMocks();
-  });
-
-  it("emits ASSET_TAGS_CHANGED only for assets whose tag set changed", async () => {
-    expect.assertions(2);
-
-    //@ts-expect-error mock setup
-    db.tag.findMany.mockResolvedValue([{ id: "tag-new" }]);
-    //@ts-expect-error mock setup
-    db.asset.findMany.mockResolvedValue([
-      { id: "asset-1", tags: [{ id: "tag-old", name: "Old" }] },
-      { id: "asset-2", tags: [] },
-    ]);
-
-    (db.asset.update as ReturnType<typeof vitest.fn>)
-      .mockResolvedValueOnce({
-        id: "asset-1",
-        tags: [
-          { id: "tag-old", name: "Old" },
-          { id: "tag-new", name: "New" },
-        ],
-      })
-      .mockResolvedValueOnce({
-        id: "asset-2",
-        tags: [{ id: "tag-new", name: "New" }],
-      });
-
-    await bulkAssignAssetTags({
-      userId: "user-1",
-      assetIds: ["asset-1", "asset-2"],
-      organizationId: "org-1",
-      tagsIds: ["tag-new"],
-      remove: false,
-      // @ts-expect-error settings not relevant for this test
-      settings: {},
-    });
-
-    expect(recordEvents).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          action: "ASSET_TAGS_CHANGED",
-          assetId: "asset-1",
-          field: "tags",
-        }),
-        expect.objectContaining({
-          action: "ASSET_TAGS_CHANGED",
-          assetId: "asset-2",
-        }),
-      ]),
-      expect.anything(),
-    );
-    expect(
-      (recordEvents as ReturnType<typeof vitest.fn>).mock.calls[0][0],
-    ).toHaveLength(2);
-  });
-
-  it("throws when any tagId belongs to a different organization", async () => {
-    expect.assertions(1);
-    // why: emulate cross-org tag — org-scoped findMany returns fewer rows
-    //@ts-expect-error mock setup
-    db.tag.findMany.mockResolvedValue([{ id: "tag-own" }]);
-
-    await expect(
-      bulkAssignAssetTags({
-        userId: "user-1",
-        assetIds: ["asset-1"],
-        organizationId: "org-1",
-        tagsIds: ["tag-own", "tag-foreign"],
-        remove: false,
-        // @ts-expect-error settings not relevant for this test
-        settings: {},
-      }),
-    ).rejects.toThrow(ShelfError);
-  });
-
-  // Regression: the per-asset `update` loop runs inside the interactive tx, so
-  // large selections must not abort with P2028 (Sentry SHELF-WEBAPP-1MH).
-  it("raises the interactive transaction timeout to 15s", async () => {
-    expect.assertions(1);
-    //@ts-expect-error mock setup
-    db.tag.findMany.mockResolvedValue([{ id: "tag-new" }]);
-    //@ts-expect-error mock setup
-    db.asset.findMany.mockResolvedValue([{ id: "asset-1", tags: [] }]);
-    (db.asset.update as ReturnType<typeof vitest.fn>).mockResolvedValue({
-      id: "asset-1",
-      tags: [{ id: "tag-new", name: "New" }],
-    });
-
-    await bulkAssignAssetTags({
-      userId: "user-1",
-      assetIds: ["asset-1"],
-      organizationId: "org-1",
-      tagsIds: ["tag-new"],
-      remove: false,
-      // @ts-expect-error settings not relevant for this test
-      settings: {},
-    });
-
-    expect(db.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-      timeout: 15000,
-    });
   });
 });
 
@@ -2748,136 +2559,6 @@ describe("getAssets search fallback", () => {
   });
 });
 
-describe("buildAssetKitCreateData — AssetKit pivot for create-with-kit", () => {
-  it("builds the AssetKit pivot nested-create and never emits a `kit` relation", () => {
-    // why: `Asset.kit` was replaced by the `assetKits` pivot; a `kit: { connect }`
-    // throws `Unknown argument kit` at runtime (the import-crash bug). This guards
-    // against that regression.
-    const result = buildAssetKitCreateData({
-      kitId: "kit-1",
-      organizationId: "org-1",
-      type: "INDIVIDUAL",
-      quantity: null,
-    });
-
-    expect(result).toEqual({
-      assetKits: {
-        create: {
-          kit: { connect: { id: "kit-1" } },
-          organization: { connect: { id: "org-1" } },
-          quantity: 1,
-        },
-      },
-    });
-    expect("kit" in result).toBe(false);
-  });
-
-  it("uses the full tracked pool for QUANTITY_TRACKED assets", () => {
-    const result = buildAssetKitCreateData({
-      kitId: "kit-1",
-      organizationId: "org-1",
-      type: "QUANTITY_TRACKED",
-      quantity: 50,
-    });
-
-    expect(result).toEqual({
-      assetKits: {
-        create: {
-          kit: { connect: { id: "kit-1" } },
-          organization: { connect: { id: "org-1" } },
-          quantity: 50,
-        },
-      },
-    });
-  });
-
-  it("defaults quantity to 1 for a QUANTITY_TRACKED asset with no quantity", () => {
-    const result = buildAssetKitCreateData({
-      kitId: "kit-1",
-      organizationId: "org-1",
-      type: "QUANTITY_TRACKED",
-      quantity: null,
-    });
-
-    expect(result).toEqual({
-      assetKits: {
-        create: {
-          kit: { connect: { id: "kit-1" } },
-          organization: { connect: { id: "org-1" } },
-          quantity: 1,
-        },
-      },
-    });
-  });
-});
-
-describe("setKitCustodyAfterAssetImport — kit custody + member inheritance", () => {
-  const mockBulkAssignKitCustody = vi.mocked(bulkAssignKitCustody);
-
-  beforeEach(() => {
-    vitest.clearAllMocks();
-  });
-
-  it("assigns each kit to its row custodian via bulkAssignKitCustody, grouped by custodian", async () => {
-    // why: custody lives on the kit; members inherit through the canonical flow.
-    const kits = {
-      "Camera Kit": { id: "kit-1", name: "Camera Kit" },
-      "Audio Kit": { id: "kit-2", name: "Audio Kit" },
-    } as never;
-    const teamMembers = {
-      Alice: { id: "tm-1", name: "Alice" },
-      Bob: { id: "tm-2", name: "Bob" },
-    } as never;
-    const data = [
-      { title: "A", key: "1", kit: "Camera Kit", custodian: "Alice" },
-      { title: "B", key: "2", kit: "Camera Kit", custodian: "Alice" },
-      { title: "C", key: "3", kit: "Audio Kit", custodian: "Bob" },
-      { title: "D", key: "4" }, // no kit / custodian -> ignored
-    ] as never;
-
-    await setKitCustodyAfterAssetImport({
-      data,
-      kits,
-      teamMembers,
-      userId: "user-1",
-      organizationId: "org-1",
-    });
-
-    expect(mockBulkAssignKitCustody).toHaveBeenCalledTimes(2);
-    expect(mockBulkAssignKitCustody).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kitIds: ["kit-1"],
-        custodianId: "tm-1",
-        custodianName: "Alice",
-        userId: "user-1",
-        organizationId: "org-1",
-      }),
-    );
-    expect(mockBulkAssignKitCustody).toHaveBeenCalledWith(
-      expect.objectContaining({
-        kitIds: ["kit-2"],
-        custodianId: "tm-2",
-        custodianName: "Bob",
-      }),
-    );
-  });
-
-  it("does nothing when no row carries both a kit and a custodian", async () => {
-    await setKitCustodyAfterAssetImport({
-      data: [
-        { title: "A", key: "1", kit: "Camera Kit" },
-        { title: "B", key: "2", custodian: "Alice" },
-      ] as never,
-      kits: {} as never,
-      teamMembers: {} as never,
-      userId: "user-1",
-      organizationId: "org-1",
-    });
-
-    expect(mockBulkAssignKitCustody).not.toHaveBeenCalled();
-  });
-});
-
 /**
  * Approval and booking availability.
  *
@@ -2972,87 +2653,5 @@ describe("approval opens booking availability", () => {
     expect(db.asset.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { availableToBook: false } }),
     );
-  });
-});
-
-describe("getAssets — excludeCurrentlyBooked", () => {
-  const findManyMock = vi.mocked(db.asset.findMany);
-  const countMock = vi.mocked(db.asset.count);
-
-  const baseParams = {
-    organizationId: "org-1",
-    page: 1,
-    perPage: 8,
-    orderBy: "createdAt" as const,
-    orderDirection: "desc" as const,
-  };
-
-  /** The `where` handed to Prisma by the call under test. */
-  const whereOf = () => (findManyMock.mock.calls[0][0] as any).where;
-
-  /** The two branches of the "is something holding this?" predicate. */
-  const branches = () => whereOf().bookingAssets.none.booking.OR;
-
-  beforeEach(() => {
-    findManyMock.mockReset();
-    countMock.mockReset();
-    findManyMock.mockResolvedValue([] as never);
-    countMock.mockResolvedValue(0 as never);
-  });
-
-  it("adds no booking clause unless asked", async () => {
-    // Every pre-existing caller must keep its behaviour: the main inventory
-    // index would otherwise start hiding reserved stock.
-    await getAssets({ ...baseParams });
-
-    expect(whereOf().bookingAssets).toBeUndefined();
-  });
-
-  it("hides an asset reserved for a window containing now", async () => {
-    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
-
-    const reserved = branches().find((b: any) => b.status === "RESERVED");
-
-    expect(reserved.from.lte).toBeInstanceOf(Date);
-    expect(reserved.to.gte).toBeInstanceOf(Date);
-  });
-
-  it("hides an asset that is out, regardless of its end date", async () => {
-    // The bug this replaced: OVERDUE was ANDed with `to >= now`, but a booking
-    // is overdue precisely because it is past `to` — so the branch could never
-    // fire and an unreturned item still read as available.
-    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
-
-    const out = branches().find((b: any) => Array.isArray(b.status?.in));
-
-    expect(out.status.in).toEqual(
-      expect.arrayContaining(["ONGOING", "OVERDUE"]),
-    );
-    // No window test on this branch — that is the whole point.
-    expect(out.from).toBeUndefined();
-    expect(out.to).toBeUndefined();
-  });
-
-  it("does not let a DRAFT booking hide an asset", async () => {
-    // A draft is unsubmitted and holds nothing. If drafts hid stock, one
-    // employee could empty the catalogue with drafts they never submit.
-    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
-
-    const mentionsDraft = JSON.stringify(branches()).includes("DRAFT");
-
-    expect(mentionsDraft).toBe(false);
-  });
-
-  it("bounds the reserved window to this instant, so a future booking hides nothing", async () => {
-    const before = Date.now();
-    await getAssets({ ...baseParams, excludeCurrentlyBooked: true });
-    const after = Date.now();
-
-    const reserved = branches().find((b: any) => b.status === "RESERVED");
-
-    // `from <= now <= to` selects only bookings straddling the present.
-    expect(reserved.from.lte.getTime()).toBeGreaterThanOrEqual(before);
-    expect(reserved.from.lte.getTime()).toBeLessThanOrEqual(after);
-    expect(reserved.to.gte.getTime()).toEqual(reserved.from.lte.getTime());
   });
 });

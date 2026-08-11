@@ -3,8 +3,7 @@
  *
  * Houses Prisma `where`-clause builders for the Locations index so that bulk
  * "select all" operations resolve the SAME filtered set the user currently
- * sees on screen. Mirrors `getKitsWhereInput` (`~/modules/kit/utils.server`)
- * and `getAssetsWhereInput` (`~/modules/asset/utils.server`).
+ * sees on screen. Mirrors `getAssetsWhereInput` (`~/modules/asset/utils.server`).
  *
  * @see {@link file://./service.server.ts} getLocations — the list loader whose filter this mirrors
  * @see {@link file://./../audit/context-helpers.server.ts} resolveAssetIdsForLocationSelection — consumer for bulk audit

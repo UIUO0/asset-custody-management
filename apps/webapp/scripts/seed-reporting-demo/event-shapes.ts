@@ -107,13 +107,12 @@ export type AssetFieldChangeAction =
   | "ASSET_DESCRIPTION_CHANGED"
   | "ASSET_CATEGORY_CHANGED"
   | "ASSET_LOCATION_CHANGED"
-  | "ASSET_VALUATION_CHANGED"
-  | "ASSET_KIT_CHANGED";
+  | "ASSET_VALUATION_CHANGED";
 
 /**
  * Per-field asset change event. `field` is the logical column name; the
  * `fromValue`/`toValue` payload is stored verbatim as JSON (primitives for
- * name/description/valuation; ids for category/location/kit).
+ * name/description/valuation; ids for category/location).
  */
 export function assetFieldChangedEvent(
   base: BuilderBase & {
@@ -135,26 +134,6 @@ export function assetFieldChangedEvent(
     field: base.field,
     fromValue: base.fromValue,
     toValue: base.toValue,
-    meta: buildMeta(base.extraMeta),
-  };
-}
-
-/**
- * `KIT_CREATED` — emitted once per kit. Entity is the kit itself.
- * Asset-to-kit links are instead represented by `ASSET_KIT_CHANGED` per
- * asset (see `assetFieldChangedEvent` with action `"ASSET_KIT_CHANGED"`).
- */
-export function kitCreatedEvent(
-  base: BuilderBase & { kitId: string },
-): ActivityEventInput {
-  return {
-    ...actorFields(base.actor),
-    organizationId: base.organizationId,
-    occurredAt: base.occurredAt,
-    action: "KIT_CREATED",
-    entityType: "KIT",
-    entityId: base.kitId,
-    kitId: base.kitId,
     meta: buildMeta(base.extraMeta),
   };
 }

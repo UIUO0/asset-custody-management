@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CompassIcon, MapPinIcon, PackageIcon } from "lucide-react";
+import { CompassIcon, MapPinIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Dialog, DialogPortal } from "~/components/layout/dialog";
 import { Button } from "~/components/shared/button";
@@ -78,33 +78,6 @@ export function NewAuditInfoDialog() {
                       onClick={handleClose}
                     >
                       {t("ui.goToLocations")}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {/* From Kit */}
-              <div className="rounded-lg border border-gray-200 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-green-50">
-                    <PackageIcon className="size-5 text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="mb-1 font-medium text-gray-900">
-                      {t("ui.fromKits")}
-                    </h4>
-                    <p className="mb-3 text-sm text-gray-600">
-                      Audit the assets across one or more kits. Great for
-                      verifying that kit contents are complete. Select kits on
-                      the Kits page, then choose Actions → Create audit.
-                    </p>
-                    <Button
-                      to="/kits"
-                      variant="secondary"
-                      size="xs"
-                      onClick={handleClose}
-                    >
-                      {t("ui.goToKits")}
                     </Button>
                   </div>
                 </div>

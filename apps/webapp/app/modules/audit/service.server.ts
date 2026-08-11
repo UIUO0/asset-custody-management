@@ -48,7 +48,6 @@ import {
 import type { AuditSchedulerData } from "./types";
 import { recordEvent, recordEvents } from "../activity-event/service.server";
 import { getPrimaryLocation } from "../asset/utils";
-import { TAG_WITH_COLOR_SELECT } from "../tag/constants";
 const label: ErrorLabel = "Audit";
 
 /**
@@ -210,7 +209,7 @@ export type AuditScanData = {
   /** The ID of the asset that was scanned */
   assetId: string;
   /** The type of item scanned (currently only 'asset' is supported) */
-  type: "asset" | "kit";
+  type: "asset";
   /** When the scan occurred */
   scannedAt: Date;
   /** Whether this asset was expected in the audit */
@@ -1057,7 +1056,6 @@ export async function getAssetsForAuditSession({
             color: true,
           },
         },
-        tags: TAG_WITH_COLOR_SELECT,
         assetLocations: {
           select: {
             quantity: true,

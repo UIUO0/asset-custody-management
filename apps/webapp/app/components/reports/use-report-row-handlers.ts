@@ -28,9 +28,6 @@ export type ReportRowHandlers = {
   /** Navigate to an asset detail page. Accepts any row that exposes
    *  an `assetId`. */
   onAssetRowClick: (row: { assetId: string }) => void;
-  /** Navigate to a kit detail page. Accepts any row that exposes
-   *  a `kitId`. */
-  onKitRowClick: (row: { kitId: string }) => void;
 };
 
 /**
@@ -54,12 +51,5 @@ export function useReportRowHandlers(): ReportRowHandlers {
     [navigate],
   );
 
-  const onKitRowClick = useCallback(
-    (row: { kitId: string }) => {
-      void navigate(`/kits/${row.kitId}`);
-    },
-    [navigate],
-  );
-
-  return { onBookingRowClick, onAssetRowClick, onKitRowClick };
+  return { onBookingRowClick, onAssetRowClick };
 }

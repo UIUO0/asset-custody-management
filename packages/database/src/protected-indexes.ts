@@ -12,11 +12,17 @@ import { fileURLToPath } from "url";
  * Indexes that should be protected from being dropped during migrations.
  * These are crucial for performance in many-to-many relationship queries.
  *
- * _AssetToTag_asset_idx: Optimizes tag filtering operations
+ * Currently empty. The one entry this list ever held —
+ * `_AssetToTag_asset_idx` — went away with the `Tag` model on 2026-08-11.
+ *
+ * ⚠️ Do not treat an empty list as "this mechanism is unnecessary". It is
+ * also not the right tool for most drift: an index that exists in the
+ * database but is not declared in `schema.prisma` gets a `DROP INDEX` in
+ * every migration Prisma generates, and the durable fix is to declare it in
+ * the schema (see the `Location_*_trgm_idx` entries), not to list it here.
+ * This list is the last resort for indexes Prisma cannot express at all.
  */
-const PROTECTED_INDEXES = [
-  "_AssetToTag_asset_idx", // Critical for tag filtering performance
-] as const;
+const PROTECTED_INDEXES: readonly string[] = [];
 
 /**
  * Processes a newly created migration file to remove any DROP INDEX statements

@@ -36,7 +36,7 @@ export const loader = async ({
 
     // why: org-scope the QR lookup. Without organizationId an authenticated
     // user in any workspace could read another tenant's QR (and the linked
-    // asset title / kit name) just by guessing the QR id — cross-org IDOR.
+    // asset title) just by guessing the QR id — cross-org IDOR.
     const { organizationId } = await requirePermission({
       userId,
       request,
@@ -49,18 +49,11 @@ export const loader = async ({
       select: {
         id: true,
         assetId: true,
-        kitId: true,
 
         asset: {
           select: {
             id: true,
             title: true,
-          },
-        },
-        kit: {
-          select: {
-            id: true,
-            name: true,
           },
         },
       },
@@ -112,11 +105,7 @@ export default function QrSuccessfullLink() {
           Your {type} <b>{normalizedName}</b> {t("qr.hasBeenLinked")}
         </p>
         <div className="mt-8 flex w-full flex-col gap-3">
-          <Button
-            to={`/${type === "asset" ? "assets" : "kits"}/${item.id}`}
-            width="full"
-            variant="secondary"
-          >
+          <Button to={`/assets/${item.id}`} width="full" variant="secondary">
             View {type}
           </Button>
           <Button to={`/scanner`} width="full">

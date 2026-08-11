@@ -192,7 +192,7 @@ export async function runBookingsPhase(
  */
 async function createBooking(
   ctx: SeederContext,
-  state: SeederState,
+  _state: SeederState,
   args: {
     popularityOrder: string[];
     createdAt: Date;
@@ -249,11 +249,6 @@ async function createBooking(
       // where a custodian can be either a registered user or a non-user TM).
       custodianTeamMemberId: custodian.teamMemberId,
       custodianUserId: custodian.userId ?? undefined,
-      // Tag the booking so cleanup can identify it. Marker is the first
-      // entry in state.tagIds and must be non-null by Phase 2's contract.
-      tags: state.markerTagId
-        ? { connect: [{ id: state.markerTagId }] }
-        : undefined,
       // Phase 3a renamed the implicit `Asset <-> Booking` M2M to the
       // explicit `BookingAsset` pivot table. Each row is created with
       // `quantity: 1` (the default for INDIVIDUAL assets). Qty-tracked

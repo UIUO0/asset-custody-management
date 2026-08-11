@@ -1,4 +1,3 @@
-import { TagUseFor } from "@prisma/client";
 import { data, type LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/database/db.server";
@@ -27,17 +26,10 @@ export const ModelFiltersSchema = z.discriminatedUnion("name", [
     name: z.literal("asset"),
   }),
   BasicModelFilters.extend({
-    name: z.literal("tag"),
-    useFor: z.nativeEnum(TagUseFor).optional(),
-  }),
-  BasicModelFilters.extend({
     name: z.literal("category"),
   }),
   BasicModelFilters.extend({
     name: z.literal("location"),
-  }),
-  BasicModelFilters.extend({
-    name: z.literal("kit"),
   }),
   BasicModelFilters.extend({
     name: z.literal("teamMember"),
@@ -132,21 +124,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
 
     if (modelFilters.name === "booking") {
       where.status = { in: ["RESERVED", "ONGOING", "OVERDUE"] };
-    }
-
-    if (modelFilters.name === "tag" && modelFilters.useFor) {
-      // Tags with "All" selected are stored with an empty useFor array, so filtering only by `has`
-      // would hide those tags in bulk/tag pickers even though they are intended to be available.
-      // This keeps tag searches consistent with create/edit flows that also include "All" tags.
-      where.AND = [
-        ...(where.AND ?? []),
-        {
-          OR: [
-            { useFor: { isEmpty: true } },
-            { useFor: { has: modelFilters.useFor } },
-          ],
-        },
-      ];
     }
 
     const queryData = (await db[name].dynamicFindMany({

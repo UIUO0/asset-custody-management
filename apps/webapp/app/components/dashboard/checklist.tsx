@@ -8,7 +8,6 @@ import {
   CategoriesIcon,
   CheckmarkIcon,
   CustomFiedIcon,
-  TagsIcon,
   UserIcon,
 } from "../icons/library";
 import { Button } from "../shared/button";
@@ -96,36 +95,6 @@ export default function OnboardingChecklist() {
                   <div className="flex gap-3">
                     <Button variant="link" to="/categories/new">
                       {t("categories.newCategory")}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <i className="hidden text-primary">
-                <CheckmarkIcon />
-              </i>
-            </div>
-          </li>
-          <li
-            className={tw(
-              " mx-1 mb-2 xl:w-[49%]",
-              checklistOptions.hasTags && "completed",
-            )}
-          >
-            <div className="flex h-full items-start justify-between gap-1 rounded border p-4">
-              <div className="flex items-start">
-                <div className="me-3 inline-flex items-center justify-center rounded-full border-[5px] border-solid border-primary-50 bg-primary-100 p-1.5 text-primary">
-                  <TagsIcon />
-                </div>
-                <div className="text-[14px]">
-                  <div className="mb-3">
-                    <h6 className="font-medium text-gray-700">
-                      {t("onboarding.tagTitle")}
-                    </h6>
-                    <p className=" text-gray-600">{t("onboarding.tagText")}</p>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button variant="link" to="/tags/new">
-                      {t("tags.newTag")}
                     </Button>
                   </div>
                 </div>

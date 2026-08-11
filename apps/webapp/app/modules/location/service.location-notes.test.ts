@@ -23,29 +23,14 @@ const dbMocks = vi.hoisted(() => ({
     count: vi.fn(),
   },
   // why: placement lives on the AssetLocation pivot (not Asset.locationId).
-  // updateLocationAssets/updateLocationKits create/delete pivot rows
-  // directly inside the transaction, so the delegate must be mockable.
+  // updateLocationAssets creates/deletes pivot rows directly inside the
+  // transaction, so the delegate must be mockable.
   assetLocation: {
     createMany: vi.fn(),
     deleteMany: vi.fn(),
     findMany: vi.fn(),
-    // why: qty-edit branch uses `updateMany` scoped to `assetKitId IS NULL`
-    // because the (assetId, locationId) composite is no longer unique
-    // (manual + kit-driven rows can coexist).
     update: vi.fn(),
     updateMany: vi.fn(),
-  },
-  // why: kit model stubs for fetching kits affected by location changes
-  kit: {
-    findMany: vi.fn(),
-    // why: org-scope assertion in updateLocationKits calls db.kit.count
-    count: vi.fn(),
-  },
-  // why: kit-driven AssetLocation cascade in `updateLocationKits`
-  // re-creates rows from the matching AssetKit rows; the cascade
-  // fetches them inside the tx.
-  assetKit: {
-    findMany: vi.fn().mockResolvedValue([]),
   },
   // why: user model stubs for resolving actor info in activity events
   user: {
@@ -60,8 +45,6 @@ const dbMocks = vi.hoisted(() => ({
       location: dbMocks.location,
       asset: dbMocks.asset,
       assetLocation: dbMocks.assetLocation,
-      assetKit: dbMocks.assetKit,
-      kit: dbMocks.kit,
       user: dbMocks.user,
     };
     return cb(txClient);
@@ -102,11 +85,6 @@ vi.mock("~/modules/activity-event/service.server", () => ({
 vi.mock("~/modules/asset/utils.server", () => ({
   getAssetsWhereInput: vi.fn(() => ({})),
   getLocationUpdateNoteContent: vi.fn(() => "asset note"),
-  getKitLocationUpdateNoteContent: vi.fn(() => "kit asset note"),
-}));
-
-vi.mock("~/modules/kit/utils.server", () => ({
-  getKitsWhereInput: vi.fn(() => ({})),
 }));
 
 vi.mock("~/utils/http.server", () => ({
@@ -142,12 +120,8 @@ vi.mock("~/utils/error", () => {
   };
 });
 
-const {
-  updateLocation,
-  updateLocationAssets,
-  updateLocationKits,
-  createLocationChangeNote,
-} = await import("./service.server");
+const { updateLocation, updateLocationAssets, createLocationChangeNote } =
+  await import("./service.server");
 
 describe("location service activity logging", () => {
   beforeEach(() => {
@@ -163,7 +137,6 @@ describe("location service activity logging", () => {
       // relation. updateLocationAssets reads `location.assetLocations` to
       // derive the current placement set.
       assetLocations: [],
-      kits: [],
     });
 
     dbMocks.location.update.mockResolvedValue({ id: "loc-1" });
@@ -177,13 +150,9 @@ describe("location service activity logging", () => {
       firstName: "Jane",
       lastName: "Doe",
     });
-    dbMocks.kit.findMany.mockResolvedValue([]);
     // why: assertion helpers count submitted IDs; default to "all authorized"
     // so happy-path tests don't have to wire it up explicitly
     dbMocks.asset.count.mockImplementation(({ where }: any) =>
-      Promise.resolve(where?.id?.in?.length ?? 0),
-    );
-    dbMocks.kit.count.mockImplementation(({ where }: any) =>
       Promise.resolve(where?.id?.in?.length ?? 0),
     );
     locationNoteMocks.createSystemLocationNote.mockResolvedValue(undefined);
@@ -504,7 +473,6 @@ describe("location service activity logging", () => {
         longitude: null,
         // Pens is already at loc-1 with qty 60.
         assetLocations: [{ assetId: "pens", quantity: 60 }],
-        kits: [],
       });
       dbMocks.asset.findMany.mockResolvedValueOnce([
         modifiedAssetRow({
@@ -554,7 +522,6 @@ describe("location service activity logging", () => {
         latitude: null,
         longitude: null,
         assetLocations: [{ assetId: "pens", quantity: 30 }],
-        kits: [],
       });
       dbMocks.asset.findMany.mockResolvedValueOnce([
         modifiedAssetRow({
@@ -581,115 +548,15 @@ describe("location service activity logging", () => {
         assetQuantities: { pens: 50 },
       });
 
-      // The qty-edit branch uses `updateMany` scoped to
-      // `assetKitId: null` because the (assetId, locationId) composite
-      // isn't unique when manual + kit-driven rows can coexist. The
-      // partial unique `AssetLocation_manual_unique` still caps it at
-      // one match.
+      // The qty-edit branch uses `updateMany` rather than `update`
+      // because (assetId, locationId) is enforced by the partial unique
+      // `AssetLocation_manual_unique`, not a Prisma compound key.
       expect(dbMocks.assetLocation.updateMany).toHaveBeenCalledWith({
-        where: { assetId: "pens", locationId: "loc-1", assetKitId: null },
+        where: { assetId: "pens", locationId: "loc-1" },
         data: { quantity: 50 },
       });
       // No createMany because the asset is already at this location.
       expect(dbMocks.assetLocation.createMany).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("updateLocationKits", () => {
-    it("records notes when kits are assigned", async () => {
-      dbMocks.location.findUniqueOrThrow.mockResolvedValueOnce({
-        id: "loc-1",
-        organizationId: "org-1",
-        kits: [],
-      });
-
-      dbMocks.location.update.mockResolvedValueOnce({ id: "loc-1" });
-
-      const kitAssets = [
-        {
-          id: "asset-1",
-          title: "Lens",
-          location: { id: "loc-9", name: "Main" },
-        },
-      ];
-
-      // Phase-4a: Kit now exposes assets through the AssetKit pivot
-      const kitRecords = [
-        {
-          id: "kit-1",
-          name: "Shoot Kit",
-          assetKits: kitAssets.map((asset) => ({ asset })),
-        },
-      ];
-
-      dbMocks.kit.findMany
-        .mockResolvedValueOnce(kitRecords)
-        .mockResolvedValueOnce(kitRecords);
-
-      await updateLocationKits({
-        locationId: "loc-1",
-        kitIds: ["kit-1"],
-        removedKitIds: [],
-        organizationId: "org-1",
-        userId: "user-1",
-        request: new Request("https://example.com"),
-      });
-
-      expect(locationNoteMocks.createSystemLocationNote).toHaveBeenCalledWith(
-        expect.objectContaining({
-          locationId: "loc-1",
-          content: expect.stringContaining("Shoot Kit"),
-        }),
-      );
-    });
-  });
-
-  describe("updateLocationKits cross-organization guard", () => {
-    it("rejects when a kitId does not belong to the caller's organization", async () => {
-      dbMocks.kit.count.mockResolvedValueOnce(1);
-
-      await expect(
-        updateLocationKits({
-          locationId: "loc-1",
-          kitIds: ["kit-mine", "kit-foreign"],
-          removedKitIds: [],
-          organizationId: "org-1",
-          userId: "user-1",
-          request: new Request("https://example.com"),
-        }),
-      ).rejects.toMatchObject({ status: 403 });
-
-      expect(dbMocks.location.update).not.toHaveBeenCalled();
-    });
-
-    it("rejects when a removedKitId does not belong to the caller's organization", async () => {
-      dbMocks.kit.count.mockResolvedValueOnce(0);
-
-      await expect(
-        updateLocationKits({
-          locationId: "loc-1",
-          kitIds: [],
-          removedKitIds: ["kit-foreign"],
-          organizationId: "org-1",
-          userId: "user-1",
-          request: new Request("https://example.com"),
-        }),
-      ).rejects.toMatchObject({ status: 403 });
-
-      expect(dbMocks.location.update).not.toHaveBeenCalled();
-    });
-
-    it("skips the count query when no kit IDs are submitted", async () => {
-      await updateLocationKits({
-        locationId: "loc-1",
-        kitIds: [],
-        removedKitIds: [],
-        organizationId: "org-1",
-        userId: "user-1",
-        request: new Request("https://example.com"),
-      });
-
-      expect(dbMocks.kit.count).not.toHaveBeenCalled();
     });
   });
 });

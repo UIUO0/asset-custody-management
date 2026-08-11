@@ -57,7 +57,6 @@ export const QR_SELECT_FOR_REPORT = {
   organizationId: true,
   userId: true,
   assetId: true,
-  kitId: true,
   asset: {
     select: {
       id: true,
@@ -74,7 +73,6 @@ export const QR_SELECT_FOR_REPORT = {
       },
     },
   },
-  kit: true,
 };
 
 export async function loader({ params }: LoaderFunctionArgs) {
@@ -142,7 +140,6 @@ export async function action({ request, params }: ActionFunctionArgs) {
       email,
       content,
       assetId: qr?.asset?.id,
-      kitId: qr?.kit?.id,
     });
 
     /**

@@ -86,12 +86,12 @@ export function wrapAssetsWithDataForNote(
  *
  * For INDIVIDUAL assets — or a missing / non-positive quantity — it returns
  * the bare asset link, so existing note phrasing is byte-for-byte unchanged.
- * Use this for per-asset notes (kit add/remove, location move, booking add)
+ * Use this for per-asset notes (location move, booking add)
  * where the asset appears as a single link in the sentence; the calling verb
- * wraps around it (e.g. `added ${fragment} to ${kit}`).
+ * wraps around it (e.g. `added ${fragment} to ${location}`).
  *
  * @param asset - Asset with id, title, type, and unitOfMeasure
- * @param quantity - The PIVOT-row quantity (AssetKit / AssetLocation /
+ * @param quantity - The PIVOT-row quantity (AssetLocation /
  *   BookingAsset / Custody `.quantity`), NOT `Asset.quantity`
  * @returns `"50 units of {% link ... /%}"` or just `"{% link ... /%}"`
  */
@@ -108,64 +108,6 @@ export function wrapAssetWithCountForNote(
   const count = formatUnitCount(asset, quantity);
   return count ? `${count} of ${link}` : link;
 }
-
-/**
- * Wraps kit information in Markdoc kits_list tag syntax for interactive display
- *
- * @param kitIds - Array of kit IDs or single kit ID
- * @param action - Action performed on the kits (e.g., "added", "removed")
- * @returns String with kits wrapped in Markdoc tag syntax
- *
- * Example: wrapKitsForNote(["id1", "id2"], "added") -> "{% kits_list count=2 ids=\"id1,id2\" action=\"added\" /%}"
- */
-export function wrapKitsForNote(
-  kitIds: string[] | string,
-  action: string = "added",
-): string {
-  const ids = Array.isArray(kitIds) ? kitIds : [kitIds];
-  const count = ids.length;
-  const idsString = ids.join(",");
-
-  return `{% kits_list count=${count} ids="${idsString}" action="${action.replace(
-    /"/g,
-    "&quot;",
-  )}" /%}`;
-}
-
-/**
- * Wraps kit information with actual kit data to avoid loading flash for single items
- *
- * @param kits - Array of kit objects with id and name, or single kit object
- * @param action - Action performed on the kits (e.g., "added", "removed")
- * @returns String with appropriate format based on count
- *
- * For single kit: Direct link with name
- * For multiple kits: Interactive component with popover
- */
-export function wrapKitsWithDataForNote(
-  kits: Array<{ id: string; name: string }> | { id: string; name: string },
-  action: string = "added",
-): string {
-  const kitArray = Array.isArray(kits) ? kits : [kits];
-  const count = kitArray.length;
-
-  if (count === 1) {
-    // For single kit, use link tag to ensure proper styling and new tab behavior
-    const kit = kitArray[0];
-    return `{% link to="/kits/${kit.id}" text="${kit.name.replace(
-      /"/g,
-      "&quot;",
-    )}" /%}`;
-  } else {
-    // For multiple kits, use interactive component
-    const idsString = kitArray.map((k) => k.id).join(",");
-    return `{% kits_list count=${count} ids="${idsString}" action="${action.replace(
-      /"/g,
-      "&quot;",
-    )}" /%}`;
-  }
-}
-
 /**
  * Creates a consistent user link for notes using Markdoc link tag
  *
@@ -201,36 +143,6 @@ export function wrapUserLinkForNote(user: {
 export function wrapLinkForNote(to: string, text: string): string {
   return `{% link to="${to}" text="${text.replace(/"/g, "&quot;")}" /%}`;
 }
-
-export function wrapTagForNote(tag: {
-  id?: string | null;
-  name: string;
-}): string {
-  const sanitizedName = tag.name.replace(/"/g, "&quot;");
-  const idAttr = tag.id ? ` id="${tag.id}"` : "";
-  return `{% tag name="${sanitizedName}"${idAttr} /%}`;
-}
-
-/**
- * Wraps booking status in Markdoc booking_status tag syntax for consistent display
- *
- * @param status - Booking status (DRAFT, RESERVED, ONGOING, etc.)
- * @param custodianUserId - Optional custodian user ID for extra tooltip info
- * @returns String with booking status wrapped in Markdoc tag syntax
- *
- * Example: wrapBookingStatusForNote("RESERVED", "user123")
- * -> "{% booking_status status=\"RESERVED\" custodianUserId=\"user123\" /%}"
- */
-export function wrapBookingStatusForNote(
-  status: string,
-  custodianUserId?: string,
-): string {
-  const custodianAttr = custodianUserId
-    ? ` custodianUserId="${custodianUserId}"`
-    : "";
-  return `{% booking_status status="${status}"${custodianAttr} /%}`;
-}
-
 /**
  * Regular expression to match Markdoc assets_list tags in note content
  * Matches: {% assets_list count=3 ids="id1,id2,id3" action="added" /%}

@@ -16,7 +16,7 @@ The `ALL_SELECTED_KEY` pattern enables users to select **all items matching curr
 
 When a user has:
 
-1. Active filters applied (e.g., category, location, tags, search)
+1. Active filters applied (e.g., category, location, search)
 2. Multiple pages of results
 3. Clicks "Select All"
 
@@ -314,8 +314,7 @@ export function getAssetsWhereInput({
 
   const searchParams = new URLSearchParams(currentSearchParams);
   const paramsValues = getParamsValues(searchParams);
-  const { categoriesIds, locationIds, tagsIds, search, teamMemberIds } =
-    paramsValues;
+  const { categoriesIds, locationIds, search, teamMemberIds } = paramsValues;
 
   // Apply filters to where clause
   if (search) {
@@ -339,7 +338,6 @@ export function getAssetsWhereInput({
 
 - Text search
 - Categories (including "uncategorized")
-- Tags (including "untagged")
 - Locations (including "without-location")
 - Team members / custodians
 - Status
@@ -367,27 +365,17 @@ All these operations follow the same pattern shown above:
    - Route: `app/routes/api+/assets.bulk-update-category.ts`
    - Service: `app/modules/asset/service.server.ts`
 
-4. **bulkAssignAssetTags** - Assign/remove tags for multiple assets
-
-   - Route: `app/routes/api+/assets.bulk-assign-tags.ts`
-   - Service: `app/modules/asset/service.server.ts`
-
-5. **bulkCheckOutAssets** (bulkAssignCustody) - Assign custody
+4. **bulkCheckOutAssets** (bulkAssignCustody) - Assign custody
 
    - Route: `app/routes/api+/assets.bulk-assign-custody.ts`
    - Service: `app/modules/asset/service.server.ts`
 
-6. **bulkCheckInAssets** (bulkReleaseCustody) - Release custody
+5. **bulkCheckInAssets** (bulkReleaseCustody) - Release custody
 
    - Route: `app/routes/api+/assets.bulk-release-custody.ts`
    - Service: `app/modules/asset/service.server.ts`
 
-7. **bulkRemoveAssetsFromKits** - Remove assets from kits
-
-   - Route: `app/routes/api+/assets.bulk-remove-from-kits.ts`
-   - Service: `app/modules/kit/service.server.ts`
-
-8. **bulkDeleteAssets** - Delete multiple assets
+6. **bulkDeleteAssets** - Delete multiple assets
    - Route: `app/routes/_layout+/assets._index.tsx` (action)
    - Route: `app/routes/_layout+/admin-dashboard+/org.$organizationId.assets.tsx` (action)
    - Service: `app/modules/asset/service.server.ts`
@@ -496,9 +484,9 @@ When implementing a new bulk operation with Select All:
 - [ ] Filters are applied correctly when selecting all
 - [ ] Works with multi-page datasets
 - [ ] Respects search text filter
-- [ ] Respects dropdown filters (category, location, tags, etc.)
+- [ ] Respects dropdown filters (category, location, etc.)
 - [ ] Works with combined filters
-- [ ] Handles "uncategorized", "untagged", "without-location" special cases
+- [ ] Handles "uncategorized" and "without-location" special cases
 - [ ] Performance is acceptable with large datasets
 - [ ] Error handling for failed operations
 

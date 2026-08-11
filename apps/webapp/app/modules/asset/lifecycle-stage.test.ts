@@ -1,145 +1,160 @@
 /**
- * Asset intake-stage tests (مرحلة استلام الصنف)
+ * The signature gate on single-asset approval.
  *
- * Covers the permission and query rules that make the intake workflow real:
+ * `updateAssetLifecycleStage` is the door the **asset page** approves through.
+ * Until 2026-08-10 it did not call `assertReceiptSignedBeforeApproval` at all,
+ * while the index's bulk action did — so the same item could be refused from
+ * one screen and released from another, and the bulk path's comment claimed to
+ * be "the single chokepoint every approval passes through" while it was not.
  *
- * 1. Only roles holding `asset.approve` can move an asset between stages.
- * 2. A newly-created asset starts at PENDING, so an omitted field can never
- *    produce a ready-to-distribute asset.
- * 3. Roles scoped to their own records never see PENDING assets — at the query
- *    level, not just hidden in the UI.
+ * Kept out of `service.server.test.ts` deliberately: that file is currently
+ * unrunnable (it imports the kit service, which is being removed in a separate
+ * change), and a rule about what may enter circulation should not be
+ * unverifiable because an unrelated module is mid-demolition.
  *
- * The third property is the one that matters most: if it regresses, employees
- * start seeing (and booking) inventory the warehouse has not released.
- *
- * @see {@link file://./service.server.ts} `updateAssetLifecycleStage`, `getAssets`
- * @see {@link file://./../../utils/permissions/role-scope.ts}
+ * @see {@link file://./service.server.ts} `updateAssetLifecycleStage`
+ * @see {@link file://./../goods-receipt/receipt-gate.server.ts}
  */
 
-import { AssetLifecycleStage, OrganizationRoles } from "@prisma/client";
-import { describe, expect, it } from "vitest";
-import {
-  PermissionAction,
-  PermissionEntity,
-  Role2PermissionMap,
-} from "~/utils/permissions/permission.data";
-import { userHasPermission } from "~/utils/permissions/permission.validator";
-import { rolesAreScopedToOwnRecords } from "~/utils/permissions/role-scope";
+import { AssetLifecycleStage } from "@prisma/client";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-describe("asset.approve permission", () => {
-  it("is held by المستودعات (WAREHOUSE) — they release assets into circulation", () => {
-    expect(
-      userHasPermission({
-        roles: [OrganizationRoles.WAREHOUSE],
-        entity: PermissionEntity.asset,
-        action: PermissionAction.approve,
-      }),
-    ).toBe(true);
-  });
+// why: the function under test is a single `findFirst` + `update` around the
+// rule being tested; mocking the client keeps the rule testable without a
+// database. Only the delegates this path touches are implemented.
+vi.mock("~/database/db.server", () => ({
+  db: {
+    asset: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+      update: vi.fn(),
+    },
+    user: { findUniqueOrThrow: vi.fn() },
+    note: { create: vi.fn(), createMany: vi.fn() },
+  },
+}));
 
-  it("is NOT held by المالية (FINANCE) — they code assets, they do not release them", () => {
-    expect(Role2PermissionMap.FINANCE?.asset).not.toContain(
-      PermissionAction.approve,
-    );
-    expect(
-      userHasPermission({
-        roles: [OrganizationRoles.FINANCE],
-        entity: PermissionEntity.asset,
-        action: PermissionAction.approve,
-      }),
-    ).toBe(false);
-  });
+// why: the gate has its own tests and its own database reads. What this file
+// pins is whether this door *reaches* it, and on which transitions — so it is
+// stubbed and the assertions are about the call, not the query behind it.
+const assertReceiptSignedBeforeApproval = vi.fn();
+vi.mock("~/modules/goods-receipt/receipt-gate.server", () => ({
+  assertReceiptSignedBeforeApproval: (...args: unknown[]) =>
+    assertReceiptSignedBeforeApproval(...args),
+}));
 
-  it("is NOT held by المخزون (INVENTORY) or by ordinary employees", () => {
-    for (const role of [
-      OrganizationRoles.INVENTORY,
-      OrganizationRoles.BASE,
-      OrganizationRoles.SELF_SERVICE,
-    ]) {
-      expect(
-        userHasPermission({
-          roles: [role],
-          entity: PermissionEntity.asset,
-          action: PermissionAction.approve,
-        }),
-      ).toBe(false);
-    }
-  });
+// why: the note writer is a separate concern with its own tests, and letting it
+// run here would only re-exercise its own database mocks.
+vi.mock("~/modules/note/service.server", () => ({
+  createNote: vi.fn().mockResolvedValue(undefined),
+  createNotes: vi.fn().mockResolvedValue(undefined),
+  createAssetQuantityChangeNote: vi.fn().mockResolvedValue(undefined),
+  createAssetValuationChangeNote: vi.fn().mockResolvedValue(undefined),
+}));
 
-  it("is held by OWNER and ADMIN, who bypass the map entirely", () => {
-    for (const role of [OrganizationRoles.OWNER, OrganizationRoles.ADMIN]) {
-      expect(
-        userHasPermission({
-          roles: [role],
-          entity: PermissionEntity.asset,
-          action: PermissionAction.approve,
-        }),
-      ).toBe(true);
-    }
-  });
-});
+const { db } = await import("~/database/db.server");
+const { updateAssetLifecycleStage } = await import("./service.server");
 
-describe("intake stage defaults", () => {
-  /**
-   * The creation form hides the stage control from roles without
-   * `asset.approve`, so those callers submit no `lifecycleStage` at all. The
-   * action coerces that to PENDING; this test pins the coercion rule so a
-   * future refactor cannot quietly flip the default back to READY.
-   */
-  const resolveRequestedStage = (
-    canApprove: boolean,
-    submitted?: AssetLifecycleStage,
-  ) => (canApprove ? submitted : AssetLifecycleStage.PENDING);
+const mocked = db as unknown as {
+  asset: {
+    findFirst: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
+  user: { findUniqueOrThrow: ReturnType<typeof vi.fn> };
+};
 
-  it("defaults to PENDING when the field is omitted", () => {
-    expect(resolveRequestedStage(true, undefined)).toBeUndefined();
-    expect(resolveRequestedStage(false, undefined)).toBe(
-      AssetLifecycleStage.PENDING,
-    );
-  });
+const baseArgs = {
+  id: "asset-1",
+  organizationId: "org-1",
+  userId: "user-1",
+};
 
-  it("ignores a forged READY from a caller who cannot approve", () => {
-    expect(resolveRequestedStage(false, AssetLifecycleStage.READY)).toBe(
-      AssetLifecycleStage.PENDING,
-    );
-  });
-
-  it("honours READY from a caller who can approve", () => {
-    expect(resolveRequestedStage(true, AssetLifecycleStage.READY)).toBe(
-      AssetLifecycleStage.READY,
-    );
+beforeEach(() => {
+  vi.clearAllMocks();
+  assertReceiptSignedBeforeApproval.mockResolvedValue(undefined);
+  mocked.asset.update.mockResolvedValue({});
+  mocked.user.findUniqueOrThrow.mockResolvedValue({
+    id: "user-1",
+    firstName: "John",
+    lastName: "Doe",
   });
 });
 
-describe("who may see PENDING assets", () => {
-  /**
-   * `onlyReadyAssets` is derived from `isScopedToOwnRecords` at every read
-   * path. Asserting the derivation here keeps the two concepts tied together:
-   * if a role ever becomes org-wide, it also gains the intake queue, which is
-   * the intended behaviour for an operational role.
-   */
-  const onlyReadyAssetsFor = (role: OrganizationRoles) =>
-    rolesAreScopedToOwnRecords(role);
+/** Puts the asset in the stage the transition starts from. */
+function assetAt(stage: AssetLifecycleStage) {
+  mocked.asset.findFirst.mockResolvedValue({
+    id: "asset-1",
+    title: "Laptop",
+    lifecycleStage: stage,
+  });
+}
 
-  it("hides them from ordinary employees", () => {
-    expect(onlyReadyAssetsFor(OrganizationRoles.BASE)).toBe(true);
-    expect(onlyReadyAssetsFor(OrganizationRoles.SELF_SERVICE)).toBe(true);
+describe("updateAssetLifecycleStage — receipt signature gate", () => {
+  it("checks the signatures before releasing an item into circulation", async () => {
+    assetAt(AssetLifecycleStage.PENDING);
+
+    await updateAssetLifecycleStage({
+      ...baseArgs,
+      stage: AssetLifecycleStage.READY,
+    });
+
+    expect(assertReceiptSignedBeforeApproval).toHaveBeenCalledWith({
+      assetIds: ["asset-1"],
+      organizationId: "org-1",
+    });
   });
 
-  it("shows them to the three operational roles and to admins", () => {
-    for (const role of [
-      OrganizationRoles.WAREHOUSE,
-      OrganizationRoles.FINANCE,
-      OrganizationRoles.INVENTORY,
-      OrganizationRoles.ADMIN,
-      OrganizationRoles.OWNER,
-    ]) {
-      expect(onlyReadyAssetsFor(role)).toBe(false);
-    }
+  it("does not write the stage when the gate refuses", async () => {
+    // The point of the gate: an unsigned delivery's items stay out of
+    // circulation. A check that ran but let the write through anyway would be
+    // worse than no check, because the screen would say it succeeded.
+    assetAt(AssetLifecycleStage.PENDING);
+    assertReceiptSignedBeforeApproval.mockRejectedValue(
+      new Error("النموذج غير موقّع"),
+    );
+
+    await expect(
+      updateAssetLifecycleStage({
+        ...baseArgs,
+        stage: AssetLifecycleStage.READY,
+      }),
+    ).rejects.toThrow();
+
+    expect(mocked.asset.update).not.toHaveBeenCalled();
   });
 
-  it("hides them from an unregistered role — the gate fails closed", () => {
-    const unregistered = "SOME_FUTURE_ROLE" as OrganizationRoles;
-    expect(onlyReadyAssetsFor(unregistered)).toBe(true);
+  it("leaves a send-back ungated", async () => {
+    // A send-back pulls an item *out* of circulation. Gating it on a signature
+    // would trap an item approved by mistake exactly where it must not be.
+    assetAt(AssetLifecycleStage.READY);
+
+    await updateAssetLifecycleStage({
+      ...baseArgs,
+      stage: AssetLifecycleStage.PENDING,
+      reason: "Missing financial coding",
+    });
+
+    expect(assertReceiptSignedBeforeApproval).not.toHaveBeenCalled();
+    expect(mocked.asset.update).toHaveBeenCalled();
+  });
+
+  it("still couples approval to booking availability", async () => {
+    // Guards the pre-existing contract against the gate being added above it:
+    // approval releases the item AND opens it for booking, in one write.
+    assetAt(AssetLifecycleStage.PENDING);
+
+    await updateAssetLifecycleStage({
+      ...baseArgs,
+      stage: AssetLifecycleStage.READY,
+    });
+
+    expect(mocked.asset.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          lifecycleStage: AssetLifecycleStage.READY,
+          availableToBook: true,
+        },
+      }),
+    );
   });
 });

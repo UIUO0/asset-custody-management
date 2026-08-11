@@ -4,7 +4,6 @@ import {
   detectPotentialChanges,
   detectCustomFieldChanges,
   getCustomFieldUpdateNoteContent,
-  getKitLocationUpdateNoteContent,
   getLocationUpdateNoteContent,
 } from "./utils.server";
 
@@ -770,72 +769,5 @@ describe("getLocationUpdateNoteContent", () => {
       expect(result).toContain("set the location to");
       expect(result).not.toMatch(/\d+\s+units?/);
     });
-  });
-});
-
-describe("getKitLocationUpdateNoteContent", () => {
-  const userArgs = {
-    userId: "u1",
-    firstName: "Alex",
-    lastName: "Doe",
-  };
-  const officeA = { id: "loc-a", name: "Office A" };
-
-  it("appends the kit-assignment suffix to the original INDIVIDUAL phrase", () => {
-    const result = getKitLocationUpdateNoteContent({
-      ...userArgs,
-      currentLocation: null,
-      newLocation: officeA,
-      isRemoving: false,
-      type: AssetType.INDIVIDUAL,
-    });
-
-    expect(result).toContain("set the location to");
-    expect(result).toContain("Office A");
-    expect(result.endsWith("via parent kit assignment.")).toBe(true);
-    expect(result).not.toMatch(/\d+\s+units?/);
-  });
-
-  it("appends the kit-removal suffix to the original INDIVIDUAL phrase", () => {
-    const result = getKitLocationUpdateNoteContent({
-      ...userArgs,
-      currentLocation: officeA,
-      newLocation: null,
-      isRemoving: true,
-      type: AssetType.INDIVIDUAL,
-    });
-
-    expect(result).toContain("removed the asset from location");
-    expect(result.endsWith("via parent kit removal.")).toBe(true);
-  });
-
-  it("renders 'placed N units at L … via parent kit assignment.' for qty-tracked", () => {
-    const result = getKitLocationUpdateNoteContent({
-      ...userArgs,
-      currentLocation: null,
-      newLocation: officeA,
-      isRemoving: false,
-      type: AssetType.QUANTITY_TRACKED,
-      quantity: 50,
-    });
-
-    expect(result).toContain("placed 50 units at");
-    expect(result).toContain("Office A");
-    expect(result.endsWith("via parent kit assignment.")).toBe(true);
-  });
-
-  it("renders 'removed N units from L … via parent kit removal.' for qty-tracked", () => {
-    const result = getKitLocationUpdateNoteContent({
-      ...userArgs,
-      currentLocation: officeA,
-      newLocation: null,
-      isRemoving: true,
-      type: AssetType.QUANTITY_TRACKED,
-      quantity: 50,
-    });
-
-    expect(result).toContain("removed 50 units from");
-    expect(result).toContain("Office A");
-    expect(result.endsWith("via parent kit removal.")).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 /** In this file you can find the different ways of fetching data for the asset index. They are either for the simple or advanced mode */
 
-import type { AssetIndexSettings, Kit } from "@prisma/client";
+import type { AssetIndexSettings } from "@prisma/client";
 import type { OrganizationRoles } from "@prisma/client";
 import { data, redirect } from "react-router";
 import type { HeaderData } from "~/components/layout/header/types";
@@ -42,7 +42,6 @@ import { listPresetsForUser } from "../asset-filter-presets/service.server";
 import type { Column } from "../asset-index-settings/helpers";
 import { getActiveCustomFields } from "../custom-field/service.server";
 import type { OrganizationFromUser } from "../organization/service.server";
-import { getTagsForBookingTagsFilter } from "../tag/service.server";
 import {
   getTeamMemberForCustodianFilter,
   getTeamMemberForForm,
@@ -139,18 +138,15 @@ export async function simpleModeLoader({
       perPage,
       page,
       categories,
-      tags,
       assets,
       totalPages,
       cookie,
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
       teamMembers,
       totalTeamMembers,
     },
-    tagsData,
     teamMembersForFormData,
     notifyData,
     savedFilterPresets,
@@ -172,9 +168,6 @@ export async function simpleModeLoader({
       onlyReadyAssets: isScopedToOwnRecords,
       isSelfService,
       userId,
-    }),
-    getTagsForBookingTagsFilter({
-      organizationId,
     }),
     // Team members for booking form - BASE/SELF_SERVICE always get their team member
     isScopedToOwnRecords
@@ -251,7 +244,6 @@ export async function simpleModeLoader({
       header,
       items: assets,
       categories,
-      tags,
       search,
       page,
       totalItems: totalAssets,
@@ -266,7 +258,6 @@ export async function simpleModeLoader({
         text: parseMarkdownToReact(searchFieldTooltipText),
       },
       totalCategories,
-      totalTags,
       locations,
       totalLocations,
       teamMembers,
@@ -285,12 +276,8 @@ export async function simpleModeLoader({
        * Those are fields we need in advanced mode and this helps us prevent type issues.
        * */
       customFields: [],
-      kits: [] as Kit[],
-      totalKits: 0,
       bookings: [] as { id: string; name: string }[],
       totalBookings: 0,
-      // Those tags are used for the tags autocomplete on the booking form
-      tagsData,
       // Saved filter presets
       savedFilterPresets,
       savedFilterPresetLimit: MAX_SAVED_FILTER_PRESETS,
@@ -355,17 +342,13 @@ export async function advancedModeLoader({
     organizationId,
   );
 
-  const {
-    selectedTags,
-    selectedCategory,
-    selectedLocation,
-    selectedAssetModel,
-  } = await getAllSelectedValuesFromFilters(
-    filters,
-    settings.columns as Column[],
-    organizationId,
-    parsedFilters,
-  );
+  const { selectedCategory, selectedLocation, selectedAssetModel } =
+    await getAllSelectedValuesFromFilters(
+      filters,
+      settings.columns as Column[],
+      organizationId,
+      parsedFilters,
+    );
 
   // getEntitiesWithSelectedValues fetches filter dropdown options (tags,
   // categories, locations, asset models). Its output is only used in the final
@@ -374,8 +357,6 @@ export async function advancedModeLoader({
   /** Query entities, tierLimit, assets & more — all in parallel */
   const [
     {
-      tags,
-      totalTags,
       categories,
       totalCategories,
       locations,
@@ -387,9 +368,6 @@ export async function advancedModeLoader({
     { search, totalAssets, perPage, page, assets, totalPages, cookie },
     customFields,
     teamMembersData,
-    kits,
-    totalKits,
-    tagsData,
     teamMembersForFormData,
     bookings,
     totalBookings,
@@ -400,7 +378,6 @@ export async function advancedModeLoader({
     getEntitiesWithSelectedValues({
       organizationId,
       allSelectedEntries,
-      selectedTagIds: selectedTags,
       selectedCategoryIds: selectedCategory,
       selectedLocationIds: selectedLocation,
       selectedAssetModelIds: selectedAssetModel,
@@ -435,19 +412,6 @@ export async function advancedModeLoader({
       userId,
     }),
 
-    // Kits
-    db.kit.findMany({
-      where: { organizationId },
-      take:
-        searchParams.has("getAll") && hasGetAllValue(searchParams, "kit")
-          ? undefined
-          : 12,
-    }),
-    db.kit.count({ where: { organizationId } }),
-    // Tags for booking form
-    getTagsForBookingTagsFilter({
-      organizationId,
-    }),
     // Team members for booking form - BASE/SELF_SERVICE always get their team member
     isScopedToOwnRecords
       ? getTeamMemberForForm({
@@ -572,11 +536,6 @@ export async function advancedModeLoader({
       totalCategories,
       locations,
       totalLocations,
-      kits,
-      totalKits,
-      tags,
-      totalTags,
-      tagsData,
       bookings,
       totalBookings,
       assetModels,

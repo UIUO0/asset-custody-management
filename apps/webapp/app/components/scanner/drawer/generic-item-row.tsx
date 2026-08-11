@@ -9,25 +9,16 @@ import { updateScannedItemAtom } from "~/atoms/qr-scanner";
 import { Button } from "~/components/shared/button";
 import { Td } from "~/components/table";
 import useApiQuery from "~/hooks/use-api-query";
-import type {
-  AssetFromBarcode,
-  KitFromBarcode,
-} from "~/routes/api+/get-scanned-barcode.$value";
-import type {
-  AssetFromQr,
-  KitFromQr,
-} from "~/routes/api+/get-scanned-item.$qrId";
+import type { AssetFromBarcode } from "~/routes/api+/get-scanned-barcode.$value";
+import type { AssetFromQr } from "~/routes/api+/get-scanned-item.$qrId";
 import { tw } from "~/utils/tw";
 
 // Type for the QR API response
 type QrApiResponse = {
   error?: { message: string };
   qr?: {
-    type: "asset" | "kit";
+    type: "asset";
     asset?: AssetFromQr & {
-      [key: string]: any; // Extend with any additional fields you need
-    };
-    kit?: KitFromQr & {
       [key: string]: any; // Extend with any additional fields you need
     };
   };
@@ -37,11 +28,8 @@ type QrApiResponse = {
 type BarcodeApiResponse = {
   error?: { message: string };
   barcode?: {
-    type: "asset" | "kit";
+    type: "asset";
     asset?: AssetFromBarcode & {
-      [key: string]: any; // Extend with any additional fields you need
-    };
-    kit?: KitFromBarcode & {
       [key: string]: any; // Extend with any additional fields you need
     };
   };
@@ -64,12 +52,6 @@ type GenericItemRowProps<T> = {
    */
   assetExtraInclude?: Prisma.AssetInclude;
   /**
-   * Optional array of strings to be sent as search params to the get-scanned-item endpoint
-   * This can allow for additional data to be fetched or included in the kit request for better UX
-   * The strings inside the array should be a json representation of prisma's include/select syntax,
-   */
-  kitExtraInclude?: Prisma.KitInclude;
-  /**
    * Optional additional search params to be sent to the get-scanned-item endpoint
    */
   searchParams?: Record<string, string>;
@@ -88,7 +70,6 @@ export function GenericItemRow<T>({
   renderItem,
   renderLoading,
   assetExtraInclude,
-  kitExtraInclude,
   searchParams: additionalSearchParams,
   className: rowClassName,
 }: GenericItemRowProps<T>) {
@@ -105,10 +86,6 @@ export function GenericItemRow<T>({
   // Add asset extra include if provided
   if (assetExtraInclude) {
     searchParams.append("assetExtraInclude", JSON.stringify(assetExtraInclude));
-  }
-  // Add kit extra include if provided
-  if (kitExtraInclude) {
-    searchParams.append("kitExtraInclude", JSON.stringify(kitExtraInclude));
   }
   // Add any additional search params
   if (additionalSearchParams) {
@@ -149,15 +126,6 @@ export function GenericItemRow<T>({
         const itemWithType: ScanListItem = {
           data: dataSource.asset,
           type: "asset",
-          codeType: codeTypeRef.current,
-        };
-        if (itemWithType.data) {
-          setItem({ qrId, item: itemWithType });
-        }
-      } else if (dataSource && dataSource.type === "kit") {
-        const itemWithType: ScanListItem = {
-          data: dataSource.kit,
-          type: "kit",
           codeType: codeTypeRef.current,
         };
         if (itemWithType.data) {

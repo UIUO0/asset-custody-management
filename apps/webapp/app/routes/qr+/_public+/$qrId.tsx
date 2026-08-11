@@ -116,10 +116,10 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     ];
 
     /**
-     * When there is no assetId or qrId that means that the asset or kit was deleted or the Qr was generated as unlinked.
-     * Here we redirect to a page where the user has the option to link to existing asset or kit create a new one.
+     * When there is no assetId that means that the asset was deleted or the Qr was generated as unlinked.
+     * Here we redirect to a page where the user has the option to link to an existing asset or create a new one.
      */
-    if (!qr.assetId && !qr.kitId) {
+    if (!qr.assetId) {
       return redirect(`link?scanId=${scan.id}`, {
         headers,
       });
@@ -129,14 +129,6 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     if (qr.assetId) {
       return redirect(
         `/assets/${qr.assetId}/overview?ref=qr&scanId=${scan.id}&qrId=${qr.id}`,
-        {
-          headers,
-        },
-      );
-    } else if (qr.kitId) {
-      /** If its linked to a kit, redirect to the kit */
-      return redirect(
-        `/kits/${qr.kitId}?ref=qr&scanId=${scan.id}&qrId=${qr.id}`,
         {
           headers,
         },

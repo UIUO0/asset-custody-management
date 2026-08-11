@@ -8,7 +8,6 @@ import {
   FilePlus2Icon,
   HomeIcon,
   MapPinIcon,
-  PackageIcon,
   SearchIcon,
   SettingsIcon,
   UserIcon,
@@ -47,7 +46,6 @@ export type CommandPaletteSearchResponse = DataOrErrorResponse<{
   query: string;
   assets: AssetSearchResult[];
   audits: AuditSearchResult[];
-  kits: KitSearchResult[];
   locations: LocationSearchResult[];
   teamMembers: TeamMemberSearchResult[];
 }>;
@@ -75,14 +73,6 @@ export type AuditSearchResult = {
   description: string | null;
   status: string;
   dueDate: string | null;
-};
-
-export type KitSearchResult = {
-  id: string;
-  name: string;
-  description: string | null;
-  status: string;
-  assetCount: number;
 };
 
 export type LocationSearchResult = {
@@ -132,7 +122,6 @@ type CommandContext = {
   canReadWorkspaceSettings: boolean;
   canReadDashboard: boolean;
   canCreateAssets: boolean;
-  canCreateKits: boolean;
 };
 
 const NAVIGATION_COMMANDS: QuickCommand[] = [
@@ -143,14 +132,6 @@ const NAVIGATION_COMMANDS: QuickCommand[] = [
     href: "/assets",
     keywords: ["inventory", "items", "equipment"],
     icon: CompassIcon,
-  },
-  {
-    id: "kits",
-    label: "Kits",
-    description: "Browse and manage asset kits",
-    href: "/kits",
-    keywords: ["packages", "bundles", "collections"],
-    icon: PackageIcon,
   },
   {
     id: "audits",
@@ -200,15 +181,6 @@ const ACTION_COMMANDS: QuickAction[] = [
     keywords: ["new", "asset", "inventory"],
     icon: FilePlus2Icon,
     isVisible: ({ canCreateAssets }) => canCreateAssets,
-  },
-  {
-    id: "create-kit",
-    label: "Create kit",
-    description: "Bundle assets into a new kit",
-    href: "/kits/new",
-    keywords: ["new", "kit", "inventory", "collection"],
-    icon: PackageIcon,
-    isVisible: ({ canCreateKits }) => canCreateKits,
   },
   {
     id: "invite-user",
@@ -361,15 +333,6 @@ function getAssetSubtitle(asset: AssetSearchResult, query: string): string {
     asset.locationName ? ` • ${asset.locationName}` : ""
   }`;
 }
-
-export function getKitCommandValue(kit: KitSearchResult) {
-  const searchableFields = [kit.name, kit.description ?? "", kit.id].filter(
-    Boolean,
-  );
-
-  return [`kit-${kit.id}`, ...searchableFields].join(" ").trim();
-}
-
 export function getAuditCommandValue(audit: AuditSearchResult) {
   const searchableFields = [
     audit.name,
@@ -496,7 +459,6 @@ export function CommandPalette() {
         can(PermissionEntity.customField, PermissionAction.read),
       canReadDashboard: can(PermissionEntity.dashboard, PermissionAction.read),
       canCreateAssets: can(PermissionEntity.asset, PermissionAction.create),
-      canCreateKits: can(PermissionEntity.kit, PermissionAction.create),
     };
   }, [roles, isPersonalWorkspace]);
 
@@ -586,13 +548,6 @@ export function CommandPalette() {
     return searchData.assets || [];
   }, [searchData]);
 
-  const kitResults = useMemo(() => {
-    if (!searchData || searchData.error) {
-      return [];
-    }
-    return searchData.kits || [];
-  }, [searchData]);
-
   const auditResults = useMemo(() => {
     if (!searchData || searchData.error) {
       return [];
@@ -635,7 +590,7 @@ export function CommandPalette() {
         ref={inputRef}
         value={query}
         onValueChange={setQuery}
-        placeholder="Search assets, audits, kits, locations, team members..."
+        placeholder="Search assets, audits, locations, team members..."
         className="my-4 rounded border-gray-100"
       />
       <CommandList className="divide-y divide-gray-100">
@@ -703,30 +658,6 @@ export function CommandPalette() {
                       ? ` • Due ${new Date(audit.dueDate).toLocaleDateString()}`
                       : ""}
                     {audit.description ? ` • ${audit.description}` : ""}
-                  </span>
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        ) : null}
-
-        {kitResults.length > 0 ? (
-          <CommandGroup heading="Kits">
-            {kitResults.map((kit) => (
-              <CommandItem
-                key={kit.id}
-                value={getKitCommandValue(kit)}
-                onSelect={() => handleSelect(`/kits/${kit.id}`)}
-                className="gap-3"
-              >
-                <PackageIcon className="size-4 text-gray-500" />
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate font-medium text-gray-900">
-                    {kit.name}
-                  </span>
-                  <span className="truncate text-xs text-gray-500">
-                    {kit.status} • {kit.assetCount} assets
-                    {kit.description ? ` • ${kit.description}` : ""}
                   </span>
                 </div>
               </CommandItem>
@@ -849,8 +780,8 @@ export function CommandPalette() {
         <div className="flex items-center gap-2">
           <SearchIcon className="size-4" />
           {isPersonalOrg(layoutData?.currentOrganization)
-            ? "Search across all assets, audits, kits, and locations"
-            : "Search across all assets, audits, kits, locations, and team members"}
+            ? "Search across all assets, audits, and locations"
+            : "Search across all assets, audits, locations, and team members"}
         </div>
         <CommandShortcut className={tw("bg-white")}>
           {shortcutLabel}

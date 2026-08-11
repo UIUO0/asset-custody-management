@@ -14,7 +14,6 @@ export enum PermissionAction {
   extend = "extend",
   manageAssets = "manage-assets",
   custody = "custody",
-  manageKits = "manage-kits",
   changeRole = "change-role",
   /**
    * EPDA: approving a workflow transition (asset request, readiness sign-off).
@@ -41,7 +40,6 @@ export enum PermissionEntity {
   asset = "asset",
   assetIndexSettings = "assetIndexSettings",
   qr = "qr",
-  tag = "tag",
   category = "category",
   location = "location",
   locationNote = "locationNote",
@@ -53,7 +51,6 @@ export enum PermissionEntity {
   generalSettings = "generalSettings",
   workingHours = "workingHours",
   subscription = "subscription",
-  kit = "kit",
   note = "note",
   scan = "scan",
   custody = "custody",
@@ -119,7 +116,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.customField]: [],
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [],
     [PermissionEntity.teamMember]: [],
     [PermissionEntity.teamMemberProfile]: [],
     [PermissionEntity.workspace]: [],
@@ -127,7 +123,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.generalSettings]: [],
     [PermissionEntity.workingHours]: [PermissionAction.read],
     [PermissionEntity.subscription]: [],
-    [PermissionEntity.kit]: [PermissionAction.read],
     [PermissionEntity.note]: [],
     [PermissionEntity.scan]: [],
     [PermissionEntity.custody]: [],
@@ -156,7 +151,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.customField]: [],
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [],
     [PermissionEntity.teamMember]: [],
     [PermissionEntity.teamMemberProfile]: [],
     [PermissionEntity.workspace]: [],
@@ -164,7 +158,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.generalSettings]: [],
     [PermissionEntity.workingHours]: [PermissionAction.read],
     [PermissionEntity.subscription]: [],
-    [PermissionEntity.kit]: [PermissionAction.read, PermissionAction.custody],
     [PermissionEntity.note]: [],
     [PermissionEntity.scan]: [],
     [PermissionEntity.custody]: [],
@@ -229,12 +222,6 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.delete,
     ],
-    [PermissionEntity.tag]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-    ],
     [PermissionEntity.teamMember]: [
       PermissionAction.create,
       PermissionAction.read,
@@ -259,13 +246,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.subscription]: [
       PermissionAction.read,
       PermissionAction.update,
-    ],
-    [PermissionEntity.kit]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-      PermissionAction.custody,
     ],
     [PermissionEntity.note]: [
       PermissionAction.create,
@@ -360,12 +340,6 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.delete,
     ],
-    [PermissionEntity.tag]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-    ],
     [PermissionEntity.teamMember]: [
       PermissionAction.create,
       PermissionAction.read,
@@ -392,13 +366,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.subscription]: [
       PermissionAction.read,
       PermissionAction.update,
-    ],
-    [PermissionEntity.kit]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-      PermissionAction.custody,
     ],
     [PermissionEntity.note]: [
       PermissionAction.create,
@@ -508,12 +475,6 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.delete,
     ],
-    [PermissionEntity.tag]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-    ],
     // Matrix: رؤية المستخدمين = عرض only. No create/update/delete/changeRole.
     [PermissionEntity.teamMember]: [PermissionAction.read],
     [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
@@ -522,13 +483,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.generalSettings]: [],
     [PermissionEntity.workingHours]: [PermissionAction.read],
     [PermissionEntity.subscription]: [],
-    [PermissionEntity.kit]: [
-      PermissionAction.create,
-      PermissionAction.read,
-      PermissionAction.update,
-      PermissionAction.delete,
-      PermissionAction.custody,
-    ],
     [PermissionEntity.note]: [
       PermissionAction.create,
       PermissionAction.read,
@@ -615,7 +569,6 @@ export const Role2PermissionMap: {
     // Matrix marks المواقع as "—" for المالية.
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [PermissionAction.read],
     [PermissionEntity.teamMember]: [PermissionAction.read],
     [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
     [PermissionEntity.workspace]: [],
@@ -624,7 +577,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.generalSettings]: [],
     [PermissionEntity.workingHours]: [PermissionAction.read],
     [PermissionEntity.subscription]: [],
-    [PermissionEntity.kit]: [PermissionAction.read],
     [PermissionEntity.note]: [PermissionAction.read],
     [PermissionEntity.scan]: [PermissionAction.read],
     [PermissionEntity.custody]: [PermissionAction.read],
@@ -681,7 +633,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.customField]: [],
     [PermissionEntity.location]: [],
     [PermissionEntity.locationNote]: [],
-    [PermissionEntity.tag]: [],
     // Read-only, and only so the desk can name the employee it is handing an
     // asset to. No create/update — a department does not manage the roster.
     [PermissionEntity.teamMember]: [PermissionAction.read],
@@ -691,7 +642,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.generalSettings]: [],
     [PermissionEntity.workingHours]: [],
     [PermissionEntity.subscription]: [],
-    [PermissionEntity.kit]: [PermissionAction.read, PermissionAction.custody],
     [PermissionEntity.note]: [],
     [PermissionEntity.scan]: [],
     [PermissionEntity.custody]: [PermissionAction.read],
@@ -742,7 +692,6 @@ export const Role2PermissionMap: {
     ],
     [PermissionEntity.location]: [PermissionAction.read],
     [PermissionEntity.locationNote]: [PermissionAction.read],
-    [PermissionEntity.tag]: [PermissionAction.read],
     [PermissionEntity.teamMember]: [PermissionAction.read],
     [PermissionEntity.teamMemberProfile]: [PermissionAction.read],
     [PermissionEntity.workspace]: [],
@@ -750,7 +699,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.generalSettings]: [],
     [PermissionEntity.workingHours]: [PermissionAction.read],
     [PermissionEntity.subscription]: [],
-    [PermissionEntity.kit]: [PermissionAction.read],
     [PermissionEntity.note]: [PermissionAction.read],
     [PermissionEntity.scan]: [PermissionAction.read],
     [PermissionEntity.custody]: [PermissionAction.read],

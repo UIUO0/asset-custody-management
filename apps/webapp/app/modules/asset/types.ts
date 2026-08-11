@@ -5,9 +5,7 @@ import type {
   Location,
   Category,
   CustomField,
-  Kit,
   Prisma,
-  Tag,
   User,
   CustomFieldType,
   AssetReminder,
@@ -59,7 +57,6 @@ export interface UpdateAssetPayload {
   mainImage?: Asset["mainImage"];
   thumbnailImage?: string | null;
   mainImageExpiration?: Asset["mainImageExpiration"];
-  tags?: { set: { id: string }[] };
   userId: User["id"];
   customFieldsValues?: ShelfAssetCustomFieldValueType[];
   barcodes?: { id?: string; type: BarcodeType; value: string }[];
@@ -85,8 +82,6 @@ export interface CreateAssetFromContentImportPayload
   title: string;
   description?: string;
   category?: string;
-  kit?: string;
-  tags?: string[];
   location?: string;
   custodian?: string;
   bookable?: "yes" | "no";
@@ -123,9 +118,6 @@ export interface CreateAssetFromBackupImportPayload
         userId: string;
       }
     | {};
-  tags: {
-    name: string;
-  }[];
   location:
     | {
         name: string;
@@ -155,22 +147,15 @@ export type AdvancedAssetBooking = Pick<
 > & {
   from: string;
   to: string;
-  tags: Array<Pick<Tag, "id" | "name" | "color">>;
   custodianTeamMember?: Pick<TeamMember, "id" | "name">;
   custodianUser?: Pick<
     User,
     "id" | "firstName" | "lastName" | "profilePicture"
   >;
   creator?: Pick<User, "id" | "firstName" | "lastName" | "profilePicture">;
-  /** BookingAsset.assetKitId of THIS slice: null = standalone (free pool),
-   * non-null = kit-driven (FK → AssetKit.id). Availability view only. */
-  assetKitId?: string | null;
   /** BookingAsset.quantity — booked units for THIS slice. Never Asset.quantity
    * (workspace stock). Availability view only. */
   quantity?: number;
-  /** Kit name for THIS slice (null when standalone), resolved via
-   * AssetKit → Kit.name. Availability view only. */
-  kitName?: string | null;
 };
 
 /** Type for advanced index query. We cannot infer it because we do a raw query so we need to create it ourselves. */
@@ -201,17 +186,7 @@ export type AdvancedIndexAsset = Pick<
   qrId: string; // QR code will always be available
   assetModelId?: string | null;
   assetModelName?: string | null;
-  /** Primary kit (oldest pivot row) — mirrors the LATERAL primary-pick
-   * used by ORDER BY and filters. Kept alongside `kits` for back-compat
-   * with consumers that only need the primary. */
-  kit: Pick<Kit, "id" | "name"> | null;
-  /** Full kit membership for the asset, ordered by `AssetKit.createdAt`.
-   * A multi-kit QUANTITY_TRACKED asset surfaces all kits here so the
-   * asset-index "Kit" column can render the primary plus a "+N more"
-   * affordance (mirror of `custody`). Always an array, never null. */
-  kits: Array<Pick<Kit, "id" | "name" | "status">>;
   category: Pick<Category, "id" | "name" | "color"> | null;
-  tags: Pick<Tag, "id" | "name" | "color">[];
   /** Primary placement (oldest pivot row) — see `kit` above. */
   location:
     | (Pick<Location, "id" | "name"> & {

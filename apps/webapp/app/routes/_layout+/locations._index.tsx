@@ -166,7 +166,6 @@ export default function LocationsIndexPage() {
                 {t("locations.childLocations")}
               </Th>
               <Th>{t("nav.assets")}</Th>
-              <Th>{t("nav.kits")}</Th>
               <Th>{t("list.actions")}</Th>
             </>
           }
@@ -227,7 +226,6 @@ const ListItemContent = ({
     </Td>
     <Td>{item._count.children}</Td>
     <Td>{item._count.assetLocations}</Td>
-    <Td>{item._count.kits}</Td>
     <Td>
       <LocationQuickActions
         location={{

@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import { getAssetOverviewFields } from "./fields";
 
 describe("getAssetOverviewFields", () => {
-  const testAssetId = "asset-123";
-
   it("includes full barcodes relation when canUseBarcodes is true", () => {
-    const result = getAssetOverviewFields(testAssetId, true);
+    const result = getAssetOverviewFields(true);
 
     expect(result).toHaveProperty("barcodes", {
       select: { id: true, type: true, value: true },
@@ -14,7 +12,7 @@ describe("getAssetOverviewFields", () => {
   });
 
   it("includes _count.barcodes (not full barcodes) when canUseBarcodes is false", () => {
-    const result = getAssetOverviewFields(testAssetId, false);
+    const result = getAssetOverviewFields(false);
 
     expect(result).toHaveProperty("_count", {
       select: { barcodes: true },
@@ -23,7 +21,7 @@ describe("getAssetOverviewFields", () => {
   });
 
   it("defaults canUseBarcodes to false when omitted", () => {
-    const result = getAssetOverviewFields(testAssetId);
+    const result = getAssetOverviewFields();
 
     expect(result).toHaveProperty("_count", {
       select: { barcodes: true },
@@ -35,16 +33,14 @@ describe("getAssetOverviewFields", () => {
     const baseKeys = [
       "category",
       "qrCodes",
-      "tags",
       "assetLocations",
       "custody",
       "organization",
       "customFields",
-      "assetKits",
     ];
 
-    const withBarcodes = getAssetOverviewFields(testAssetId, true);
-    const withoutBarcodes = getAssetOverviewFields(testAssetId, false);
+    const withBarcodes = getAssetOverviewFields(true);
+    const withoutBarcodes = getAssetOverviewFields(false);
 
     for (const key of baseKeys) {
       expect(withBarcodes).toHaveProperty(key);

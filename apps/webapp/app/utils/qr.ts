@@ -1,34 +1,28 @@
-import type { Asset, Kit } from "@prisma/client";
-/** This function takes a QR and normalizes the related object data
+import type { Asset } from "@prisma/client";
+
+/**
+ * Normalizes a QR row into the item it points at.
+ *
+ * A code used to be linkable to an asset *or* a kit; kits are gone, so the
+ * only linkable target is an asset. The `type` field is kept — callers switch
+ * on it, and an unlinked code still has to read as `null` rather than as an
+ * asset with no title.
  */
 export function normalizeQrData(qr: {
   id: string;
   assetId?: string | null;
-  kitId?: string | null;
-  asset?: Partial<Pick<Asset, "id" | "title">> | null; // Use Partial and Pick to relax requirements
-  kit?: Partial<Pick<Kit, "id" | "name">> | null; // Use Partial and Pick to relax requirements
+  // Use Partial and Pick to relax the requirement on callers' selects.
+  asset?: Partial<Pick<Asset, "id" | "title">> | null;
 }): {
-  item: Asset | Kit | null;
-  type: "asset" | "kit" | null;
+  item: Asset | null;
+  type: "asset" | null;
   normalizedName: string;
 } {
-  let item: Asset | Kit | null = null;
-  let type: "asset" | "kit" | null = null;
-  let normalizedName = "";
-
-  if (qr.assetId) {
-    type = "asset";
-    item = qr.asset as Asset;
-    normalizedName = item.title;
-  } else if (qr.kitId && qr.kit) {
-    type = "kit";
-    item = qr.kit as Kit;
-    normalizedName = item.name;
+  if (!qr.assetId || !qr.asset) {
+    return { item: null, type: null, normalizedName: "" };
   }
 
-  return {
-    item,
-    type,
-    normalizedName,
-  };
+  const item = qr.asset as Asset;
+
+  return { item, type: "asset", normalizedName: item.title };
 }

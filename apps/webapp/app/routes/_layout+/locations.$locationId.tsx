@@ -207,14 +207,13 @@ export default function LocationPage() {
   const items = [
     { to: "overview", content: "Overview" },
     { to: "assets", content: t("nav.assets") },
-    { to: "kits", content: t("nav.kits") },
     { to: "activity", content: t("bookings.tabActivity") },
   ];
 
   /**
    * When we are on the location.scan-assets route, we render an outlet on the whole layout.
    */
-  if (currentRoute?.handle?.name === "location.scan-assets-kits") {
+  if (currentRoute?.handle?.name === "location.scan-assets") {
     return <Outlet />;
   }
 

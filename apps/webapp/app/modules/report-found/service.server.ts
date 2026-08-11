@@ -1,4 +1,4 @@
-import type { Asset, Kit, Prisma, ReportFound, User } from "@prisma/client";
+import type { Asset, Prisma, ReportFound, User } from "@prisma/client";
 import { config } from "~/config/shelf.config";
 import { db } from "~/database/db.server";
 import { sendEmail } from "~/emails/mail.server";
@@ -10,10 +10,8 @@ export async function createReport({
   email,
   content,
   assetId,
-  kitId,
 }: Pick<ReportFound, "email" | "content"> & {
   assetId?: Asset["id"];
-  kitId?: Kit["id"];
 }) {
   try {
     return await db.reportFound.create({
@@ -27,14 +25,6 @@ export async function createReport({
             },
           },
         }),
-
-        ...(kitId && {
-          kit: {
-            connect: {
-              id: kitId,
-            },
-          },
-        }),
       },
     });
   } catch (cause) {
@@ -42,7 +32,7 @@ export async function createReport({
       cause,
       message:
         "Something went wrong while creating the report. Please try again or contact support.",
-      additionalData: { email, content, assetId, kitId },
+      additionalData: { email, content, assetId },
       label: "Report",
     });
   }
@@ -62,7 +52,7 @@ export function sendReportEmails({
   }>;
 }) {
   const { item, type, normalizedName } = normalizeQrData(qr);
-  const isUnlinked = !qr.assetId && !qr.kitId;
+  const isUnlinked = !qr.assetId;
 
   const subject = isUnlinked
     ? "Reported unlinked qr found"
