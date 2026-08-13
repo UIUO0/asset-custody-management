@@ -1,9 +1,10 @@
 import type { ComponentProps } from "react";
 import { NavLink } from "react-router";
+import { ActionNotice } from "~/components/shared/action-notice";
 import { useIsRouteActive } from "~/hooks/use-is-route-active";
 import type { ChildNavItem as ChildNavItemType } from "~/hooks/use-sidebar-nav-items";
 import { tw } from "~/utils/tw";
-import { SidebarMenuButton, SidebarMenuItem } from "./sidebar";
+import { SidebarMenuButton, SidebarMenuItem, useSidebar } from "./sidebar";
 
 type ChildNavItemProps = {
   route: ChildNavItemType;
@@ -17,6 +18,19 @@ export default function ChildNavItem({
   tooltip,
 }: ChildNavItemProps) {
   const isActive = useIsRouteActive(route.to);
+  const { state } = useSidebar();
+
+  /**
+   * A backlog waiting on this viewer gets a sentence, not just a digit — but
+   * only when the sidebar is wide enough to read one. Collapsed to icons, the
+   * count pill below is all there is room for, and a number with no words is
+   * still better than no signal at all.
+   */
+  const notice =
+    route.badge?.show && route.badge.variant === "action" && route.badge.noun
+      ? route.badge
+      : null;
+  const showNotice = !!notice && state === "expanded";
 
   return (
     <SidebarMenuItem className="z-50">
@@ -42,7 +56,9 @@ export default function ChildNavItem({
             Count badge (e.g. pending requests). Rendered only when the item
             asks for it, so items without a badge keep their exact markup.
           */}
-          {route.badge?.show ? (
+          {/* Suppressed when the notice below is showing the same number in
+              words — two indicators for one backlog is noise. */}
+          {route.badge?.show && !showNotice ? (
             <span
               // `title` gives the sentence on hover; `aria-label` gives it to a
               // screen reader, which would otherwise announce a bare digit with
@@ -65,6 +81,15 @@ export default function ChildNavItem({
           ) : null}
         </NavLink>
       </SidebarMenuButton>
+
+      {showNotice ? (
+        <ActionNotice
+          size="compact"
+          count={notice.count ?? 0}
+          message={notice.noun as string}
+          className="m-1"
+        />
+      ) : null}
     </SidebarMenuItem>
   );
 }

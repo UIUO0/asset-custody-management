@@ -72,7 +72,6 @@ model User {
   assets             Asset[]
   categories         Category[]
   notes              Note[]
-  bookingNotes      BookingNote[]      @relation("BookingNoteUser")
   auditNotes        AuditNote[]        @relation("AuditNoteUser")
   locationNotes     LocationNote[]     @relation("LocationNoteUser")
   qrCodes            Qr[]
@@ -90,12 +89,8 @@ model User {
   /// EPDA: handover signatures this user put their name to, on either side.
   custodyHandoverSignatures CustodyHandoverSignature[] @relation("CustodyHandoverSignatory")
   userOrganizations  UserOrganization[]
-  bookings           Booking[]          @relation("creator")
-  custodies          Booking[]          @relation("custodian")
   /// EPDA: booking requests this user accepted or rejected (المستودعات)
-  bookingApprovals   Booking[]          @relation("bookingApprovalDecider")
   /// EPDA: booking requests this user put on review hold (المخزون)
-  bookingReviewHolds Booking[]          @relation("bookingReviewHolder")
   /// EPDA: instance settings this user last wrote (app-wide admins only)
   appSettingUpdates  AppSetting[]       @relation("appSettingUpdatedBy")
   /// EPDA: external-integration API keys this user issued
@@ -122,12 +117,6 @@ model User {
 
   // A user can have multiple asset index settings, 1 for each organization
   assetIndexSettings AssetIndexSettings[]
-
-  partialCheckins  PartialBookingCheckin[]  @relation("PartialCheckinUser")
-  partialCheckouts PartialBookingCheckout[] @relation("PartialCheckoutUser")
-
-  // Native-app SSO web-delegated login — single-use session-handoff codes
-  mobileAuthCodes MobileAuthCode[]
 
   // Updates feature
   createdUpdates Update[]
@@ -264,7 +253,6 @@ model Asset {
   barcodes     Barcode[]              @relation("AssetBarcodes")
   reports      ReportFound[]
   customFields AssetCustomFieldValue[]
-  bookingAssets   BookingAsset[]
   consumptionLogs ConsumptionLog[]
   reminders       AssetReminder[]
   auditEntries    AuditAsset[]
@@ -505,7 +493,6 @@ model AssetModel {
 
   // Relationships
   assets         Asset[]
-  modelRequests  BookingModelRequest[]
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   organizationId String
   createdBy      User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -519,55 +506,6 @@ model AssetModel {
   @@index([userId])
 }
 
-/// Book-by-Model: intent row attached to a booking for a quantity of
-/// assets of a given AssetModel, without yet picking specific assets.
-/// Concrete `BookingAsset` rows are only created at
-/// scan-to-assign time; when the last unit is assigned, the request
-/// row is deleted. `quantity` is the number of units still needing
-/// assignment (starts at the full requested total, decrements on scan).
-///
-/// Keeping model requests separate from `BookingAsset` means the ~40
-/// code paths that assume `BookingAsset.assetId` points to a real
-/// asset stay untouched — model-only bookings become concrete the
-/// moment they're checked out.
-model BookingModelRequest {
-  id String @id @default(cuid())
-
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  bookingId String
-
-  assetModel   AssetModel @relation(fields: [assetModelId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  assetModelId String
-
-  /// Total units originally reserved. Mutated only by explicit
-  /// operator edits (upsert) — never decremented on materialisation.
-  /// This preserves the audit trail of "how many were planned".
-  quantity Int
-
-  /// Units already assigned to concrete `BookingAsset` rows via
-  /// `materializeModelRequestForAsset`. Monotonically increases as
-  /// scans match the request. Never decreases on its own — to undo
-  /// a scan the operator removes the corresponding `BookingAsset`,
-  /// which does NOT roll this back (by design; the scan happened,
-  /// that's a historical fact).
-  fulfilledQuantity Int @default(0)
-
-  /// Timestamp of the scan that fulfilled the final unit — set when
-  /// `fulfilledQuantity` catches up to `quantity`. Cleared back to
-  /// null if the operator later edits `quantity` upwards (re-opens
-  /// outstanding units). Used as the primary "is this outstanding?"
-  /// filter: `fulfilledAt IS NULL` means there are still units to
-  /// materialise.
-  fulfilledAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // One request row per (booking, model) — reserving 5 × Dell Latitude
-  // is a single row with quantity=5, not five rows with quantity=1.
-  @@unique([bookingId, assetModelId])
-  @@index([assetModelId])
-}
 
 enum TagUseFor {
   ASSET
@@ -594,25 +532,6 @@ model Note {
   @@index([userId])
 }
 
-model BookingNote {
-  id      String   @id @default(cuid())
-  content String
-  type    NoteType @default(COMMENT)
-
-  // Datetime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relationships
-  user      User?   @relation("BookingNoteUser", fields: [userId], references: [id], onUpdate: Cascade, onDelete: SetNull)
-  userId    String?
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  bookingId String
-
-  // Indexes for foreign keys
-  @@index([bookingId])
-  @@index([userId])
-}
 
 model LocationNote {
   id      String   @id @default(cuid())
@@ -893,14 +812,9 @@ model TeamMember {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   deletedAt       DateTime?
-  bookings        Booking[]
   assetReminders  AssetReminder[]
   consumptionLogs ConsumptionLog[]
   teamMemberNotes TeamMemberNote[]
-
-  // Booking notification settings
-  alwaysNotifyBookingSettings BookingSettings[] @relation("BookingSettingsAlwaysNotify")
-  bookingNotifications        Booking[]         @relation("BookingNotificationRecipients")
 
   // Special GIN index for optimization of simple search queries
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
@@ -1169,7 +1083,6 @@ model Organization {
   ssoDetailsId    String?
   ssoDetails      SsoDetails?      @relation(fields: [ssoDetailsId], references: [id])
   workingHours    WorkingHours?
-  bookingSettings BookingSettings?
 
   // Permissions configuration
   // those values are used to control the access to the custody and bookings by SELF SERVICE and BASE users
@@ -1202,7 +1115,6 @@ model Organization {
   updatedAt          DateTime             @updatedAt
   customFields       CustomField[]
   images             Image[]              @relation("owner")
-  bookings           Booking[]
   assetModels        AssetModel[]
   assetIndexSettings AssetIndexSettings[]
   assetReminders     AssetReminder[]
@@ -2137,312 +2049,22 @@ model ConsumptionLog {
   performedBy User   @relation(fields: [userId], references: [id])
   userId      String
 
-  booking   Booking? @relation(fields: [bookingId], references: [id])
-  bookingId String?
-
   custodian   TeamMember? @relation(fields: [custodianId], references: [id])
   custodianId String? // Who received/returned the items (if applicable)
-
-  // Per-row attribution for QUANTITY_TRACKED check-in. With Polish-6 a
-  // single (booking, asset) pair can have multiple BookingAsset rows
-  // (kit-driven + standalone slices); aggregating dispositions by
-  // (bookingId, assetId) alone can't distinguish "the kit slice is
-  // done" from "all slices are done". `bookingAssetId` points the log
-  // at the specific row the units were returned/consumed against.
-  //
-  // Declared as a plain column without a Prisma `@relation` accessor
-  // explosion on read paths that pull ConsumptionLog through Booking
-  // / Asset graphs. The migration SQL creates a proper FK with
-  // `ON DELETE SET NULL` so removing a BookingAsset row doesn't lose
-  // history — the log stays but loses its per-row attribution.
-  //
-  // Legacy rows (pre-Polish-6, pre-this-migration) keep `NULL` and are
-  // handled by a greedy-fill fallback in readers (kit-driven slices
-  // attribute first, then standalone) so existing bookings still
-  // render sensibly.
-  bookingAssetId String?
 
   // Datetime
   createdAt DateTime @default(now())
 
   @@index([assetId, createdAt])
   @@index([userId])
-  @@index([bookingId])
   @@index([custodianId])
-  @@index([bookingAssetId])
 }
 
-/**
- * Explicit pivot table between Booking and Asset.
- * Replaces the implicit M2M (_AssetToBooking) via a rename migration in Phase 3.
- */
-model BookingAsset {
-  id        String  @id @default(cuid())
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  bookingId String
-  asset     Asset   @relation(fields: [assetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  assetId   String
-  quantity  Int     @default(1) // For quantity-tracked assets: how many booked
 
 
-  // The old `@@unique([bookingId, assetId])` is replaced by two partial
-  // unique indexes in the migration SQL (Postgres-only feature Prisma
-  // can't express in the schema):
-  // These let one standalone row coexist with N kit-driven rows for the
-  // same (booking, asset) — required for the multi-kit qty-tracked case.
 
-  @@index([assetId])
-}
 
-model Booking {
-  id String @id @default(cuid())
 
-  name        String
-  status      BookingStatus @default(DRAFT)
-  description String?       @default("")
-
-  activeSchedulerReference String?
-
-  // Relationships
-  creator   User   @relation("creator", fields: [creatorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  creatorId String
-
-  custodianUser   User?   @relation("custodian", fields: [custodianUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  custodianUserId String?
-
-  custodianTeamMember   TeamMember? @relation(fields: [custodianTeamMemberId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  custodianTeamMemberId String?
-
-  organization   Organization @relation(fields: [organizationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  organizationId String
-
-  bookingAssets   BookingAsset[]
-  consumptionLogs ConsumptionLog[]
-  notes           BookingNote[]
-  // Unfulfilled model-level requests (intent rows). Converted into
-  // concrete `bookingAssets` at scan-to-assign time.
-  modelRequests   BookingModelRequest[]
-  partialCheckins  PartialBookingCheckin[]
-  partialCheckouts PartialBookingCheckout[]
-
-  // Datetime
-  createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @db.Timestamptz(3)
-  from      DateTime @db.Timestamptz(3)
-  to        DateTime @db.Timestamptz(3)
-
-  // When a booking is early check-in or early check-out, we store the original from and to
-  // dates here and updated the from and to dates to current date (if users agrees to change)
-  originalFrom DateTime? @db.Timestamptz(3)
-  originalTo   DateTime? @db.Timestamptz(3)
-
-  // When a booking is auto-archived, we store the timestamp here
-  autoArchivedAt DateTime? @db.Timestamptz(3)
-
-  // True when the booking was archived directly from RESERVED — i.e. its end
-  // date passed without ever being checked out/in. Such bookings were never
-  // "returned", so return-behaviour reports (e.g. Booking Compliance) must
-  // exclude them. Bookings archived from COMPLETE keep the default `false`.
-  archivedWithoutCheckin Boolean @default(false)
-
-  cancellationReason String?
-
-  // ── EPDA request workflow (مسار الطلبات) ──────────────────────────────
-  //
-  // A booking raised by an ordinary employee is a *request*: it exists, but
-  // it holds no inventory until المستودعات accept it. Bookings created by
-  // operational roles skip the queue (they start APPROVED) — the gate exists
-  // to review what employees ask for, not to make the warehouse approve
-  // itself.
-  //
-  // Modelled as a separate field rather than a new `BookingStatus` member on
-  // purpose: `status` is switched on exhaustively in dozens of places, and
-  // widening it would silently change every one of those flows.
-  approvalState BookingApprovalState @default(PENDING)
-
-  /// When the accept/reject decision was made. Null while still queued.
-  approvalDecidedAt DateTime? @db.Timestamptz(3)
-
-  approvalDecidedBy   User?   @relation("bookingApprovalDecider", fields: [approvalDecidedById], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  approvalDecidedById String?
-
-  /// Mandatory on rejection, optional on acceptance.
-  approvalNote String?
-
-  // ── Review hold (تعليق للمراجعة) ──────────────────────────────────────
-  //
-  // المخزون cannot accept or reject, but can freeze a request for review.
-  // While frozen, the accept/reject actions are blocked for المستودعات too —
-  // that is the whole point of the hold. Modelled as a nullable timestamp
-  // rather than a boolean so "who held it, when, and why" comes for free.
-  reviewHoldAt DateTime? @db.Timestamptz(3)
-
-  reviewHoldBy   User?   @relation("bookingReviewHolder", fields: [reviewHoldById], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  reviewHoldById String?
-
-  /// Mandatory when placing a hold — it is the only record of why someone
-  /// else's request stopped moving.
-  reviewHoldReason String?
-
-  // Per-booking notification recipients (team members who receive all email updates for this booking)
-  notificationRecipients TeamMember[] @relation("BookingNotificationRecipients")
-
-  // Indexes for foreign keys
-  @@index([creatorId])
-  @@index([approvalDecidedById])
-  @@index([reviewHoldById])
-  /// Drives the requests queue: "pending requests in this workspace".
-  @@index([organizationId, approvalState])
-  @@index([custodianTeamMemberId])
-  @@index([custodianUserId])
-  @@index([organizationId])
-  // Speeds up status filtering when joining from Asset → Booking
-  // (e.g. fetching ONGOING/OVERDUE bookings for asset custodian display)
-  @@index([status])
-  // Serves the bookings index default view (getBookings): WHERE
-  // organizationId = ? ORDER BY "from" ASC LIMIT n. Column order (org first,
-  // then the sort key, then id as the pagination tiebreaker) lets Postgres
-  // seek the org and read the page straight off the index instead of
-  // scanning + sorting every booking in the workspace. Same pattern as
-  // Asset_organizationId_createdAt_id_idx.
-  @@index([organizationId, from, id])
-}
-
-model BookingSettings {
-  id String @id @default(cuid())
-
-  bufferStartTime Int     @default(0) // Buffer time in hours for bookings. This is used to prevent short term bookings
-
-  maxBookingLength               Int? // Maximum booking length in hours. NULL means no limit
-  maxBookingLengthSkipClosedDays Boolean @default(false) // If true, the max booking length will skip closed days
-
-  autoArchiveBookings Boolean @default(false) // Whether to automatically archive completed bookings
-  autoArchiveDays     Int     @default(2) // Number of days after a booking is done before auto-archiving (shared by both auto-archive toggles)
-
-  // Whether to automatically archive reserved bookings whose end date has passed
-  // without ever being checked out (for teams that use bookings as a reservation
-  // calendar and don't check out/in). Reuses autoArchiveDays for the delay.
-  autoArchiveExpiredReservations Boolean @default(false)
-
-  requireExplicitCheckinForAdmin      Boolean @default(false) // When true, admins must use explicit check-in (scanner) instead of quick check-in
-  requireExplicitCheckinForSelfService Boolean @default(false) // When true, self-service users must use explicit check-in (scanner) instead of quick check-in
-
-  // Progressive check-in/out settings
-
-  // Notification settings
-  notifyBookingCreator     Boolean @default(true) // Whether the booking creator receives email notifications
-  notifyAdminsOnNewBooking Boolean @default(true) // Whether all admins receive a notification when a booking is reserved
-  alwaysNotifyTeamMembers  TeamMember[] @relation("BookingSettingsAlwaysNotify") // Team members who always receive ALL booking email notifications
-
-  // Relationships
-  organization   Organization @relation(fields: [organizationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  organizationId String       @unique
-
-  // Datetime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Index for foreign key
-  @@index([organizationId])
-}
-
-model PartialBookingCheckin {
-  id String @id @default(cuid())
-
-  // Track which assets were checked in during this session
-  assetIds     String[] // Array of asset IDs checked in
-  checkinCount Int // Number of assets checked in (for quick reference)
-
-  // Metadata
-  checkinTimestamp DateTime @default(now()) @db.Timestamptz(3)
-
-  // Relationships
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  bookingId String
-
-  checkedInBy   User   @relation("PartialCheckinUser", fields: [checkedInById], references: [id])
-  checkedInById String
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([bookingId])
-  @@index([checkedInById])
-  @@index([checkinTimestamp])
-  @@index([bookingId, checkinTimestamp]) // Composite for efficient booking history queries
-}
-
-model PartialBookingCheckout {
-  id String @id @default(cuid())
-
-  // Track which assets were checked out during this session
-  assetIds      String[] // Array of asset IDs checked out
-  // Units checked out per entry in `assetIds` (positional alignment).
-  // INDIVIDUAL assets always record `1`. QUANTITY_TRACKED slices record the
-  // unit count submitted for the matching `bookingAssetId`. Empty default
-  // keeps legacy rows (written before Wave B) readable without a backfill.
-  quantities    Int[]    @default([])
-  // BookingAsset (slice) IDs per entry in `assetIds` (positional alignment
-  // with `assetIds`/`quantities`). Disambiguates a QUANTITY_TRACKED asset that
-  // is booked as multiple slices (e.g. standalone + kit member). An empty
-  // string `""` element means "no specific slice known → greedy attribution";
-  // Prisma `String[]` cannot hold `null`, so `""` is the sentinel. Empty
-  // default keeps legacy rows readable without a backfill.
-  bookingAssetIds String[] @default([])
-  checkoutCount   Int // Number of assets checked out (for quick reference)
-
-  // Metadata
-  checkoutTimestamp DateTime @default(now()) @db.Timestamptz(3)
-
-  // Relationships
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  bookingId String
-
-  checkedOutBy   User   @relation("PartialCheckoutUser", fields: [checkedOutById], references: [id])
-  checkedOutById String
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([bookingId])
-  @@index([checkedOutById])
-  @@index([checkoutTimestamp])
-  @@index([bookingId, checkoutTimestamp]) // Composite for efficient booking history queries
-}
-
-/// Native-app SSO web-delegated login — single-use session-handoff codes.
-/// @see apps/webapp/app/routes/_auth+/oauth.callback.mobile.tsx
-model MobileAuthCode {
-  id String @id @default(cuid())
-
-  // The user this code authorizes a session for.
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
-
-  // SHA-256 hash of the single-use plaintext code. The plaintext only ever
-  // lives in the deeplink + the exchange request body — never stored.
-  codeHash String @unique
-
-  // PKCE (S256) challenge — base64url(SHA-256(verifier)) — set when the minting
-  // client is PKCE-capable. NULL for legacy (pre-PKCE) app builds, which redeem
-  // without a verifier (backward compatible).
-  codeChallenge String?
-
-  // Single-use guard: set when redeemed. A non-null value rejects reuse.
-  consumedAt DateTime?
-
-  // Short TTL (~60s). Rejected once `now > expiresAt`.
-  expiresAt DateTime
-
-  createdAt DateTime @default(now())
-
-  // Indexes for foreign keys
-  @@index([userId])
-  // For periodic cleanup of expired, unredeemed rows
-  @@index([expiresAt])
-}
 
 model AssetLocation {
   id             String       @id @default(cuid())

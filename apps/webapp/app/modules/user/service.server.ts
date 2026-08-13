@@ -1515,38 +1515,6 @@ export async function changeUserRole({
  */
 export type EntityTransferReason = "removal" | "demotion";
 
-/**
- * Prisma `where` selecting the bookings a DEMOTION reassigns to the new owner:
- * those the user created for a DIFFERENT registered custodian. Shared by
- * {@link transferEntitiesToNewOwner} (which moves them) and the change-role
- * dialog's entity-count endpoint (which tells the admin how many will move), so
- * the number the admin consents to and the rows actually reassigned cannot drift.
- *
- * The custodian filter is `IS NOT NULL AND <> userId`, written explicitly rather
- * than as the terser `{ not: userId }`: a null `custodianUserId` marks the
- * booking as the user's own — an unassigned draft, or a legacy row held via the
- * team-member link — which must stay theirs. `{ not: userId }` alone excludes
- * nulls only because this Prisma version compiles `not` to a bare `<>`; the
- * explicit `not: null` keeps those rows out regardless of that behaviour. See
- * the JSDoc on {@link transferEntitiesToNewOwner} for the full rationale.
- */
-export function bookingsReassignedOnDemotionWhere({
-  userId,
-  organizationId,
-}: {
-  userId: User["id"];
-  organizationId: Organization["id"];
-}): Prisma.BookingWhereInput {
-  return {
-    creatorId: userId,
-    organizationId,
-    AND: [
-      { custodianUserId: { not: null } },
-      { custodianUserId: { not: userId } },
-    ],
-  };
-}
-
 /** Move entries inside an organization from 1 owner to another.
  *
  * OWNERSHIP — moved for EVERY `reason`: `Asset`/`Category`/`Tag`/`Location`/
@@ -1657,48 +1625,14 @@ export async function transferEntitiesToNewOwner({
         inviterId: newOwnerId,
       },
     });
-
-    /** Update bookings */
-    await tx.booking.updateMany({
-      where: {
-        creatorId: id,
-        organizationId: organizationId,
-      },
-      data: {
-        creatorId: newOwnerId,
-      },
-    });
-
-    /** Update bookings where the person deleted is the custodian */
-    await tx.booking.updateMany({
-      where: {
-        custodianUserId: id,
-        organizationId: organizationId,
-      },
-      data: {
-        custodianUserId: null,
-      },
-    });
   }
 
-  if (reason === "demotion") {
-    /**
-     * Hand over ONLY the bookings the demoted user created for a different
-     * registered custodian; their own bookings keep `creatorId`. The predicate
-     * (and the reason it is null-safe) lives in
-     * {@link bookingsReassignedOnDemotionWhere}, shared with the count the
-     * change-role dialog shows the admin.
-     */
-    await tx.booking.updateMany({
-      where: bookingsReassignedOnDemotionWhere({
-        userId: id,
-        organizationId,
-      }),
-      data: {
-        creatorId: newOwnerId,
-      },
-    });
-  }
+  /**
+   * A demotion used to hand over the bookings the demoted user had created for
+   * somebody else. Bookings are gone, and nothing else about a demotion moves
+   * ownership — the branch is left empty rather than removed so the two
+   * `reason` values stay visible side by side.
+   */
 
   /** Update images */
   await tx.image.updateMany({

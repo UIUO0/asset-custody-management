@@ -4,7 +4,6 @@ import type { AssetIndexSettings } from "@prisma/client";
 import type { OrganizationRoles } from "@prisma/client";
 import { data, redirect } from "react-router";
 import type { HeaderData } from "~/components/layout/header/types";
-import { db } from "~/database/db.server";
 import { hasGetAllValue } from "~/hooks/use-model-filters";
 import type { AllowedModelNames } from "~/routes/api+/model-filters";
 import { getClientHint } from "~/utils/client-hints";
@@ -276,8 +275,6 @@ export async function simpleModeLoader({
        * Those are fields we need in advanced mode and this helps us prevent type issues.
        * */
       customFields: [],
-      bookings: [] as { id: string; name: string }[],
-      totalBookings: 0,
       // Saved filter presets
       savedFilterPresets,
       savedFilterPresetLimit: MAX_SAVED_FILTER_PRESETS,
@@ -369,8 +366,6 @@ export async function advancedModeLoader({
     customFields,
     teamMembersData,
     teamMembersForFormData,
-    bookings,
-    totalBookings,
     advNotifyData,
     advSavedFilterPresets,
     advCanImport,
@@ -424,25 +419,6 @@ export async function advancedModeLoader({
         })
       : Promise.resolve(null),
 
-    // Bookings for filter dropdown (upcoming bookings only)
-    db.booking.findMany({
-      where: {
-        organizationId,
-        status: { in: ["RESERVED", "ONGOING", "OVERDUE"] },
-      },
-      select: { id: true, name: true },
-      take:
-        searchParams.has("getAll") && hasGetAllValue(searchParams, "booking")
-          ? undefined
-          : 12,
-      orderBy: { from: "asc" },
-    }),
-    db.booking.count({
-      where: {
-        organizationId,
-        status: { in: ["RESERVED", "ONGOING", "OVERDUE"] },
-      },
-    }),
     getTeamMembersForNotify({ organizationId }),
     // Saved filter presets — only depends on organizationId + userId
     listPresetsForUser({
@@ -536,8 +512,6 @@ export async function advancedModeLoader({
       totalCategories,
       locations,
       totalLocations,
-      bookings,
-      totalBookings,
       assetModels,
       totalAssetModels,
       // Saved filter presets

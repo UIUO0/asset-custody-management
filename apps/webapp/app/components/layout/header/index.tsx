@@ -36,7 +36,24 @@ export default function Header({
   const data = useLoaderData<{ header?: HeaderData }>();
   const header = data?.header;
 
-  return header ? (
+  /**
+   * Render when the route asked for a header **in any of the three ways**.
+   *
+   * This used to be `header ? … : null` — loader data alone. A route that wrote
+   * `<Header title="…">…buttons…</Header>` and did not also return a `header`
+   * key rendered **nothing at all**, silently: no title, and every action
+   * button inside it gone. Two live screens were in that state — the goods
+   * receipt page (print / cancel / erase) and the receipts index ("new
+   * receipt") — and nothing in the type system or the tests could notice,
+   * because passing the props is valid and the loader key is invisible from
+   * the call site.
+   *
+   * Loader data still wins for breadcrumbs and the page description; the props
+   * are what make the component honest about being *used*.
+   */
+  const hasContent = !!header || !!title || !!children;
+
+  return hasContent ? (
     <header className={tw("-mx-4 bg-white", classNames)}>
       {!hideBreadcrumbs && (
         <>

@@ -18,6 +18,7 @@ import type { HeaderData } from "~/components/layout/header/types";
 import HorizontalTabs from "~/components/layout/horizontal-tabs";
 import When from "~/components/when/when";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { ASSET_DETAIL_SHELL_FIELDS } from "~/modules/asset/fields";
 import {
   deleteAsset,
   deleteOtherImages,
@@ -99,17 +100,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
        * asset is not part of the inventory they may see yet.
        */
       onlyReadyAssets: isScopedToOwnRecords,
-      include: {
-        custody: { include: { custodian: true } },
-        assetKits: {
-          select: {
-            id: true,
-            quantity: true,
-            kit: { select: { id: true, name: true, status: true } },
-          },
-        },
-        qrCodes: true,
-      },
+      include: ASSET_DETAIL_SHELL_FIELDS,
     });
 
     /**

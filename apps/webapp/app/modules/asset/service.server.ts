@@ -225,6 +225,28 @@ type AssetWithInclude<T extends Prisma.AssetInclude | undefined> =
     ? Prisma.AssetGetPayload<{ include: T }>
     : Asset;
 
+/*
+ * ⚠️ `include?: T` does NOT reject a relation `Asset` does not have.
+ *
+ * TypeScript infers `T` from the object literal and skips the excess-property
+ * check it would apply to a plain parameter — so
+ * `db.asset.findFirst({ include: { bogus: true } })` errors, while routing the
+ * same literal through this wrapper compiles cleanly.
+ *
+ * That is how `assetKits: { … }` survived in three live loaders after the Kit
+ * model was dropped: past typecheck, lint, 2500 tests and a production build,
+ * failing only at runtime — and failing as "Asset not found", because the
+ * catch below rewrites every cause into that one message.
+ *
+ * Tightening this generic was tried and abandoned: the mapped/conditional
+ * forms that would enforce exactness (`T & { [K in Exclude<…>]: never }`,
+ * `Exact<T, Shape>`) break inference — `T` falls back to the constraint, so
+ * nothing is caught, and one legitimate call site starts failing instead.
+ *
+ * So the compiler will not help here. Verify includes by RUNNING them against
+ * the database (Prisma validates relation names at runtime), and never trust a
+ * grep for the removed name — see the note in CLAUDE.md.
+ */
 export async function getAsset<T extends Prisma.AssetInclude | undefined>({
   id,
   organizationId,
@@ -448,12 +470,6 @@ export async function getAssets(params: {
                       name: { contains: term, mode: "insensitive" },
                     },
                   },
-                },
-              },
-              // Search in related tags
-              {
-                tags: {
-                  some: { name: { contains: term, mode: "insensitive" } },
                 },
               },
               // Search in custodian names — custody is a list relation, so

@@ -441,8 +441,14 @@ export const Role2PermissionMap: {
     ],
     /**
      * المستودعات own intake: they fill the form in, and stock now enters the
-     * system no other way. `delete` is void-the-document, not delete-the-stock
-     * (see `voidGoodsReceipt`).
+     * system no other way.
+     *
+     * `delete` covers **both** ways a receipt can go: cancelling it
+     * (`voidGoodsReceipt` — document and items stay) and erasing it
+     * (`deleteGoodsReceipt` — document, signatures and items all go). One
+     * permission, because they are the same authority over the same document;
+     * what makes the harder one safe is the movement guard inside it, not a
+     * narrower role.
      */
     [PermissionEntity.goodsReceipt]: [
       PermissionAction.create,
@@ -454,14 +460,12 @@ export const Role2PermissionMap: {
       PermissionAction.read,
       PermissionAction.create,
       PermissionAction.update,
-      PermissionAction.delete,
     ],
     [PermissionEntity.qr]: [PermissionAction.read],
     [PermissionEntity.category]: [
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      PermissionAction.delete,
     ],
     // Matrix: custom fields belong to المخزون only.
     [PermissionEntity.customField]: [],
@@ -473,7 +477,6 @@ export const Role2PermissionMap: {
     [PermissionEntity.locationNote]: [
       PermissionAction.read,
       PermissionAction.create,
-      PermissionAction.delete,
     ],
     // Matrix: رؤية المستخدمين = عرض only. No create/update/delete/changeRole.
     [PermissionEntity.teamMember]: [PermissionAction.read],
@@ -487,7 +490,6 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      PermissionAction.delete,
     ],
     [PermissionEntity.scan]: [PermissionAction.read],
     [PermissionEntity.custody]: [PermissionAction.read],
@@ -495,25 +497,21 @@ export const Role2PermissionMap: {
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      PermissionAction.delete,
     ],
     [PermissionEntity.audit]: [
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      PermissionAction.delete,
       PermissionAction.archive,
     ],
     [PermissionEntity.teamMemberNote]: [
       PermissionAction.read,
       PermissionAction.create,
-      PermissionAction.delete,
     ],
     [PermissionEntity.assetModel]: [
       PermissionAction.create,
       PermissionAction.read,
       PermissionAction.update,
-      PermissionAction.delete,
     ],
     [PermissionEntity.emailSettings]: [],
     [PermissionEntity.userData]: [
@@ -662,9 +660,9 @@ export const Role2PermissionMap: {
     [PermissionEntity.asset]: [PermissionAction.read, PermissionAction.delete],
     [PermissionEntity.assetIndexSettings]: [PermissionAction.read],
     /**
-     * المخزون monitor intake without performing it — plus `delete`, which here
-     * means *voiding the document*, not erasing stock (`voidGoodsReceipt` keeps
-     * the record and never touches the items it created).
+     * المخزون monitor intake without performing it — plus `delete`, which
+     * covers cancelling a receipt and erasing it outright (see the same entity
+     * on WAREHOUSE for what each one leaves behind).
      *
      * Granted provisionally at the authority's request: المخزون are the ones
      * who notice a receipt entered against the wrong supplier or in duplicate,

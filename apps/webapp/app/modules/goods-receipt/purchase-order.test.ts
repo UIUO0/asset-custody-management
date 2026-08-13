@@ -25,11 +25,24 @@ const findMany = vi.fn();
 
 const assetFindMany = vi.fn();
 const assetCount = vi.fn();
+const receiptUpdateMany = vi.fn();
+const deleteGoodsReceiptMock = vi.fn();
+
+// why: erasing a receipt has its own module and its own tests
+// (`delete-receipt.test.ts`). What matters here is the order-wide gate in front
+// of it — so the effect is stubbed and the assertions are about whether it was
+// reached at all.
+vi.mock("~/modules/goods-receipt/service.server", () => ({
+  deleteGoodsReceipt: (...a: unknown[]) => deleteGoodsReceiptMock(...a),
+}));
 const teamMemberFindMany = vi.fn();
 
 vi.mock("~/database/db.server", () => ({
   db: {
-    goodsReceipt: { findMany: (...args: unknown[]) => findMany(...args) },
+    goodsReceipt: {
+      findMany: (...args: unknown[]) => findMany(...args),
+      updateMany: (...args: unknown[]) => receiptUpdateMany(...args),
+    },
     asset: {
       findMany: (...args: unknown[]) => assetFindMany(...args),
       count: (...args: unknown[]) => assetCount(...args),
@@ -55,7 +68,9 @@ const {
   getOrderApprovalState,
   getPurchaseOrders,
   listDepartments,
+  deletePurchaseOrder,
   orderNumberOf,
+  voidPurchaseOrder,
 } = await import("./purchase-order.server");
 
 /** A receipt row shaped like the service's `select`. */
@@ -510,5 +525,254 @@ describe("order approval gate", () => {
         { purchaseRequestNumber: "PO-1" },
       ]);
     });
+  });
+});
+
+/**
+ * Cancelling a whole order's paperwork.
+ *
+ * The rule worth pinning is what it leaves alone. An order has no row of its
+ * own, so "cancel the order" is "cancel its receipts" — and the stock those
+ * receipts admitted stays put, because it physically arrived. A version of this
+ * that also deleted assets would be disposing of inventory on the strength of a
+ * form, and nothing on screen would say so.
+ */
+describe("voidPurchaseOrder", () => {
+  beforeEach(() => {
+    findMany.mockReset();
+    receiptUpdateMany.mockReset();
+    // Reset here too: the "touches nothing but the receipt state" case asserts
+    // this spy was never called, which is only meaningful if earlier blocks'
+    // calls are cleared first.
+    assetFindMany.mockReset();
+    receiptUpdateMany.mockResolvedValue({ count: 0 });
+  });
+
+  it("cancels only the receipts that are still live", async () => {
+    findMany.mockResolvedValue([
+      { id: "r-1", state: "SIGNED" },
+      { id: "r-2", state: "VOIDED" },
+      { id: "r-3", state: "SAVED" },
+    ]);
+    receiptUpdateMany.mockResolvedValue({ count: 2 });
+
+    await expect(
+      voidPurchaseOrder({ orderNumber: "PO-1", organizationId: "org-1" }),
+    ).resolves.toBe(2);
+
+    const where = receiptUpdateMany.mock.calls[0][0].where;
+    expect(where.id).toEqual({ in: ["r-1", "r-3"] });
+    // Re-scoped on the write, not trusted from the read above.
+    expect(where.organizationId).toBe("org-1");
+    expect(where.state).toEqual({ not: "VOIDED" });
+  });
+
+  it("touches nothing but the receipt state", async () => {
+    // The assets stay. See the service docblock for why.
+    findMany.mockResolvedValue([{ id: "r-1", state: "SAVED" }]);
+    receiptUpdateMany.mockResolvedValue({ count: 1 });
+
+    await voidPurchaseOrder({ orderNumber: "PO-1", organizationId: "org-1" });
+
+    expect(receiptUpdateMany.mock.calls[0][0].data).toEqual({
+      state: "VOIDED",
+    });
+    expect(assetFindMany).not.toHaveBeenCalled();
+  });
+
+  it("refuses an order number nothing was booked against", async () => {
+    findMany.mockResolvedValue([]);
+
+    await expect(
+      voidPurchaseOrder({ orderNumber: "PO-nope", organizationId: "org-1" }),
+    ).rejects.toMatchObject({ status: 404 });
+
+    expect(receiptUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it("refuses an order that is already fully cancelled", async () => {
+    // Not an error the operator caused — but re-writing rows to the state they
+    // are already in would report "cancelled 3" for a click that changed
+    // nothing.
+    findMany.mockResolvedValue([
+      { id: "r-1", state: "VOIDED" },
+      { id: "r-2", state: "VOIDED" },
+    ]);
+
+    await expect(
+      voidPurchaseOrder({ orderNumber: "PO-1", organizationId: "org-1" }),
+    ).rejects.toMatchObject({ status: 409 });
+
+    expect(receiptUpdateMany).not.toHaveBeenCalled();
+  });
+
+  it("matches the order number exactly, trimmed", async () => {
+    // A prefix match would fold PO-1 into PO-11 and cancel the wrong delivery.
+    findMany.mockResolvedValue([{ id: "r-1", state: "SAVED" }]);
+
+    await voidPurchaseOrder({
+      orderNumber: "  PO-1  ",
+      organizationId: "org-1",
+    });
+
+    expect(findMany.mock.calls[0][0].where.OR).toEqual([
+      { purchaseOrderNumber: "PO-1" },
+      { purchaseRequestNumber: "PO-1" },
+    ]);
+  });
+});
+
+/**
+ * Erasing a whole order.
+ *
+ * The property worth pinning is that the movement check runs **across the whole
+ * order before anything is removed**. Erasing receipt-by-receipt and letting
+ * each guard itself would leave the order half-gone when the third receipt is
+ * refused — and there is no undo to reach for.
+ */
+/** A receipt row shaped like `deletePurchaseOrder`'s `select`. */
+function orderReceipt(id: string, state = "SAVED") {
+  return { id, reference: `EPDA-RCV-2026-${id}`, state };
+}
+
+describe("deletePurchaseOrder", () => {
+  beforeEach(() => {
+    findMany.mockReset();
+    assetFindMany.mockReset();
+    assetFindMany.mockResolvedValue([]);
+    deleteGoodsReceiptMock.mockReset();
+    deleteGoodsReceiptMock.mockResolvedValue({
+      reference: "ref",
+      assetsDeleted: 2,
+    });
+  });
+
+  it("erases every receipt on the order and totals what went", async () => {
+    findMany.mockResolvedValue([orderReceipt("r-1"), orderReceipt("r-2")]);
+
+    await expect(
+      deletePurchaseOrder({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+        canDeleteSigned: true,
+      }),
+    ).resolves.toEqual({ receiptsDeleted: 2, assetsDeleted: 4 });
+
+    expect(deleteGoodsReceiptMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("checks the whole order before removing anything", async () => {
+    // All-or-nothing: a refusal must arrive before the first delete, not
+    // between the second and the third.
+    findMany.mockResolvedValue([
+      orderReceipt("r-1"),
+      orderReceipt("r-2"),
+      orderReceipt("r-3"),
+    ]);
+    assetFindMany.mockResolvedValue([{ title: "لابتوب" }]);
+
+    await expect(
+      deletePurchaseOrder({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+        canDeleteSigned: true,
+      }),
+    ).rejects.toMatchObject({ status: 409 });
+
+    expect(deleteGoodsReceiptMock).not.toHaveBeenCalled();
+  });
+
+  it("looks for movement across every asset the order produced", async () => {
+    findMany.mockResolvedValue([orderReceipt("r-1")]);
+
+    await deletePurchaseOrder({
+      orderNumber: "PO-1",
+      organizationId: "org-1",
+      canDeleteSigned: true,
+    });
+
+    const where = assetFindMany.mock.calls[0][0].where;
+    expect(where.OR).toEqual([
+      { custody: { some: {} } },
+      { custodyHandovers: { some: {} } },
+    ]);
+    // Scoped to this order's receipts, not the whole workspace.
+    expect(where.receiptLine.receipt.OR).toEqual([
+      { purchaseOrderNumber: "PO-1" },
+      { purchaseRequestNumber: "PO-1" },
+    ]);
+  });
+
+  it("refuses the whole order when one of its receipts is signed", async () => {
+    // Erasing an order is all-or-nothing, so one signed document anywhere in
+    // it puts the order out of المستودعات' reach — otherwise a refusal on the
+    // third receipt would leave the first two already gone.
+    findMany.mockResolvedValue([
+      orderReceipt("r-1"),
+      orderReceipt("r-2", "SIGNED"),
+    ]);
+
+    await expect(
+      deletePurchaseOrder({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+        canDeleteSigned: false,
+      }),
+    ).rejects.toMatchObject({ status: 403 });
+
+    expect(deleteGoodsReceiptMock).not.toHaveBeenCalled();
+  });
+
+  it("names the signed receipt so the operator knows which one blocks it", async () => {
+    findMany.mockResolvedValue([orderReceipt("r-2", "SIGNED")]);
+
+    await expect(
+      deletePurchaseOrder({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+        canDeleteSigned: false,
+      }),
+    ).rejects.toThrow(/EPDA-RCV-2026-r-2/);
+  });
+
+  it("erases an order of unsigned receipts for that same caller", async () => {
+    findMany.mockResolvedValue([orderReceipt("r-1"), orderReceipt("r-2")]);
+
+    await expect(
+      deletePurchaseOrder({
+        orderNumber: "PO-1",
+        organizationId: "org-1",
+        canDeleteSigned: false,
+      }),
+    ).resolves.toMatchObject({ receiptsDeleted: 2 });
+  });
+
+  it("passes the caller's reach down to each receipt", async () => {
+    // The per-receipt guard is the real one; this only has to not drop it.
+    findMany.mockResolvedValue([orderReceipt("r-1")]);
+
+    await deletePurchaseOrder({
+      orderNumber: "PO-1",
+      organizationId: "org-1",
+      canDeleteSigned: false,
+    });
+
+    expect(deleteGoodsReceiptMock).toHaveBeenCalledWith(
+      expect.objectContaining({ canDeleteSigned: false }),
+    );
+  });
+
+  it("refuses an order number nothing was booked against", async () => {
+    findMany.mockResolvedValue([]);
+
+    await expect(
+      deletePurchaseOrder({
+        orderNumber: "PO-nope",
+        organizationId: "org-1",
+        canDeleteSigned: true,
+      }),
+    ).rejects.toMatchObject({ status: 404 });
+
+    expect(deleteGoodsReceiptMock).not.toHaveBeenCalled();
   });
 });

@@ -14,7 +14,6 @@ import {
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
 import { requirePermission } from "~/utils/roles.server";
-import { resolveUserDisplayName } from "~/utils/user";
 
 const querySchema = z.object({
   q: z.string().trim().max(100).optional(),
@@ -37,7 +36,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           query,
           assets: [],
           audits: [],
-          bookings: [],
           locations: [],
           teamMembers: [],
         }),
@@ -47,7 +45,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const {
       organizationId,
       role,
-      canSeeAllBookings,
       canSeeAllCustody,
       isScopedToOwnRecords,
       currentOrganization,
@@ -71,16 +68,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       fields.map((field) => ({
         [field]: { contains: term, mode: Prisma.QueryMode.insensitive },
       }));
-
-    // Booking search conditions
-    const bookingSearchConditions: Prisma.BookingWhereInput[] = searchTerms.map(
-      (term) => ({
-        OR: [
-          ...createTextSearchConditions(term, ["name", "description"]),
-          { id: { contains: term, mode: Prisma.QueryMode.insensitive } },
-        ],
-      }),
-    );
 
     // Location search conditions
     const locationSearchConditions: Prisma.LocationWhereInput[] =
@@ -141,24 +128,12 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     const isPersonalWorkspace = isPersonalOrg(currentOrganization);
 
     // Check permissions for different entity types based on actual roles
-    const hasBookingPermission =
-      !isPersonalWorkspace &&
-      ["OWNER", "ADMIN", "SELF_SERVICE", "BASE"].includes(role);
     const hasLocationPermission = ["OWNER", "ADMIN"].includes(role);
     const hasTeamMemberPermission =
       !isPersonalWorkspace && ["OWNER", "ADMIN"].includes(role);
     const hasAuditPermission = true;
 
     // Prepare where clauses for other entities
-
-    const bookingWhere: Prisma.BookingWhereInput = {
-      organizationId,
-      ...(bookingSearchConditions.length
-        ? { OR: bookingSearchConditions }
-        : {}),
-      // BASE and SELF_SERVICE users can only see their own bookings unless org settings allow otherwise
-      ...(canSeeAllBookings ? {} : { custodianUserId: userId }),
-    };
 
     const locationWhere: Prisma.LocationWhereInput = {
       organizationId,
@@ -207,105 +182,84 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
     };
 
     // Execute parallel searches
-    const [assetResults, audits, bookings, locations, teamMembers] =
-      await Promise.all([
-        // Assets (always allowed) - using enhanced search from asset service.
-        // The asset-index default include no longer eagerly loads customFields
-        // (see fields.ts), so add them back here for the command palette,
-        // which surfaces matching custom-field values in its results.
-        getAssets({
-          search: query,
-          organizationId,
-          page: 1,
-          orderBy: "title",
-          orderDirection: "asc",
-          perPage: 8,
-          // Search must not be a side channel around the intake gate.
-          onlyReadyAssets: isScopedToOwnRecords,
-          extraInclude: {
-            barcodes: {
-              select: { id: true, value: true, type: true },
-            },
-            // Pulled so the search-result row can show the asset's
-            // primary placement (read via `getPrimaryLocation`).
-            assetLocations: {
-              select: { location: { select: { name: true } } },
-            },
-            customFields: {
-              where: {
-                customField: { active: true, deletedAt: null },
-              },
+    const [assetResults, audits, locations, teamMembers] = await Promise.all([
+      // Assets (always allowed) - using enhanced search from asset service.
+      // The asset-index default include no longer eagerly loads customFields
+      // (see fields.ts), so add them back here for the command palette,
+      // which surfaces matching custom-field values in its results.
+      getAssets({
+        search: query,
+        organizationId,
+        page: 1,
+        orderBy: "title",
+        orderDirection: "asc",
+        perPage: 8,
+        // Search must not be a side channel around the intake gate.
+        onlyReadyAssets: isScopedToOwnRecords,
+        extraInclude: {
+          barcodes: {
+            select: { id: true, value: true, type: true },
+          },
+          // Pulled so the search-result row can show the asset's
+          // primary placement (read via `getPrimaryLocation`).
+          assetLocations: {
+            select: { location: { select: { name: true } } },
+          },
+          customFields: {
+            where: {
+              customField: { active: true, deletedAt: null },
             },
           },
-        }),
+        },
+      }),
 
-        // Audits (permission-gated)
-        hasAuditPermission
-          ? db.auditSession.findMany({
-              where: auditWhere,
-              take: 6,
-              orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                status: true,
-                dueDate: true,
-              },
-            })
-          : Promise.resolve([]),
+      // Audits (permission-gated)
+      hasAuditPermission
+        ? db.auditSession.findMany({
+            where: auditWhere,
+            take: 6,
+            orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              status: true,
+              dueDate: true,
+            },
+          })
+        : Promise.resolve([]),
 
-        // Bookings (permission-gated)
-        hasBookingPermission
-          ? db.booking.findMany({
-              where: bookingWhere,
-              take: 6,
-              orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-              include: {
-                custodianUser: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                    displayName: true,
-                    email: true,
-                  },
-                },
-                custodianTeamMember: { select: { name: true } },
-              },
-            })
-          : Promise.resolve([]),
+      // Locations (permission-gated)
+      hasLocationPermission
+        ? db.location.findMany({
+            where: locationWhere,
+            take: 6,
+            orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+            include: {
+              _count: { select: { assetLocations: true } },
+            },
+          })
+        : Promise.resolve([]),
 
-        // Locations (permission-gated)
-        hasLocationPermission
-          ? db.location.findMany({
-              where: locationWhere,
-              take: 6,
-              orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-              include: {
-                _count: { select: { assetLocations: true } },
-              },
-            })
-          : Promise.resolve([]),
-
-        // Team members (permission-gated)
-        hasTeamMemberPermission
-          ? db.teamMember.findMany({
-              where: teamMemberWhere,
-              take: 8,
-              orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
-              include: {
-                user: {
-                  select: {
-                    firstName: true,
-                    lastName: true,
-                    displayName: true,
-                    email: true,
-                  },
+      // Team members (permission-gated)
+      hasTeamMemberPermission
+        ? db.teamMember.findMany({
+            where: teamMemberWhere,
+            take: 8,
+            orderBy: [{ updatedAt: "desc" }, { name: "asc" }],
+            include: {
+              user: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  displayName: true,
+                  email: true,
                 },
               },
-            })
-          : Promise.resolve([]),
-      ]);
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
     return data(
       payload({
@@ -367,17 +321,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
           description: audit.description || null,
           status: audit.status,
           dueDate: audit.dueDate?.toISOString() || null,
-        })),
-        bookings: bookings.map((booking) => ({
-          id: booking.id,
-          name: booking.name,
-          description: booking.description || null,
-          status: booking.status,
-          custodianName: booking.custodianUser
-            ? resolveUserDisplayName(booking.custodianUser)
-            : booking.custodianTeamMember?.name || null,
-          from: booking.from?.toISOString() || null,
-          to: booking.to?.toISOString() || null,
         })),
         locations: locations.map((location) => ({
           id: location.id,

@@ -12,10 +12,11 @@ import type { ReactNode } from "react";
 import type { GoodsReceiptParty } from "@prisma/client";
 // Browser-safe enum values — see modules/goods-receipt/enums.ts.
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { data, useActionData, useLoaderData } from "react-router";
+import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { Form } from "~/components/custom-form";
 import { SignatureBoxes } from "~/components/goods-receipt/signature-boxes";
 import Header from "~/components/layout/header";
+import type { HeaderData } from "~/components/layout/header/types";
 import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { Table, Td, Th, Tr } from "~/components/table";
@@ -30,6 +31,7 @@ import {
   getSignatureUrls,
   materializeReceiptItems,
   storeReceiptSignature,
+  deleteGoodsReceipt,
   voidGoodsReceipt,
 } from "~/modules/goods-receipt/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
@@ -65,7 +67,14 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     // The paths come along with the receipt, so no second query is needed.
     const signatureUrls = await getSignatureUrls(receipt.signatures);
 
-    return payload({ receipt, signatureUrls });
+    /**
+     * `Header` renders **nothing at all** without this key — it returns `null`
+     * when the loader has no `header`, taking every button inside it with it.
+     * This page had a print and a cancel button that nobody could see.
+     */
+    const header: HeaderData = { title: receipt.reference };
+
+    return payload({ header, receipt, signatureUrls });
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
     throw data(error(reason), { status: reason.status });
@@ -84,6 +93,39 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
      * and (provisionally) المخزون; signing and repairing are `update`. A role
      * that may look at a receipt is not thereby allowed to sign or cancel it.
      */
+    /**
+     * Erase. `goodsReceipt.delete` opens the door; how far it opens is decided
+     * by `asset.delete`, checked below.
+     *
+     * Erasing takes the items with it, so the authority to erase a document
+     * people have already signed is the authority to destroy items in
+     * circulation — which is what `asset.delete` names. المستودعات hold only
+     * the first, and can therefore undo their own data entry up until someone
+     * signs it; المخزون hold both. Deriving it from the permission map rather
+     * than naming the roles keeps the rule in one place.
+     */
+    if (formData.get("intent") === "erase") {
+      const { organizationId, roles } = await requirePermission({
+        userId,
+        request,
+        entity: PermissionEntity.goodsReceipt,
+        action: PermissionAction.delete,
+      });
+
+      await deleteGoodsReceipt({
+        id: params.receiptId as string,
+        organizationId,
+        canDeleteSigned: userHasPermission({
+          roles,
+          entity: PermissionEntity.asset,
+          action: PermissionAction.delete,
+        }),
+      });
+
+      // Nothing left to show — the record this page renders is gone.
+      return redirect("/receipts");
+    }
+
     if (formData.get("intent") === "void") {
       const { organizationId } = await requirePermission({
         userId,
@@ -215,6 +257,30 @@ export default function ReceiptDetailPage() {
     }) && receipt.state !== ReceiptState.VOIDED;
 
   /**
+   * Erasing needs the same permission as cancelling, and unlike it applies in
+   * every state — a cancelled receipt is exactly the one somebody is most
+   * likely to want gone.
+   */
+  /**
+   * Erasing is offered only where the action would actually go through — the
+   * same two-part rule the action applies, so nobody is shown a button that
+   * answers 403. `asset.delete` is what permits erasing a signed document; see
+   * the action for why that is the permission that decides it.
+   */
+  const canErase =
+    userHasPermission({
+      roles,
+      entity: PermissionEntity.goodsReceipt,
+      action: PermissionAction.delete,
+    }) &&
+    (receipt.state !== ReceiptState.SIGNED ||
+      userHasPermission({
+        roles,
+        entity: PermissionEntity.asset,
+        action: PermissionAction.delete,
+      }));
+
+  /**
    * Repair is offered to whoever may edit a receipt — المستودعات. Signing
    * repairs a receipt on its way to SIGNED, but a receipt that was *already*
    * signed when it came up short has no other way back, so the button is the
@@ -261,6 +327,35 @@ export default function ReceiptDetailPage() {
             <input type="hidden" name="intent" value="void" />
             <Button type="submit" variant="secondary">
               إلغاء النموذج
+            </Button>
+          </Form>
+        ) : null}
+
+        {/*
+         * Erase sits beside cancel, not instead of it: they answer different
+         * questions. Cancel is "this delivery was called off" — the document
+         * stays because it happened. Erase is "this document should never have
+         * existed", and it takes the items with it.
+         *
+         * `variant="danger"` and a confirm that names the item count: this is
+         * the only control on the screen with no way back.
+         */}
+        {canErase ? (
+          <Form
+            method="post"
+            onSubmit={(event) => {
+              if (
+                !window.confirm(
+                  `حذف ${receipt.reference} نهائياً؟ سيُمحى المستند وتواقيعه و${totalItems} صنفاً أنشأها. لا يمكن التراجع.`,
+                )
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <input type="hidden" name="intent" value="erase" />
+            <Button type="submit" variant="danger">
+              حذف نهائي
             </Button>
           </Form>
         ) : null}

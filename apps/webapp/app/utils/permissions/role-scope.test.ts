@@ -1,6 +1,6 @@
 import { OrganizationRoles } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { Role2PermissionMap } from "./permission.data";
+import { PermissionAction, Role2PermissionMap } from "./permission.data";
 import {
   hasOrgWideNonOwnerRole,
   hasWorkspaceAdminRole,
@@ -339,5 +339,75 @@ describe("resolveDepartmentDeskId — multi-role memberships", () => {
         departmentTeamMemberId: IT_DESK,
       }),
     ).toBeNull();
+  });
+});
+
+/**
+ * Who may destroy things.
+ *
+ * The authority is deliberately narrow: المخزون prune the register, and nobody
+ * else operational deletes anything. المستودعات keep exactly one delete —
+ * `goodsReceipt` — and that one is narrowed further at the service, which
+ * refuses a document whose signatures are complete (see `deleteGoodsReceipt`).
+ * They can therefore undo their own data entry right up until someone signs
+ * it, and no further.
+ *
+ * These assertions are the policy, not a description of it. A `delete` added to
+ * an operational role fails here, which is the point — the map is edited far
+ * more often than this decision is revisited.
+ */
+describe("deletion authority", () => {
+  /** Every entity a role may delete, read straight from the map. */
+  function deletableEntities(role: OrganizationRoles): string[] {
+    const entry = Role2PermissionMap[role] ?? {};
+
+    return Object.entries(entry)
+      .filter(([, actions]) =>
+        (actions as PermissionAction[]).includes(PermissionAction.delete),
+      )
+      .map(([entity]) => entity)
+      .sort();
+  }
+
+  it("gives المخزون the register-wide delete", () => {
+    expect(deletableEntities(OrganizationRoles.INVENTORY)).toEqual([
+      "asset",
+      "goodsReceipt",
+    ]);
+  });
+
+  it("gives المستودعات only the goods receipt", () => {
+    // Not `asset`: that is what lets a caller erase a signed document, and the
+    // service reads it as exactly that. Adding it here silently widens the
+    // signature rule too.
+    expect(deletableEntities(OrganizationRoles.WAREHOUSE)).toEqual([
+      "goodsReceipt",
+    ]);
+  });
+
+  it("gives المالية nothing to delete", () => {
+    // Finance re-codes items; it does not remove them.
+    expect(deletableEntities(OrganizationRoles.FINANCE)).toEqual([]);
+  });
+
+  it.each([
+    OrganizationRoles.DEPARTMENT,
+    OrganizationRoles.SELF_SERVICE,
+    OrganizationRoles.BASE,
+  ])("gives %s nothing to delete", (role) => {
+    expect(deletableEntities(role)).toEqual([]);
+  });
+
+  it("leaves erasing a signed document to whoever may delete an asset", () => {
+    // The property the services rely on: `goodsReceipt.delete` says who may
+    // erase, `asset.delete` says how far. If the two ever coincide for an
+    // operational role, the signature rule stops distinguishing anyone.
+    const canEraseSigned = [
+      OrganizationRoles.WAREHOUSE,
+      OrganizationRoles.FINANCE,
+      OrganizationRoles.INVENTORY,
+    ].filter((role) => deletableEntities(role).includes("asset"));
+
+    expect(canEraseSigned).toEqual([OrganizationRoles.INVENTORY]);
   });
 });

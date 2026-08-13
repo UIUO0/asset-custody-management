@@ -1,7 +1,6 @@
 import type { MouseEvent } from "react";
 import { useAtomValue, useSetAtom } from "jotai";
 import {
-  bulkSelectionKey,
   disabledBulkItemsAtom,
   removeSelectedBulkItemsAtom,
   selectedBulkItemsAtom,
@@ -40,16 +39,9 @@ export default function BulkListItemCheckbox({
   const freezeColumn = useAssetIndexFreezeColumn();
   const { modeIsAdvanced } = useAssetIndexViewState();
 
-  // Compare by `bulkSelectionKey` (= `bookingAssetId ?? id`) so a kit-driven
-  // slice and a standalone slice of the same asset are tracked independently.
-  // See helper JSDoc in ~/atoms/list for the multi-slice rationale.
-  const itemKey = bulkSelectionKey(item);
-  const disabled = disabledBulkItems.some(
-    (i) => bulkSelectionKey(i) === itemKey,
-  );
-  const checked = !!selectedBulkItems.find(
-    (i) => bulkSelectionKey(i) === itemKey,
-  );
+  const itemKey = item.id;
+  const disabled = disabledBulkItems.some((i) => i.id === itemKey);
+  const checked = !!selectedBulkItems.find((i) => i.id === itemKey);
 
   function handleBulkItemSelection(e: MouseEvent<HTMLTableCellElement>) {
     e.preventDefault();
@@ -58,9 +50,9 @@ export default function BulkListItemCheckbox({
 
     if (bulkItems && bulkItems.length > 0) {
       const itemsToSet = [...bulkItems, item];
-      const itemsToSetKeys = new Set(itemsToSet.map(bulkSelectionKey));
+      const itemsToSetKeys = new Set(itemsToSet.map((i) => i.id));
       const itemsExists = selectedBulkItems.some((selItem) =>
-        itemsToSetKeys.has(bulkSelectionKey(selItem)),
+        itemsToSetKeys.has(selItem.id),
       );
 
       /** If the selected items already exists, then remove them */

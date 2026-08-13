@@ -947,3 +947,152 @@ export async function voidGoodsReceipt({
 
   return getGoodsReceipt({ id, organizationId });
 }
+
+/**
+ * Erases a receipt and everything it created — the document, its lines, its
+ * signatures, and the assets it admitted.
+ *
+ * ## This is not {@link voidGoodsReceipt}
+ *
+ * Voiding keeps the paperwork and the stock; this removes both. It is for the
+ * receipt that should never have existed — a mistyped entry, a duplicate, a
+ * delivery booked against the wrong workspace — where leaving a cancelled
+ * document in the register is worse than having no record of it at all.
+ *
+ * ## The one thing it refuses
+ *
+ * A receipt whose assets have **moved** cannot be erased. That is not a policy
+ * choice; it is that the database would do it silently and wrongly:
+ *
+ * - `Custody` cascades on `assetId`. An item in somebody's hands would vanish
+ *   from the custody record with nothing left to say who has it.
+ * - `CustodyHandoverAsset` cascades too. A محضر that two parties signed would
+ *   keep its signatures and quietly lose a line — a signed document listing
+ *   fewer assets than it was signed for, discoverable only at the next
+ *   inventory count.
+ *
+ * So the test is *movement*, not paperwork state: an unsigned receipt whose
+ * stock was already handed out is refused, and a fully signed receipt whose
+ * stock never left the shelf is erased. What matters is whether anyone has
+ * taken responsibility for the items.
+ *
+ * ⚠️ Signature images are left in storage — orphaned in a private bucket rather
+ * than dangling. Deleting them first would mean a failed storage call could
+ * leave a half-erased receipt; the rows are the record that matters.
+ *
+ * @param args.id - Receipt id
+ * @param args.organizationId - Workspace, applied to every read and write
+ * @returns The reference that was erased and how many assets went with it
+ * @throws {ShelfError} 404 if it is not in this workspace; 409 if any of its
+ *   assets is in custody or named on a handover
+ */
+export async function deleteGoodsReceipt({
+  id,
+  organizationId,
+  canDeleteSigned,
+}: {
+  id: string;
+  organizationId: string;
+  /**
+   * Whether this caller may erase a receipt whose signatures are complete.
+   *
+   * Derived by the route from `asset.delete`, **not** from a role name: erasing
+   * a signed receipt destroys items that are already in circulation, and the
+   * permission that governs destroying items is the one that should say who
+   * may. Today that means المخزون (and workspace admins); المستودعات hold
+   * `goodsReceipt.delete` alone, so they can undo their own data entry before
+   * anyone has signed it and no further.
+   */
+  canDeleteSigned: boolean;
+}): Promise<{ reference: string; assetsDeleted: number }> {
+  const receipt = await db.goodsReceipt.findFirst({
+    where: { id, organizationId },
+    select: {
+      id: true,
+      reference: true,
+      state: true,
+      lines: { select: { assets: { select: { id: true, title: true } } } },
+    },
+  });
+
+  if (!receipt) {
+    throw new ShelfError({
+      cause: null,
+      title: "النموذج غير موجود",
+      message: "لا يوجد نموذج استلام بهذا المعرّف في مساحة العمل.",
+      additionalData: { id, organizationId },
+      label,
+      status: 404,
+      shouldBeCaptured: false,
+    });
+  }
+
+  const assetIds = receipt.lines.flatMap((line) =>
+    line.assets.map((asset) => asset.id),
+  );
+
+  if (assetIds.length > 0) {
+    const moved = await db.asset.findMany({
+      where: {
+        id: { in: assetIds },
+        organizationId,
+        OR: [{ custody: { some: {} } }, { custodyHandovers: { some: {} } }],
+      },
+      select: { title: true },
+      take: 10,
+    });
+
+    if (moved.length > 0) {
+      const names = moved.map((asset) => asset.title).join("، ");
+
+      throw new ShelfError({
+        cause: null,
+        title: "أصناف هذا النموذج تحرّكت",
+        message: `لا يمكن حذف النموذج: بعض أصنافه في عهدة أو مذكورة في محضر تسليم (${names}). الحذف يمحو سطر الصنف من محضر موقَّع بصمت. فُكّ العهدة وأبطِل المحاضر أولاً، أو ألغِ النموذج بدل حذفه.`,
+        additionalData: { id, organizationId, movedCount: moved.length },
+        label,
+        status: 409,
+        shouldBeCaptured: false,
+      });
+    }
+  }
+
+  /**
+   * A signed receipt is a document three parties put their names to. Undoing
+   * your own typing before anyone signed is data entry; erasing it afterwards
+   * is destroying a signed record, and that is a different authority.
+   *
+   * Asked **after** the movement check, never before: an item that has moved is
+   * refused whoever is asking, and that 409 is the more useful answer. Leading
+   * with the 403 would tell المستودعات they lack the authority, sending them to
+   * fetch المخزون — who would then hit the same wall for a different reason.
+   */
+  if (!canDeleteSigned && receipt.state === GoodsReceiptState.SIGNED) {
+    throw new ShelfError({
+      cause: null,
+      title: "النموذج موقَّع",
+      message: `لا يمكنك حذف ${receipt.reference} بعد اكتمال تواقيعه. الحذف بعد التوقيع للمخزون وحده — ويمكنك إلغاء النموذج بدلاً من ذلك.`,
+      additionalData: { id, organizationId, state: receipt.state },
+      label,
+      status: 403,
+      shouldBeCaptured: false,
+    });
+  }
+
+  await db.$transaction(async (tx) => {
+    // Assets first: `Asset.receiptLine` is `SET NULL`, so deleting the receipt
+    // on its own would orphan them rather than take them along — and an asset
+    // with no receipt line is exactly the shape that passes
+    // `assertReceiptSignedBeforeApproval` unchecked.
+    if (assetIds.length > 0) {
+      await tx.asset.deleteMany({
+        where: { id: { in: assetIds }, organizationId },
+      });
+    }
+
+    // Lines and signatures cascade from the receipt row itself.
+    await tx.goodsReceipt.deleteMany({ where: { id, organizationId } });
+  });
+
+  return { reference: receipt.reference, assetsDeleted: assetIds.length };
+}

@@ -38,9 +38,6 @@ export const ModelFiltersSchema = z.discriminatedUnion("name", [
     usersOnly: z.coerce.boolean().optional(), // To get only the teamMembers with users (exclude NRMs)
   }),
   BasicModelFilters.extend({
-    name: z.literal("booking"),
-  }),
-  BasicModelFilters.extend({
     name: z.literal("assetModel"),
   }),
 ]);
@@ -120,10 +117,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       where.OR.push({
         [queryKey]: { contains: queryValue, mode: "insensitive" },
       });
-    }
-
-    if (modelFilters.name === "booking") {
-      where.status = { in: ["RESERVED", "ONGOING", "OVERDUE"] };
     }
 
     const queryData = (await db[name].dynamicFindMany({

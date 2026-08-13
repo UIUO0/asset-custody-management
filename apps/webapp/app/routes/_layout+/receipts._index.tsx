@@ -19,6 +19,7 @@ import Header from "~/components/layout/header";
 import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { Table, Td, Th, Tr } from "~/components/table";
+import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { ReceiptState } from "~/modules/goods-receipt/enums";
 import { getFormShape } from "~/modules/goods-receipt/form-shape";
 import { getGoodsReceipts } from "~/modules/goods-receipt/service.server";
@@ -30,6 +31,7 @@ import {
   PermissionAction,
   PermissionEntity,
 } from "~/utils/permissions/permission.data";
+import { userHasPermission } from "~/utils/permissions/permission.validator";
 import { requirePermission } from "~/utils/roles.server";
 
 export const meta = () => [{ title: appendToMetaTitle("نماذج الاستلام") }];
@@ -87,13 +89,29 @@ const STATE_STYLES: Record<
 export default function ReceiptsIndexPage() {
   const { t } = useTranslation();
   const { receipts, totalItems } = useLoaderData<typeof loader>();
+  const { roles } = useUserRoleHelper();
+
+  /**
+   * Only المستودعات fill receipts in — المالية and المخزون read them.
+   *
+   * The button was ungated, which went unnoticed only because the whole
+   * `Header` was rendering null; fixing that exposed a "new receipt" button for
+   * roles whose click would 403 on arrival.
+   */
+  const canCreate = userHasPermission({
+    roles,
+    entity: PermissionEntity.goodsReceipt,
+    action: PermissionAction.create,
+  });
 
   return (
     <div className="relative">
       <Header title="نماذج الاستلام">
-        <Button to="/receipts/new" icon="plus">
-          {t("receipts.newReceipt")}
-        </Button>
+        {canCreate ? (
+          <Button to="/receipts/new" icon="plus">
+            {t("receipts.newReceipt")}
+          </Button>
+        ) : null}
       </Header>
 
       {receipts.length === 0 ? (

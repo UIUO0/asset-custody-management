@@ -41,8 +41,6 @@ export type SeederCounts = {
   customFields: number;
   teamMembers: number;
   assets: number;
-  bookings: number;
-  partialCheckins: number;
   auditSessions: number;
   auditAssets: number;
   auditScans: number;
@@ -58,8 +56,6 @@ export function emptyCounts(): SeederCounts {
     customFields: 0,
     teamMembers: 0,
     assets: 0,
-    bookings: 0,
-    partialCheckins: 0,
     auditSessions: 0,
     auditAssets: 0,
     auditScans: 0,

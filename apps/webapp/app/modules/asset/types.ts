@@ -10,10 +10,8 @@ import type {
   CustomFieldType,
   AssetReminder,
   Organization,
-  Booking,
   BarcodeType,
   Barcode,
-  TeamMember,
 } from "@prisma/client";
 import type { Return } from "@prisma/client/runtime/library";
 import type { assetIndexFields } from "./fields";
@@ -140,24 +138,6 @@ export type AssetsFromViewItem = Prisma.AssetGetPayload<{
   include: Return<typeof assetIndexFields>;
 }>;
 
-/** Type for advanced asset booking */
-export type AdvancedAssetBooking = Pick<
-  Booking,
-  "id" | "name" | "status" | "description"
-> & {
-  from: string;
-  to: string;
-  custodianTeamMember?: Pick<TeamMember, "id" | "name">;
-  custodianUser?: Pick<
-    User,
-    "id" | "firstName" | "lastName" | "profilePicture"
-  >;
-  creator?: Pick<User, "id" | "firstName" | "lastName" | "profilePicture">;
-  /** BookingAsset.quantity — booked units for THIS slice. Never Asset.quantity
-   * (workspace stock). Availability view only. */
-  quantity?: number;
-};
-
 /** Type for advanced index query. We cannot infer it because we do a raw query so we need to create it ourselves. */
 export type AdvancedIndexAsset = Pick<
   Asset,
@@ -236,7 +216,6 @@ export type AdvancedIndexAsset = Pick<
     AssetReminder,
     "id" | "alertDateTime" | "name" | "message"
   >;
-  bookings?: Array<AdvancedAssetBooking>;
   barcodes?: Array<Pick<Barcode, "id" | "type" | "value">>;
 };
 // Type for the entire query result

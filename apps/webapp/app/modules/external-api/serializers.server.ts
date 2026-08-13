@@ -36,14 +36,10 @@ export const API_ASSET_SELECT = {
   createdAt: true,
   updatedAt: true,
   category: { select: { id: true, name: true } },
-  tags: { select: { id: true, name: true } },
-  // Location and kit live on pivots (`AssetLocation` / `AssetKit`); the
-  // serializer flattens the primary row so the public shape stays flat.
+  // Location lives on the `AssetLocation` pivot; the serializer flattens the
+  // primary row so the public shape stays flat.
   assetLocations: {
     select: { location: { select: { id: true, name: true } } },
-  },
-  assetKits: {
-    select: { kit: { select: { id: true, name: true } } },
   },
   // Custodian name only. The custodian's user id is internal and deliberately
   // withheld — an external system has no way to act on it and no need for it.
@@ -68,9 +64,7 @@ export type ApiAsset = {
   unitOfMeasure: string | null;
   mainImage: string | null;
   category: { id: string; name: string } | null;
-  tags: Array<{ id: string; name: string }>;
   location: { id: string; name: string } | null;
-  kit: { id: string; name: string } | null;
   custodians: Array<{ name: string; quantity: number }>;
   createdAt: string;
   updatedAt: string;
@@ -99,9 +93,7 @@ export function serializeAsset(asset: {
   createdAt: Date;
   updatedAt: Date;
   category: { id: string; name: string } | null;
-  tags: Array<{ id: string; name: string }>;
   assetLocations: Array<{ location: { id: string; name: string } }>;
-  assetKits: Array<{ kit: { id: string; name: string } }>;
   custody: Array<{ quantity: number; custodian: { name: string } }>;
 }): ApiAsset {
   return {
@@ -119,12 +111,10 @@ export function serializeAsset(asset: {
     unitOfMeasure: asset.unitOfMeasure,
     mainImage: asset.mainImage,
     category: asset.category,
-    tags: asset.tags,
-    // INDIVIDUAL assets are capped at one location/kit row by DB triggers, so
+    // INDIVIDUAL assets are capped at one location row by DB triggers, so
     // taking the first is lossless for them. QUANTITY_TRACKED assets may sit at
     // several locations; the public shape reports the primary one.
     location: asset.assetLocations[0]?.location ?? null,
-    kit: asset.assetKits[0]?.kit ?? null,
     custodians: asset.custody.map((entry) => ({
       name: entry.custodian.name,
       quantity: entry.quantity,
@@ -134,7 +124,7 @@ export function serializeAsset(asset: {
   };
 }
 
-/** A reference-data record: kits, locations, categories all share this shape. */
+/** A reference-data record: locations and categories share this shape. */
 export type ApiNamedRecord = {
   id: string;
   name: string;

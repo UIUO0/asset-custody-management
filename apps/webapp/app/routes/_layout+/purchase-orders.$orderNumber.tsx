@@ -20,6 +20,8 @@ import { data, redirect, useActionData, useLoaderData } from "react-router";
 import { z } from "zod";
 import { Form } from "~/components/custom-form";
 import Header from "~/components/layout/header";
+import type { HeaderData } from "~/components/layout/header/types";
+import { ActionNotice } from "~/components/shared/action-notice";
 import { Button } from "~/components/shared/button";
 import { DateS } from "~/components/shared/date";
 import { Table, Td, Th, Tr } from "~/components/table";
@@ -37,6 +39,8 @@ import {
   getPurchaseOrder,
   listDepartments,
   setAssetFinanceCode,
+  deletePurchaseOrder,
+  voidPurchaseOrder,
 } from "~/modules/goods-receipt/purchase-order.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError, ShelfError } from "~/utils/error";
@@ -82,7 +86,7 @@ const HandoverSchema = z.object({
  * the server from the order number in the URL. See {@link approveOrderAssets}.
  */
 const IntentSchema = z.object({
-  intent: z.enum(["code", "approve", "handover"]),
+  intent: z.enum(["code", "approve", "handover", "void-order", "erase-order"]),
 });
 
 export async function loader({ context, request, params }: LoaderFunctionArgs) {
@@ -117,7 +121,17 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
       getOrderApprovalState({ orderNumber, organizationId }),
     ]);
 
-    return payload({ order, departments, handoverCandidates, approvalState });
+    // Without a `header` the shared `Header` component renders null — see the
+    // same note on the receipt page.
+    const header: HeaderData = { title: `أمر شراء ${order.orderNumber}` };
+
+    return payload({
+      header,
+      order,
+      departments,
+      handoverCandidates,
+      approvalState,
+    });
   } catch (cause) {
     const reason = makeShelfError(cause, { userId });
     throw data(error(reason), { status: reason.status });
@@ -132,6 +146,53 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
     const { intent } = parseData(formData, IntentSchema, {
       shouldBeCaptured: false,
     });
+
+    if (intent === "erase-order") {
+      const { organizationId, roles } = await requirePermission({
+        userId,
+        request,
+        entity: PermissionEntity.goodsReceipt,
+        action: PermissionAction.delete,
+      });
+
+      await deletePurchaseOrder({
+        orderNumber: params.orderNumber as string,
+        organizationId,
+        // Same two-part rule as the single receipt — see `receipts.$receiptId`.
+        canDeleteSigned: userHasPermission({
+          roles,
+          entity: PermissionEntity.asset,
+          action: PermissionAction.delete,
+        }),
+      });
+
+      // The order was its receipts; with none left there is no page to return
+      // to — this URL now 404s.
+      return redirect("/purchase-orders");
+    }
+
+    if (intent === "void-order") {
+      /**
+       * Cancelling the order's paperwork is `goodsReceipt.delete` — المستودعات
+       * own intake, and المخزون monitor it. Deliberately not `asset.delete`:
+       * this touches documents, and the stock they admitted is left alone.
+       */
+      const { organizationId } = await requirePermission({
+        userId,
+        request,
+        entity: PermissionEntity.goodsReceipt,
+        action: PermissionAction.delete,
+      });
+
+      // The receipts are re-derived from the order number on the server; the
+      // form sends nothing but the intent.
+      const voided = await voidPurchaseOrder({
+        orderNumber: params.orderNumber as string,
+        organizationId,
+      });
+
+      return payload({ voided });
+    }
 
     if (intent === "approve") {
       /**
@@ -318,6 +379,43 @@ export default function PurchaseOrderDetailPage() {
   const voidedReceiptCount = order.receipts.length - liveReceipts.length;
   const liveItems = order.items.filter((item) => !item.fromVoidedReceipt);
 
+  /**
+   * Cancelling the order's paperwork — المستودعات and المخزون.
+   *
+   * Offered only while something is left to cancel: an order whose every
+   * receipt is already voided has nothing this button could do, and a control
+   * that does nothing reads as broken.
+   */
+  const canVoidOrder =
+    userHasPermission({
+      roles,
+      entity: PermissionEntity.goodsReceipt,
+      action: PermissionAction.delete,
+    }) && liveReceipts.length > 0;
+
+  /**
+   * Erasing applies whatever state the receipts are in — a fully cancelled
+   * order is the one most likely to be worth removing entirely.
+   */
+  /**
+   * The order-wide form of the receipt rule: one signed document anywhere in
+   * the order puts erasing it out of reach for anyone without `asset.delete`,
+   * because the order is erased whole or not at all. See
+   * `receipts.$receiptId` for why `asset.delete` is the deciding permission.
+   */
+  const canEraseOrder =
+    userHasPermission({
+      roles,
+      entity: PermissionEntity.goodsReceipt,
+      action: PermissionAction.delete,
+    }) &&
+    (!order.receipts.some((receipt) => receipt.state === ReceiptState.SIGNED) ||
+      userHasPermission({
+        roles,
+        entity: PermissionEntity.asset,
+        action: PermissionAction.delete,
+      }));
+
   const awaiting = order.items.filter(
     (item) =>
       item.itemClass === ItemClassValue.ASSET &&
@@ -343,12 +441,85 @@ export default function PurchaseOrderDetailPage() {
         >
           طباعة
         </Button>
+
+        {canVoidOrder ? (
+          <Form
+            method="post"
+            onSubmit={(event) => {
+              // Cancels every live document on the order at once and cannot be
+              // undone from the UI. The count is named so the operator can see
+              // whether it matches what they meant to cancel.
+              if (
+                !window.confirm(
+                  `إلغاء ${liveReceipts.length} نموذج استلام على هذا الأمر؟ ` +
+                    "تبقى المستندات في السجل، والأصناف التي أنشأتها لا تُحذف.",
+                )
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <input type="hidden" name="intent" value="void-order" />
+            <Button type="submit" variant="secondary" disabled={disabled}>
+              إلغاء الأمر
+            </Button>
+          </Form>
+        ) : null}
+
+        {/* The only control here with no way back — see the receipt page. */}
+        {canEraseOrder ? (
+          <Form
+            method="post"
+            onSubmit={(event) => {
+              if (
+                !window.confirm(
+                  `حذف أمر الشراء ${order.orderNumber} نهائياً؟ ستُمحى ` +
+                    `${order.receipts.length} نماذج استلام وتواقيعها و` +
+                    `${order.items.length} صنفاً أنشأتها. لا يمكن التراجع.`,
+                )
+              ) {
+                event.preventDefault();
+              }
+            }}
+          >
+            <input type="hidden" name="intent" value="erase-order" />
+            <Button type="submit" variant="danger" disabled={disabled}>
+              حذف الأمر نهائياً
+            </Button>
+          </Form>
+        ) : null}
       </Header>
 
       {errorMessage ? (
         <div className="mb-6 rounded border border-error-300 bg-error-50 p-4 text-error-700">
           {errorMessage}
         </div>
+      ) : null}
+
+      {/*
+        ── ما ينتظر هذا القارئ على هذا الأمر ──
+
+        The same notice the sidebar shows, narrowed to this order and placed
+        where the work is done. At the top rather than inside the summary block:
+        it is the reason المالية opened the order at all, and a line buried
+        among four totals is read after the totals, not before them.
+
+        One notice, never two. `canApprove` decides which side of the relay the
+        viewer is on — exactly the rule the sidebar badge uses, so the two can
+        never disagree about who is being asked for what.
+      */}
+      {canApprove && approvalState.readyToApproveCount > 0 ? (
+        <ActionNotice
+          className="mb-6"
+          count={approvalState.readyToApproveCount}
+          message="صنفاً تم ترميزها وجاهزة للاعتماد والإتاحة."
+        />
+      ) : canCode && awaiting > 0 ? (
+        <ActionNotice
+          className="mb-6"
+          count={awaiting}
+          message="أصلاً بانتظار الترميز من المالية."
+        />
       ) : null}
 
       {/*
@@ -488,12 +659,6 @@ export default function PurchaseOrderDetailPage() {
             </dd>
           </div>
         </dl>
-
-        {awaiting > 0 ? (
-          <div className="mt-4 rounded border border-warning-300 bg-warning-50 p-3 text-sm text-warning-700">
-            {awaiting} أصل بانتظار الترميز من المالية.
-          </div>
-        ) : null}
       </section>
 
       {/* ── نماذج الاستلام ── */}

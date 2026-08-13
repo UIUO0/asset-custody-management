@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { db } from "~/database/db.server";
-import { bookingsReassignedOnDemotionWhere } from "~/modules/user/service.server";
 import { loader } from "~/routes/api+/user.entity-counts";
 import { requirePermission } from "~/utils/roles.server";
 
@@ -26,7 +25,6 @@ vi.mock("~/database/db.server", () => ({
     kit: { count: vi.fn() },
     assetReminder: { count: vi.fn() },
     image: { count: vi.fn() },
-    booking: { count: vi.fn() },
   },
 }));
 
@@ -64,30 +62,19 @@ describe("user.entity-counts loader", () => {
     } as LoaderFunctionArgs);
   }
 
-  it("counts only the bookings a demotion reassigns, via the shared transfer predicate", async () => {
-    await run();
-
-    // The count must use the exact predicate the transfer runs — sharing
-    // `bookingsReassignedOnDemotionWhere` is what stops the number the admin
-    // consents to from drifting from the rows actually moved.
-    expect(dbMock.booking.count).toHaveBeenCalledWith({
-      where: bookingsReassignedOnDemotionWhere({
-        userId: TARGET,
-        organizationId: ORG,
-      }),
-    });
-  });
-
-  it("includes the booking count in the payload and the total", async () => {
+  it("sums every counted entity into the total", async () => {
+    // The total is what the change-role dialog asks the admin to consent to,
+    // so it must not drift from the individual counts beside it.
     dbMock.asset.count.mockResolvedValue(2);
-    dbMock.booking.count.mockResolvedValue(3);
+    dbMock.image.count.mockResolvedValue(3);
 
     const result = (await run()) as unknown as {
-      data: { bookings: number; total: number };
+      data: { assets: number; images: number; total: number };
     };
 
-    expect(result.data.bookings).toBe(3);
-    // 2 assets + 3 bookings, every other count stubbed to 0.
+    expect(result.data.assets).toBe(2);
+    expect(result.data.images).toBe(3);
+    // Every other count is stubbed to 0.
     expect(result.data.total).toBe(5);
   });
 });

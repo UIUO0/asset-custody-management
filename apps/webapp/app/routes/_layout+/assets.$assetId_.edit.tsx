@@ -14,6 +14,7 @@ import Header from "~/components/layout/header";
 import type { HeaderData } from "~/components/layout/header/types";
 import { Button } from "~/components/shared/button";
 import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
+import { ASSET_EDIT_FORM_FIELDS } from "~/modules/asset/fields";
 import {
   getAllEntriesForCreateAndEdit,
   getAsset,
@@ -71,31 +72,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     const asset = await getAsset({
       organizationId,
       id,
-      include: {
-        customFields: true,
-        assetKits: {
-          select: {
-            kit: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-        // Pull the primary placement so the edit form can pre-fill the
-        // location picker.
-        assetLocations: {
-          select: { location: { select: { id: true } } },
-        },
-        barcodes: {
-          select: {
-            id: true,
-            type: true,
-            value: true,
-          },
-        },
-      },
+      include: ASSET_EDIT_FORM_FIELDS,
       userOrganizations,
       request,
     });

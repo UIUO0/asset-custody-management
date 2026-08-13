@@ -203,3 +203,39 @@ export const advancedAssetIndexFields = () => {
 
   return fields;
 };
+
+/**
+ * `include` for the asset detail shell (`assets.$assetId.tsx`).
+ *
+ * Lives here rather than inline in the loader so it is reachable from
+ * `fields.test.ts`, which validates every exported field-set against Prisma's
+ * DMMF. An inline literal is not: `getAsset<T>` accepts unknown relation keys
+ * without a compile error (see the note on `getAsset` in
+ * `modules/asset/service.server.ts`), so an inline include that names a
+ * dropped relation reaches production and fails as "Asset not found".
+ */
+export const ASSET_DETAIL_SHELL_FIELDS = {
+  custody: { include: { custodian: true } },
+  qrCodes: true,
+} satisfies Prisma.AssetInclude;
+
+/**
+ * `include` for the asset edit form (`assets.$assetId_.edit.tsx`).
+ *
+ * Exported for the same reason as {@link ASSET_DETAIL_SHELL_FIELDS}.
+ */
+export const ASSET_EDIT_FORM_FIELDS = {
+  customFields: true,
+  // Pull the primary placement so the edit form can pre-fill the
+  // location picker.
+  assetLocations: {
+    select: { location: { select: { id: true } } },
+  },
+  barcodes: {
+    select: {
+      id: true,
+      type: true,
+      value: true,
+    },
+  },
+} satisfies Prisma.AssetInclude;

@@ -144,7 +144,6 @@ async function main(): Promise<void> {
  */
 type MarkedRatios = {
   assets: { marked: number; total: number };
-  bookings: { marked: number; total: number };
   audits: { marked: number; total: number };
   activityEvents: { marked: number; total: number };
 };
@@ -162,8 +161,6 @@ async function collectMarkedRatios(
   const [
     totalAssets,
     markedAssets,
-    totalBookings,
-    markedBookings,
     totalAudits,
     markedAudits,
     totalEvents,
@@ -172,10 +169,6 @@ async function collectMarkedRatios(
     db.asset.count({ where: { organizationId: orgId } }),
     db.asset.count({
       where: { organizationId: orgId, title: { endsWith: NAME_SUFFIX } },
-    }),
-    db.booking.count({ where: { organizationId: orgId } }),
-    db.booking.count({
-      where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
     }),
     db.auditSession.count({ where: { organizationId: orgId } }),
     db.auditSession.count({
@@ -195,7 +188,6 @@ async function collectMarkedRatios(
 
   return {
     assets: { marked: markedAssets, total: totalAssets },
-    bookings: { marked: markedBookings, total: totalBookings },
     audits: { marked: markedAudits, total: totalAudits },
     activityEvents: { marked: markedEvents, total: totalEvents },
   };
@@ -208,10 +200,6 @@ function printRatios(ratios: MarkedRatios): void {
   console.log(
     "Marked-vs-total rows in this workspace:\n" +
       `  Assets          ${fmt(ratios.assets.marked, ratios.assets.total)}\n` +
-      `  Bookings        ${fmt(
-        ratios.bookings.marked,
-        ratios.bookings.total,
-      )}\n` +
       `  Audits          ${fmt(ratios.audits.marked, ratios.audits.total)}\n` +
       `  Activity events ${fmt(
         ratios.activityEvents.marked,
@@ -239,7 +227,6 @@ function assertSafeToClean(ratios: MarkedRatios): void {
     }
   };
   check("Assets", ratios.assets);
-  check("Bookings", ratios.bookings);
   check("Audits", ratios.audits);
   check("Activity events", ratios.activityEvents);
 
@@ -336,20 +323,6 @@ async function deleteAll(
       where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
     });
     counts.auditSessions = auditSessionResult.count;
-
-    // 5) PartialBookingCheckin rows attached to seeded bookings.
-    const partialResult = await t.partialBookingCheckin.deleteMany({
-      where: {
-        booking: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
-      },
-    });
-    counts.partialCheckins = partialResult.count;
-
-    // 6) Booking rows (name suffix).
-    const bookingResult = await t.booking.deleteMany({
-      where: { organizationId: orgId, name: { endsWith: NAME_SUFFIX } },
-    });
-    counts.bookings = bookingResult.count;
 
     // 7) Custody rows on seeded assets.
     const custodyResult = await t.custody.deleteMany({

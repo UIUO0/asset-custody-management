@@ -43,6 +43,7 @@ import type {
 import { AssetLifecycleStage } from "@prisma/client";
 import { db } from "~/database/db.server";
 import { approveAssetsByIds } from "~/modules/asset/approve.server";
+import { deleteGoodsReceipt } from "~/modules/goods-receipt/service.server";
 import { ShelfError } from "~/utils/error";
 import { ItemClassValue, ReceiptState } from "./enums";
 
@@ -581,6 +582,16 @@ export type OrderApprovalState = {
    * above zero the order cannot be approved.
    */
   awaitingCodeCount: number;
+  /**
+   * Pending items on this order that المالية have already coded — the
+   * warehouse's share of the backlog, and what their notice counts.
+   *
+   * Deliberately *not* the same as `pendingCount`: an item still waiting on a
+   * code is not المستودعات' work yet, and telling them about it would be a
+   * number they cannot act on. Materials are absent for the mirror reason —
+   * they are never coded, so they never appear here.
+   */
+  readyToApproveCount: number;
   /** Whether {@link approveOrderAssets} would do anything if called now. */
   canApprove: boolean;
 };
@@ -635,29 +646,40 @@ export async function getOrderApprovalState({
     },
   };
 
-  const [pendingCount, awaitingCodeCount] = await Promise.all([
-    db.asset.count({
-      where: {
-        organizationId,
-        lifecycleStage: AssetLifecycleStage.PENDING,
-        receiptLine: liveReceipt,
-      },
-    }),
-    db.asset.count({
-      where: {
-        organizationId,
-        itemClass: ItemClassValue.ASSET,
-        // `null` and `""` both mean uncoded — the field is cleared by writing an
-        // empty string, so testing for null alone would let a cleared code pass.
-        OR: [{ financeCode: null }, { financeCode: "" }],
-        receiptLine: liveReceipt,
-      },
-    }),
-  ]);
+  /** `null` and `""` both mean uncoded — clearing a code writes an empty string. */
+  const uncoded = [{ financeCode: null }, { financeCode: "" }];
+
+  const [pendingCount, awaitingCodeCount, readyToApproveCount] =
+    await Promise.all([
+      db.asset.count({
+        where: {
+          organizationId,
+          lifecycleStage: AssetLifecycleStage.PENDING,
+          receiptLine: liveReceipt,
+        },
+      }),
+      db.asset.count({
+        where: {
+          organizationId,
+          itemClass: ItemClassValue.ASSET,
+          OR: uncoded,
+          receiptLine: liveReceipt,
+        },
+      }),
+      db.asset.count({
+        where: {
+          organizationId,
+          lifecycleStage: AssetLifecycleStage.PENDING,
+          NOT: { OR: uncoded },
+          receiptLine: liveReceipt,
+        },
+      }),
+    ]);
 
   return {
     pendingCount,
     awaitingCodeCount,
+    readyToApproveCount,
     canApprove: pendingCount > 0 && awaitingCodeCount === 0,
   };
 }
@@ -752,5 +774,259 @@ export async function approveOrderAssets({
     assetIds: pending.map((asset) => asset.id),
     organizationId,
     userId,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/*                            إلغاء أمر الشراء كاملاً                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Cancels every live receipt booked against one order number.
+ *
+ * ## "Deleting an order" can only mean this
+ *
+ * There is no `PurchaseOrder` row to delete — an order here *is* the number
+ * written on its receipts (see {@link orderNumberOf}). So cancelling one is
+ * cancelling its documents, and the order stops appearing in the index the
+ * moment none of them is live.
+ *
+ * ## What it deliberately does **not** touch
+ *
+ * The assets those receipts created stay exactly where they are. That is the
+ * same rule {@link file://./service.server.ts} `voidGoodsReceipt` follows, for
+ * the same reason: stock that physically arrived does not stop existing because
+ * the paperwork was cancelled, and quietly deleting it here would be this
+ * function disposing of inventory on the strength of a form. Items received in
+ * error are removed separately, by somebody who has looked at them.
+ *
+ * Already-cancelled receipts are skipped rather than re-written, so the count
+ * returned is what this call actually changed.
+ *
+ * @param args.orderNumber - The number as written on the receipts
+ * @param args.organizationId - Workspace, applied to every read and write
+ * @returns How many receipts were cancelled
+ * @throws {ShelfError} 404 when the order has no receipts here; 409 when every
+ *   receipt on it is already cancelled
+ */
+export async function voidPurchaseOrder({
+  orderNumber,
+  organizationId,
+}: {
+  orderNumber: string;
+  organizationId: string;
+}): Promise<number> {
+  const trimmed = orderNumber.trim();
+
+  const receipts = await db.goodsReceipt.findMany({
+    where: {
+      organizationId,
+      OR: [
+        { purchaseOrderNumber: trimmed },
+        { purchaseRequestNumber: trimmed },
+      ],
+    },
+    select: { id: true, state: true },
+  });
+
+  if (receipts.length === 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "أمر الشراء غير موجود",
+      message: "لا توجد نماذج استلام بهذا الرقم في مساحة العمل.",
+      additionalData: { orderNumber: trimmed, organizationId },
+      label,
+      status: 404,
+      shouldBeCaptured: false,
+    });
+  }
+
+  const live = receipts.filter(
+    (receipt) => receipt.state !== ReceiptState.VOIDED,
+  );
+
+  if (live.length === 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "الأمر ملغى بالفعل",
+      message: "كل نماذج هذا الأمر ملغاة — لا شيء لإلغائه.",
+      additionalData: { orderNumber: trimmed, organizationId },
+      label,
+      status: 409,
+      shouldBeCaptured: false,
+    });
+  }
+
+  const { count } = await db.goodsReceipt.updateMany({
+    // Re-scoped by id *and* workspace: the ids came from a query above, but a
+    // write that trusts an id it did not re-scope is one refactor away from
+    // being an IDOR.
+    where: {
+      id: { in: live.map((receipt) => receipt.id) },
+      organizationId,
+      state: { not: ReceiptState.VOIDED },
+    },
+    data: { state: ReceiptState.VOIDED },
+  });
+
+  return count;
+}
+
+/**
+ * Erases an order: every receipt booked against the number, and every asset
+ * those receipts admitted.
+ *
+ * The hard counterpart to {@link voidPurchaseOrder}. Voiding keeps the
+ * documents and the stock; this leaves nothing — for the order that should
+ * never have been entered, where a register full of cancelled paperwork is
+ * worse than no record.
+ *
+ * Delegates each receipt to {@link deleteGoodsReceipt}, which carries the
+ * movement guard: an order with any asset in custody or on a محضر is refused
+ * before anything is removed. Deleting receipt-by-receipt inside one loop means
+ * a refusal mid-way leaves earlier receipts already gone, so the guard is run
+ * across the **whole order first** — either all of it can go or none of it
+ * does.
+ *
+ * @param args.orderNumber - The number as written on the receipts
+ * @param args.organizationId - Workspace, applied to every read and write
+ * @param args.canDeleteSigned - Whether the caller may erase signed documents;
+ *   see {@link deleteGoodsReceipt}, which defines the rule this passes through
+ * @returns How many receipts and assets were erased
+ * @throws {ShelfError} 404 when the order has no receipts here; 409 when any of
+ *   its assets has moved; 403 when it holds a signed receipt the caller may not
+ *   erase
+ */
+export async function deletePurchaseOrder({
+  orderNumber,
+  organizationId,
+  canDeleteSigned,
+}: {
+  orderNumber: string;
+  organizationId: string;
+  canDeleteSigned: boolean;
+}): Promise<{ receiptsDeleted: number; assetsDeleted: number }> {
+  const trimmed = orderNumber.trim();
+
+  const receipts = await db.goodsReceipt.findMany({
+    where: {
+      organizationId,
+      OR: [
+        { purchaseOrderNumber: trimmed },
+        { purchaseRequestNumber: trimmed },
+      ],
+    },
+    select: { id: true, reference: true, state: true },
+  });
+
+  if (receipts.length === 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "أمر الشراء غير موجود",
+      message: "لا توجد نماذج استلام بهذا الرقم في مساحة العمل.",
+      additionalData: { orderNumber: trimmed, organizationId },
+      label,
+      status: 404,
+      shouldBeCaptured: false,
+    });
+  }
+
+  /**
+   * The whole order is checked before a single row is removed.
+   *
+   * `deleteGoodsReceipt` guards each receipt on its way through, but by then
+   * the earlier ones are gone — a refusal on the third receipt would leave the
+   * order half-erased and the operator with no way back. Asking once, across
+   * every asset the order produced, makes it all-or-nothing.
+   */
+  await assertOrderAssetsHaveNotMoved({ orderNumber: trimmed, organizationId });
+
+  /**
+   * And the same reason for the signature rule: `deleteGoodsReceipt` refuses a
+   * signed document one at a time, which on the third receipt of an order would
+   * leave the first two already gone. Asked once, up front, it is a refusal
+   * instead of a half-erased order.
+   */
+  const signed = receipts.filter(
+    (receipt) => receipt.state === ReceiptState.SIGNED,
+  );
+
+  if (!canDeleteSigned && signed.length > 0) {
+    throw new ShelfError({
+      cause: null,
+      title: "الأمر يحوي نماذج موقَّعة",
+      message: `لا يمكنك حذف الأمر ${trimmed}: ${signed
+        .map((receipt) => receipt.reference)
+        .join("، ")} اكتملت تواقيعه. الحذف بعد التوقيع للمخزون وحده.`,
+      additionalData: { orderNumber: trimmed, organizationId },
+      label,
+      status: 403,
+      shouldBeCaptured: false,
+    });
+  }
+
+  let assetsDeleted = 0;
+
+  for (const receipt of receipts) {
+    const result = await deleteGoodsReceipt({
+      id: receipt.id,
+      organizationId,
+      canDeleteSigned,
+    });
+    assetsDeleted += result.assetsDeleted;
+  }
+
+  return { receiptsDeleted: receipts.length, assetsDeleted };
+}
+
+/**
+ * Refuses when any asset on the order is in custody or named on a محضر.
+ *
+ * The order-wide form of the check inside {@link deleteGoodsReceipt} — see that
+ * function for why movement, not paperwork state, is the thing being tested.
+ *
+ * @param args.orderNumber - Trimmed order number
+ * @param args.organizationId - Workspace
+ * @throws {ShelfError} 409 naming the items that moved
+ */
+async function assertOrderAssetsHaveNotMoved({
+  orderNumber,
+  organizationId,
+}: {
+  orderNumber: string;
+  organizationId: string;
+}): Promise<void> {
+  const moved = await db.asset.findMany({
+    where: {
+      organizationId,
+      receiptLine: {
+        receipt: {
+          organizationId,
+          OR: [
+            { purchaseOrderNumber: orderNumber },
+            { purchaseRequestNumber: orderNumber },
+          ],
+        },
+      },
+      OR: [{ custody: { some: {} } }, { custodyHandovers: { some: {} } }],
+    },
+    select: { title: true },
+    take: 10,
+  });
+
+  if (moved.length === 0) return;
+
+  throw new ShelfError({
+    cause: null,
+    title: "أصناف هذا الأمر تحرّكت",
+    message: `لا يمكن حذف الأمر: بعض أصنافه في عهدة أو مذكورة في محضر تسليم (${moved
+      .map((asset) => asset.title)
+      .join(
+        "، ",
+      )}). الحذف يمحو سطر الصنف من محضر موقَّع بصمت. فُكّ العهدة وأبطِل المحاضر أولاً، أو ألغِ الأمر بدل حذفه.`,
+    additionalData: { orderNumber, organizationId, movedCount: moved.length },
+    label,
+    status: 409,
+    shouldBeCaptured: false,
   });
 }

@@ -42,7 +42,7 @@ type BaseNavItem = {
     count?: number;
     variant?: "unread" | "action";
     /**
-     * The sentence the number stands for, e.g. "لديك ٣ أصول لم تُرمَّز بعد".
+     * The full sentence, e.g. "لديك ٣ أصول لم تُرمَّز بعد".
      *
      * A bare pill says how many but never what of — fine for a queue whose
      * name is the nav item itself ("Handovers: 3"), useless for a count that
@@ -50,6 +50,12 @@ type BaseNavItem = {
      * as its accessible name, so the number is never the only thing said.
      */
     label?: string;
+    /**
+     * The same thing as a bare noun phrase — "أصول لم تُرمَّز بعد" — for the
+     * expanded-sidebar notice, which renders the figure itself and would
+     * otherwise print it twice.
+     */
+    noun?: string;
   };
 };
 
@@ -123,6 +129,7 @@ export function useSidebarNavItems() {
         count: awaitingFinanceCode,
         variant: "action" as const,
         label: t("nav.awaitingFinanceCode", { count: awaitingFinanceCode }),
+        noun: t("nav.awaitingFinanceCodeItems", { count: awaitingFinanceCode }),
       };
     }
 
@@ -132,6 +139,7 @@ export function useSidebarNavItems() {
         count: awaitingApproval,
         variant: "action" as const,
         label: t("nav.awaitingApproval", { count: awaitingApproval }),
+        noun: t("nav.awaitingApprovalItems", { count: awaitingApproval }),
       };
     }
 

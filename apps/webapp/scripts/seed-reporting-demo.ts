@@ -2,7 +2,7 @@
  * Reporting Demo Data Seeder (entry point)
  *
  * Fills a dedicated staging workspace with ~12 months of coherent historic
- * data — assets, bookings, audits, custody, taxonomy, and the matching
+ * data — assets, audits, custody, taxonomy, and the matching
  * `ActivityEvent` trail — so the reporting UI can render non-empty charts
  * and tables for all ten target reports (R1–R10, see
  * `CONTEXT-activity-event-next.md`).
@@ -60,7 +60,6 @@ import {
 import { SEED_RUN_ID } from "./seed-reporting-demo/markers";
 import { runAssetsPhase } from "./seed-reporting-demo/phases/assets";
 import { runAuditsPhase } from "./seed-reporting-demo/phases/audits";
-import { runBookingsPhase } from "./seed-reporting-demo/phases/bookings";
 import { runCurrentStatePhase } from "./seed-reporting-demo/phases/current-state";
 import { runTaxonomyPhase } from "./seed-reporting-demo/phases/taxonomy-and-team";
 
@@ -75,9 +74,6 @@ export const SEED_TARGETS = {
   customFields: 3,
   teamMembers: 18,
   assets: 300,
-  bookings: 1_500,
-  /** Subset of bookings that went through a partial-checkin step. */
-  partialCheckinBookings: 75,
   auditSessions: 80,
   /** Rough; actual audit-asset rows depend on per-audit randomness. */
   approxAuditAssets: 2_500,
@@ -248,8 +244,6 @@ function printPlannedTargets(options: SeederCliOptions, orgName: string): void {
       `  Custom Fields      ${SEED_TARGETS.customFields}\n` +
       `  Team Members       ${SEED_TARGETS.teamMembers}\n` +
       `  Assets             ${SEED_TARGETS.assets}\n` +
-      `  Bookings           ${SEED_TARGETS.bookings}\n` +
-      `  Partial Check-ins  ${SEED_TARGETS.partialCheckinBookings}\n` +
       `  Audit Sessions     ${SEED_TARGETS.auditSessions}\n` +
       `  Audit Assets       ~${SEED_TARGETS.approxAuditAssets}\n` +
       `  Activity Events    ~${SEED_TARGETS.approxActivityEvents}\n`,
@@ -275,15 +269,6 @@ async function runPhases(
   await runAssetsPhase(ctx, state);
   console.log(
     `  ${state.counts.assets} assets, ${state.counts.activityEvents} activity events so far\n`,
-  );
-
-  console.log(
-    "Phase 5 — bookings with Pareto popularity, seasonality, outcome mix…",
-  );
-  await runBookingsPhase(ctx, state);
-  console.log(
-    `  ${state.counts.bookings} bookings, ${state.counts.partialCheckins} partial check-ins, ` +
-      `${state.counts.activityEvents} activity events so far\n`,
   );
 
   console.log("Phase 6 — audit sessions with scan trails…");
