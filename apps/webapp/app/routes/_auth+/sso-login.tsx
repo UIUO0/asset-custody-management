@@ -16,13 +16,11 @@ import { z } from "zod";
 import Input from "~/components/forms/input";
 import { Button } from "~/components/shared/button";
 import { config } from "~/config/shelf.config";
-import { useSearchParams } from "~/hooks/search-params";
 import { useAutoFocus } from "~/hooks/use-auto-focus";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import { getAuthConfig } from "~/modules/auth/auth-config.server";
 import { signInWithSSO } from "~/modules/auth/service.server";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
-import { mobilePkceChallengeCookie } from "~/utils/cookies.server";
 import { makeShelfError, notAllowedMethod, ShelfError } from "~/utils/error";
 import { isFormProcessing } from "~/utils/form";
 import {
@@ -44,7 +42,6 @@ const SSOLoginFormSchema = z.object({
   redirectTo: z.string().optional(),
   // "mobile" routes the post-auth redirect to the native-app callback so the
   // companion app can complete SSO login (see signInWithSSO).
-  platform: z.enum(["web", "mobile"]).optional(),
 });
 
 export async function loader({ context, request }: LoaderFunctionArgs) {
@@ -55,15 +52,8 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const subHeading = t("auth.enterDomainForSso");
   const { disableSSO } = config;
 
-  const url = new URL(request.url);
-  // The native-app flow opens this page with `?platform=mobile`. The in-app
-  // browser may carry a stale web cookie, but the app still needs to complete
-  // the SSO handoff to obtain its OWN session — so don't short-circuit it to
-  // /assets. The web flow still redirects an already-authenticated session.
-  const isMobile = url.searchParams.get("platform") === "mobile";
-
   try {
-    if (context.isAuthenticated && !isMobile) {
+    if (context.isAuthenticated) {
       const { userId } = context.getSession();
       return redirect(await getLandingRouteForUser({ userId, request }));
     }
@@ -91,26 +81,6 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       });
     }
 
-    // PKCE (native SSO): a PKCE-capable companion build appends an S256
-    // `code_challenge`. Stash it in a short-lived cookie so it survives the SSO
-    // redirect chain back to `/oauth/callback/mobile`, where it is bound to the
-    // minted auth code. Only accept a well-formed S256 challenge (43-char
-    // base64url); anything else is ignored (treated as a legacy, non-PKCE flow).
-    const codeChallenge = url.searchParams.get("code_challenge");
-    const validChallenge =
-      isMobile && codeChallenge && /^[A-Za-z0-9_-]{43}$/.test(codeChallenge)
-        ? codeChallenge
-        : null;
-
-    if (validChallenge) {
-      return data(payload({ title, subHeading }), {
-        headers: {
-          "Set-Cookie":
-            await mobilePkceChallengeCookie.serialize(validChallenge),
-        },
-      });
-    }
-
     return payload({ title, subHeading });
   } catch (cause) {
     const reason = makeShelfError(cause);
@@ -124,12 +94,12 @@ export async function action({ request }: ActionFunctionArgs) {
 
     switch (method) {
       case "POST": {
-        const { domain, platform } = parseData(
+        const { domain } = parseData(
           await request.formData(),
           SSOLoginFormSchema,
           { shouldBeCaptured: false },
         );
-        const url = await signInWithSSO(domain, { platform });
+        const url = await signInWithSSO(domain);
 
         return redirect(url);
       }
@@ -152,11 +122,6 @@ export default function SSOLogin() {
   const navigation = useNavigation();
   const disabled = isFormProcessing(navigation.state);
   const data = useActionData<typeof action>();
-  const [searchParams] = useSearchParams();
-  // Native-app SSO opens this page with `?platform=mobile`; forward it so the
-  // action targets the mobile callback. Defaults to web for the normal flow.
-  const platform = searchParams.get("platform") === "mobile" ? "mobile" : "web";
-
   /** Focus the domain field on mount (intentional first-field focus on auth pages). */
   const domainInputRef = useAutoFocus<HTMLInputElement>();
 
@@ -164,8 +129,6 @@ export default function SSOLogin() {
     <>
       <div className="flex flex-col gap-3">
         <Form method="post" ref={zo.ref}>
-          {/* Forwarded so the action can target the native-app callback. */}
-          <input type="hidden" name="platform" value={platform} />
           <div className="flex flex-col gap-3">
             <Input
               ref={domainInputRef}

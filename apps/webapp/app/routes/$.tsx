@@ -6,6 +6,23 @@ import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 
+/**
+ * Answer 404, not 200.
+ *
+ * Without a loader this route rendered the not-found page with the default
+ * `200 OK`, so every removed feature — `/kits`, `/tags`, `/bookings`,
+ * `/calendar` — and every mistyped URL reported success to anything reading
+ * the status rather than the pixels: uptime checks, link crawlers, and the
+ * integration clients that call this app's API.
+ *
+ * The status is *returned*, not thrown: throwing would hand the request to an
+ * error boundary, and the point is to keep rendering the friendly page below
+ * while telling the truth in the status line.
+ */
+export function loader() {
+  return new Response(null, { status: 404 });
+}
+
 export const meta: MetaFunction = ({ matches }) => {
   // why: `meta` runs outside React — locale comes from the root loader.
   const rootData = matches.find((match) => match.id === "root")?.data as

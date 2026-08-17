@@ -450,8 +450,21 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
   { title: data ? appendToMetaTitle(data.title) : "" },
 ];
 
+/**
+ * Breadcrumb as a component, not a string.
+ *
+ * `handle.breadcrumb` runs outside React, so it cannot call `useTranslation`
+ * directly — which is how this one stayed the literal "General" in an Arabic
+ * UI. Returning an element defers the lookup to render time. Same pattern as
+ * the parent route and `/settings`.
+ */
+function GeneralBreadcrumb() {
+  const { t } = useTranslation();
+  return <>{t("nav.general")}</>;
+}
+
 export const handle = {
-  breadcrumb: () => "General",
+  breadcrumb: () => <GeneralBreadcrumb />,
 };
 
 export default function UserPage() {

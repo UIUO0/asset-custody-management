@@ -3,6 +3,7 @@ import {
   AlarmClockIcon,
   BellIcon,
   BoxesIcon,
+  Building2Icon,
   ChartLineIcon,
   ClipboardCheckIcon,
   ClipboardListIcon,
@@ -10,12 +11,13 @@ import {
   FileBarChartIcon,
   HandIcon,
   HomeIcon,
+  MailIcon,
   MapPinIcon,
   MessageCircleIcon,
   PackageOpenIcon,
   ScanBarcodeIcon,
-  SettingsIcon,
   SignatureIcon,
+  UserRoundPlusIcon,
   UsersRoundIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -160,23 +162,6 @@ export function useSidebarNavItems() {
     PermissionAction.read,
   );
   const canReadTeam = can(PermissionEntity.teamMember, PermissionAction.read);
-
-  const canReadGeneralSettings = can(
-    PermissionEntity.generalSettings,
-    PermissionAction.read,
-  );
-  const canReadCustomFields = can(
-    PermissionEntity.customField,
-    PermissionAction.read,
-  );
-  // why: BASE already holds `assetModel.read` for the asset form, but has never
-  // had a workspace-settings entry. The scope check preserves that.
-  const canReadAssetModels =
-    !isScopedToOwnRecords &&
-    can(PermissionEntity.assetModel, PermissionAction.read);
-
-  const canSeeWorkspaceSettings =
-    canReadGeneralSettings || canReadCustomFields || canReadAssetModels;
 
   /**
    * Audits are the one operational surface an ordinary employee legitimately
@@ -340,55 +325,56 @@ export function useSidebarNavItems() {
       to: "/reports",
     },
 
+    /**
+     * الفريق is its own section now — «المنشأة» is gone.
+     *
+     * That heading grouped two items. The second, «إعدادات مساحة العمل», was
+     * removed: its screens were the workspace name/logo/SSO, الحقول المخصّصة
+     * and طُرز الأصناف, and the two taxonomies held zero rows and play no part
+     * in the intake flow. What was left did not deserve a heading of its own
+     * called "the organisation".
+     *
+     * ⚠️ Dropping the label alone was not enough: a `label` scopes everything
+     * after it, so الفريق silently fell under «العمليات» for المستودعات and
+     * under «خدماتي» for الإدارة — reading as an operation, and as a personal
+     * service. A section needs its own label or it inherits the previous one.
+     *
+     * Flattened from a collapsible parent to plain children while here: three
+     * links behind a disclosure triangle cost a click and hid الإدارات, which
+     * is the one screen in the app that can create a department desk.
+     */
     {
       type: "label",
-      title: t("nav.organization"),
-      hidden: !canReadTeam && !canSeeWorkspaceSettings,
-    },
-    {
-      type: "parent",
       title: t("nav.team"),
-      Icon: UsersRoundIcon,
       hidden: !canReadTeam,
-      children: [
-        {
-          title: t("nav.users"),
-          to: "/settings/team/users",
-          hidden: isPersonalOrganization,
-        },
-        {
-          title: t("nav.pendingInvites"),
-          to: "/settings/team/invites",
-          hidden: isPersonalOrganization,
-        },
-        {
-          title: t("nav.nonRegisteredMembers"),
-          to: "/settings/team/nrm",
-        },
-      ],
     },
     {
-      type: "parent",
-      title: t("nav.workspaceSettings"),
-      Icon: SettingsIcon,
-      hidden: !canSeeWorkspaceSettings,
-      children: [
-        {
-          title: t("nav.general"),
-          to: "/settings/general",
-          hidden: !canReadGeneralSettings,
-        },
-        {
-          title: t("nav.customFields"),
-          to: "/settings/custom-fields",
-          hidden: !canReadCustomFields,
-        },
-        {
-          title: t("nav.assetModels"),
-          to: "/settings/asset-models",
-          hidden: !canReadAssetModels,
-        },
-      ],
+      type: "child",
+      title: t("nav.users"),
+      Icon: UsersRoundIcon,
+      hidden: !canReadTeam || isPersonalOrganization,
+      to: "/settings/team/users",
+    },
+    {
+      type: "child",
+      title: t("team.departments"),
+      Icon: Building2Icon,
+      hidden: !canReadTeam || isPersonalOrganization,
+      to: "/settings/team/departments",
+    },
+    {
+      type: "child",
+      title: t("nav.nonRegisteredMembers"),
+      Icon: UserRoundPlusIcon,
+      hidden: !canReadTeam,
+      to: "/settings/team/nrm",
+    },
+    {
+      type: "child",
+      title: t("nav.pendingInvites"),
+      Icon: MailIcon,
+      hidden: !canReadTeam || isPersonalOrganization,
+      to: "/settings/team/invites",
     },
   ];
 

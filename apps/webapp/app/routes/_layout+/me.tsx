@@ -51,6 +51,7 @@ export function meta({ data }: MetaArgs<typeof loader>) {
 }
 
 export default function Me() {
+  const { t } = useTranslation();
   const { user } = useLoaderData<typeof loader>();
   const { roles } = useUserRoleHelper();
 
@@ -63,9 +64,10 @@ export default function Me() {
   });
 
   const TABS: Item[] = [
-    { to: "assets", content: "Assets" },
-    { to: "bookings", content: "Bookings" },
-    ...(canReadNotes ? [{ to: "notes", content: "Notes" }] : []),
+    { to: "assets", content: t("nav.assets") },
+    // No "bookings" tab: `/me/bookings` has no route — it left with the
+    // booking system, and the tab outlived it, landing on the not-found page.
+    ...(canReadNotes ? [{ to: "notes", content: t("nav.notes") }] : []),
   ];
 
   return (
@@ -88,7 +90,7 @@ export default function Me() {
               to={`/account-details/general`}
               className={"ms-auto"}
             >
-              Edit
+              {t("common.edit")}
             </Button>
           ),
         }}

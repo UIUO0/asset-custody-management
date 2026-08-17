@@ -215,21 +215,17 @@ export async function signInWithEmail(email: string, password: string) {
   }
 }
 
-export async function signInWithSSO(
-  domain: string,
-  /**
-   * Which client is initiating SSO. `"mobile"` lands the post-auth redirect on
-   * the native-app callback path (which hands a session back to the app);
-   * defaults to the web callback. The redirect path is built HERE (never taken
-   * from the caller) so it is always an allow-listed, query-free Supabase
-   * redirect URL — Supabase treats `?` as a wildcard in the allow-list.
-   */
-  { platform = "web" }: { platform?: "web" | "mobile" } = {},
-) {
+export async function signInWithSSO(domain: string) {
   try {
-    const redirectTo = `${SERVER_URL}/oauth/callback${
-      platform === "mobile" ? "/mobile" : ""
-    }`;
+    /*
+     * Built HERE, never taken from the caller, so it is always an
+     * allow-listed, query-free Supabase redirect URL — Supabase treats `?`
+     * as a wildcard in the allow-list.
+     *
+     * There used to be a `platform: "mobile"` variant pointing at
+     * `/oauth/callback/mobile`; that route went with the companion app.
+     */
+    const redirectTo = `${SERVER_URL}/oauth/callback`;
 
     const { data, error } = await getSupabaseAdmin().auth.signInWithSSO({
       domain,

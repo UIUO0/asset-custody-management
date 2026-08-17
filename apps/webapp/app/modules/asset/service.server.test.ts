@@ -947,6 +947,26 @@ describe("releaseQuantity — activity events", () => {
   });
 });
 
+/**
+ * Answers the two different `asset.findMany` calls a bulk delete makes.
+ *
+ * `bulkDeleteAssets` first fetches the rows it is about to remove, then asks
+ * `assertAssetsHaveNotMoved` whether any of them is in custody or named on a
+ * محضر. Both go through the same mocked delegate, so a single
+ * `mockResolvedValue` answers "yes, all of them moved" to the guard and the
+ * delete is refused. Keying on the guard's `OR` clause keeps the mock honest:
+ * these fixtures describe assets that have *not* moved.
+ */
+function mockAssetsForBulkDelete(
+  mock: ReturnType<typeof vitest.fn>,
+  rows: Array<{ id: string; mainImage: string | null; title: string }>,
+  moved: Array<{ title: string }> = [],
+) {
+  mock.mockImplementation((args: { where?: { OR?: unknown } }) =>
+    Promise.resolve(args?.where?.OR ? moved : rows),
+  );
+}
+
 describe("bulkDeleteAssets — activity events", () => {
   const mockAssetFindMany = db.asset.findMany as ReturnType<typeof vitest.fn>;
   const mockAssetDeleteMany = db.asset.deleteMany as ReturnType<
@@ -960,7 +980,7 @@ describe("bulkDeleteAssets — activity events", () => {
   });
 
   it("emits one ASSET_DELETED per deleted asset, with title meta", async () => {
-    mockAssetFindMany.mockResolvedValue([
+    mockAssetsForBulkDelete(mockAssetFindMany, [
       { id: "asset-1", mainImage: null, title: "Asset One" },
       { id: "asset-2", mainImage: null, title: "Asset Two" },
     ]);
@@ -1721,10 +1741,9 @@ describe("bulkDeleteAssets", () => {
 
   it("emits ASSET_DELETED per asset before deleteMany", async () => {
     expect.assertions(2);
-    //@ts-expect-error mock setup
-    db.asset.findMany.mockResolvedValue([
-      { id: "asset-1", mainImage: null },
-      { id: "asset-2", mainImage: null },
+    mockAssetsForBulkDelete(db.asset.findMany as ReturnType<typeof vitest.fn>, [
+      { id: "asset-1", mainImage: null, title: "Asset One" },
+      { id: "asset-2", mainImage: null, title: "Asset Two" },
     ]);
 
     await bulkDeleteAssets({
@@ -1775,8 +1794,9 @@ describe("bulkDeleteAssets", () => {
   // selections must not abort with P2028 (Sentry SHELF-WEBAPP-1MJ).
   it("raises the interactive transaction timeout to 15s", async () => {
     expect.assertions(1);
-    //@ts-expect-error mock setup
-    db.asset.findMany.mockResolvedValue([{ id: "asset-1", mainImage: null }]);
+    mockAssetsForBulkDelete(db.asset.findMany as ReturnType<typeof vitest.fn>, [
+      { id: "asset-1", mainImage: null, title: "Asset One" },
+    ]);
 
     await bulkDeleteAssets({
       assetIds: ["asset-1"],

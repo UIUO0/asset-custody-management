@@ -13,7 +13,6 @@ model Image {
   id String @id @default(cuid())
 
   contentType String
-  altText     String?
   blob        Bytes
 
   createdAt DateTime @default(now())
@@ -60,13 +59,6 @@ model User {
 
   // Used to flag if the user is soft deleted
   deletedAt DateTime?
-
-  // Last time this user used the mobile companion app (any workspace). Powers
-  // companion-app adoption metrics from our own DB — no external analytics.
-  // Recorded debounced + fire-and-forget by requireMobileAuth, the chokepoint
-  // every mobile API route passes through. Account-level adoption = orgs with a
-  // recently-active member (join via UserOrganization). Null until first use.
-  lastMobileActiveAt DateTime?
 
   // Relationships
   assets             Asset[]
@@ -141,8 +133,6 @@ model User {
   // Indexes for foreign keys
   @@index([tierId])
   @@index([lastSelectedOrganizationId])
-  // Index for mobile-adoption "active since <date>" range scans
-  @@index([lastMobileActiveAt])
 }
 
 model UserContact {
@@ -506,11 +496,6 @@ model AssetModel {
   @@index([userId])
 }
 
-
-enum TagUseFor {
-  ASSET
-  BOOKING
-}
 
 model Note {
   id      String   @id @default(cuid())
@@ -2246,11 +2231,6 @@ enum AuditAssetStatus {
   UNEXPECTED
 }
 
-enum AuditAssignmentRole {
-  LEAD
-  PARTICIPANT
-}
-
 model AuditNote {
   id      String   @id @default(cuid())
   content String
@@ -2353,8 +2333,6 @@ model AuditAssignment {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String
-
-  role AuditAssignmentRole?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

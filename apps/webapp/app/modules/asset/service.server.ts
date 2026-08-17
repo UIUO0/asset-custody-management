@@ -30,6 +30,10 @@ import type {
 } from "~/components/list/filters/sort-by";
 import { db } from "~/database/db.server";
 import { getSupabaseAdmin } from "~/integrations/supabase/client";
+import {
+  assertAssetsHaveNotMoved,
+  assetsMovedMessage,
+} from "~/modules/asset/movement-guard.server";
 import { getPrimaryLocation, isQuantityTracked } from "~/modules/asset/utils";
 import {
   updateBarcodes,
@@ -2504,6 +2508,17 @@ export async function deleteAsset({
   actorUserId?: string;
 }) {
   try {
+    /**
+     * Refuse before the cascade, not after: `CustodyHandoverAsset` cascades on
+     * `assetId`, so erasing an item named on a محضر removes a line from a
+     * document its signatories already put their names to.
+     */
+    await assertAssetsHaveNotMoved({
+      scope: { id },
+      organizationId,
+      message: assetsMovedMessage,
+    });
+
     // Use transaction to ensure delete and activity event are atomic
     const deletedAsset = await db.$transaction(async (tx) => {
       const deleted = await tx.asset.delete({
@@ -4856,6 +4871,14 @@ export async function bulkDeleteAssets({
         organizationId,
       },
       select: { id: true, mainImage: true, title: true },
+    });
+
+    // Same guard as the singular path — a bulk selection is the likelier way
+    // to sweep up an item that is sitting on someone's signed محضر.
+    await assertAssetsHaveNotMoved({
+      scope: { id: { in: assets.map((asset) => asset.id) } },
+      organizationId,
+      message: assetsMovedMessage,
     });
 
     try {

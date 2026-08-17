@@ -68,7 +68,7 @@ export function DisplayNameForm({
             name="intent"
             value="updateDisplayName"
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </Form>

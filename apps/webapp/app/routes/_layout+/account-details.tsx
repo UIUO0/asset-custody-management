@@ -1,11 +1,9 @@
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
-import { data, Link, Outlet, useRouteLoaderData } from "react-router";
+import { data, Link, Outlet } from "react-router";
 import { ErrorContent } from "~/components/errors";
 import Header from "~/components/layout/header";
-import HorizontalTabs from "~/components/layout/horizontal-tabs";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
-import type { loader as layoutLoader } from "~/routes/_layout+/_layout";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError } from "~/utils/error";
 import { payload, error } from "~/utils/http.server";
@@ -59,26 +57,23 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => [
 
 export const shouldRevalidate = () => false;
 
+/**
+ * The signed-in user's own account.
+ *
+ * One section, so no tab strip: three of the four upstream tabs do not apply
+ * to this deployment and one of them never had a route at all.
+ *
+ * - **الاشتراكات** — a Stripe plan. The authority runs this system itself.
+ * - **مساحات العمل** — creating and switching workspaces. There is exactly one
+ *   workspace, the authority's, and it is not something an employee creates.
+ * - **التقويمات** — pointed at `/account-details/calendars`, which **does not
+ *   exist**; the calendar left with the booking system. Clicking it landed on
+ *   the not-found page.
+ */
 export default function AccountDetailsPage() {
-  const { t } = useTranslation();
-  const items = [
-    { to: "general", content: t("nav.general") },
-    { to: "workspace", content: t("ui.workspaces") },
-    { to: "calendars", content: t("ui.calendars") },
-  ];
-
-  const enablePremium = useRouteLoaderData<typeof layoutLoader>(
-    "routes/_layout+/_layout",
-  )?.enablePremium;
-
-  if (enablePremium) {
-    items.push({ to: "subscription", content: t("ui.subscription") });
-  }
-
   return (
     <>
       <Header hidePageDescription />
-      <HorizontalTabs items={items} />
       <div>
         <Outlet />
       </div>

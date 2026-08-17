@@ -185,7 +185,7 @@ export function UserDetailsForm({
             name="intent"
             value="updateUser"
           >
-            Save
+            {t("common.save")}
           </Button>
         </div>
       </Form>

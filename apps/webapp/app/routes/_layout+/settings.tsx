@@ -9,17 +9,14 @@ import { useUserRoleHelper } from "~/hooks/user-user-role-helper";
 import { getFixedT, getLocale } from "~/i18n/i18n.server";
 import ar from "~/i18n/locales/ar.json";
 import en from "~/i18n/locales/en.json";
+import { SETTINGS_SECTIONS } from "~/modules/settings/sections";
 import type { RouteHandleWithName } from "~/modules/types";
 import { appendToMetaTitle } from "~/utils/append-to-meta-title";
 import { makeShelfError } from "~/utils/error";
 import { payload, error } from "~/utils/http.server";
 import { isPersonalOrg } from "~/utils/organization";
-import {
-  PermissionAction,
-  PermissionEntity,
-} from "~/utils/permissions/permission.data";
 import { userHasPermission } from "~/utils/permissions/permission.validator";
-import { requirePermission } from "~/utils/roles.server";
+import { requireAnyPermission } from "~/utils/roles.server";
 
 /** Breadcrumb for settings (component so it can use the translation hook). */
 function SettingsBreadcrumb() {
@@ -36,11 +33,28 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
   const { userId } = authSession;
 
   try {
-    const { currentOrganization } = await requirePermission({
+    /**
+     * Admission is "can you open *any* section", not "can you read the general
+     * settings".
+     *
+     * The tab strip below has always been per-section — the comment on it even
+     * names المخزون as seeing only "الحقول المخصّصة" — but this gate demanded
+     * `generalSettings.read` from everyone, so nobody but a workspace admin
+     * ever reached the component that draws it. The visible symptom was in the
+     * sidebar: «الفريق» is shown on `teamMember.read`, which المستودعات،
+     * المالية، المخزون and الإدارة all hold, and clicking it answered
+     * *Unauthorized* for all four.
+     *
+     * Each child route still enforces its own permission, so this only decides
+     * who gets as far as the tabs.
+     */
+    const { currentOrganization } = await requireAnyPermission({
       userId: authSession.userId,
       request,
-      entity: PermissionEntity.generalSettings,
-      action: PermissionAction.read,
+      permissions: SETTINGS_SECTIONS.map(({ entity, action }) => ({
+        entity,
+        action,
+      })),
     });
 
     // Header copy is rendered server-side, so we resolve it with the request's
@@ -77,56 +91,44 @@ export const shouldRevalidate = () => false;
 export default function SettingsPage() {
   const { t } = useTranslation();
   const { _isPersonalOrg } = useLoaderData<typeof loader>();
-  let items = [
-    { to: "general", content: t("settings.general") },
-    ...(!_isPersonalOrg
-      ? [{ to: "bookings", content: t("settings.bookings") }]
-      : []),
-    ...(!_isPersonalOrg
-      ? [{ to: "emails", content: t("settings.emails") }]
-      : []),
-    { to: "custom-fields", content: t("settings.customFields") },
-    { to: "asset-models", content: t("settings.assetModels") },
-    { to: "team", content: t("settings.team") },
-  ];
-
   const { roles } = useUserRoleHelper();
 
   /**
-   * Keep only the tabs this role can actually open.
+   * Draw only the tabs this role can actually open.
    *
-   * Previously the whole set was stripped for anyone matching
-   * `isBaseOrSelfService`, which meant a new role saw every tab and hit a 403 on
-   * the ones it lacked. Gating each tab on the permission its own loader
-   * enforces keeps the nav honest — INVENTORY, for instance, sees only
-   * "Custom fields".
+   * Built from the same `SETTINGS_SECTIONS` the loader gates on, so a section
+   * cannot be admissible-but-undrawn (or drawn-but-inadmissible) again. The
+   * previous hand-written copy had drifted twice: it still listed a
+   * «الحجوزات» tab whose route was removed with the booking system, and it
+   * gated that tab on `generalSettings.read`.
    */
-  const can = (entity: PermissionEntity, action: PermissionAction) =>
-    userHasPermission({ roles, entity, action });
-
-  const canReadGeneralSettings = can(
-    PermissionEntity.generalSettings,
-    PermissionAction.read,
-  );
-  const tabPermissions: Record<string, boolean> = {
-    general: canReadGeneralSettings,
-    bookings: canReadGeneralSettings,
-    emails: can(PermissionEntity.emailSettings, PermissionAction.read),
-    "custom-fields": can(PermissionEntity.customField, PermissionAction.read),
-    "asset-models": can(PermissionEntity.assetModel, PermissionAction.update),
-    team: can(PermissionEntity.teamMember, PermissionAction.read),
-  };
-
-  items = items.filter((item) => tabPermissions[item.to] ?? true);
+  const items = SETTINGS_SECTIONS.filter(
+    (section) =>
+      !(section.organizationOnly && _isPersonalOrg) &&
+      userHasPermission({
+        roles,
+        entity: section.entity,
+        action: section.action,
+      }),
+  ).map((section) => ({ to: section.to, content: t(section.labelKey) }));
 
   const matches = useMatches();
   const currentRoute: RouteHandleWithName = matches[matches.length - 1];
   return (
     <>
       <Header title={t("settings.title")} hidePageDescription />
+      {/*
+        A strip of one tab is a strip that decides nothing — it just repeats
+        the page title in a second style. Now that الفريق is the only section
+        left, the strip is drawn only if a second one ever comes back.
+
+        The `$userId.*` exclusion is separate and still needed: those are the
+        drill-down pages *inside* الفريق, and they have their own tabs.
+      */}
       <When
         truthy={
-          !["$userId.assets", "$userId.bookings", "$userId.notes"].includes(
+          items.length > 1 &&
+          !["$userId.assets", "$userId.notes"].includes(
             currentRoute?.handle?.name,
           )
         }

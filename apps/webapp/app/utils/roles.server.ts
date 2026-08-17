@@ -8,6 +8,7 @@ import type {
   PermissionAction,
   PermissionEntity,
 } from "./permissions/permission.data";
+import { userHasPermission } from "./permissions/permission.validator";
 import { validatePermission } from "./permissions/permission.validator.server";
 import { rolesAreScopedToOwnRecords } from "./permissions/role-scope";
 
@@ -58,6 +59,36 @@ export async function requirePermission({
   entity: PermissionEntity;
   action: PermissionAction;
 }) {
+  const { organizationId, roles } = await resolveRequestRoles({
+    userId,
+    request,
+  });
+
+  await validatePermission({
+    roles,
+    action,
+    entity,
+    organizationId,
+    userId,
+  });
+
+  return buildPermissionContext({ userId, request });
+}
+
+/**
+ * Resolves the workspace and the roles the user holds in it.
+ *
+ * Split out so {@link requirePermission} and {@link requireAnyPermission} check
+ * the *same* roles they later report — two copies of this lookup would be two
+ * chances for the gate and the returned context to disagree.
+ */
+async function resolveRequestRoles({
+  userId,
+  request,
+}: {
+  userId: string;
+  request: Request;
+}) {
   /**
    * This can be very slow and consuming as there are a few queries with a few joins and this running on every loader/action makes it slow
    * We need to find a  strategy to make it more performant. Idea:
@@ -65,7 +96,31 @@ export async function requirePermission({
    * 2. Store it in a cookie
    * 3. If they mismatch, make the big query to check the actual data
    */
+  const { organizationId, userOrganizations } = await getSelectedOrganization({
+    userId,
+    request,
+  });
 
+  return {
+    organizationId,
+    roles: userOrganizations.find((o) => o.organization.id === organizationId)
+      ?.roles,
+  };
+}
+
+/**
+ * Everything a loader gets back once its gate has passed.
+ *
+ * Shared verbatim by both `require*Permission` helpers so the two can never
+ * hand back differently-shaped context.
+ */
+async function buildPermissionContext({
+  userId,
+  request,
+}: {
+  userId: string;
+  request: Request;
+}) {
   const {
     organizationId,
     userOrganizations,
@@ -76,14 +131,6 @@ export async function requirePermission({
   const roles = userOrganizations.find(
     (o) => o.organization.id === organizationId,
   )?.roles;
-
-  await validatePermission({
-    roles,
-    action,
-    entity,
-    organizationId,
-    userId,
-  });
 
   // Tag the current Sentry scope with the resolved user + organization so
   // every span / error emitted later in this request is filterable in
@@ -242,4 +289,57 @@ export function getRoleFromGroupId(
   } else {
     return null;
   }
+}
+
+/**
+ * Like {@link requirePermission}, but admits the caller if **any** of the given
+ * permissions holds.
+ *
+ * For layout routes that are only a container: `/settings` draws a tab strip
+ * and an `<Outlet/>`, and every tab's own route already enforces its own
+ * permission. Demanding one specific permission at the container turns it into
+ * a second, stricter gate that the tabs know nothing about — which is exactly
+ * how four operational roles ended up seeing «الفريق» in the sidebar and
+ * getting *Unauthorized* when they clicked it.
+ *
+ * Same return shape as {@link requirePermission}, so a caller can swap one for
+ * the other without touching the rest of the loader.
+ *
+ * @param args.userId - The signed-in user
+ * @param args.request - Used to resolve the selected workspace
+ * @param args.permissions - Entity/action pairs; one match is enough
+ * @returns The same context {@link requirePermission} returns
+ * @throws {ShelfError} 403 when none of the permissions hold
+ */
+export async function requireAnyPermission({
+  userId,
+  request,
+  permissions,
+}: {
+  userId: string;
+  request: Request;
+  permissions: ReadonlyArray<{
+    entity: PermissionEntity;
+    action: PermissionAction;
+  }>;
+}) {
+  const { roles } = await resolveRequestRoles({ userId, request });
+
+  const granted = permissions.some(({ entity, action }) =>
+    userHasPermission({ roles: roles ?? [], entity, action }),
+  );
+
+  if (!granted) {
+    throw new ShelfError({
+      cause: null,
+      title: "Unauthorized",
+      message: "You have no permission to perform this action",
+      additionalData: { userId, permissions },
+      label: "Permission",
+      status: 403,
+      shouldBeCaptured: false,
+    });
+  }
+
+  return buildPermissionContext({ userId, request });
 }

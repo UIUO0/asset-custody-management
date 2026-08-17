@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LogOutIcon, UserPenIcon, UserRoundIcon, Wallet } from "lucide-react";
+import { LogOutIcon, UserPenIcon, UserRoundIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useFetcher, useLoaderData } from "react-router";
 import { ChevronRight } from "~/components/icons/library";
@@ -104,16 +104,17 @@ export default function SidebarUserMenu() {
                 {t("settings.account")}
               </NavLink>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              asChild
-              className="cursor-pointer gap-2 border-b border-gray-200 p-2"
-              onClick={closeDropdown}
-            >
-              <NavLink to="/account-details/subscription">
-                <Wallet className="size-4" />
-                {t("userMenu.subscriptions")}
-              </NavLink>
-            </DropdownMenuItem>
+            {/* No subscription entry: the authority runs this system itself,
+                so there is no plan to buy and no card on file. It was also the
+                one item here shown unconditionally — the matching tab was
+                already behind `enablePremium`, so the menu advertised a screen
+                the page itself hid.
+
+                The Stripe *routes* are deliberately still in the tree: they
+                are entangled with the `tier` system that gates الجرد and
+                الباركود, and pulling them out closes working features rather
+                than cleaning up. See the `/api/stripe-webhook` pitfall in
+                CLAUDE.md — that is the decision this waits on. */}
             {/* The language switcher lives in the menu (not a settings page)
                 so it is one click away from anywhere. Wrapped in a plain div
                 rather than DropdownMenuItem: it is a form, and a menu item
