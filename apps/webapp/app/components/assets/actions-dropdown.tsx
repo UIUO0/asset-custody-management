@@ -198,7 +198,7 @@ const ConditionalActionsDropdown = () => {
                     </Button>
                   ) : assetCanBeReleased ? (
                     /*
-                     * EPDA: custody moves through the signed handover flow.
+                     * ORG: custody moves through the signed handover flow.
                      * The direction is derived server-side, so both branches
                      * point at the same route — but the LABEL must match what
                      * will actually be filed. A department officer looking at

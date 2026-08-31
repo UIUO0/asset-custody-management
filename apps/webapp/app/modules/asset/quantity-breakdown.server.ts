@@ -14,7 +14,7 @@
  * wrong place for the arithmetic, not because two callers share it.
  *
  * The booking half of this breakdown was dropped with the booking system
- * itself: EPDA moves assets on custody records, so custody and kit
+ * itself: ORG moves assets on custody records, so custody and kit
  * allocation are the only consumers of a quantity-tracked pool.
  *
  * @see {@link file://./../../routes/api+/assets.$assetId.quantity-breakdown.ts}

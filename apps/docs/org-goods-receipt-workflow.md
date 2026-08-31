@@ -316,8 +316,8 @@ pnpm webapp:validate
 
 ## مراجع
 
-- سير العمل والأدوار: [epda-workflow-and-roles.md](./epda-workflow-and-roles.md)
-- استلام الصنف (`lifecycleStage`): [epda-asset-intake-workflow.md](./epda-asset-intake-workflow.md)
-- محاضر التسليم الموقّعة: [epda-custody-signatures.md](./epda-custody-signatures.md)
+- سير العمل والأدوار: [org-workflow-and-roles.md](./org-workflow-and-roles.md)
+- استلام الصنف (`lifecycleStage`): [org-asset-intake-workflow.md](./org-asset-intake-workflow.md)
+- محاضر التسليم الموقّعة: [org-custody-signatures.md](./org-custody-signatures.md)
 - وصف النموذجين: `apps/webapp/app/modules/goods-receipt/form-shape.ts`
 - الحارس: `apps/webapp/app/modules/goods-receipt/receipt-gate.server.ts`

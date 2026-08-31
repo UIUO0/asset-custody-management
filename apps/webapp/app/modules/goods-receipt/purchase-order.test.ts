@@ -632,7 +632,7 @@ describe("voidPurchaseOrder", () => {
  */
 /** A receipt row shaped like `deletePurchaseOrder`'s `select`. */
 function orderReceipt(id: string, state = "SAVED") {
-  return { id, reference: `EPDA-RCV-2026-${id}`, state };
+  return { id, reference: `RCV-2026-${id}`, state };
 }
 
 describe("deletePurchaseOrder", () => {
@@ -732,7 +732,7 @@ describe("deletePurchaseOrder", () => {
         organizationId: "org-1",
         canDeleteSigned: false,
       }),
-    ).rejects.toThrow(/EPDA-RCV-2026-r-2/);
+    ).rejects.toThrow(/RCV-2026-r-2/);
   });
 
   it("erases an order of unsigned receipts for that same caller", async () => {

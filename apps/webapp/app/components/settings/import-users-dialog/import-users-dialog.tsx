@@ -113,7 +113,7 @@ export default function ImportUsersDialog({
                 file. To get started,{" "}
                 <Button
                   variant="link"
-                  to="/static/epda-example-import-users-from-content.csv"
+                  to="/static/demo-example-import-users-from-content.csv"
                   target="_blank"
                   download
                 >

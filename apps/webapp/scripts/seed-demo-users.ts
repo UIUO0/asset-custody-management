@@ -1,29 +1,29 @@
 /**
- * EPDA seed script — هيئة تطوير المنطقة الشرقية
+ * ORG seed script — جهة حكومية
  *
  * Creates the initial accounts for the internal deployment:
- *   1. Super admin  : admin@epda.local      (app-wide ADMIN role + workspace OWNER)
- *   2. Test user 1  : user1@epda.local      (workspace BASE member)
- *   3. Test user 2  : user2@epda.local      (workspace BASE member)
- *   4. Warehouse    : warehouse@epda.local  (WAREHOUSE — المستودعات)
- *   5. Finance      : finance@epda.local    (FINANCE — المالية)
- *   6. Inventory    : inventory@epda.local  (INVENTORY — المخزون)
- *   7. Facilities   : facilities@epda.local (DEPARTMENT — إدارة المرافق)
+ *   1. Super admin  : admin@example.local      (app-wide ADMIN role + workspace OWNER)
+ *   2. Test user 1  : user1@example.local      (workspace BASE member)
+ *   3. Test user 2  : user2@example.local      (workspace BASE member)
+ *   4. Warehouse    : warehouse@example.local  (WAREHOUSE — المستودعات)
+ *   5. Finance      : finance@example.local    (FINANCE — المالية)
+ *   6. Inventory    : inventory@example.local  (INVENTORY — المخزون)
+ *   7. Facilities   : facilities@example.local (DEPARTMENT — إدارة المرافق)
  *
  * Accounts 4-7 exist so each operational role can be exercised end to end
  * without hand-editing `UserOrganization.roles` in the database.
  *
  * There is no IT account: تقنية المعلومات are the workspace's system
- * administrators and run on `admin@epda.local`. Both department *desks*
+ * administrators and run on `admin@example.local`. Both department *desks*
  * (إدارة المرافق, إدارة تقنية المعلومات) are seeded as `TeamMember` rows so the
  * warehouse can hand a purchase order to either.
  *
- * All three share one TEAM workspace: "هيئة تطوير المنطقة الشرقية".
+ * All three share one TEAM workspace: "جهة حكومية".
  * Asset index settings are created lazily by the app on first visit, so they
  * are intentionally not seeded here.
  *
  * Usage (from the monorepo root, with .env configured):
- *   pnpm --filter @shelf/webapp seed:epda
+ *   pnpm --filter @shelf/webapp seed:org
  *
  * Idempotent: re-running skips accounts/workspace that already exist.
  *
@@ -31,11 +31,13 @@
  *      app's runtime user-creation flow this script mirrors.
  */
 /* eslint-disable no-console */
+import { randomBytes } from "node:crypto";
+
 import { OrganizationRoles, Roles } from "@prisma/client";
 import { createDatabaseClient } from "@shelf/database";
 import { createClient } from "@supabase/supabase-js";
 
-// Env is injected by dotenv-cli (see the `seed:epda` npm script)
+// Env is injected by dotenv-cli (see the `seed:org` npm script)
 const { SUPABASE_URL, SUPABASE_SERVICE_ROLE, DATABASE_URL } = process.env;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE || !DATABASE_URL) {
@@ -51,7 +53,7 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE, {
 
 const db = createDatabaseClient();
 
-const WORKSPACE_NAME = "هيئة تطوير المنطقة الشرقية";
+const WORKSPACE_NAME = "جهة حكومية";
 
 /**
  * Department desks — `TeamMember` rows that hold custody but are not people.
@@ -67,12 +69,29 @@ const FACILITIES_DEPARTMENT = "إدارة المرافق";
 const IT_DEPARTMENT = "إدارة تقنية المعلومات";
 const DEPARTMENTS = [FACILITIES_DEPARTMENT, IT_DEPARTMENT] as const;
 
-/** Accounts to seed. Change passwords after first login! */
+/**
+ * Seed passwords are generated per run, never hardcoded.
+ *
+ * ⚠️ A literal here is a published credential the moment the repo is public —
+ * and worse, a fixed pattern leaks the naming convention even after rotation.
+ * Set `SEED_PASSWORD` to pin one (useful in CI); otherwise each run mints a
+ * fresh random password and prints it once at the end.
+ */
+function generatePassword() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = randomBytes(20);
+  const body = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+  // Guarantee the symbol/digit classes most password policies demand.
+  return `${body}#7`;
+}
+
+const SEED_PASSWORD = process.env.SEED_PASSWORD || generatePassword();
+
+/** Accounts to seed. Passwords are generated — see `generatePassword`. */
 const ACCOUNTS = [
   {
-    email: "admin@epda.local",
-    password: "Epda@Admin#2026",
-    username: "epda-admin",
+    email: "admin@example.local",
+    username: "org-admin",
     firstName: "مدير",
     lastName: "النظام",
     isSuperAdmin: true,
@@ -87,54 +106,48 @@ const ACCOUNTS = [
     department: IT_DEPARTMENT,
   },
   {
-    email: "user1@epda.local",
-    password: "Epda@User1#2026",
-    username: "epda-user1",
+    email: "user1@example.local",
+    username: "org-user1",
     firstName: "مستخدم",
     lastName: "تجريبي ١",
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.BASE],
   },
   {
-    email: "user2@epda.local",
-    password: "Epda@User2#2026",
-    username: "epda-user2",
+    email: "user2@example.local",
+    username: "org-user2",
     firstName: "مستخدم",
     lastName: "تجريبي ٢",
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.BASE],
   },
   {
-    email: "warehouse@epda.local",
-    password: "Epda@Warehouse#2026",
-    username: "epda-warehouse",
+    email: "warehouse@example.local",
+    username: "org-warehouse",
     firstName: "موظف",
     lastName: "المستودعات",
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.WAREHOUSE],
   },
   {
-    email: "finance@epda.local",
-    password: "Epda@Finance#2026",
-    username: "epda-finance",
+    email: "finance@example.local",
+    username: "org-finance",
     firstName: "موظف",
     lastName: "المالية",
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.FINANCE],
   },
   {
-    email: "inventory@epda.local",
-    password: "Epda@Inventory#2026",
-    username: "epda-inventory",
+    email: "inventory@example.local",
+    username: "org-inventory",
     firstName: "موظف",
     lastName: "المخزون",
     isSuperAdmin: false,
     orgRoles: [OrganizationRoles.INVENTORY],
   },
   {
-    email: "facilities@epda.local",
-    password: "Epda@Facilities#2026",
-    username: "epda-facilities",
+    email: "facilities@example.local",
+    username: "org-facilities",
     firstName: "موظف",
     lastName: "المرافق",
     isSuperAdmin: false,
@@ -144,7 +157,7 @@ const ACCOUNTS = [
     department: FACILITIES_DEPARTMENT,
   },
   // No separate IT account: تقنية المعلومات are the workspace's system
-  // administrators, so they run on `admin@epda.local` — which is why that
+  // administrators, so they run on `admin@example.local` — which is why that
   // account carries `DEPARTMENT` and points at the IT desk above.
 ] as const;
 
@@ -226,7 +239,7 @@ async function main() {
       continue;
     }
 
-    const authId = await ensureAuthAccount(account.email, account.password);
+    const authId = await ensureAuthAccount(account.email, SEED_PASSWORD);
 
     const user = await db.user.create({
       data: {
@@ -335,11 +348,14 @@ async function main() {
     }
   }
 
-  console.log("\nSeed complete. Accounts:");
+  console.log("\nSeed complete. Accounts (shared password below):");
   for (const account of ACCOUNTS) {
-    console.log(`  ${account.email}  /  ${account.password}`);
+    console.log(`  ${account.email}`);
   }
-  console.log("\n⚠ غيّر كلمات المرور بعد أول تسجيل دخول.");
+  console.log(`\n  password: ${SEED_PASSWORD}`);
+  console.log(
+    "\n⚠ كلمة مرور تطويرية مولّدة لهذا التشغيل. غيّرها بعد أول دخول.",
+  );
 }
 
 main()

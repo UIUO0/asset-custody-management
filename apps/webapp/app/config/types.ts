@@ -30,7 +30,7 @@ export interface Config {
    *
    * Prefilled into مذكرة/محضر الاستلام rather than typed each time: every
    * receipt in this deployment names the same جهة, and re-typing it is how one
-   * receipt ends up saying «هيئة تطوير المنطقة الشرقيه» and another
+   * receipt ends up saying «جهة حكومية» and another
    * «الهيئة» — three spellings of one authority in a set of signed documents.
    *
    * A default, not a lock: the operator can still correct the box.
@@ -51,11 +51,11 @@ export interface Config {
    * Product name shown in outgoing email subjects and footers.
    *
    * Deliberately a single source: email subjects used to hardcode the upstream
-   * `shelf.nu` suffix in 16 places, which violates the EPDA identity rule and
+   * `shelf.nu` suffix in 16 places, which violates the ORG identity rule and
    * drifts the moment one is edited. Kept Latin-script for now because email
    * bodies are not localized yet — Arabic subjects land with phase 6.
    *
-   * @see {@link file://./../../../docs/epda-i18n-and-theming.md}
+   * @see {@link file://./../../../docs/org-i18n-and-theming.md}
    */
   appName: string;
 

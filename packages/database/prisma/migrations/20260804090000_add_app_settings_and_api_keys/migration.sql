@@ -1,4 +1,4 @@
--- EPDA: instance-wide settings + external-integration API keys.
+-- ORG: instance-wide settings + external-integration API keys.
 --
 -- Two additive tables. Nothing existing is read or rewritten, so this migration
 -- is safe to apply to a live database: absent settings fall back to the

@@ -446,7 +446,7 @@ export const CodePreview = ({
  *
  * Replaces the upstream "Powered by shelf.nu" line, which was stripped for this
  * deployment — leaving the workspace toggle that controls it switching nothing.
- * The toggle is a real preference again, and what it now prints is the EPDA
+ * The toggle is a real preference again, and what it now prints is the ORG
  * mark rather than a vendor's.
  *
  * Rendered as an `<img>` from {@link config.logoPath} so it is same-origin: the

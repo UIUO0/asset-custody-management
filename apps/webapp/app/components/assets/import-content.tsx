@@ -1,7 +1,7 @@
 /**
  * @file CSV upload form for the admin dashboard's per-organization import.
  *
- * The workspace-facing `ImportContent` that used to live here is gone: EPDA
+ * The workspace-facing `ImportContent` that used to live here is gone: ORG
  * books stock in on مذكرة/محضر استلام, and `/assets/import` is now a redirect
  * (see `assets.import.tsx` for why closing the bulk door mattered as much as
  * the single one).

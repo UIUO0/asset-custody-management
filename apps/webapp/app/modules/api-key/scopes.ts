@@ -53,4 +53,4 @@ export function isApiKeyScope(scope: string): scope is ApiKeyScope {
  * Token prefix. Makes a leaked credential identifiable in logs and greppable
  * by secret scanners, which is the reason to have one at all.
  */
-export const API_KEY_TOKEN_PREFIX = "epda";
+export const API_KEY_TOKEN_PREFIX = "org";

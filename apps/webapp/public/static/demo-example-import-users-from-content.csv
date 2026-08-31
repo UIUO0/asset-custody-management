@@ -1,0 +1,5 @@
+role,email,teamMemberId
+WAREHOUSE,warehouse.example@example.gov,
+FINANCE,finance.example@example.gov,
+INVENTORY,inventory.example@example.gov,
+BASE,employee.example@example.gov,cm7ep29mu0001slft9zw9e6sp

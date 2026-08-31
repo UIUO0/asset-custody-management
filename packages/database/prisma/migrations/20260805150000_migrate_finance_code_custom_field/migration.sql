@@ -1,4 +1,4 @@
--- EPDA: fold the «ترميز الاصل» custom field into `Asset.financeCode`.
+-- ORG: fold the «ترميز الاصل» custom field into `Asset.financeCode`.
 --
 -- Two places held the finance coding number and neither knew about the other:
 -- a workspace custom field created before the receipt flow existed, and the

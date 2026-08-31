@@ -1,7 +1,7 @@
 /**
  * Legacy direct asset creation — superseded by the goods-receipt forms.
  *
- * EPDA books stock in on one of two official documents (مذكرة استلام /
+ * ORG books stock in on one of two official documents (مذكرة استلام /
  * محضر استلام), so this route no longer creates anything. It is kept as a
  * redirect rather than deleted because bookmarks, the command palette, the
  * QR-claim flow and stale open tabs still point here; a 404 would read as a

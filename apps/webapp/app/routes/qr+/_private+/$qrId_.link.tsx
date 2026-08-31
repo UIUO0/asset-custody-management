@@ -120,7 +120,7 @@ export async function action({ context, request, params }: ActionFunctionArgs) {
          * Redirect to the relevant action. We also set the current org to the
          * one selected, as the user could select a different one.
          *
-         * EPDA: `linkTo === "new"` no longer creates an asset. Stock enters
+         * ORG: `linkTo === "new"` no longer creates an asset. Stock enters
          * only through مذكرة/محضر استلام, so a scanned sticker can only be
          * attached to an item that already exists — which is the right order
          * anyway: the delivery is booked in on a form, then someone walks
@@ -181,7 +181,7 @@ export default function QrLink() {
             </div>
             <div className="flex flex-col justify-center gap-2">
               {/*
-               * EPDA: "create a new asset here" is gone. It was a second door
+               * ORG: "create a new asset here" is gone. It was a second door
                * into inventory, bypassing the receipt forms that carry the
                * supplier, the purchase order and the price. Linking a sticker
                * to an item that already exists is now the primary action —

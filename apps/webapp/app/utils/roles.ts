@@ -8,7 +8,7 @@ import { OrganizationRoles } from "@prisma/client";
  * visibility**, not seniority: a role change that keeps organization-wide
  * visibility must not move ownership around.
  *
- * That is why the three EPDA operational roles sit at rank 2 alongside ADMIN.
+ * That is why the three ORG operational roles sit at rank 2 alongside ADMIN.
  * WAREHOUSE, FINANCE and INVENTORY all see the whole organization, so
  * ADMIN → WAREHOUSE is a lateral move, not a demotion. Only a drop to
  * BASE/SELF_SERVICE — where the user can suddenly see just their own records —
@@ -126,7 +126,7 @@ export const ORGANIZATION_ROLE_DESCRIPTION_KEYS: Record<
  * by picking it from a dropdown.
  *
  * Ordered as the dropdowns should render them — operational roles first, since
- * those are what EPDA assigns day to day.
+ * those are what ORG assigns day to day.
  */
 export const ASSIGNABLE_ORGANIZATION_ROLES: [
   OrganizationRoles,

@@ -102,7 +102,7 @@ export function rolesAreScopedToOwnRecords(roles) {
   `INVENTORY` مضافة إلى `enum OrganizationRoles` مع تعليق يشترط تسجيل أي دور
   جديد في **مكانين** (`Role2PermissionMap` و `ROLES_WITH_ORG_WIDE_VISIBILITY`).
 - migration جديدة:
-  `20260726120000_add_epda_organization_roles/migration.sql` —
+  `20260726120000_add_org_organization_roles/migration.sql` —
   `ALTER TYPE ... ADD VALUE IF NOT EXISTS` × 3. لا صفّ يُعاد كتابته.
 
 ### 3.2 الصلاحيات
@@ -144,7 +144,7 @@ export function rolesAreScopedToOwnRecords(roles) {
 - 14 مفتاحاً جديداً في `ar.json` و `en.json` (`team.roles.*` و
   `team.roleDescriptions.*`). **الملفان متطابقان** — تحقّقتُ برمجياً:
   لا مفاتيح في أحدهما دون الآخر عدا صيغ الجمع العربية.
-- `scripts/seed-epda-users.ts` — ثلاثة حسابات تجريبية للأدوار الجديدة.
+- `scripts/seed-demo-users.ts` — ثلاثة حسابات تجريبية للأدوار الجديدة.
 
 ### 3.6 مسار استيراد المستخدمين (CSV)
 
@@ -159,7 +159,7 @@ export function rolesAreScopedToOwnRecords(roles) {
   SELF_SERVICE» — صار مشتقّاً من `ASSIGNABLE_ORGANIZATION_ROLES` فلا يتخلّف
   عمّا يقبله الخادم.
 - قالب الـ CSV: `shelf.nu-example-import-users-from-content.csv` →
-  `epda-example-import-users-from-content.csv` بمحتوى EPDA (قوالب الأصناف
+  `demo-example-import-users-from-content.csv` بمحتوى ORG (قوالب الأصناف
   كانت مُعاد تسميتها سابقاً، وهذا كان آخر ما تبقّى).
 
 ### 3.7 عرض أسماء الأدوار
@@ -218,16 +218,16 @@ export function rolesAreScopedToOwnRecords(roles) {
 
 ## 4ج. تصفية مراجع `shelf` و `shelf.nu` — منجَزة
 
-قاعدة هوية EPDA قيدٌ إلزامي، فأتممتُ التصفية بدل تركها تذكرة معلّقة.
+قاعدة هوية ORG قيدٌ إلزامي، فأتممتُ التصفية بدل تركها تذكرة معلّقة.
 
 ### مصدر واحد للاسم
 
 حقلان جديدان في `config/shelf.config.ts` (والنوع في `config/types.ts`):
 
-| الحقل           | القيمة        | الاستخدام                                            |
-| --------------- | ------------- | ---------------------------------------------------- |
-| `appName`       | `EPDA Assets` | عناوين الإيميلات وتذييلاتها ونصوصها                  |
-| `appIdentifier` | `EPDA`        | ASCII فقط: `PRODID` للتقويم وأسماء الملفات المنزَّلة |
+| الحقل           | القيمة       | الاستخدام                                            |
+| --------------- | ------------ | ---------------------------------------------------- |
+| `appName`       | `ORG Assets` | عناوين الإيميلات وتذييلاتها ونصوصها                  |
+| `appIdentifier` | `ORG`        | ASCII فقط: `PRODID` للتقويم وأسماء الملفات المنزَّلة |
 
 > بقي الاسم لاتينياً لأن أجسام الإيميلات غير مُعرَّبة بعد؛ تعريبها كان
 > سينتج رسائل نصفها عربي ونصفها إنجليزي. الإيميلات العربية في المرحلة 6.
@@ -244,7 +244,7 @@ export function rolesAreScopedToOwnRecords(roles) {
 | اسم ملف ICS المُنزَّل + `PRODID` + اسم التقويم | 4        | ظاهرة في تطبيق تقويم المستخدم                                                                                                         |
 | رسائل خطأ ظاهرة (SSO، الباركود)                | 2        |                                                                                                                                       |
 | روابط `mailto` لموظفي Shelf                    | 2        | في شاشة الفلاتر المتقدمة وشاشة SSO ← أُحيلت لتقنية المعلومات                                                                          |
-| نطاق الحذف الناعم                              | 1        | `@deleted.shelf.nu` ← `@deleted.epda.local`                                                                                           |
+| نطاق الحذف الناعم                              | 1        | `@deleted.shelf.nu` ← `@deleted.example.local`                                                                                        |
 
 ### نقطتان تستحقّان انتباهك
 
@@ -277,7 +277,7 @@ export function rolesAreScopedToOwnRecords(roles) {
 | #   | التغيير                                                                    | المبرر                                                                                                                                        |
 | --- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **BASE و SELF_SERVICE يريان الآن اختصار «التدقيقات» في لوحة الأوامر**      | القائمة الجانبية تعرض `nav.audits` لهما أصلاً بلا شرط، وكلاهما يملك `audit: [read, update]`. البوابة القديمة كانت متناقضة مع القائمة الجانبية |
-| 2   | **إزالة رابط «ملصقات الأصناف» من القائمة الجانبية**                        | كان يشير إلى `store.shelf.nu` — مخالف لقاعدة هوية EPDA                                                                                        |
+| 2   | **إزالة رابط «ملصقات الأصناف» من القائمة الجانبية**                        | كان يشير إلى `store.shelf.nu` — مخالف لقاعدة هوية ORG                                                                                         |
 | 3   | **إزالة رابط «الصلاحيات هنا» من شاشتَي المستخدمين والدعوات**               | كان يشير إلى `shelf.nu/knowledge-base` — نفس القاعدة. النص التمهيدي بقي                                                                       |
 | 4   | **استيراد CSV بدور غير معروف صار يفشل برسالة واضحة بدل خطأ Postgres مبهم** | تشديد تحقق، لا تغيير سلوك مقصود — لكنه يحوّل نجاحاً صامتاً سابقاً (صفوف تُكتب بأدوار خطأ) إلى رفض صريح                                        |
 
@@ -347,7 +347,7 @@ pnpm webapp:validate
 pnpm webapp:test -- --run app/utils/permissions/role-scope.test.ts app/utils/roles.test.ts
 
 # 5. حسابات تجريبية للأدوار الثلاثة (اختياري)
-pnpm webapp:seed:epda
+pnpm webapp:seed:org
 ```
 
 **نقطة توقّف:** لم أستطع تشغيل `tsc` ولا `eslint` (الحزم مبنية لـ macOS).
@@ -368,7 +368,7 @@ pnpm webapp:seed:epda
 
 ## مراجع
 
-- المواصفات: [epda-workflow-and-roles.md](./epda-workflow-and-roles.md)
-- التعريب والاتجاه: [epda-i18n-and-theming.md](./epda-i18n-and-theming.md)
+- المواصفات: [org-workflow-and-roles.md](./org-workflow-and-roles.md)
+- التعريب والاتجاه: [org-i18n-and-theming.md](./org-i18n-and-theming.md)
 - قائمة السماح: `apps/webapp/app/utils/permissions/role-scope.ts`
 - خريطة الصلاحيات: `apps/webapp/app/utils/permissions/permission.data.ts`

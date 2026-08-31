@@ -1,6 +1,6 @@
-# Supabase local development config — EPDA internal deployment
+# Supabase local development config — ORG internal deployment
 # Started with `supabase start` (requires Docker Desktop running).
-project_id = "shelf-epda"
+project_id = "shelf-org"
 
 [api]
 enabled = true

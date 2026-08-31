@@ -1,4 +1,4 @@
--- EPDA: asset intake workflow stage (قيد الانتظار / جاهز للتوزيع).
+-- ORG: asset intake workflow stage (قيد الانتظار / جاهز للتوزيع).
 --
 -- Separate from "AssetStatus", which is derived from custody and bookings.
 -- New assets start at PENDING and only become visible to ordinary employees

@@ -1,7 +1,7 @@
 /**
  * Legacy CSV asset import — superseded by the goods-receipt forms.
  *
- * The mirror of `assets.new.tsx`: EPDA books stock in on مذكرة/محضر استلام, and
+ * The mirror of `assets.new.tsx`: ORG books stock in on مذكرة/محضر استلام, and
  * a spreadsheet of titles carries none of what those documents exist to
  * record — supplier, purchase order, inspection reference, unit price, or the
  * three signatures.

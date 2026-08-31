@@ -70,7 +70,7 @@ describe("getDepartmentDesks", () => {
             roles: [OrganizationRoles.DEPARTMENT],
             user: {
               id: "u-rep",
-              email: "rep@epda.local",
+              email: "rep@example.local",
               firstName: "سعد",
               lastName: null,
             },
@@ -80,7 +80,7 @@ describe("getDepartmentDesks", () => {
             roles: [OrganizationRoles.BASE],
             user: {
               id: "u-bystander",
-              email: "someone@epda.local",
+              email: "someone@example.local",
               firstName: null,
               lastName: null,
             },
@@ -92,7 +92,7 @@ describe("getDepartmentDesks", () => {
     const [desk] = await getDepartmentDesks({ organizationId: "org-1" });
 
     expect(desk.representatives).toEqual([
-      { userId: "u-rep", name: "سعد", email: "rep@epda.local" },
+      { userId: "u-rep", name: "سعد", email: "rep@example.local" },
     ]);
     expect(desk.custodyCount).toBe(12);
   });
@@ -109,7 +109,7 @@ describe("getDepartmentDesks", () => {
             roles: [OrganizationRoles.OWNER, OrganizationRoles.DEPARTMENT],
             user: {
               id: "u-1",
-              email: "admin@epda.local",
+              email: "admin@example.local",
               firstName: null,
               lastName: null,
             },
@@ -120,7 +120,7 @@ describe("getDepartmentDesks", () => {
 
     const [desk] = await getDepartmentDesks({ organizationId: "org-1" });
 
-    expect(desk.representatives[0].name).toBe("admin@epda.local");
+    expect(desk.representatives[0].name).toBe("admin@example.local");
   });
 });
 
@@ -187,7 +187,7 @@ describe("linkUserToDepartment", () => {
   });
 
   it("keeps the roles the account already holds", async () => {
-    // `admin@epda.local` is `[OWNER, DEPARTMENT]`: they administer the system
+    // `admin@example.local` is `[OWNER, DEPARTMENT]`: they administer the system
     // and receive their own office's batches. Replacing the array would strip
     // the workspace owner.
     mocked.teamMember.findFirst.mockResolvedValue({ id: "desk-1" });

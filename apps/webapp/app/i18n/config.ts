@@ -1,9 +1,9 @@
 /**
- * i18n configuration — EPDA (هيئة تطوير المنطقة الشرقية)
+ * i18n configuration — ORG (جهة حكومية)
  *
  * Single source of truth for the supported locales, their text direction, and
  * the shared i18next options used on both the server and the client. Arabic is
- * the default because the primary audience is EPDA staff; English is kept as a
+ * the default because the primary audience is ORG staff; English is kept as a
  * full peer locale for non-Arabic-speaking staff and vendors.
  *
  * Text direction is derived from the locale here (never hardcoded in
@@ -25,7 +25,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 export const DEFAULT_LOCALE: SupportedLocale = "ar";
 
 /** Cookie that persists the user's explicit language choice. */
-export const LOCALE_COOKIE_NAME = "epda_locale";
+export const LOCALE_COOKIE_NAME = "org_locale";
 
 /** Text direction per locale. Drives `<html dir>` and the RTL Tailwind variant. */
 export const LOCALE_DIRECTION: Record<SupportedLocale, "rtl" | "ltr"> = {

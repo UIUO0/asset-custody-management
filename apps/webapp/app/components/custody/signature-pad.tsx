@@ -25,7 +25,7 @@
  * The surrounding layout uses logical properties as usual.
  *
  * @see {@link file://./../../modules/custody/handover.server.ts} — consumes the emitted data URL
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import type { PointerEvent as ReactPointerEvent } from "react";

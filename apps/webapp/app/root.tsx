@@ -62,7 +62,7 @@ export const links: LinksFunction = () => [
 
 export const meta: MetaFunction = () => [
   {
-    title: "هيئة تطوير المنطقة الشرقية",
+    title: "جهة حكومية",
   },
 ];
 
@@ -79,7 +79,7 @@ export const loader = async ({ request, context }: LoaderFunctionArgs) => {
   // Locale is resolved here (not in a child route) because the <html>
   // element lives in this module's Layout — it must be known before any
   // markup is emitted to avoid a direction flash.
-  // why: dark mode is intentionally removed EPDA-wide — the system always
+  // why: dark mode is intentionally removed ORG-wide — the system always
   // renders the light theme, so no theme preference is resolved.
   const locale = getLocale(request);
 
@@ -128,7 +128,7 @@ export function Layout({ children }: { children: ReactNode }) {
     <html
       lang={locale}
       dir={dir}
-      // why: dark mode is removed EPDA-wide — the `dark` class is never
+      // why: dark mode is removed ORG-wide — the `dark` class is never
       // applied and the color scheme is pinned to light so form controls
       // and scrollbars don't follow the OS dark preference.
       className="overflow-hidden"
@@ -140,7 +140,7 @@ export function Layout({ children }: { children: ReactNode }) {
         {/* why: no iOS Smart App Banner. The upstream one advertised the
             public "Shelf Companion" App Store listing — a third-party app,
             not this deployment's build. The in-repo companion app was itself
-            removed on 2026-08-06; EPDA runs on the web app only. */}
+            removed on 2026-08-06; ORG runs on the web app only. */}
         <ClientHintCheck nonce={nonce} />
         <Meta />
         <Links />

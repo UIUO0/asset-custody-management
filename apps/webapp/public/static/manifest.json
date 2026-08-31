@@ -1,8 +1,8 @@
 {
-  "name": "نظام إدارة الأصناف — هيئة تطوير المنطقة الشرقية",
+  "name": "نظام إدارة الأصناف — جهة حكومية",
   "lang": "ar-SA",
-  "short_name": "EPDA Assets",
-  "description": "نظام إدارة الأصناف والعهد الخاص بهيئة تطوير المنطقة الشرقية",
+  "short_name": "ORG Assets",
+  "description": "نظام إدارة الأصناف والعهد الخاص بجهة حكومية",
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
@@ -10,7 +10,7 @@
   "background_color": "#FFFFFF",
   "icons": [
     {
-      "src": "/static/images/sda-symbol.png",
+      "src": "/static/images/app-symbol.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"

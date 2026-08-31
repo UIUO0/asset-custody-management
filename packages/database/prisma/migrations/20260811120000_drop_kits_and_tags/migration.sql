@@ -1,6 +1,6 @@
 -- Drop the Kit and Tag subsystems.
 --
--- Project-owner decision (2026-08-11): EPDA does not group assets into kits
+-- Project-owner decision (2026-08-11): ORG does not group assets into kits
 -- and does not tag them. Both features are removed from the product, so the
 -- tables, columns, join tables and the `KitStatus` enum go with them.
 --

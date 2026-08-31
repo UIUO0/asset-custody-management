@@ -1110,7 +1110,7 @@ export async function updateProfilePicture({
  * To comply with regulations, we will destroy all personal data related to the user
  *
  * To soft delete the user we do the following:
- * 1. Update the user email to: deleted+{randomId}@deleted.epda.local
+ * 1. Update the user email to: deleted+{randomId}@deleted.example.local
  * 2. Update the user username to: deleted+{randomId}
  * 3. Update the user firstName to: Deleted
  * 4. Update the user lastName to: User

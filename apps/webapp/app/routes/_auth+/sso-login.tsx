@@ -160,7 +160,7 @@ export default function SSOLogin() {
         {/* why: upstream pointed this at its own sales inbox. SSO for this
             deployment is an internal Azure AD (Entra ID) configuration, so the
             only correct recipient is the authority's own IT department.
-            @see apps/docs/epda-azure-entra-sso.md */}
+            @see apps/docs/org-azure-entra-sso.md */}
         <div>{t("auth.needSsoAccess")}</div>
       </div>
     </>

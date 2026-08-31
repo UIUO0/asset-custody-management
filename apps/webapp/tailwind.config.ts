@@ -114,7 +114,7 @@ export default {
           800: "rgb(var(--color-gray-800) / <alpha-value>)",
           900: "rgb(var(--color-gray-900) / <alpha-value>)",
         },
-        // EPDA brand blue (هيئة تطوير المنطقة الشرقية) — derived from logo #044E8B.
+        // ORG brand blue (جهة حكومية) — derived from logo #044E8B.
         // 500–700 are variable-driven so they lighten in dark mode for contrast.
         primary: {
           DEFAULT: "rgb(var(--color-primary-600) / <alpha-value>)",

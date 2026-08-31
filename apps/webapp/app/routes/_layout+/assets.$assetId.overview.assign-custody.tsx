@@ -1,7 +1,7 @@
 /**
  * Legacy unsigned custody assignment — superseded by the signed handover flow.
  *
- * EPDA requires both parties to sign before an asset changes hands, so this
+ * ORG requires both parties to sign before an asset changes hands, so this
  * route no longer assigns anything. It is kept as a redirect rather than
  * deleted because bookmarks, the mobile app and stale open tabs still point
  * here; a 404 would read as a bug, while a redirect lands the operator on the
@@ -18,7 +18,7 @@
  *
  * @see {@link file://./assets.$assetId.overview.custody-handover.tsx}
  * @see {@link file://./../../modules/custody/handover.server.ts}
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";

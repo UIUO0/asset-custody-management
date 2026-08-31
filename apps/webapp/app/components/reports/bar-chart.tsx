@@ -30,7 +30,7 @@ import type { ChartSeries } from "~/modules/reports/types";
 
 /** Color palette for multi-series charts */
 const SERIES_COLORS = [
-  "#044E8B", // primary (EPDA blue)
+  "#044E8B", // primary (ORG blue)
   "#22c55e", // green-500
   "#3b82f6", // blue-500
   "#a855f7", // purple-500

@@ -61,7 +61,7 @@ const IV_BYTES = 12;
  * separation (so the encryption key is not literally the session secret), not
  * to resist dictionary attacks.
  */
-const DERIVATION_SALT = "epda:app-settings:v1";
+const DERIVATION_SALT = "org:app-settings:v1";
 
 /** Memoized so scrypt runs once per process rather than per read. */
 let cachedKey: Buffer | null = null;

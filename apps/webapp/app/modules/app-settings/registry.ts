@@ -80,7 +80,7 @@ export const SETTING_DEFINITIONS = [
     type: "string",
     label: "Application name",
     description: "Shown in email subjects and downloaded file names.",
-    defaultValue: "SDA Assets",
+    defaultValue: "Asset Custody",
   },
   {
     key: "general.supportEmail",
@@ -235,7 +235,7 @@ export const SETTING_DEFINITIONS = [
     category: "ldap",
     type: "string",
     label: "Server URL",
-    description: "e.g. ldaps://dc.epda.local:636. Prefer ldaps.",
+    description: "e.g. ldaps://dc.example.local:636. Prefer ldaps.",
     defaultValue: "",
   },
   {
@@ -259,7 +259,7 @@ export const SETTING_DEFINITIONS = [
     category: "ldap",
     type: "string",
     label: "Search base",
-    description: "e.g. ou=users,dc=epda,dc=local",
+    description: "e.g. ou=users,dc=org,dc=local",
     defaultValue: "",
   },
   {

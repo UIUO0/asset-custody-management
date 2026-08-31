@@ -146,7 +146,7 @@ function WelcomeToTrialEmailTemplate({
           <Text style={{ ...styles.h2 }}>Explore Key Features:</Text>
 
           {/* why: the upstream copy linked each feature to shelf.nu's public
-              knowledge base. There is no EPDA equivalent to point at, so the
+              knowledge base. There is no ORG equivalent to point at, so the
               feature descriptions stay and the outbound links go. */}
           <Text style={{ ...styles.p }}>
             <strong>Custom Fields</strong>: Tailor the asset record to your

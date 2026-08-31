@@ -23,7 +23,7 @@
  *
  * @see {@link file://./form-shape.ts} how the two forms differ
  * @see {@link file://./classification.ts} أصل/مادة, decided by capitalisation threshold
- * @see {@link file://./../../../../docs/epda-goods-receipt-workflow.md}
+ * @see {@link file://./../../../../docs/org-goods-receipt-workflow.md}
  */
 
 import {
@@ -110,7 +110,7 @@ export const RECEIPT_INCLUDE = {
 } as const;
 
 /**
- * Builds the next workspace-scoped reference, e.g. `EPDA-RCV-2026-0042`.
+ * Builds the next workspace-scoped reference, e.g. `RCV-2026-0042`.
  *
  * Reads the current maximum and adds one, which races if two operators submit
  * at the same instant. That is handled where it belongs: the
@@ -127,7 +127,7 @@ async function nextReference(
   tx: ReceiptTxClient,
 ): Promise<string> {
   const year = new Date().getFullYear();
-  const prefix = `EPDA-RCV-${year}-`;
+  const prefix = `RCV-${year}-`;
 
   const latest = await tx.goodsReceipt.findFirst({
     where: { organizationId, reference: { startsWith: prefix } },

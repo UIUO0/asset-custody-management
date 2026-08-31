@@ -154,19 +154,19 @@ describe("API token hashing", () => {
   it("is deterministic, so a token can be looked up by its digest", async () => {
     const { hashApiToken } = await loadCrypto();
 
-    expect(hashApiToken("epda_abc")).toBe(hashApiToken("epda_abc"));
+    expect(hashApiToken("org_abc")).toBe(hashApiToken("org_abc"));
   });
 
   it("produces different digests for different tokens", async () => {
     const { hashApiToken } = await loadCrypto();
 
-    expect(hashApiToken("epda_abc")).not.toBe(hashApiToken("epda_abd"));
+    expect(hashApiToken("org_abc")).not.toBe(hashApiToken("org_abd"));
   });
 
   it("never returns the token itself", async () => {
     const { hashApiToken } = await loadCrypto();
 
-    const digest = hashApiToken("epda_supersecret");
+    const digest = hashApiToken("org_supersecret");
 
     expect(digest).not.toContain("supersecret");
     expect(digest).toMatch(/^[0-9a-f]{64}$/);

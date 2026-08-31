@@ -1,4 +1,4 @@
--- EPDA: booking request workflow (مسار الطلبات).
+-- ORG: booking request workflow (مسار الطلبات).
 --
 -- A booking raised by an ordinary employee becomes a *request* that المستودعات
 -- accept or reject, and that المخزون can freeze for review. Modelled next to

@@ -55,7 +55,7 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
                     { organizationId },
                     // why: the recipient list is "people who see the whole
                     // organization", which is exactly the visibility allow-list.
-                    // Hardcoding ADMIN/OWNER silently excluded every EPDA
+                    // Hardcoding ADMIN/OWNER silently excluded every ORG
                     // operational role from being picked.
                     { roles: { hasSome: [...ROLES_WITH_ORG_WIDE_VISIBILITY] } },
                   ],

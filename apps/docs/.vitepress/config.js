@@ -65,31 +65,31 @@ export default {
     // Sidebar navigation
     sidebar: [
       {
-        // EPDA deployment docs. First in the list on purpose: this repo is the
+        // ORG deployment docs. First in the list on purpose: this repo is the
         // authority's fork, so its customisation is what a newcomer needs
         // before any of the upstream guides make sense.
-        text: "🏛️ هيئة تطوير المنطقة الشرقية",
+        text: "🏛️ جهة حكومية",
         collapsed: false,
         items: [
-          { text: "نقطة البداية", link: "/epda-overview" },
-          { text: "سير العمل والأدوار", link: "/epda-workflow-and-roles" },
-          { text: "التعريب والمظهر", link: "/epda-i18n-and-theming" },
-          { text: "معجم المصطلحات", link: "/epda-glossary" },
+          { text: "نقطة البداية", link: "/org-overview" },
+          { text: "سير العمل والأدوار", link: "/org-workflow-and-roles" },
+          { text: "التعريب والمظهر", link: "/org-i18n-and-theming" },
+          { text: "معجم المصطلحات", link: "/org-glossary" },
           {
             text: "دورة حياة الصنف كاملةً",
-            link: "/epda-asset-lifecycle-workflow",
+            link: "/org-asset-lifecycle-workflow",
           },
-          { text: "مسار استلام الأصل", link: "/epda-asset-intake-workflow" },
+          { text: "مسار استلام الأصل", link: "/org-asset-intake-workflow" },
           {
             text: "مسار الطلبات",
-            link: "/epda-booking-request-workflow",
+            link: "/org-booking-request-workflow",
           },
           {
             text: "جرد فحوصات الأدوار",
-            link: "/epda-phase1-role-check-inventory",
+            link: "/org-phase1-role-check-inventory",
           },
-          { text: "تقدّم التعريب", link: "/epda-i18n-progress" },
-          { text: "الدخول الموحّد (Entra)", link: "/epda-azure-entra-sso" },
+          { text: "تقدّم التعريب", link: "/org-i18n-progress" },
+          { text: "الدخول الموحّد (Entra)", link: "/org-azure-entra-sso" },
         ],
       },
       {

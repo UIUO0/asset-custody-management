@@ -33,7 +33,7 @@ import { requireApiKey } from "./auth.server";
 const findUnique = vi.mocked(db.apiKey.findUnique);
 const update = vi.mocked(db.apiKey.update);
 
-const TOKEN = "epda_test-token-value";
+const TOKEN = "org_test-token-value";
 
 /** A live key row with the given overrides. */
 function keyRow(overrides: Partial<Record<string, unknown>> = {}) {
@@ -51,7 +51,7 @@ function keyRow(overrides: Partial<Record<string, unknown>> = {}) {
 
 /** A request carrying the token in the given header. */
 function request(headers: Record<string, string>) {
-  return new Request("https://epda.local/api/v1/assets", { headers });
+  return new Request("https://example.local/api/v1/assets", { headers });
 }
 
 describe("requireApiKey", () => {
@@ -102,7 +102,7 @@ describe("requireApiKey", () => {
       // Query strings land in access logs, proxy logs and browser history, so
       // the token is deliberately not read from there.
       const withQuery = new Request(
-        `https://epda.local/api/v1/assets?token=${TOKEN}`,
+        `https://example.local/api/v1/assets?token=${TOKEN}`,
       );
 
       await expect(requireApiKey(withQuery, "assets:read")).rejects.toThrow(
@@ -233,7 +233,7 @@ describe("requireApiKey", () => {
 
       // Every shape a caller might try to smuggle a different workspace in.
       const spoofed = new Request(
-        "https://epda.local/api/v1/assets?orgId=org-other&organizationId=org-other",
+        "https://example.local/api/v1/assets?orgId=org-other&organizationId=org-other",
         {
           headers: {
             "x-api-key": TOKEN,

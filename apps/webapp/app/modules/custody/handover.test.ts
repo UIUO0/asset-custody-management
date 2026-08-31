@@ -845,7 +845,7 @@ describe("openHandover — batch", () => {
   it("puts every selected asset on one record with one reference", async () => {
     const create = vi
       .fn()
-      .mockResolvedValue({ id: "ho-1", reference: "EPDA-HO-2026-0001" });
+      .mockResolvedValue({ id: "ho-1", reference: "HO-2026-0001" });
     runTransactionWith({
       asset: {
         findMany: vi

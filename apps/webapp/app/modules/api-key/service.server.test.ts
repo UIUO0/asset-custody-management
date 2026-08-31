@@ -39,7 +39,7 @@ function createdRow(data: Record<string, unknown> = {}) {
   return {
     id: "key-1",
     name: "ERP sync",
-    prefix: "epda_stored",
+    prefix: "org_stored",
     hashedKey: "stored-digest",
     scopes: ["assets:read"],
     organizationId: "org-1",
@@ -50,8 +50,8 @@ function createdRow(data: Record<string, unknown> = {}) {
     updatedAt: new Date("2026-08-04"),
     expiresAt: null,
     ...data,
-    organization: { name: "EPDA" },
-    createdBy: { email: "admin@epda.local" },
+    organization: { name: "ORG" },
+    createdBy: { email: "admin@example.local" },
   };
 }
 
@@ -122,7 +122,7 @@ describe("createApiKey", () => {
       userId: "admin-1",
     });
 
-    expect(result.token.startsWith("epda_")).toBe(true);
+    expect(result.token.startsWith("org_")).toBe(true);
     // The stored prefix is a leading slice of the issued token, so an admin can
     // match a key in the list to the credential an integration is using.
     expect(result.token.startsWith(writtenData().prefix as string)).toBe(true);
@@ -194,7 +194,7 @@ describe("revokeApiKey", () => {
     update.mockResolvedValue(
       createdRow({
         name: "ERP sync",
-        prefix: "epda_ab",
+        prefix: "org_ab",
         scopes: [],
         revokedAt: new Date(),
       }) as never,
@@ -214,7 +214,7 @@ describe("revokeApiKey", () => {
     update.mockResolvedValue(
       createdRow({
         name: "ERP sync",
-        prefix: "epda_ab",
+        prefix: "org_ab",
         scopes: [],
         revokedAt: firstRevocation,
       }) as never,
@@ -246,7 +246,7 @@ describe("listApiKeys", () => {
     findMany.mockResolvedValue([
       createdRow({
         name: "ERP sync",
-        prefix: "epda_abcd1234",
+        prefix: "org_abcd1234",
         hashedKey: "deadbeef".repeat(8),
         scopes: ["assets:read"],
         organizationId: "org-1",
@@ -256,7 +256,7 @@ describe("listApiKeys", () => {
     const keys = await listApiKeys();
 
     expect(JSON.stringify(keys)).not.toContain("deadbeef");
-    expect(keys[0].prefix).toBe("epda_abcd1234");
+    expect(keys[0].prefix).toBe("org_abcd1234");
   });
 
   it("derives status from revocation and expiry", async () => {

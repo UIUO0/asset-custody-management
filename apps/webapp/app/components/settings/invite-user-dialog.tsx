@@ -236,7 +236,7 @@ export default function InviteUserDialog({
                   }
                   icon="mail"
                   label={t("team.emailAddress")}
-                  placeholder="employee@epda.gov.sa"
+                  placeholder="employee@example.gov"
                   required
                 />
               </div>

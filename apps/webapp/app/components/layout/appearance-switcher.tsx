@@ -9,7 +9,7 @@
  * Plain form rather than a fetcher, so the control keeps working with
  * JavaScript unavailable.
  *
- * why: dark mode is removed EPDA-wide — the theme switcher that used to live
+ * why: dark mode is removed ORG-wide — the theme switcher that used to live
  * here was deleted and the system always renders the light theme.
  *
  * @see {@link file://./../../routes/api+/preferences.tsx} — the form target

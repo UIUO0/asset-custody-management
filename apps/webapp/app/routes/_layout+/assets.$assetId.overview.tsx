@@ -198,7 +198,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     /**
      * Compute quantity availability for QUANTITY_TRACKED assets.
      *
-     * Custody is the only consumer of the pool: EPDA hands assets over on
+     * Custody is the only consumer of the pool: ORG hands assets over on
      * custody records, so a unit is either free or held by a custodian.
      */
     let quantityData: {
@@ -1065,7 +1065,7 @@ export default function AssetOverview() {
               />
 
               {/*
-               * EPDA: the finance coding number.
+               * ORG: the finance coding number.
                *
                * Read-only here on purpose — coding happens on
                * `/purchase-orders/:orderNumber`, where المالية already reads the

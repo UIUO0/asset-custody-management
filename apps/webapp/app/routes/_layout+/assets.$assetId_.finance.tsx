@@ -16,7 +16,7 @@
  * page is for the richer per-asset finance view that comes later.
  *
  * @see {@link file://./purchase-orders.$orderNumber.tsx} where coding happens today
- * @see {@link file://./../../../../docs/epda-workflow-and-roles.md} phase 2 — الإهلاك
+ * @see {@link file://./../../../../docs/org-workflow-and-roles.md} phase 2 — الإهلاك
  */
 
 import type { LoaderFunctionArgs } from "react-router";

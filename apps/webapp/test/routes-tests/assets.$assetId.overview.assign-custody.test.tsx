@@ -1,7 +1,7 @@
 /**
  * Tests for the legacy unsigned custody-assignment route.
  *
- * This route used to assign custody directly. EPDA requires both parties to
+ * This route used to assign custody directly. ORG requires both parties to
  * sign a محضر before an asset changes hands, so it was reduced to a redirect
  * onto the signed handover flow — see the docblock on the route itself.
  *
@@ -21,7 +21,7 @@
  *
  * @see {@link file://../../app/routes/_layout+/assets.$assetId.overview.assign-custody.tsx}
  * @see {@link file://../../app/modules/custody/handover.server.ts}
- * @see {@link file://../../../docs/epda-custody-signatures.md}
+ * @see {@link file://../../../docs/org-custody-signatures.md}
  */
 
 import { createActionArgs, createLoaderArgs } from "@mocks/remix";

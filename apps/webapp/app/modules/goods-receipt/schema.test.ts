@@ -18,7 +18,7 @@ import { GoodsReceiptSchema } from "./schema";
 const validMemo = {
   type: "MEMO",
   fiscalYear: "1447",
-  entityName: "هيئة تطوير المنطقة الشرقية",
+  entityName: "جهة حكومية",
   entityNumber: "1",
   warehouseName: "المستودع الرئيسي",
   receiptDate: "2026-08-10",

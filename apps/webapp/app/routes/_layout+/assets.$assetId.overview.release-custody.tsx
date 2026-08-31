@@ -1,7 +1,7 @@
 /**
  * Legacy unsigned custody release — superseded by the signed handover flow.
  *
- * The mirror of `assets.$assetId.overview.assign-custody.tsx`: EPDA requires a
+ * The mirror of `assets.$assetId.overview.assign-custody.tsx`: ORG requires a
  * signed محضر in *both* directions, so releasing an asset without the employee
  * and the warehouse both signing is no longer possible.
  *
@@ -15,7 +15,7 @@
  *
  * @see {@link file://./assets.$assetId.overview.custody-handover.tsx}
  * @see {@link file://./../../modules/custody/handover.server.ts}
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";

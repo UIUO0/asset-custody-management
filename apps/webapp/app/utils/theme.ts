@@ -22,7 +22,7 @@ export type ThemePreference = (typeof THEME_PREFERENCES)[number];
 export type ResolvedTheme = "light" | "dark";
 
 /** Cookie that persists the user's explicit theme choice. */
-export const THEME_COOKIE_NAME = "epda_theme";
+export const THEME_COOKIE_NAME = "org_theme";
 
 /** Preference used when the request carries no stored choice. */
 export const DEFAULT_THEME_PREFERENCE: ThemePreference = "system";

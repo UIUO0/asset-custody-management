@@ -17,22 +17,22 @@ export const config: Config = {
   disableSignup: DISABLE_SIGNUP || false,
   disableSSO: DISABLE_SSO || false,
 
-  // EPDA (هيئة تطوير المنطقة الشرقية) branding
+  // ORG (جهة حكومية) branding
   logoPath: {
-    fullLogo: "/static/images/sda-logo-full.png",
-    symbol: "/static/images/sda-symbol.png",
+    fullLogo: "/static/images/app-logo-full.png",
+    symbol: "/static/images/app-symbol.png",
   },
   faviconPath: "/static/favicon.ico",
 
   // As written on نموذج 2 and نموذج 3.
   entity: {
-    name: "هيئة تطوير المنطقة الشرقية",
+    name: "جهة حكومية",
     number: "1",
   },
 
   emailPrimaryColor: "#044E8B",
-  appName: "SDA Assets",
-  appIdentifier: "SDA",
+  appName: "Asset Custody",
+  appIdentifier: "ORG",
   showHowDidYouFindUs: SHOW_HOW_DID_YOU_FIND_US || false,
   collectBusinessIntel:
     COLLECT_BUSINESS_INTEL || SHOW_HOW_DID_YOU_FIND_US || false,

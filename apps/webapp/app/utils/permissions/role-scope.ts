@@ -12,7 +12,7 @@
  *
  * ## Why an allow-list
  *
- * The pre-EPDA codebase derived this negatively:
+ * The pre-ORG codebase derived this negatively:
  *
  * ```ts
  * const isSelfServiceOrBase = role === SELF_SERVICE || role === BASE;
@@ -26,7 +26,7 @@
  *
  * @see {@link file://./permission.data.ts} — the entity/action permission map
  * @see {@link file://./../roles.server.ts} — `requirePermission`, the main caller
- * @see {@link file://./../../../../docs/epda-workflow-and-roles.md}
+ * @see {@link file://./../../../../docs/org-workflow-and-roles.md}
  */
 
 import { OrganizationRoles } from "@prisma/client";
@@ -91,7 +91,7 @@ export function rolesAreScopedToOwnRecords(
 
 /**
  * True for roles that act on behalf of the whole organization but are **not**
- * the workspace owner — ADMIN plus the three EPDA operational roles.
+ * the workspace owner — ADMIN plus the three ORG operational roles.
  *
  * Exists for the handful of policies that deliberately exempt OWNER while still
  * applying to every other organization-wide role. The clearest example is the
@@ -145,7 +145,7 @@ export function hasWorkspaceAdminRole(
  *
  * Deliberately independent of {@link rolesAreScopedToOwnRecords}. "Which rows
  * may I see?" and "which desk do I act for?" are different questions, and
- * conflating them hid the IT desk from `admin@epda.local`: they hold `OWNER`
+ * conflating them hid the IT desk from `admin@example.local`: they hold `OWNER`
  * (org-wide, so nothing is filtered) *and* speak for تقنية المعلومات, and a
  * visibility-derived answer returned "no desk" for exactly that combination.
  *

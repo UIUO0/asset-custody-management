@@ -31,13 +31,13 @@ describe("triggerEmail", () => {
   it("skips sending email to soft-deleted users", async () => {
     await triggerEmail({
       ...basePayload,
-      to: "deleted+abc123@deleted.epda.local",
+      to: "deleted+abc123@deleted.example.local",
     });
 
     expect(transporter.sendMail).not.toHaveBeenCalled();
   });
 
-  it("still skips addresses stamped with the pre-EPDA soft-delete domain", async () => {
+  it("still skips addresses stamped with the pre-ORG soft-delete domain", async () => {
     // why: the marker lives in `User.email`, so rows soft-deleted before the
     // domain was renamed must stay suppressed. Renaming the constant without
     // this fallback would silently resume delivery to deleted accounts.

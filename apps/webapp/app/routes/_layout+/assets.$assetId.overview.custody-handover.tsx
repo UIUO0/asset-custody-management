@@ -15,7 +15,7 @@
  * touches the `Custody` table.
  *
  * @see {@link file://./../../components/custody/signature-pad.tsx}
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import { useState } from "react";

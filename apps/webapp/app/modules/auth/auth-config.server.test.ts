@@ -158,8 +158,8 @@ describe("getAuthConfig", () => {
       settings({
         "auth.method": "ldap",
         "ldap.enabled": "true",
-        "ldap.url": "ldaps://dc.epda.local:636",
-        "ldap.searchBase": "ou=users,dc=epda,dc=local",
+        "ldap.url": "ldaps://dc.example.local:636",
+        "ldap.searchBase": "ou=users,dc=org,dc=local",
       }),
     );
 

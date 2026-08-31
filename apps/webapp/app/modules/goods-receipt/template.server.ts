@@ -99,7 +99,7 @@ export async function buildTemplateWorkbook(
   const columns = itemColumnsFor(type, categoryOptions());
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "هيئة تطوير المنطقة الشرقية";
+  workbook.creator = "جهة حكومية";
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet(TEMPLATE_SHEET_NAME, {

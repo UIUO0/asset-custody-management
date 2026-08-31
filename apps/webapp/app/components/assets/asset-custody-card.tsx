@@ -18,7 +18,7 @@ import { DateS } from "../shared/date";
  * when.
  *
  * Custody is the only path here: the booking variant of this card was dropped
- * with the booking system itself (EPDA runs on handover/custody records only).
+ * with the booking system itself (ORG runs on handover/custody records only).
  */
 export function CustodyCard({
   hasPermission,

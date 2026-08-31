@@ -3,7 +3,7 @@
  *
  * The language switcher posts here. The preference is stored in a readable
  * cookie so the server can render `<html lang/dir>` correctly on the next
- * request. Dark mode is removed EPDA-wide, so no theme is handled here.
+ * request. Dark mode is removed ORG-wide, so no theme is handled here.
  *
  * Deliberately unauthenticated: the payload is a display preference tied to
  * the browser, not to a user record, so it must also work on the login screen
@@ -25,7 +25,7 @@ export async function action({ request }: ActionFunctionArgs) {
   try {
     const formData = await request.formData();
 
-    // why: dark mode is removed EPDA-wide — this endpoint only handles the
+    // why: dark mode is removed ORG-wide — this endpoint only handles the
     // locale now; the theme form field is ignored if ever posted.
     const locale = parseLocale(String(formData.get("locale") ?? ""));
     const redirectTo = formData.get("redirectTo");

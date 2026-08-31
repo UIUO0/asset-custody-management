@@ -91,7 +91,7 @@ export type TemplateHeaderField = {
  * module exists to avoid.
  *
  * `رقم التسلسل` and `عدد الصفحات` are deliberately absent: the system assigns
- * the first (`EPDA-RCV-YYYY-NNNN`) and derives the second from the item lines.
+ * the first (`RCV-YYYY-NNNN`) and derives the second from the item lines.
  * A box for either would invite an operator to write a value and then find it
  * silently ignored.
  *

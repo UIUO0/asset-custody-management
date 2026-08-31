@@ -69,7 +69,7 @@ beforeEach(() => {
 function receiptWith(titles: string[], state = "SAVED") {
   return {
     id: "r-1",
-    reference: "EPDA-RCV-2026-0001",
+    reference: "RCV-2026-0001",
     state,
     lines: [
       {
@@ -154,7 +154,7 @@ describe("deleteGoodsReceipt", () => {
 
     expect(order).toEqual(["assets", "receipt"]);
     expect(result).toEqual({
-      reference: "EPDA-RCV-2026-0001",
+      reference: "RCV-2026-0001",
       assetsDeleted: 2,
     });
   });
@@ -178,7 +178,7 @@ describe("deleteGoodsReceipt", () => {
   it("erases a receipt that produced nothing without touching assets", async () => {
     receiptFindFirst.mockResolvedValue({
       id: "r-1",
-      reference: "EPDA-RCV-2026-0002",
+      reference: "RCV-2026-0002",
       state: "SAVED",
       lines: [],
     });
@@ -221,7 +221,7 @@ describe("deleteGoodsReceipt", () => {
           organizationId: "org-1",
           canDeleteSigned: false,
         }),
-      ).resolves.toMatchObject({ reference: "EPDA-RCV-2026-0001" });
+      ).resolves.toMatchObject({ reference: "RCV-2026-0001" });
     });
 
     it("allows a voided receipt for that same caller", async () => {

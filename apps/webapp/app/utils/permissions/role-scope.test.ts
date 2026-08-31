@@ -14,7 +14,7 @@ import {
  * These tests exist to protect one property above all others: **a role nobody
  * remembered to register must not gain organization-wide data visibility.**
  *
- * The pre-EPDA code derived scope negatively (`role === SELF_SERVICE || role
+ * The pre-ORG code derived scope negatively (`role === SELF_SERVICE || role
  * === BASE`), so every role added afterwards silently defaulted to seeing the
  * whole organization. The allow-list inverts that, and the "unregistered role"
  * test below is what stops the old shape creeping back in.
@@ -33,7 +33,7 @@ describe("rolesAreScopedToOwnRecords", () => {
     }
   });
 
-  it("gives the three EPDA operational roles organization-wide visibility", () => {
+  it("gives the three ORG operational roles organization-wide visibility", () => {
     expect(rolesAreScopedToOwnRecords(OrganizationRoles.WAREHOUSE)).toBe(false);
     expect(rolesAreScopedToOwnRecords(OrganizationRoles.FINANCE)).toBe(false);
     expect(rolesAreScopedToOwnRecords(OrganizationRoles.INVENTORY)).toBe(false);
@@ -77,7 +77,7 @@ describe("hasOrgWideNonOwnerRole", () => {
     expect(hasOrgWideNonOwnerRole(OrganizationRoles.OWNER)).toBe(false);
   });
 
-  it("includes ADMIN and the EPDA operational roles", () => {
+  it("includes ADMIN and the ORG operational roles", () => {
     expect(hasOrgWideNonOwnerRole(OrganizationRoles.ADMIN)).toBe(true);
     expect(hasOrgWideNonOwnerRole(OrganizationRoles.WAREHOUSE)).toBe(true);
     expect(hasOrgWideNonOwnerRole(OrganizationRoles.FINANCE)).toBe(true);
@@ -115,23 +115,23 @@ describe("hasWorkspaceAdminRole", () => {
   });
 });
 
-describe("Role2PermissionMap coverage for EPDA roles", () => {
-  const epdaRoles = [
+describe("Role2PermissionMap coverage for ORG roles", () => {
+  const orgRoles = [
     OrganizationRoles.WAREHOUSE,
     OrganizationRoles.FINANCE,
     OrganizationRoles.INVENTORY,
   ];
 
-  it("registers every EPDA role in the permission map", () => {
+  it("registers every ORG role in the permission map", () => {
     // why: an unregistered role is denied everything by `hasPermission`, which
     // is safe but silently unusable. Catch it here rather than in production.
-    for (const role of epdaRoles) {
+    for (const role of orgRoles) {
       expect(Role2PermissionMap[role]).toBeDefined();
     }
   });
 
   it("withholds workspace administration from all three", () => {
-    for (const role of epdaRoles) {
+    for (const role of orgRoles) {
       expect(Role2PermissionMap[role]?.workspace).toEqual([]);
       expect(Role2PermissionMap[role]?.generalSettings).toEqual([]);
       expect(Role2PermissionMap[role]?.subscription).toEqual([]);
@@ -162,7 +162,7 @@ describe("Role2PermissionMap coverage for EPDA roles", () => {
   });
 
   it("keeps the team directory read-only for all three", () => {
-    for (const role of epdaRoles) {
+    for (const role of orgRoles) {
       expect(Role2PermissionMap[role]?.teamMember).toEqual(["read"]);
     }
   });
@@ -254,7 +254,7 @@ describe("DEPARTMENT scope", () => {
 });
 
 /**
- * `admin@epda.local` is BOTH the workspace owner and the officer who receives
+ * `admin@example.local` is BOTH the workspace owner and the officer who receives
  * for إدارة تقنية المعلومات — the authority runs IT on the admin account.
  *
  * That combination broke the first implementation: the desk was derived from
@@ -313,7 +313,7 @@ describe("resolveDepartmentDeskId", () => {
  * That is fine for permission checks — the widest role wins anyway — but it is
  * lossy, and any caller that needs "does this person hold DEPARTMENT?" must
  * read the full array from the membership instead. Passing the collapsed value
- * is what hid IT's stock from `admin@epda.local`, whose roles are stored as
+ * is what hid IT's stock from `admin@example.local`, whose roles are stored as
  * `[OWNER, DEPARTMENT]`: `roles[0]` is `OWNER`, and the desk resolved to null.
  */
 describe("resolveDepartmentDeskId — multi-role memberships", () => {

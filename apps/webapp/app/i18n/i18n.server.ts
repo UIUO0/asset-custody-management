@@ -2,7 +2,7 @@
  * Server-side i18n — locale detection and per-request i18next instances.
  *
  * Detection order (first match wins):
- *   1. `epda_locale` cookie — the user's explicit choice in the switcher
+ *   1. `org_locale` cookie — the user's explicit choice in the switcher
  *   2. `Accept-Language` header — the browser/OS preference
  *   3. `DEFAULT_LOCALE` (Arabic)
  *

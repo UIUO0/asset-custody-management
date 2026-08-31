@@ -18,7 +18,7 @@
  * `Buffer`, `process` and every other Node-only global.
  *
  * @see {@link file://./handover.server.ts} — the database and storage side
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import {

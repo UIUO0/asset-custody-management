@@ -1,9 +1,9 @@
--- EPDA local seed: storage buckets required by the app.
+-- ORG local seed: storage buckets required by the app.
 -- Mirrors apps/docs/supabase-setup.md:
 --   profile-pictures (public), assets (private), kits (private),
 --   files (public), locations (private),
---   custody-signatures (private — EPDA handover signature images),
---   goods-receipt-signatures (private — EPDA intake form signature images).
+--   custody-signatures (private — ORG handover signature images),
+--   goods-receipt-signatures (private — ORG intake form signature images).
 -- Client-side writes stay denied (RLS with no permissive policies);
 -- the app uploads through the service role, which bypasses RLS.
 

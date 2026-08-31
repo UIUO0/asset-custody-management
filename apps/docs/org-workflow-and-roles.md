@@ -1,4 +1,4 @@
-# سير العمل والأدوار — هيئة تطوير المنطقة الشرقية
+# سير العمل والأدوار — جهة حكومية
 
 هذا المستند يوثّق سير العمل المطلوب في الهيئة، ويقارنه بما يدعمه النظام
 الحالي، ويحدّد ما يجب بناؤه ومراحل التنفيذ.
@@ -8,7 +8,7 @@
 > جميع القرارات المفتوحة أُجيبت (انظر القسم 5).
 >
 > 📍 لحالة التنفيذ المحدَّثة والفجوات المعروفة:
-> [epda-overview.md](./epda-overview.md)
+> [org-overview.md](./org-overview.md)
 
 ---
 
@@ -296,7 +296,7 @@
 5. ✅ تحديث واجهة دعوة المستخدمين لعرض الأدوار الجديدة بأسمائها العربية
 
 📖 تفاصيل التنفيذ والفروق السلوكية وما يجب تشغيله:
-[epda-phase1-role-check-inventory.md](./epda-phase1-role-check-inventory.md)
+[org-phase1-role-check-inventory.md](./org-phase1-role-check-inventory.md)
 
 ### المرحلة 2 — دورة حياة الصنف ومسار الاكسل 🟡 ٣ من ٦
 
@@ -317,7 +317,7 @@
     القراءة (الفهرس البسيط والمتقدّم، الرابط المباشر، البحث السريع، المنتقيات،
     الجوال) وفي جهة الكتابة أيضاً
 
-📖 [epda-asset-intake-workflow.md](./epda-asset-intake-workflow.md)
+📖 [org-asset-intake-workflow.md](./org-asset-intake-workflow.md)
 
 البنود ٧ و ٧ب و ٨ **لم تُبنَ بعد**: لا `purchaseDate`، ولا حقل ترميز، ولا
 تاريخ انتهاء إهلاك، ولا حصر للكتابة عليها بدور المالية.
@@ -337,7 +337,7 @@ _تصفية_ التصدير حسب الحالة و*حصر* الاستيراد ا
 14. ❌ **التوقيع** — لوحة رسم بالفأرة ورفع ملف + تخزين + ربط بالتسليم
 15. ❌ **بوابة: لا تسليم قبل وصول التوقيع**
 
-📖 [epda-booking-request-workflow.md](./epda-booking-request-workflow.md)
+📖 [org-booking-request-workflow.md](./org-booking-request-workflow.md)
 
 > **ابدأ من هنا إن كنت تكمل العمل.** البندان ١٤ و ١٥ هما الفجوة الوحيدة التي
 > تجعل مساراً مبنياً ناقصاً: الطلب يُقبل ثم يُسلَّم الأصل بلا توقيع، وهو شرط
@@ -414,5 +414,5 @@ _تصفية_ التصدير حسب الحالة و*حصر* الاستيراد ا
 
 - الأدوار والصلاحيات: `apps/webapp/app/utils/permissions/permission.data.ts`
 - مخطط قاعدة البيانات: `packages/database/prisma/schema.prisma`
-- التعريب والاتجاه: [epda-i18n-and-theming.md](./epda-i18n-and-theming.md)
-- تكامل Azure AD: [epda-azure-entra-sso.md](./epda-azure-entra-sso.md)
+- التعريب والاتجاه: [org-i18n-and-theming.md](./org-i18n-and-theming.md)
+- تكامل Azure AD: [org-azure-entra-sso.md](./org-azure-entra-sso.md)

@@ -40,7 +40,7 @@ declare global {
       SUPABASE_ANON_PUBLIC: string;
       SESSION_SECRET: string;
       /**
-       * EPDA: key used to encrypt secret values in `AppSetting` (LDAP bind
+       * ORG: key used to encrypt secret values in `AppSetting` (LDAP bind
        * password, OIDC client secret, SAML key). Optional — when unset the key
        * is derived from SESSION_SECRET, which means rotating that secret makes
        * stored settings secrets unreadable. See `utils/crypto.server.ts`.

@@ -7,13 +7,13 @@ import { SMTP_FROM, SUPPORT_EMAIL } from "../utils/env";
 
 /**
  * Domain stamped onto a user's email address when their account is soft-deleted
- * (`deleted+{randomId}@deleted.epda.local`). Nothing is ever delivered to it —
+ * (`deleted+{randomId}@deleted.example.local`). Nothing is ever delivered to it —
  * `sendEmail` below drops any message addressed to this domain.
  */
-export const SOFT_DELETED_EMAIL_DOMAIN = "@deleted.epda.local";
+export const SOFT_DELETED_EMAIL_DOMAIN = "@deleted.example.local";
 
 /**
- * The pre-EPDA domain. Still matched on send so that accounts soft-deleted
+ * The pre-ORG domain. Still matched on send so that accounts soft-deleted
  * before the rename stay suppressed — the marker is persisted in `User.email`,
  * so changing the constant alone would silently start delivering mail to rows
  * written under the old value.
@@ -86,7 +86,7 @@ export const triggerEmail = async ({
       // module's tests mock `~/utils/env` with only the two vars they need —
       // the extra named imports then fail at collection time. This is a
       // last-resort default anyway: real deployments set SMTP_FROM.
-      from: from || SMTP_FROM || `"SDA Assets" <hello@example.com>`, // sender address
+      from: from || SMTP_FROM || `"Asset Custody" <hello@example.com>`, // sender address
       replyTo: replyTo || SUPPORT_EMAIL, // reply to
       to, // list of receivers
       subject, // Subject line

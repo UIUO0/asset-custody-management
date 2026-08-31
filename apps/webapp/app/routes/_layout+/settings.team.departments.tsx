@@ -3,7 +3,7 @@
  *
  * A receiving department needs three things written (a desk row, the
  * `DEPARTMENT` role, and the pointer joining them), and until this screen
- * existed all three were writable only by `scripts/seed-epda-users.ts`.
+ * existed all three were writable only by `scripts/seed-demo-users.ts`.
  * `CLAUDE.md` described departments as "data, not code" — but data with no
  * screen is code for anybody who is not holding a psql prompt, and onboarding
  * the authority's third department meant asking a developer.

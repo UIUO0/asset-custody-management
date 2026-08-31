@@ -1,7 +1,7 @@
 /**
  * Custody Handover Service (خدمة محاضر التسليم والاسترجاع)
  *
- * EPDA requires that no asset changes hands without both parties signing. This
+ * ORG requires that no asset changes hands without both parties signing. This
  * module owns that rule end to end: it opens a handover record, collects one
  * signature per side, and — on the second signature — applies the custody
  * change inside the same transaction that completes the record.
@@ -23,9 +23,9 @@
  * — and only the service sees all of them. Hiding a button is a hint; this is
  * the fence.
  *
- * @see {@link file://./service.server.ts} — plain custody release (pre-EPDA path)
+ * @see {@link file://./service.server.ts} — plain custody release (pre-ORG path)
  * @see {@link file://./../../../../../packages/database/prisma/schema.prisma} — `CustodyHandover`
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import type {
@@ -88,7 +88,7 @@ const SIGNATURE_URL_TTL_SECONDS = 5 * 60;
 
 /**
  * Builds the next workspace-scoped reference for a handover (e.g.
- * `EPDA-HO-2026-0042`).
+ * `HO-2026-0042`).
  *
  * Derived from a count rather than a sequence so the number resets per year and
  * reads like the paper form it replaces. The count is racy under concurrent
@@ -117,7 +117,7 @@ async function nextReference(
     },
   });
 
-  return `EPDA-${infix}-${year}-${String(used + 1).padStart(4, "0")}`;
+  return `ORG-${infix}-${year}-${String(used + 1).padStart(4, "0")}`;
 }
 
 /**

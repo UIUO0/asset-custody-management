@@ -1,4 +1,4 @@
--- EPDA: سبب طلب الاسترجاع (why the custodian asked to hand the asset back)
+-- ORG: سبب طلب الاسترجاع (why the custodian asked to hand the asset back)
 --
 -- Kept separate from `conditionNotes` on purpose. "الجهاز يسخن" and "خدش في
 -- الغطاء الخلفي" are different facts: one is why the asset is coming back, the

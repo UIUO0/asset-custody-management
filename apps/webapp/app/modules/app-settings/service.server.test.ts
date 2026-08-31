@@ -222,14 +222,14 @@ describe("app settings", () => {
   describe("writes", () => {
     it("stores a plain value as given", async () => {
       await updateSettings({
-        updates: [{ key: "saml.issuer", value: "epda-sp" }],
+        updates: [{ key: "saml.issuer", value: "org-sp" }],
         userId: "admin-1",
       });
 
       expect(upsert).toHaveBeenCalledTimes(1);
       expect(upsert.mock.calls[0][0].create).toMatchObject({
         key: "saml.issuer",
-        value: "epda-sp",
+        value: "org-sp",
         isSecret: false,
         updatedById: "admin-1",
       });
@@ -263,7 +263,7 @@ describe("app settings", () => {
       await updateSettings({
         updates: [
           { key: "ldap.bindPassword", value: REDACTED },
-          { key: "ldap.url", value: "ldaps://dc.epda.local:636" },
+          { key: "ldap.url", value: "ldaps://dc.example.local:636" },
         ],
         userId: "admin-1",
       });
@@ -285,7 +285,7 @@ describe("app settings", () => {
       await expect(
         updateSettings({
           updates: [
-            { key: "saml.issuer", value: "epda-sp" },
+            { key: "saml.issuer", value: "org-sp" },
             { key: "attacker.injected", value: "payload" },
           ],
           userId: "admin-1",

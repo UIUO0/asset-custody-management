@@ -1,4 +1,4 @@
--- EPDA: goods receipts (مذكرة استلام / محضر استلام).
+-- ORG: goods receipts (مذكرة استلام / محضر استلام).
 --
 -- Stock now enters the system only through one of the authority's two official
 -- intake forms. This migration adds the document, its item lines, and its three

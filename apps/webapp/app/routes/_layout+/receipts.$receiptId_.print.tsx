@@ -60,7 +60,7 @@ export async function loader({ context, request, params }: LoaderFunctionArgs) {
     return payload({
       receipt,
       signatureUrls: await getSignatureUrls(receipt.signatures),
-      // `logoPath` is optional in the config type; the EPDA build always sets
+      // `logoPath` is optional in the config type; the ORG build always sets
       // it, and an empty string simply prints without a logo rather than
       // crashing the one page that has to work when someone needs paper.
       logoPath: config.logoPath?.fullLogo ?? "",

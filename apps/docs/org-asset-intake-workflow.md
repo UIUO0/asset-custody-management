@@ -197,7 +197,7 @@ UPDATE "Asset" SET "lifecycleStage" = 'READY';
 - `apps/webapp/app/components/assets/bulk-approve-dialog.tsx` +
   `apps/webapp/app/routes/api+/assets.bulk-approve.ts` — الاعتماد الجماعي
 - `apps/webapp/app/utils/permissions/role-scope.ts` — قائمة السماح المركزية
-- [epda-phase1-role-check-inventory.md](./epda-phase1-role-check-inventory.md)
+- [org-phase1-role-check-inventory.md](./org-phase1-role-check-inventory.md)
 
 ---
 

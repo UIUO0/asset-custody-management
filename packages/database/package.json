@@ -36,5 +36,6 @@
     "prisma": "^6.19.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
-  }
+  },
+  "license": "AGPL-3.0-only"
 }

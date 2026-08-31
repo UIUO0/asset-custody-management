@@ -1,9 +1,9 @@
--- EPDA: محاضر التسليم والاسترجاع الموقّعة (signed custody handover records)
+-- ORG: محاضر التسليم والاسترجاع الموقّعة (signed custody handover records)
 --
 -- Adds an immutable audit artefact that gates every custody change: no asset
 -- moves into or out of an employee's hands without both parties signing.
 --
--- Migration posture, matching the two EPDA workflows that came before
+-- Migration posture, matching the two ORG workflows that came before
 -- (asset intake, booking requests): EXISTING ROWS ARE LEFT ALONE. Custody rows
 -- created before this migration have no handover record and are not
 -- back-filled with a synthetic one — a fabricated "محضر" nobody signed would
@@ -56,7 +56,7 @@ CREATE TABLE "CustodyHandoverSignature" (
 );
 
 -- CreateIndex
--- Workspace-scoped reference numbers: "EPDA-HO-2026-0042" may repeat across
+-- Workspace-scoped reference numbers: "HO-2026-0042" may repeat across
 -- workspaces but never within one, so a reissued PDF always resolves to one
 -- record.
 CREATE UNIQUE INDEX "CustodyHandover_organizationId_reference_key"

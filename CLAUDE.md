@@ -839,16 +839,16 @@ The `.env` file lives at the **monorepo root** (not inside `apps/webapp/`). Copy
 
 - When you write any knowledgebase articles or documentation always provide the content in markdown
 
-## نشر هيئة تطوير المنطقة الشرقية (EPDA Deployment)
+## نشر جهة حكومية (ORG Deployment)
 
-هذا المستودع مُخصّص لنشر داخلي في **هيئة تطوير المنطقة الشرقية** (Eastern
+هذا المستودع مُخصّص لنشر داخلي في **جهة حكومية** (Eastern
 Province Development Authority). التخصيصات التالية مطبّقة على `apps/webapp`
 ويجب الحفاظ عليها عند أي تعديل مستقبلي.
 
 ### الهوية البصرية
 
-- الشعار: `public/static/images/sda-logo-full.png` (كامل)،
-  `sda-logo-white-text.png` (للخلفيات الداكنة)، `sda-symbol.png` (الرمز).
+- الشعار: `public/static/images/app-logo-full.png` (كامل)،
+  `app-logo-white-text.png` (للخلفيات الداكنة)، `app-symbol.png` (الرمز).
   المسارات معرّفة في `app/config/shelf.config.ts` → `logoPath`.
 - اللون الأساسي: أزرق الهيئة `#044E8B` (مشتق من الشعار).
 - **لا تُعِد أي مرجع إلى `shelf.nu` أو شعاره** في الواجهة أو الإيميلات.
@@ -879,7 +879,7 @@ Province Development Authority). التخصيصات التالية مطبّقة 
 أنها ميتة، والتزم بـ `text-static-white` للنص فوق الخلفيات الملوّنة حتى
 يبقى الخيار مفتوحاً.
 
-📖 **اقرأ [apps/docs/epda-i18n-and-theming.md](./apps/docs/epda-i18n-and-theming.md)
+📖 **اقرأ [apps/docs/org-i18n-and-theming.md](./apps/docs/org-i18n-and-theming.md)
 قبل أي تعديل على الواجهة** — يشرح إضافة النصوص المترجمة، وقواعد الخصائص
 المنطقية (`ms-`/`me-`/`ps-`/`pe-`/`text-start`/`text-end` بدل الفيزيائية).
 
@@ -961,7 +961,7 @@ grep -rhoE 't\(\s*"[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+"' apps/webapp/app \
 
 **وللقطع الثلاث شاشة منذ ٢٠٢٦‑٠٨‑١٠:** `/settings/team/departments`
 (`app/modules/department/service.server.ts`). قبلها كانت الثلاث قابلةً للكتابة
-من `scripts/seed-epda-users.ts` وحده — أي أن «بيانات لا كود» كانت صحيحةً في
+من `scripts/seed-demo-users.ts` وحده — أي أن «بيانات لا كود» كانت صحيحةً في
 المخطط وكاذبةً عملياً: إضافة الإدارة الثالثة كانت جراحة قاعدة بيانات. لا تُضِف
 مساراً موازياً لكتابتها.
 
@@ -1030,11 +1030,11 @@ grep -rhoE 't\(\s*"[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+"' apps/webapp/app \
 كاملةً بجانب `role`.** استعملها في كل سؤال عن **عضوية** دور، وأبقِ `role`
 للرُّتبة وحدها. وثلاثة مواضع كانت تقرأ `roles[0]` فأُصلحت معها:
 
-| الموضع                                                                 | العَرَض قبل الإصلاح                                                                                                        |
-| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `getUpdatesForUser` · `getUnreadCountForUser` · `markAllUpdatesAsRead` | إعلانٌ موجَّه إلى `DEPARTMENT` **لا يراه** `admin@epda.local` — لا في الشارة ولا في القائمة ولا يمسحه «تعليم الكل مقروءاً» |
-| `changeUserRole` (حارس «المالك وحده يغيّر دور أدمن»)                   | عضوية مخزَّنة `[DEPARTMENT, ADMIN]` تُقرأ إدارةً فيمرّ أدمنٌ غير مالك من الحارس                                            |
-| `resolveRoleChange` (كشف التنزيل)                                      | `ADMIN → WAREHOUSE` يُقرأ تنزيلاً فتُنقل ملكية كل ما يملكه المستخدم                                                        |
+| الموضع                                                                 | العَرَض قبل الإصلاح                                                                                                           |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `getUpdatesForUser` · `getUnreadCountForUser` · `markAllUpdatesAsRead` | إعلانٌ موجَّه إلى `DEPARTMENT` **لا يراه** `admin@example.local` — لا في الشارة ولا في القائمة ولا يمسحه «تعليم الكل مقروءاً» |
+| `changeUserRole` (حارس «المالك وحده يغيّر دور أدمن»)                   | عضوية مخزَّنة `[DEPARTMENT, ADMIN]` تُقرأ إدارةً فيمرّ أدمنٌ غير مالك من الحارس                                               |
+| `resolveRoleChange` (كشف التنزيل)                                      | `ADMIN → WAREHOUSE` يُقرأ تنزيلاً فتُنقل ملكية كل ما يملكه المستخدم                                                           |
 
 الفاصلة الآن `highestRole(roles)` في `app/utils/roles.ts` — **الأوسع رؤيةً لا
 الأول في المصفوفة**. لا تكتب `roles[0]` في حارسٍ جديد.
@@ -1054,17 +1054,17 @@ grep -rhoE 't\(\s*"[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+"' apps/webapp/app \
 الآخر.** `resolveDepartmentDeskId` (الدور + المؤشّر) هي الفاصلة، و
 `visibleCustodianIds` تستدعيها ولا تعرّفها.
 
-اشتقاق المكتب من الرؤية انكسر فوراً على `admin@epda.local`: يحمل `OWNER`
+اشتقاق المكتب من الرؤية انكسر فوراً على `admin@example.local`: يحمل `OWNER`
 (رؤية شاملة ⇒ `visibleCustodianIds` تُعيد `null` أي «لا تُرشِّح») **و**يمثّل
 إدارة تقنية المعلومات. فكان الجواب «لا مكتب» للحساب الذي يمثّله بالضبط، ولا
 يظهر له قسم «عهدة إدارتي». يحرسه أربعة اختبارات في `role-scope.test.ts`.
 
-**الحسابات التجريبية** (كلمات المرور في `scripts/seed-epda-users.ts`):
+**الحسابات التجريبية** (كلمات المرور في `scripts/seed-demo-users.ts`):
 
-| الحساب                  | الأدوار             | المكتب                |
-| ----------------------- | ------------------- | --------------------- |
-| `facilities@epda.local` | `DEPARTMENT`        | إدارة المرافق         |
-| `admin@epda.local`      | `OWNER, DEPARTMENT` | إدارة تقنية المعلومات |
+| الحساب                     | الأدوار             | المكتب                |
+| -------------------------- | ------------------- | --------------------- |
+| `facilities@example.local` | `DEPARTMENT`        | إدارة المرافق         |
+| `admin@example.local`      | `OWNER, DEPARTMENT` | إدارة تقنية المعلومات |
 
 **لا حساب منفصل لـIT عمداً** — الهيئة تُشغّل تقنية المعلومات على حساب الأدمن
 نفسه، فيحمل الدورين معاً: `OWNER` لإدارة النظام و`DEPARTMENT` ليستلم دفعات
@@ -1138,12 +1138,12 @@ grep -rhoE 't\(\s*"[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+"' apps/webapp/app \
 
 ### مسارات العمل المبنية
 
-| المسار                 | الملخّص                                                             | التوثيق                                                                          |
-| ---------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| استلام الصنف           | `Asset.lifecycleStage`: `PENDING` → `READY` بيد المستودعات          | [epda-asset-intake-workflow.md](./apps/docs/epda-asset-intake-workflow.md)       |
-| محاضر التسليم الموقّعة | `CustodyHandover` — التوقيع الثاني هو ما ينقل العهدة                | [epda-custody-signatures.md](./apps/docs/epda-custody-signatures.md)             |
-| استلام التوريدات       | `GoodsReceipt` — نموذجا الاستلام هما **الباب الوحيد** لدخول الأصناف | [epda-goods-receipt-workflow.md](./apps/docs/epda-goods-receipt-workflow.md)     |
-| **دورة الحياة كاملةً** | من التوريدة إلى توقيع الموظف — **وكل جدول يُكتب فيه** بكل خطوة      | [epda-asset-lifecycle-workflow.md](./apps/docs/epda-asset-lifecycle-workflow.md) |
+| المسار                 | الملخّص                                                             | التوثيق                                                                        |
+| ---------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| استلام الصنف           | `Asset.lifecycleStage`: `PENDING` → `READY` بيد المستودعات          | [org-asset-intake-workflow.md](./apps/docs/org-asset-intake-workflow.md)       |
+| محاضر التسليم الموقّعة | `CustodyHandover` — التوقيع الثاني هو ما ينقل العهدة                | [org-custody-signatures.md](./apps/docs/org-custody-signatures.md)             |
+| استلام التوريدات       | `GoodsReceipt` — نموذجا الاستلام هما **الباب الوحيد** لدخول الأصناف | [org-goods-receipt-workflow.md](./apps/docs/org-goods-receipt-workflow.md)     |
+| **دورة الحياة كاملةً** | من التوريدة إلى توقيع الموظف — **وكل جدول يُكتب فيه** بكل خطوة      | [org-asset-lifecycle-workflow.md](./apps/docs/org-asset-lifecycle-workflow.md) |
 
 **ابدأ من الأخير عند تتبّع «أين ذهب هذا الصنف؟»** — الثلاثة الأولى تشرح كلٌّ
 مرحلةً، وهو يصل بينها ويسمّي الصفّ الذي يشهد على كل انتقال.
@@ -1447,7 +1447,7 @@ utils.server}.ts`. (كانت ٣١ ملفاً؛ نصيب `modules/kit` منها �
 
 **الافتراضية من `config.entity`** في `app/config/shelf.config.ts` — اسم الهيئة
 ورقمها كما هما على النموذجين. السبب أن كل نموذج هنا يسمّي الجهة نفسها، وإعادة
-كتابتها هي كيف ينتهي مستند موقَّع بـ«هيئة تطوير المنطقة الشرقيه» وآخر بـ«الهيئة»
+كتابتها هي كيف ينتهي مستند موقَّع بـ«جهة حكومية» وآخر بـ«الهيئة»
 — ثلاث تهجئات لجهة واحدة في حزمة مستندات رسمية. **`defaultValue` لا `value`**:
 افتراضٌ لا قفل. والقالب يُعبّئها في الخلية أيضاً، فالبابان يتفقان.
 
@@ -1572,7 +1572,7 @@ utils.server}.ts`. (كانت ٣١ ملفاً؛ نصيب `modules/kit` منها �
 المنتصف يترك نموذجاً محفوظاً بأصناف أقل من أسطره. كان التعليق يقول «قابل
 للإصلاح» ولم يكن هناك ما يُصلحه — نموذج في هذه الحالة يبقى ناقصاً للأبد، أي
 توريدة وُقِّعت على الورق ولم يدخل مخزونها النظام إطلاقاً. (وُجد فعلاً:
-`EPDA-RCV-2026-0001`، موقَّع بالكامل و صفر أصناف.)
+`RCV-2026-0001`، موقَّع بالكامل و صفر أصناف.)
 
 `materializeReceiptItems` **مُصدَّرة ومتكرّرة الاستدعاء بأمان** (تتخطّى كل سطر
 أنتج أصنافاً)، ولها مدخلان:
@@ -1758,7 +1758,7 @@ utils.server}.ts`. (كانت ٣١ ملفاً؛ نصيب `modules/kit` منها �
 
 ### الإعدادات المركزية و API الخارجي — محصورة بأدمن النظام
 
-📖 **اقرأ [apps/docs/epda-admin-api-and-settings.md](./apps/docs/epda-admin-api-and-settings.md)
+📖 **اقرأ [apps/docs/org-admin-api-and-settings.md](./apps/docs/org-admin-api-and-settings.md)
 قبل أي تعديل على الإعدادات أو مفاتيح API.**
 
 **تمييز جوهري:** هذه الطبقة تُحرَس بـ `requireAdmin` (`Roles.ADMIN` على مستوى
@@ -2194,7 +2194,7 @@ typecheck و lint و٢٥٠٠ اختبار وبناء إنتاج — وانكسر
 - دخول محلي بالإيميل وكلمة المرور فقط. `DISABLE_SIGNUP="true"` و
   `DISABLE_SSO="true"` في `.env`.
 - تكامل Azure AD (Entra ID) جاهز بنيوياً — التفعيل إعدادات فقط بدون كود.
-  📖 [apps/docs/epda-azure-entra-sso.md](./apps/docs/epda-azure-entra-sso.md).
+  📖 [apps/docs/org-azure-entra-sso.md](./apps/docs/org-azure-entra-sso.md).
 
 ### التشغيل المحلي
 
@@ -2203,13 +2203,13 @@ typecheck و lint و٢٥٠٠ اختبار وبناء إنتاج — وانكسر
 ```bash
 supabase start          # يحتاج Docker Desktop شغالاً
 pnpm webapp:setup       # migrations
-pnpm webapp:seed:epda   # سوبر أدمن + مستخدمَين تجريبيين
+pnpm webapp:seed:org   # سوبر أدمن + مستخدمَين تجريبيين
 pnpm webapp:dev
 ```
 
 إعدادات Supabase في `supabase/config.toml`، وحاويات التخزين في
 `supabase/seed.sql`. الحسابات التجريبية في
-`apps/webapp/scripts/seed-epda-users.ts`.
+`apps/webapp/scripts/seed-demo-users.ts`.
 
 #### ⚠️ «User not found» على كل صفحة = سكيما `public` فُرِّغت، والحساب لم يُفرَّغ
 
@@ -2226,11 +2226,11 @@ The user you are trying to access does not exist». الرسالة تُغري ب
 **شخّصه باستعلام واحد** قبل أن تقرأ سطر كود:
 
 ```bash
-docker exec supabase_db_shelf-epda psql -U postgres -d postgres -tAc \
+docker exec supabase_db_shelf-org psql -U postgres -d postgres -tAc \
   'SELECT (SELECT count(*) FROM "User") AS public_users, (SELECT count(*) FROM auth.users) AS auth_users;'
 ```
 
-`0 | 7` تعني هذه الحالة بالضبط. العلاج `pnpm webapp:seed:epda`.
+`0 | 7` تعني هذه الحالة بالضبط. العلاج `pnpm webapp:seed:org`.
 
 ⚠️ **والبذرة كانت عاجزة عن إصلاحها حتى ٢٠٢٦‑٠٨‑١١** — احتياطي
 «الحساب موجود مسبقاً» في `ensureAuthAccount` كان يبحث في `db.user` أي في

@@ -1,4 +1,4 @@
--- EPDA: add the three operational organization roles.
+-- ORG: add the three operational organization roles.
 --
 -- WAREHOUSE  (المستودعات) — creates/audits assets, approves requests, hands over
 -- FINANCE    (المالية)    — financial coding, depreciation, financial analytics

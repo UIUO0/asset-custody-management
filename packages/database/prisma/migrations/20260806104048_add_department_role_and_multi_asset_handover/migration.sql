@@ -1,4 +1,4 @@
--- EPDA: departments receive stock in bulk, and a محضر covers a whole batch.
+-- ORG: departments receive stock in bulk, and a محضر covers a whole batch.
 --
 -- Two changes, deliberately in one migration because the second one moves data:
 --

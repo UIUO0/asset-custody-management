@@ -362,7 +362,7 @@ export default function AssetIndexPage() {
           })}
         >
           {/*
-           * EPDA: the split-button that offered "bulk create" and "import CSV"
+           * ORG: the split-button that offered "bulk create" and "import CSV"
            * is gone — both doors are closed. Stock enters only through
            * مذكرة/محضر استلام, so the index CTA opens the receipt form.
            */}

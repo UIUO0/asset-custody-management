@@ -10,7 +10,7 @@ import { config } from "~/config/shelf.config";
 
 /**
  * why: upstream printed a "Powered by shelf.nu" footer on every label, gated on
- * the workspace `showShelfBranding` toggle. The EPDA deployment must not
+ * the workspace `showShelfBranding` toggle. The ORG deployment must not
  * reference the vendor anywhere a user can see (CLAUDE.md), so that footer was
  * removed — but the toggle, its database column and its plumbing all stayed,
  * leaving a workspace setting that persisted a value and changed nothing.

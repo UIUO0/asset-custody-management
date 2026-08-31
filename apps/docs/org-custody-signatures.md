@@ -16,7 +16,7 @@
 
 ```prisma
 model CustodyHandover {
-  reference String                // EPDA-HO-2026-0042
+  reference String                // HO-2026-0042
   kind      CustodyHandoverKind   // HANDOVER | RETURN
   state     CustodyHandoverState  // AWAITING_SIGNATURES | COMPLETED | VOIDED
   ...
@@ -254,7 +254,7 @@ Supabase Storage لا يشارك في معاملة Postgres، فالصورة ت�
 
 ## ترقيم المحاضر
 
-`EPDA-HO-2026-0042` — مشتق من **عدّ** لا من sequence، ليُصفَّر سنوياً ويُقرأ
+`HO-2026-0042` — مشتق من **عدّ** لا من sequence، ليُصفَّر سنوياً ويُقرأ
 كالنموذج الورقي الذي يحلّ محله.
 
 العدّ متسابق تحت الفتح المتزامن — وهذا مقصود: الفهرس الفريد
@@ -272,8 +272,8 @@ Supabase Storage لا يشارك في معاملة Postgres، فالصورة ت�
 «محضر» لم يوقّعه أحد أسوأ من فجوة صادقة. الخدمة تشترط محضراً للانتقالات
 **الجديدة** فقط، فالسجل القائم يستمر ويكتمل طبيعياً كلما استُرجع أصل.
 
-نفس موقف الترحيل في [استلام الأصول](./epda-asset-intake-workflow.md) و
-[الطلبات](./epda-booking-request-workflow.md).
+نفس موقف الترحيل في [استلام الأصول](./org-asset-intake-workflow.md) و
+[الطلبات](./org-booking-request-workflow.md).
 
 ---
 
@@ -330,5 +330,5 @@ Supabase Storage لا يشارك في معاملة Postgres، فالصورة ت�
   ولو صارت ابناً لاحتاجت `<Outlet />` في الأب، وبدونه تُعرض القائمة ولا يظهر
   شيء، بلا أي خطأ.
 - `supabase/seed.sql` — دلو `custody-signatures`
-- [epda-asset-intake-workflow.md](./epda-asset-intake-workflow.md) — نفس النمط
-- [epda-booking-request-workflow.md](./epda-booking-request-workflow.md)
+- [org-asset-intake-workflow.md](./org-asset-intake-workflow.md) — نفس النمط
+- [org-booking-request-workflow.md](./org-booking-request-workflow.md)

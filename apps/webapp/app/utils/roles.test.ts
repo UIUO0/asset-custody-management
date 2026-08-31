@@ -59,24 +59,24 @@ describe("isDemotion", () => {
 
   /**
    * A demotion reassigns every asset, booking and kit the user owns, so
-   * misranking a role is destructive rather than merely wrong. The EPDA
+   * misranking a role is destructive rather than merely wrong. The ORG
    * operational roles keep organization-wide visibility, which is what the
    * ranks encode — moving between them must therefore be lateral.
    */
-  const epdaRoles = [
+  const orgRoles = [
     OrganizationRoles.WAREHOUSE,
     OrganizationRoles.FINANCE,
     OrganizationRoles.INVENTORY,
   ];
 
-  it("treats ADMIN ↔ the EPDA operational roles as lateral, not a demotion", () => {
-    for (const role of epdaRoles) {
+  it("treats ADMIN ↔ the ORG operational roles as lateral, not a demotion", () => {
+    for (const role of orgRoles) {
       expect(isDemotion(OrganizationRoles.ADMIN, role)).toBe(false);
       expect(isDemotion(role, OrganizationRoles.ADMIN)).toBe(false);
     }
   });
 
-  it("treats moves between the EPDA operational roles as lateral", () => {
+  it("treats moves between the ORG operational roles as lateral", () => {
     expect(
       isDemotion(OrganizationRoles.WAREHOUSE, OrganizationRoles.FINANCE),
     ).toBe(false);
@@ -85,21 +85,21 @@ describe("isDemotion", () => {
     ).toBe(false);
   });
 
-  it("treats dropping an EPDA role to BASE or SELF_SERVICE as a demotion", () => {
-    for (const role of epdaRoles) {
+  it("treats dropping an ORG role to BASE or SELF_SERVICE as a demotion", () => {
+    for (const role of orgRoles) {
       expect(isDemotion(role, OrganizationRoles.BASE)).toBe(true);
       expect(isDemotion(role, OrganizationRoles.SELF_SERVICE)).toBe(true);
     }
   });
 
-  it("treats OWNER → any EPDA role as a demotion", () => {
-    for (const role of epdaRoles) {
+  it("treats OWNER → any ORG role as a demotion", () => {
+    for (const role of orgRoles) {
       expect(isDemotion(OrganizationRoles.OWNER, role)).toBe(true);
     }
   });
 
-  it("treats promotion from BASE to an EPDA role as not a demotion", () => {
-    for (const role of epdaRoles) {
+  it("treats promotion from BASE to an ORG role as not a demotion", () => {
+    for (const role of orgRoles) {
       expect(isDemotion(OrganizationRoles.BASE, role)).toBe(false);
     }
   });

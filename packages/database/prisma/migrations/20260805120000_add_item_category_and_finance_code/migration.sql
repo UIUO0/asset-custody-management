@@ -1,4 +1,4 @@
--- EPDA: item categories, capitalisation-driven classification, and finance coding.
+-- ORG: item categories, capitalisation-driven classification, and finance coding.
 --
 -- Adds the input that decides أصل vs مادة (the item's category, which carries a
 -- capitalisation threshold) and the output of the finance step that follows for

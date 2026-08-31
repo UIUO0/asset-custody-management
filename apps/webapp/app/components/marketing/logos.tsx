@@ -7,10 +7,10 @@ import When from "../when/when";
  * Alt text for the workspace logo.
  *
  * Deliberately generic: these components render inside emails and PDFs as well
- * as the app shell, where the React i18n hook is unavailable — and the EPDA
+ * as the app shell, where the React i18n hook is unavailable — and the ORG
  * deployment must not surface the upstream vendor's brand name anywhere.
  */
-const ALT_TEXT = "SDA";
+const ALT_TEXT = "ORG";
 
 /**
  * Logo shown in the sidebar

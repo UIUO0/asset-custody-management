@@ -155,7 +155,7 @@ async function buildPermissionContext({
   /**
    * Organization settings can widen visibility for the two restricted upstream
    * roles. The overrides are keyed to SELF_SERVICE and BASE specifically — the
-   * EPDA operational roles are already organization-wide via the allow-list, so
+   * ORG operational roles are already organization-wide via the allow-list, so
    * the first clause covers them.
    */
   const canSeeAllBookings =
@@ -195,7 +195,7 @@ async function buildPermissionContext({
      *
      * `role` above is `roles[0]`, which is enough to answer "may they do this?"
      * (the widest wins) but is **lossy** for anything that asks *which* roles.
-     * `admin@epda.local` is stored `[OWNER, DEPARTMENT]`, so a caller reading
+     * `admin@example.local` is stored `[OWNER, DEPARTMENT]`, so a caller reading
      * `role` alone concludes they do not run a department desk — and they do.
      *
      * Prefer this wherever the question is about role membership rather than

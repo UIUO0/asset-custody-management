@@ -3,7 +3,7 @@
  *
  * The stored field is still named `showShelfBranding` because renaming a
  * database column is a migration, not a rename — but what it now controls is
- * the EPDA mark from `config.logoPath`, not the upstream vendor's footer, which
+ * the ORG mark from `config.logoPath`, not the upstream vendor's footer, which
  * this deployment never prints.
  *
  * @param override - Explicit preference coming from the current render context.

@@ -22,7 +22,7 @@
     "webapp:setup": "pnpm --filter @shelf/webapp run setup",
     "webapp:deploy:staging": "fly deploy --remote-only --app shelf-webapp-staging --dockerfile apps/webapp/Dockerfile",
     "webapp:deploy:production": "fly deploy --remote-only --app shelf-webapp --dockerfile apps/webapp/Dockerfile",
-    "webapp:seed:epda": "pnpm --filter @shelf/webapp seed:epda",
+    "webapp:seed:org": "pnpm --filter @shelf/webapp seed:org",
     "webapp:seed:reporting-demo": "pnpm --filter @shelf/webapp seed:reporting-demo",
     "webapp:seed:reporting-demo:staging": "pnpm --filter @shelf/webapp seed:reporting-demo:staging",
     "webapp:clean:reporting-demo": "pnpm --filter @shelf/webapp clean:reporting-demo",
@@ -72,5 +72,6 @@
   "engines": {
     "node": ">=22.20.0"
   },
-  "packageManager": "pnpm@9.15.9"
+  "packageManager": "pnpm@9.15.9",
+  "license": "AGPL-3.0-only"
 }

@@ -89,7 +89,7 @@ export async function approveAssetsByIds({
     const pendingIds = pendingAssets.map((asset) => asset.id);
 
     /**
-     * EPDA: an item admitted by a goods receipt cannot be released into
+     * ORG: an item admitted by a goods receipt cannot be released into
      * circulation until all three parties have signed the document that
      * admitted it.
      *

@@ -1,5 +1,5 @@
 # =========================================================================
-#  تشغيل بيئة التطوير المحلية — EPDA Asset Management
+#  تشغيل بيئة التطوير المحلية — ORG Asset Management
 #  الاستخدام:  .\start.ps1
 #  يوقف كل شي:  .\start.ps1 -Stop
 # =========================================================================
@@ -91,7 +91,7 @@ if (Test-Path $viteCache) {
 # --- سيرفر التطوير -------------------------------------------------------
 Write-Step "تشغيل سيرفر التطوير"
 Write-Host "    http://localhost:3000" -ForegroundColor Green
-Write-Host "    admin@epda.local / Epda@Admin#2026" -ForegroundColor DarkGray
+Write-Host "    admin@example.local (كلمة المرور تُطبع في مخرجات البذر)" -ForegroundColor DarkGray
 Write-Host "    (Ctrl+C للإيقاف)`n" -ForegroundColor DarkGray
 
 Push-Location (Join-Path $Root "apps\webapp")

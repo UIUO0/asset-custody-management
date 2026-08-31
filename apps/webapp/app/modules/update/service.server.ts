@@ -41,7 +41,7 @@ export type UpdateForUser = Prisma.UpdateGetPayload<{
  *
  * A membership holds *several* roles, and every caller here used to pass
  * `roles[0]`. An update aimed at `DEPARTMENT` was invisible to the account that
- * actually runs a department desk — `admin@epda.local` is stored
+ * actually runs a department desk — `admin@example.local` is stored
  * `[OWNER, DEPARTMENT]`, so the first element answered a question nobody asked.
  * Worse, it was invisible *consistently*: absent from the badge, absent from the
  * list, and not cleared by "mark all as read", so nothing on screen hinted that

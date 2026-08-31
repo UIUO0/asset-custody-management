@@ -21,7 +21,7 @@
  *   nested, it would need an `<Outlet />` here and silently render nothing
  *   without one.
  * @see {@link file://./../../modules/custody/handover.server.ts}
- * @see {@link file://./../../../../docs/epda-custody-signatures.md}
+ * @see {@link file://./../../../../docs/org-custody-signatures.md}
  */
 
 import { CustodyHandoverKind } from "@prisma/client";

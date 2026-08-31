@@ -20,7 +20,7 @@
  *
  * ## Why this module exists
  *
- * All three pieces were writable only by `scripts/seed-epda-users.ts`. Onboarding
+ * All three pieces were writable only by `scripts/seed-demo-users.ts`. Onboarding
  * a third receiving department meant editing the database by hand — while
  * `CLAUDE.md` described departments as "data, not code". They were data with no
  * screen, which is the same as code for anybody who is not holding a psql

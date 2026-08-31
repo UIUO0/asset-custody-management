@@ -4,10 +4,10 @@ import { config } from "~/config/shelf.config";
  * Plain-text onboarding email sent once, after a user completes the welcome
  * flow. Gated behind `config.sendOnboardingEmail` (`SEND_ONBOARDING_EMAIL`).
  *
- * Rewritten for the EPDA deployment. The upstream version was Shelf's own
+ * Rewritten for the ORG deployment. The upstream version was Shelf's own
  * marketing copy — signed by a co-founder of "Shelf Asset Management, Inc."
  * and asking the recipient which features they would like built. Sending that
- * to authority staff would have been both confusing and a breach of the EPDA
+ * to authority staff would have been both confusing and a breach of the ORG
  * identity rule.
  *
  * Kept plain-text and English for now: email bodies are not localized yet, and
@@ -24,7 +24,7 @@ export const onboardingEmailText = ({
   firstName: string;
 }) => `Hi ${firstName},
 
-Welcome to ${config.appName} — the asset management system of the Sharqia Development Authority.
+Welcome to ${config.appName} — the asset management system of the Government Agency.
 
 You can now:
 
@@ -35,5 +35,5 @@ You can now:
 If you need access to something you cannot see, or a permission you believe you should have, contact the IT department.
 
 ${config.appName}
-Sharqia Development Authority
+Government Agency
 `;

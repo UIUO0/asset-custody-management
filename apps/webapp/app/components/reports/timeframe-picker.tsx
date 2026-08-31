@@ -30,7 +30,7 @@ import type {
 } from "~/modules/reports/types";
 import { tw } from "~/utils/tw";
 
-/** CSS custom properties to theme react-day-picker with the EPDA primary color and compact sizing */
+/** CSS custom properties to theme react-day-picker with the ORG primary color and compact sizing */
 const dayPickerStyles = {
   "--rdp-accent-color": "#044E8B",
   "--rdp-accent-background-color": "#EBF4FC",

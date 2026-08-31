@@ -144,16 +144,16 @@ redaction placeholder»).
 
 `ApiKey` — **الرمز نفسه لا يُخزَّن إطلاقاً**.
 
-| العمود           | الغرض                                                          |
-| ---------------- | -------------------------------------------------------------- |
-| `hashedKey`      | بصمة SHA-256 للرمز الكامل (فريدة ومفهرسة — المصادقة بحث واحد)  |
-| `prefix`         | `epda_` + 8 محارف، تُعرض في القائمة ليتعرّف الأدمن على المفتاح |
-| `scopes`         | قائمة القدرات، تُفحص في كل نقطة                                |
-| `organizationId` | مساحة العمل الوحيدة التي يعمل فيها المفتاح                     |
-| `createdById`    | الأدمن المُصدِر — الكتابات تُنسب إليه                          |
-| `lastUsedAt`     | ختم استخدام، يُكتب مرة كل دقيقة على الأكثر                     |
-| `expiresAt`      | انتهاء اختياري                                                 |
-| `revokedAt`      | إبطال **ناعم** — الصف يبقى ليبقى سجل التدقيق                   |
+| العمود           | الغرض                                                         |
+| ---------------- | ------------------------------------------------------------- |
+| `hashedKey`      | بصمة SHA-256 للرمز الكامل (فريدة ومفهرسة — المصادقة بحث واحد) |
+| `prefix`         | `org_` + 8 محارف، تُعرض في القائمة ليتعرّف الأدمن على المفتاح |
+| `scopes`         | قائمة القدرات، تُفحص في كل نقطة                               |
+| `organizationId` | مساحة العمل الوحيدة التي يعمل فيها المفتاح                    |
+| `createdById`    | الأدمن المُصدِر — الكتابات تُنسب إليه                         |
+| `lastUsedAt`     | ختم استخدام، يُكتب مرة كل دقيقة على الأكثر                    |
+| `expiresAt`      | انتهاء اختياري                                                |
+| `revokedAt`      | إبطال **ناعم** — الصف يبقى ليبقى سجل التدقيق                  |
 
 ### لماذا SHA-256 بلا ملح؟
 
@@ -189,10 +189,10 @@ kits:read · locations:read · categories:read · team:read
 
 ```bash
 curl https://<host>/api/v1/assets \
-  -H "Authorization: Bearer epda_xxxxxxxx..."
+  -H "Authorization: Bearer org_xxxxxxxx..."
 
 # أو
-curl https://<host>/api/v1/assets -H "x-api-key: epda_xxxxxxxx..."
+curl https://<host>/api/v1/assets -H "x-api-key: org_xxxxxxxx..."
 ```
 
 الرمز **لا يُقرأ من سلسلة الاستعلام** إطلاقاً — عناوين URL تنتهي في سجلات
@@ -354,7 +354,7 @@ openssl rand -hex 32
 pnpm webapp:validate
 ```
 
-بعدها: ادخل بحساب `admin@epda.local` ← **Admin dashboard** ← تبويبا
+بعدها: ادخل بحساب `admin@example.local` ← **Admin dashboard** ← تبويبا
 **Settings** و **Integration**.
 
 ---
@@ -378,7 +378,7 @@ pnpm webapp:validate
 
 - **نقل SAML** يمرّ عبر Supabase (`utils/sso.server.ts`) — الإعدادات هنا
   تتحكّم بالعرض والاختيار، وربطها بضبط Supabase خطوة تالية.
-  انظر [epda-azure-entra-sso.md](./epda-azure-entra-sso.md).
+  انظر [org-azure-entra-sso.md](./org-azure-entra-sso.md).
 - **عميلا OIDC و LDAP غير مكتوبين.** الإعدادات جاهزة و`getAuthConfig()` هو
   المكان الوحيد الذي سيقرآن منه، فلا شيء آخر يتغيّر حين يصلان.
 - **`bookings:write`** معرَّف في مفردات النطاقات ولا نقطة تمنحه (القسم ٥).
@@ -387,8 +387,8 @@ pnpm webapp:validate
 
 ## مراجع
 
-- الأدوار والصلاحيات: [epda-workflow-and-roles.md](./epda-workflow-and-roles.md)
-- سير الطلبات: [epda-booking-request-workflow.md](./epda-booking-request-workflow.md)
-- تكامل Azure AD: [epda-azure-entra-sso.md](./epda-azure-entra-sso.md)
+- الأدوار والصلاحيات: [org-workflow-and-roles.md](./org-workflow-and-roles.md)
+- سير الطلبات: [org-booking-request-workflow.md](./org-booking-request-workflow.md)
+- تكامل Azure AD: [org-azure-entra-sso.md](./org-azure-entra-sso.md)
 - سجلّ الإعدادات: `apps/webapp/app/modules/app-settings/registry.ts`
 - مفردات النطاقات: `apps/webapp/app/modules/api-key/scopes.ts`

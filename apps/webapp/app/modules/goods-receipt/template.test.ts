@@ -199,7 +199,7 @@ describe("buildTemplateWorkbook", () => {
       return found;
     };
 
-    expect(valueBeside("الجهة")).toBe("هيئة تطوير المنطقة الشرقية");
+    expect(valueBeside("الجهة")).toBe("جهة حكومية");
     expect(valueBeside("رقم الجهة")).toBe("1");
   });
 
@@ -233,7 +233,7 @@ describe("parseTemplateWorkbook", () => {
     // Every box the schema requires — the template and the validator have to
     // ask for the same things, and this round trip is what proves they do.
     setHeader(sheet, "السنة المالية", "1447");
-    setHeader(sheet, "الجهة", "هيئة تطوير المنطقة الشرقية");
+    setHeader(sheet, "الجهة", "جهة حكومية");
     setHeader(sheet, "رقم الجهة", "1");
     setHeader(sheet, "مستودع", "المستودع الرئيسي");
     setHeader(sheet, "تاريخ الاستلام", "2026-08-10");

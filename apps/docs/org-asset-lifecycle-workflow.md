@@ -47,13 +47,13 @@ flowchart TD
 | **المسار** | `/receipts/new` → [`receipts.new.tsx`](../webapp/app/routes/_layout+/receipts.new.tsx) |
 | **الخدمة** | `createGoodsReceipt` ← `materializeReceiptItems`                                       |
 
-| الجدول             | العملية  | ماذا يُكتب                                                                                              |
-| ------------------ | -------- | ------------------------------------------------------------------------------------------------------- |
-| `GoodsReceipt`     | `INSERT` | `state = SAVED` · `reference = EPDA-RCV-YYYY-NNNN` · `pageCount` (يشتقّه النظام) · الترويسة والإجماليات |
-| `GoodsReceiptLine` | `INSERT` | سطر لكل بند: الاسم، الكمية، `unitPriceHalalas`، `itemCategory`، `itemClass` (يُشتقّ من حد الرسملة)      |
-| `Asset`            | `INSERT` | **صفّ لكل صنف** — `lifecycleStage = PENDING` · `status = AVAILABLE` · `valuation` · `sequentialId`      |
-| `Qr`               | `INSERT` | رمز QR لكل صنف                                                                                          |
-| `Asset`            | `UPDATE` | `receiptLineId` + `itemClass` — ربط الصنف بسطره                                                         |
+| الجدول             | العملية  | ماذا يُكتب                                                                                         |
+| ------------------ | -------- | -------------------------------------------------------------------------------------------------- |
+| `GoodsReceipt`     | `INSERT` | `state = SAVED` · `reference = RCV-YYYY-NNNN` · `pageCount` (يشتقّه النظام) · الترويسة والإجماليات |
+| `GoodsReceiptLine` | `INSERT` | سطر لكل بند: الاسم، الكمية، `unitPriceHalalas`، `itemCategory`، `itemClass` (يُشتقّ من حد الرسملة) |
+| `Asset`            | `INSERT` | **صفّ لكل صنف** — `lifecycleStage = PENDING` · `status = AVAILABLE` · `valuation` · `sequentialId` |
+| `Qr`               | `INSERT` | رمز QR لكل صنف                                                                                     |
+| `Asset`            | `UPDATE` | `receiptLineId` + `itemClass` — ربط الصنف بسطره                                                    |
 
 **ليس جدولاً:** متتالية Postgres `org_<orgId>_asset_sequence` — منها يأتي
 `SAM-0001`، عبر الدالة `get_next_sequential_id`.
@@ -153,11 +153,11 @@ flowchart TD
 | **المسار** | `/purchase-orders/:orderNumber` — «فتح محضر التسليم» |
 | **الخدمة** | `openHandover`                                       |
 
-| الجدول                 | العملية       | ماذا يُكتب                                                                                                             |
-| ---------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `CustodyHandover`      | `UPDATE MANY` | إبطال كل محضر مفتوح على الأصناف نفسها → `VOIDED`                                                                       |
-| `CustodyHandover`      | `INSERT`      | `reference = EPDA-HO-YYYY-NNNN` · `state = AWAITING_SIGNATURES` · `counterpartyTeamMemberId` · `releasingTeamMemberId` |
-| `CustodyHandoverAsset` | `INSERT`      | **سطر لكل صنف** مع كميته                                                                                               |
+| الجدول                 | العملية       | ماذا يُكتب                                                                                                        |
+| ---------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `CustodyHandover`      | `UPDATE MANY` | إبطال كل محضر مفتوح على الأصناف نفسها → `VOIDED`                                                                  |
+| `CustodyHandover`      | `INSERT`      | `reference = HO-YYYY-NNNN` · `state = AWAITING_SIGNATURES` · `counterpartyTeamMemberId` · `releasingTeamMemberId` |
+| `CustodyHandoverAsset` | `INSERT`      | **سطر لكل صنف** مع كميته                                                                                          |
 
 ⚠️ **لا شيء تحرّك بعد.** المحضر مستندٌ مفتوح فقط؛ العهدة تنتقل بالتوقيع الثاني.
 
@@ -270,7 +270,7 @@ flowchart TD
 
 ## مراجع
 
-- [مسار الاستلام](./epda-goods-receipt-workflow.md)
-- [محاضر التسليم الموقّعة](./epda-custody-signatures.md)
-- [مسار اعتماد الأصناف](./epda-asset-intake-workflow.md)
+- [مسار الاستلام](./org-goods-receipt-workflow.md)
+- [محاضر التسليم الموقّعة](./org-custody-signatures.md)
+- [مسار اعتماد الأصناف](./org-asset-intake-workflow.md)
 - `CLAUDE.md` — قسم «مسارات العمل المبنية»

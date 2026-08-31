@@ -16,13 +16,13 @@ export enum PermissionAction {
   custody = "custody",
   changeRole = "change-role",
   /**
-   * EPDA: approving a workflow transition (asset request, readiness sign-off).
+   * ORG: approving a workflow transition (asset request, readiness sign-off).
    * Distinct from `update` — a role may edit an asset without being allowed to
    * move it forward in the lifecycle, and vice versa.
    */
   approve = "approve",
   /**
-   * EPDA: freezing an item for review without deciding it.
+   * ORG: freezing an item for review without deciding it.
    *
    * Deliberately NOT a weaker form of `approve`: one role flags something for a
    * second look, another decides it. Collapsing them would hand each role the
@@ -64,7 +64,7 @@ export enum PermissionEntity {
   update = "update",
   commandPaletteSearch = "command-palette-search",
   /**
-   * EPDA: the intake forms (مذكرة استلام / محضر استلام).
+   * ORG: the intake forms (مذكرة استلام / محضر استلام).
    *
    * Separate from `asset` on purpose. Filling in a receipt is the warehouse's
    * job and produces stock; editing an asset afterwards is a different act that
@@ -81,7 +81,7 @@ export enum PermissionEntity {
  * below are documentation rather than enforcement. Every other role is enforced
  * strictly from this map: an entity missing from a role's record denies access.
  *
- * ## EPDA roles
+ * ## ORG roles
  *
  * WAREHOUSE / FINANCE / INVENTORY are derived from the approved permission
  * matrix (2026-07-26) recorded in the workflow spec. Where the matrix is silent
@@ -94,7 +94,7 @@ export enum PermissionEntity {
  *
  * @see {@link file://./role-scope.ts} — separate, and equally required: which
  *   *rows* each role may see. A role listed here still needs registering there.
- * @see {@link file://./../../../../docs/epda-workflow-and-roles.md}
+ * @see {@link file://./../../../../docs/org-workflow-and-roles.md}
  */
 //this will come from DB eventually
 export const Role2PermissionMap: {

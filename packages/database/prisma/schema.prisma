@@ -76,22 +76,22 @@ model User {
   sentInvites        Invite[]           @relation("inviter")
   receivedInvites    Invite[]           @relation("invitee")
   teamMembers        TeamMember[]
-  /// EPDA: handover records this user opened as the warehouse operator.
+  /// ORG: handover records this user opened as the warehouse operator.
   custodyHandoversOperated  CustodyHandover[]          @relation("CustodyHandoverOperator")
-  /// EPDA: handover signatures this user put their name to, on either side.
+  /// ORG: handover signatures this user put their name to, on either side.
   custodyHandoverSignatures CustodyHandoverSignature[] @relation("CustodyHandoverSignatory")
   userOrganizations  UserOrganization[]
-  /// EPDA: booking requests this user accepted or rejected (المستودعات)
-  /// EPDA: booking requests this user put on review hold (المخزون)
-  /// EPDA: instance settings this user last wrote (app-wide admins only)
+  /// ORG: booking requests this user accepted or rejected (المستودعات)
+  /// ORG: booking requests this user put on review hold (المخزون)
+  /// ORG: instance settings this user last wrote (app-wide admins only)
   appSettingUpdates  AppSetting[]       @relation("appSettingUpdatedBy")
-  /// EPDA: external-integration API keys this user issued
+  /// ORG: external-integration API keys this user issued
   issuedApiKeys      ApiKey[]           @relation("apiKeyCreatedBy")
-  /// EPDA: goods receipts this user filled in (مذكرة/محضر استلام)
+  /// ORG: goods receipts this user filled in (مذكرة/محضر استلام)
   goodsReceipts      GoodsReceipt[]     @relation("goodsReceiptCreatedBy")
-  /// EPDA: receipt signatures this user gave
+  /// ORG: receipt signatures this user gave
   goodsReceiptSignatures GoodsReceiptSignature[] @relation("goodsReceiptSignatory")
-  /// EPDA: assets this user (المالية) entered a finance code for
+  /// ORG: assets this user (المالية) entered a finance code for
   assetsFinanceCoded     Asset[]                 @relation("assetFinanceCodedBy")
   tierId             TierId             @default(free)
   tier               Tier               @relation(fields: [tierId], references: [id])
@@ -198,7 +198,7 @@ model Asset {
   thumbnailImage      String?
   mainImageExpiration DateTime?
   status              AssetStatus @default(AVAILABLE)
-  /// Where the asset sits in the EPDA intake workflow. Deliberately separate
+  /// Where the asset sits in the ORG intake workflow. Deliberately separate
   /// from `status`, which is derived from custody/bookings and must not be
   /// overloaded with intake meaning.
   lifecycleStage      AssetLifecycleStage @default(PENDING)
@@ -235,7 +235,7 @@ model Asset {
   // `enforce_individual_asset_single_location` trigger.
 
   custody      Custody[]
-  /// EPDA: lines on signed تسليم/استرجاع records. Survive custody being
+  /// ORG: lines on signed تسليم/استرجاع records. Survive custody being
   /// released — the audit trail is the point.
   custodyHandovers CustodyHandoverAsset[]
   notes        Note[]
@@ -249,7 +249,7 @@ model Asset {
   auditScans      AuditScan[]
   assetLocations AssetLocation[]
 
-  /// EPDA: the receipt line that admitted this item, if any.
+  /// ORG: the receipt line that admitted this item, if any.
   ///
   /// Nullable and `SetNull` on delete: items created before the receipt flow
   /// existed have no line, and voiding a receipt must not delete stock that
@@ -259,17 +259,17 @@ model Asset {
   receiptLine   GoodsReceiptLine? @relation(fields: [receiptLineId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   receiptLineId String?
 
-  /// EPDA: أصل / مادة. Null until the classification rules land — see
+  /// ORG: أصل / مادة. Null until the classification rules land — see
   /// `enum ItemClass`. Mirrored from the receipt line at creation so the
   /// classification survives the line being edited.
   itemClass ItemClass?
 
-  /// EPDA: نوع الصنف, mirrored from the receipt line for the same reason as
+  /// ORG: نوع الصنف, mirrored from the receipt line for the same reason as
   /// `itemClass` — the classification must stay readable on the item even if
   /// the line is later corrected.
   itemCategory ItemCategory?
 
-  /// EPDA: رقم الترميز — the finance coding number.
+  /// ORG: رقم الترميز — the finance coding number.
   ///
   /// Entered by المالية after the item is classified as a أصل; مواد are
   /// expensed and never coded. Free text with no uniqueness constraint: the
@@ -338,7 +338,7 @@ enum AssetStatus {
   CHECKED_OUT
 }
 
-/// Intake workflow stage for the EPDA deployment.
+/// Intake workflow stage for the ORG deployment.
 ///
 /// Separate from `AssetStatus` on purpose: `status` is *derived* from custody
 /// and bookings (the system computes it), whereas this is *declared* by the
@@ -349,7 +349,7 @@ enum AssetStatus {
 /// coding and depreciation → المستودعات audits and approves (READY). Only READY
 /// assets are visible to, and requestable by, ordinary employees.
 ///
-/// @see {@link file://./../../../apps/docs/epda-workflow-and-roles.md}
+/// @see {@link file://./../../../apps/docs/org-workflow-and-roles.md}
 enum AssetLifecycleStage {
   /// قيد الانتظار — registered, awaiting finance coding and warehouse sign-off.
   PENDING
@@ -774,10 +774,10 @@ model TeamMember {
   organization    Organization @relation(fields: [organizationId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   organizationId  String
   custodies       Custody[]
-  /// EPDA: handover records where this member is the employee side.
+  /// ORG: handover records where this member is the employee side.
   custodyHandovers CustodyHandover[]
 
-  /// EPDA: marks this row as an administrative department (إدارة المرافق,
+  /// ORG: marks this row as an administrative department (إدارة المرافق,
   /// إدارة تقنية المعلومات) rather than an individual person.
   ///
   /// Departments hold custody exactly the way people do — that is why they are
@@ -787,7 +787,7 @@ model TeamMember {
   /// tell "a desk" from "a person" when listing custodians.
   isDepartment Boolean @default(false)
 
-  /// EPDA: workspace memberships whose holder belongs to this department.
+  /// ORG: workspace memberships whose holder belongs to this department.
   departmentMembers UserOrganization[] @relation("UserOrganizationDepartment")
 
   receivedInvites Invite[]
@@ -836,7 +836,7 @@ model Custody {
   @@index([teamMemberId])
 }
 
-/// EPDA: whether a handover record covers giving an asset out or taking it back.
+/// ORG: whether a handover record covers giving an asset out or taking it back.
 ///
 /// Two rows rather than a boolean because the parties swap roles between them —
 /// on `HANDOVER` المستودعات release and the employee receives; on `RETURN` the
@@ -849,7 +849,7 @@ enum CustodyHandoverKind {
   RETURN
 }
 
-/// EPDA: lifecycle of a handover record.
+/// ORG: lifecycle of a handover record.
 ///
 /// Deliberately NOT folded into `Custody` itself. A custody row answers "who
 /// holds this asset right now"; a handover record answers "what was agreed, by
@@ -865,7 +865,7 @@ enum CustodyHandoverState {
   VOIDED
 }
 
-/// EPDA: which side of a handover a signature belongs to.
+/// ORG: which side of a handover a signature belongs to.
 ///
 /// Named by role in the transaction rather than by job title, because the same
 /// person can be `RELEASING` on one record and `RECEIVING` on the next.
@@ -876,7 +876,7 @@ enum CustodyHandoverParty {
   RECEIVING
 }
 
-/// EPDA: signed handover record (محضر تسليم/استلام).
+/// ORG: signed handover record (محضر تسليم/استلام).
 ///
 /// Created *before* the custody change and gates it: `assignCustody` and
 /// `releaseCustody` refuse to run unless a `COMPLETED` record exists for that
@@ -885,12 +885,12 @@ enum CustodyHandoverParty {
 /// same operation and only the service sees all of them.
 ///
 /// @see {@link file://./../../../apps/webapp/app/modules/custody/handover.server.ts}
-/// @see {@link file://./../../../apps/docs/epda-custody-signatures.md}
+/// @see {@link file://./../../../apps/docs/org-custody-signatures.md}
 model CustodyHandover {
   id String @id @default(cuid())
 
   /// Human-facing reference printed on the محضر, unique per workspace
-  /// (e.g. "EPDA-HO-2026-0042"). Stored rather than derived so a reissued PDF
+  /// (e.g. "HO-2026-0042"). Stored rather than derived so a reissued PDF
   /// always carries the same number as the one already signed on paper.
   reference String
 
@@ -1003,7 +1003,7 @@ model CustodyHandoverAsset {
   @@index([handoverId])
 }
 
-/// EPDA: one party's signature on a handover record.
+/// ORG: one party's signature on a handover record.
 ///
 /// A separate table rather than four columns on `CustodyHandover` so the
 /// `@@unique([handoverId, party])` constraint makes "one signature per side"
@@ -1055,7 +1055,7 @@ model Organization {
   members TeamMember[]
   assets  Asset[]
   assetLocations AssetLocation[]
-  /// EPDA: signed تسليم/استرجاع records for this workspace. Scoped here so the
+  /// ORG: signed تسليم/استرجاع records for this workspace. Scoped here so the
   /// `reference` counter and every listing query stay workspace-isolated.
   custodyHandovers CustodyHandover[]
 
@@ -1109,9 +1109,9 @@ model Organization {
   auditImages        AuditImage[]
 
   usersWithLastSelected User[] @relation("lastSelectedOrg")
-  /// EPDA: API keys scoped to this workspace (see `model ApiKey`)
+  /// ORG: API keys scoped to this workspace (see `model ApiKey`)
   apiKeys             ApiKey[]
-  /// EPDA: goods receipts booked into this workspace (مذكرة/محضر استلام)
+  /// ORG: goods receipts booked into this workspace (مذكرة/محضر استلام)
   goodsReceipts       GoodsReceipt[]
   roleChangeLogs      RoleChangeLog[]
   teamMemberNotes     TeamMemberNote[]
@@ -1152,7 +1152,7 @@ model UserOrganization {
   /// `@unique` doubles as the lookup index for the public feed route.
   calendarTokenId String? @unique
 
-  /// EPDA: the department this member works for, when they hold `DEPARTMENT`.
+  /// ORG: the department this member works for, when they hold `DEPARTMENT`.
   ///
   /// This — not the role — is what scopes a department user's inventory: they
   /// see the assets whose custody sits with this `TeamMember`. The role only
@@ -1189,7 +1189,7 @@ enum QrIdDisplayPreference {
 
 /// Organization-level roles.
 ///
-/// EPDA deployment adds three operational roles on top of the upstream four:
+/// ORG deployment adds three operational roles on top of the upstream four:
 ///   - WAREHOUSE  (المستودعات) — creates/audits assets, approves & hands over requests
 ///   - FINANCE    (المالية)    — adds financial coding + depreciation, financial analytics
 ///   - INVENTORY  (المخزون)    — organization-wide oversight, may delete assets
@@ -1200,7 +1200,7 @@ enum QrIdDisplayPreference {
 ///   2. `ROLES_WITH_ORG_WIDE_VISIBILITY` — apps/webapp/app/utils/permissions/role-scope.ts
 /// Roles absent from (2) are scoped to their own records, which is the safe default.
 ///
-/// @see {@link file://./../../../apps/docs/epda-workflow-and-roles.md}
+/// @see {@link file://./../../../apps/docs/org-workflow-and-roles.md}
 enum OrganizationRoles {
   ADMIN
   BASE
@@ -1209,7 +1209,7 @@ enum OrganizationRoles {
   WAREHOUSE
   FINANCE
   INVENTORY
-  /// EPDA: an administrative department that receives stock from the warehouse
+  /// ORG: an administrative department that receives stock from the warehouse
   /// in bulk and hands it on to its own staff (المرافق today; IT runs on OWNER
   /// because they are the workspace's system administrators).
   ///
@@ -1565,7 +1565,7 @@ model Announcement {
   updatedAt DateTime @updatedAt
 }
 
-/// EPDA: which official intake form a receipt is.
+/// ORG: which official intake form a receipt is.
 ///
 /// The authority uses two paper forms and warehouse staff pick per delivery.
 /// They are not versions of one another — they carry different reference
@@ -1581,7 +1581,7 @@ enum GoodsReceiptType {
   RECORD
 }
 
-/// EPDA: where a receipt sits between being filled in and being fully signed.
+/// ORG: where a receipt sits between being filled in and being fully signed.
 ///
 /// Items are created at `SAVED`, **not** at `SIGNED`: the warehouse needs the
 /// stock visible the moment it is booked in, and the created items land at
@@ -1599,7 +1599,7 @@ enum GoodsReceiptState {
   VOIDED
 }
 
-/// EPDA: the three signatory roles on each form.
+/// ORG: the three signatory roles on each form.
 ///
 /// Both forms take exactly three signatures but name them differently, so the
 /// enum carries all six rather than three generic slots. Naming them by their
@@ -1623,7 +1623,7 @@ enum GoodsReceiptParty {
   RESPONSIBLE_HEAD
 }
 
-/// EPDA: whether a receipt line becomes individually tracked items or one
+/// ORG: whether a receipt line becomes individually tracked items or one
 /// quantity-tracked row.
 ///
 /// Chosen per line by the warehouse operator. Ten laptops need ten rows, each
@@ -1637,7 +1637,7 @@ enum GoodsReceiptLineTracking {
   BULK
 }
 
-/// EPDA: أصل (durable asset) vs مادة (consumable material).
+/// ORG: أصل (durable asset) vs مادة (consumable material).
 ///
 /// **Not yet derived from anything.** The authority's classification rules are
 /// still being written; until they arrive the column stays null and
@@ -1655,7 +1655,7 @@ enum ItemClass {
   MATERIAL
 }
 
-/// EPDA: the kind of thing being received, which decides its capitalisation
+/// ORG: the kind of thing being received, which decides its capitalisation
 /// threshold.
 ///
 /// The authority sets a different threshold per category — a vehicle is
@@ -1681,7 +1681,7 @@ enum ItemCategory {
   OTHER_EQUIPMENT
 }
 
-/// EPDA: an official goods-receipt document (مذكرة/محضر استلام).
+/// ORG: an official goods-receipt document (مذكرة/محضر استلام).
 ///
 /// This is now the **only** way stock enters the system. `/assets/new` and the
 /// CSV importer are closed behind `asset.import`, because an item with no
@@ -1699,7 +1699,7 @@ model GoodsReceipt {
   type  GoodsReceiptType
   state GoodsReceiptState @default(DRAFT)
 
-  /// رقم التسلسل — workspace-scoped running number (e.g. "EPDA-RCV-2026-0042").
+  /// رقم التسلسل — workspace-scoped running number (e.g. "RCV-2026-0042").
   /// Stored rather than derived so a reprint always carries the number that was
   /// signed on paper.
   reference String
@@ -1790,7 +1790,7 @@ model GoodsReceipt {
   @@index([createdById])
 }
 
-/// EPDA: one row of a receipt's item table.
+/// ORG: one row of a receipt's item table.
 ///
 /// Holds what the operator typed. The `Asset` rows it produces are derived from
 /// it, which is why both survive independently: correcting a typo on an asset
@@ -1855,7 +1855,7 @@ model GoodsReceiptLine {
   @@index([receiptId])
 }
 
-/// EPDA: one of the three signatures on a receipt.
+/// ORG: one of the three signatures on a receipt.
 ///
 /// Mirrors `CustodyHandoverSignature` deliberately — same snapshotting of the
 /// declared name, same private-bucket image path, same evidentiary IP/UA. Two
@@ -1892,7 +1892,7 @@ model GoodsReceiptSignature {
   @@index([signedByUserId])
 }
 
-/// EPDA: instance-wide configuration, stored as key → value.
+/// ORG: instance-wide configuration, stored as key → value.
 ///
 /// Deliberately NOT organization-scoped. The settings kept here — which
 /// authentication method is live, the SAML/OIDC/LDAP connection details — are
@@ -1938,7 +1938,7 @@ model AppSetting {
   @@index([updatedById])
 }
 
-/// EPDA: a credential issued to an external system so it can call `/api/v1/*`.
+/// ORG: a credential issued to an external system so it can call `/api/v1/*`.
 ///
 /// The token itself is never stored. `hashedKey` holds its SHA-256 digest and
 /// `prefix` holds the first characters, which is what the UI shows so an admin
@@ -1954,7 +1954,7 @@ model ApiKey {
   /// Human label chosen by the admin, e.g. "ERP nightly sync".
   name String
 
-  /// Leading segment of the token (`epda_` + 8 chars). Unique so it can be used
+  /// Leading segment of the token (`org_` + 8 chars). Unique so it can be used
   /// as a stable display handle; it is NOT sufficient to authenticate.
   prefix String @unique
 
@@ -1991,7 +1991,7 @@ model ApiKey {
   @@index([createdById])
 }
 
-/// EPDA: where a booking sits in the المستودعات approval queue.
+/// ORG: where a booking sits in the المستودعات approval queue.
 ///
 /// Deliberately separate from `BookingStatus`, which tracks the *lifecycle* of
 /// an approved booking (draft → reserved → ongoing → complete). A booking can
@@ -2000,7 +2000,7 @@ model ApiKey {
 enum BookingApprovalState {
   /// Raised by an employee, waiting on المستودعات. Cannot be reserved.
   PENDING
-  /// Accepted — behaves like any pre-EPDA booking.
+  /// Accepted — behaves like any pre-ORG booking.
   APPROVED
   /// Turned down with a reason. Kept rather than deleted so the employee can
   /// see what happened and the decision stays auditable.

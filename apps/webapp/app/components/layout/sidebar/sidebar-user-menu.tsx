@@ -119,7 +119,7 @@ export default function SidebarUserMenu() {
                 so it is one click away from anywhere. Wrapped in a plain div
                 rather than DropdownMenuItem: it is a form, and a menu item
                 would swallow the submit and close the menu. Dark mode is
-                removed EPDA-wide, so there is no theme control. */}
+                removed ORG-wide, so there is no theme control. */}
             <div className="flex flex-col gap-2 border-b border-gray-200 p-2">
               <span className="text-xs font-medium text-gray-500">
                 {t("common.language")}

@@ -14,7 +14,7 @@
  *
  * ## RTL
  *
- * Uses logical properties (`ms-`/`me-`/`text-start`) throughout, per the EPDA
+ * Uses logical properties (`ms-`/`me-`/`text-start`) throughout, per the ORG
  * i18n rules — the form is Arabic-first and must not break when the interface
  * switches to English.
  *
